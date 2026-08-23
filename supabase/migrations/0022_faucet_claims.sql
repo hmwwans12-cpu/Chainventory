@@ -28,12 +28,13 @@ create table if not exists public.faucet_claims (
 comment on table public.faucet_claims is
   'Claim test ETH dari treasury faucet (PRD §17, 0.001 ETH / user / 12h).';
 
--- Unik: satu user hanya boleh punya 1 pending/confirmed claim dalam 12 jam.
--- Partial index aktif HANYA untuk status aktif + claim dalam 12 jam terakhir.
-create unique index if not exists faucet_claims_cooldown_idx
+-- Unik: satu user maksimal 1 claim PENDING pada satu waktu (race-safe antar
+-- INSERT konkuren). Window cooldown 12 jam dicek EKSPLISIT di claim_faucet():
+-- now() tidak IMMUTABLE sehingga dilarang masuk predikat index (PostgreSQL
+-- menolak dengan 42P17 "functions in index predicate must be marked IMMUTABLE").
+create unique index if not exists faucet_claims_pending_user_idx
   on public.faucet_claims (user_id)
-  where status in ('pending', 'confirmed')
-    and created_at > (now() - interval '12 hours');
+  where status = 'pending';
 
 -- Index untuk query cooldown & history.
 create index if not exists faucet_claims_user_created_idx
@@ -95,8 +96,20 @@ begin
       using errcode = 'invalid_parameter_value';
   end if;
 
-  -- Check cooldown: the unique partial index will reject duplicate inserts
-  -- within 12 hours. We try to insert and catch the unique violation.
+  -- Cooldown 12 jam — cek eksplisit claim aktif terakhir (pending ATAU
+  -- confirmed). Index unik di atas hanya menutup race antar INSERT pending
+  -- konkuren; cek ini menutup kasus claim 'confirmed' < 12 jam yang sudah
+  -- tidak lagi memblokir lewat index.
+  if exists (
+    select 1 from public.faucet_claims
+    where user_id = p_user_id
+      and status in ('pending', 'confirmed')
+      and created_at > now() - interval '12 hours'
+  ) then
+    raise exception 'claim_faucet: cooldown active, try again after 12 hours'
+      using errcode = 'unique_violation';
+  end if;
+
   begin
     insert into public.faucet_claims (user_id, amount_wei, status)
     values (p_user_id, p_amount_wei, 'pending')
@@ -105,17 +118,19 @@ begin
     when unique_violation then
       raise exception 'claim_faucet: cooldown active, try again after 12 hours'
         using errcode = 'unique_violation';
-  end begin;
+  end;
 
-  -- Audit log
-  perform public.write_audit(
+  -- Audit log (platform-level: faucet tanpa warehouse → warehouse_id null)
+  perform private.write_audit(
+    null,
     p_user_id,
     'faucet_claim',
     'faucet_claims',
     v_claim_id::text,
-    'pending',
     null,
-    null
+    null,
+    null,
+    'pending'
   );
 
   return jsonb_build_object(
