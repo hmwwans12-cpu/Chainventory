@@ -1,0 +1,15 @@
+{
+  "chainId": 84532,
+  "chainName": "Base Sepolia",
+  "contracts": {
+    "WarehouseFactory": {
+      "version": "1.0.0",
+      "address": "0x5e44f80585Ec50CBB64a76b3ffD099A156502e10",
+      "deploymentBlock": 45470275,
+      "deployedAt": "2026-08-14T12:01:38Z",
+      "abiPath": "out/WarehouseFactory.sol/WarehouseFactory.json",
+      "proofRecorder": "0x463841123df8f45F2d58bBFCD276493750Bbf004"
+    }
+  },
+  "notes": "Deployed via forge script DeployFactory.s.sol (chain 84532) tx 0x7c28a92b4a04aa7a26a24e4b28b07d9b7973f0397e4db5996451913cac39fd1a. Source VERIFIED on BaseScan (forge verify-contract, BASESCAN_API_KEY): Factory https://sepolia.basescan.org/address/0x5e44f80585Ec50CBB64a76b3ffD099A156502e10#code and Warehouse (smoke test) https://sepolia.basescan.org/address/0xdF9cA75707f6109d447dA0eE943Ef09733da2926#code — both 'already verified' per BaseScan API (compiler v0.8.29, EVM cancun, optimizer 200). EIP-712 domain verified on-chain: name=Chainventory, version=1, chainId=84532, verifyingContract=factory address. Smoke test E2E (SmokeDeployWarehouse.s.sol tx 0xa1e265fcd384aa934beca0f56621f71451c20b1019d275d88fcdfe812e1b48c4, block 45470381): deployed warehouse 0xdF9cA75707f6109d447dA0eE943Ef09733da2926 for user 0x70E7558d907Ad01540be0639ed809f02bD1d745e; owner/proofRecorder/factory/activeWarehouse/nonce all verified on-chain; second deployment correctly reverted with 'Factory: owner has active warehouse'."
+}

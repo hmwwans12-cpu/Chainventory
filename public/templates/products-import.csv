@@ -1,0 +1,4 @@
+name,sku,category,unit,description,low_stock_threshold,initial_qty
+Steel Rod 12mm,SR-12-001,Raw Material,pcs,"Heavy duty steel rod",10,120.5
+Cement Bag 50kg,CB-50,Building Material,bag,Portland cement,25,40
+Safety Helmet,SH-W01,Safety Equipment,piece,,,15

@@ -1,0 +1,82 @@
+name: Preview E2E (staging)
+
+on:
+  pull_request:
+
+jobs:
+  # Staging (P3 item 3a): deploy PR ke Vercel preview, lalu jalankan suite E2E
+  # penuh terhadap URL preview (tanpa tunnel — preview publik sehingga QStash
+  # delivery berjalan natural, sekaligus memvalidasi hardening VERCEL_URL).
+  #
+  # Diaktifkan hanya bila secret dikonfigurasi:
+  #   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID  (deploy)
+  #   E2E_* (sama dengan workflow CI)
+  # Fork PR / repo tanpa secret → job skip dengan pesan jelas.
+  staging:
+    runs-on: ubuntu-latest
+    if: >
+      secrets.VERCEL_TOKEN != '' &&
+      secrets.VERCEL_ORG_ID != '' &&
+      secrets.VERCEL_PROJECT_ID != '' &&
+      secrets.E2E_SUPABASE_URL != ''
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Write .env.local from secrets
+        run: node scripts/ci/write-env.mjs E2E_
+        env:
+          E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          E2E_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.E2E_SUPABASE_PUBLISHABLE_KEY }}
+          E2E_PRIVY_APP_ID: ${{ secrets.E2E_PRIVY_APP_ID }}
+          E2E_SUPABASE_SECRET_KEY: ${{ secrets.E2E_SUPABASE_SECRET_KEY }}
+          E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_PRIVY_APP_SECRET: ${{ secrets.E2E_PRIVY_APP_SECRET }}
+          E2E_TREASURY_PRIVATE_KEY: ${{ secrets.E2E_TREASURY_PRIVATE_KEY }}
+          E2E_QSTASH_TOKEN: ${{ secrets.E2E_QSTASH_TOKEN }}
+          E2E_QSTASH_URL: ${{ secrets.E2E_QSTASH_URL }}
+          E2E_QSTASH_CURRENT_SIGNING_KEY: ${{ secrets.E2E_QSTASH_CURRENT_SIGNING_KEY }}
+          E2E_QSTASH_NEXT_SIGNING_KEY: ${{ secrets.E2E_QSTASH_NEXT_SIGNING_KEY }}
+          E2E_CRON_SECRET: ${{ secrets.E2E_CRON_SECRET }}
+          E2E_BASE_SEPOLIA_RPC_URL: ${{ secrets.E2E_BASE_SEPOLIA_RPC_URL }}
+
+      - name: Deploy preview ke Vercel
+        id: deploy
+        run: |
+          npx vercel deploy --yes --token "$VERCEL_TOKEN" > /tmp/vercel-url.txt 2>&1
+          URL=$(grep -E '^https://' /tmp/vercel-url.txt | tail -n 1)
+          if [ -z "$URL" ]; then
+            echo "::error::vercel deploy tidak mengembalikan URL"
+            tail -n 30 /tmp/vercel-url.txt
+            exit 1
+          fi
+          echo "preview_url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed preview: $URL"
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Run full E2E suite vs preview (proof webhook natural, tanpa tunnel)
+        run: node node_modules/@playwright/test/cli.js test
+        env:
+          E2E_BASE_URL: ${{ steps.deploy.outputs.preview_url }}
+          E2E_RETRIES: "0"
+        timeout-minutes: 20
+        shell: bash

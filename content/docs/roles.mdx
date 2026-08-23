@@ -1,0 +1,97 @@
+---
+title: Roles & Permissions
+description: What each team member can do in Chainventory — based on the RBAC model.
+---
+
+## Overview
+
+Chainventory uses Role-Based Access Control (RBAC) with five roles. Each role has specific permissions for inventory, members, and blockchain operations.
+
+## Roles
+
+### Owner
+
+The warehouse creator. Has full access to everything.
+
+- **Can:** All operations (inventory, members, blockchain, settings)
+- **Can assign:** Manager, Staff, Auditor, Viewer
+- **Special:** Cannot be removed by anyone (including themselves via the UI)
+
+### Manager
+
+A senior team member who can manage inventory and members.
+
+- **Can:** Create/edit/archive products, stock in/out/adjustment/reversal, manage members
+- **Can assign:** Staff, Auditor, Viewer
+- **Cannot:** Manage other Managers or Owners, suspend warehouse, transfer ownership
+
+### Staff
+
+A team member who can perform day-to-day inventory operations.
+
+- **Can:** Create products, stock in/out, view inventory and blockchain
+- **Cannot:** Adjust/reverse stock, manage members, approve join requests
+
+### Auditor
+
+A read-only role for checking inventory and blockchain records.
+
+- **Can:** View inventory, movements, blockchain records, export products
+- **Cannot:** Make any changes to inventory or members
+
+### Viewer
+
+The most restricted role. Read-only access to basic inventory data.
+
+- **Can:** View inventory, movements, blockchain records
+- **Cannot:** Export data, manage members, make any changes
+
+## Permission Matrix
+
+| Permission                   | Owner | Manager | Staff | Auditor | Viewer |
+| ---------------------------- | :---: | :-----: | :---: | :-----: | :----: |
+| **Inventory**                |       |         |       |         |        |
+| Read products                |  ✅   |   ✅    |  ✅   |   ✅    |   ✅   |
+| Create/edit/archive products |  ✅   |   ✅    |  ✅   |    —    |   —    |
+| Stock In                     |  ✅   |   ✅    |  ✅   |    —    |   —    |
+| Stock Out                    |  ✅   |   ✅    |  ✅   |    —    |   —    |
+| Stock Adjustment             |  ✅   |   ✅    |   —   |    —    |   —    |
+| Stock Reversal               |  ✅   |   ✅    |   —   |    —    |   —    |
+| Approve Adjustment           |  ✅   |   ✅    |   —   |    —    |   —    |
+| **Members**                  |       |         |       |         |        |
+| View members                 |  ✅   |   ✅    |  ✅   |   ✅    |   ✅   |
+| Approve join requests        |  ✅   |   ✅    |   —   |    —    |   —    |
+| Manage members               |  ✅   |   ✅    |   —   |    —    |   —    |
+| Remove members               |  ✅   |   ✅    |   —   |    —    |   —    |
+| **Blockchain**               |       |         |       |         |        |
+| View blockchain records      |  ✅   |   ✅    |  ✅   |   ✅    |   ✅   |
+| View proofs                  |  ✅   |   ✅    |  ✅   |   ✅    |   ✅   |
+| Claim faucet ETH             |  ✅   |   ✅    |   —   |    —    |   —    |
+| **Settings**                 |       |         |       |         |        |
+| Manage warehouse             |  ✅   |    —    |   —   |    —    |   —    |
+| Suspend warehouse            |  ✅   |    —    |   —   |    —    |   —    |
+| Transfer ownership           |  ✅   |    —    |   —   |    —    |   —    |
+
+## Role Assignment Rules
+
+- **Owner** can assign any role.
+- **Manager** can assign Staff, Auditor, and Viewer — but **never** another Manager or Owner.
+- A Manager **cannot** manage another Manager's permissions.
+- Role changes require the actor to have `member:manage` permission **and** the target role must be in their assignable list.
+
+## Join Requests
+
+When you invite someone to your warehouse:
+
+1. A join request is created with status `PENDING`.
+2. An Owner or Manager must approve it.
+3. Once approved, the member's status becomes `ACTIVE`.
+4. The new member can then access the warehouse according to their assigned role.
+
+## Suspended Members
+
+Members can be suspended by Owners or Managers. Suspended members:
+
+- Cannot access the warehouse
+- Their existing sessions are invalidated
+- They can be reactivated by an Owner or Manager

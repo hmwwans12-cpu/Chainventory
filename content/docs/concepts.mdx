@@ -1,0 +1,67 @@
+---
+title: Core Concepts
+description: Understanding warehouse codes, stock movement types, and the inventory model.
+---
+
+## Warehouse Code
+
+Every warehouse has a unique **warehouse code** — a short identifier used to invite team members. When you create a warehouse, a code is generated automatically. Share this code with team members who need to join.
+
+## Stock Movement Types
+
+Chainventory supports four types of stock movements:
+
+### Stock In
+
+Increases the balance of a product. Used when receiving new inventory from suppliers.
+
+- **Permission required:** `stock:in`
+- **Effect:** Balance increases by the specified quantity
+
+### Stock Out
+
+Decreases the balance of a product. Used when shipping or selling inventory.
+
+- **Permission required:** `stock:out`
+- **Effect:** Balance decreases by the specified quantity
+- **Validation:** Cannot exceed current balance (prevents negative stock)
+
+### Adjustment
+
+Corrects a stock count to match a physical audit. Can be positive or negative.
+
+- **Permission required:** `stock:adjustment`
+- **Requires approval:** Owner or Manager must approve adjustments
+- **Effect:** Balance is set to the new value
+
+### Reversal
+
+Reverses a previous stock movement (partial or full). Used to correct mistakes.
+
+- **Permission required:** `stock:reversal`
+- **Requires approval:** Owner or Manager must approve reversals
+- **Validation:** Cannot reverse more than the original movement quantity
+
+## Blockchain Verification
+
+Every important stock movement (Stock In, Stock Out, Adjustment, Reversal) creates a **proof** — a cryptographic record anchored to the blockchain. This provides:
+
+- **Integrity:** Records cannot be silently altered after the fact.
+- **Audit trail:** Every change is traceable and verifiable.
+- **Transparency:** Anyone can verify a record on Base Sepolia.
+
+Learn more at [Blockchain & Verification](/docs/blockchain).
+
+## Real-Time Updates
+
+Stock balances update in real-time across all connected clients. When a team member performs a stock movement, everyone sees the updated balance immediately — no refresh needed.
+
+## Inactivity Policy
+
+To keep the system healthy, warehouses that have no stock movements for 27 days are **suspended**. Suspended warehouses:
+
+- Cannot process new stock movements
+- Members cannot be added or removed
+- The warehouse can be reactivated by performing any stock movement
+
+This policy ensures inactive warehouses don't consume resources unnecessarily.

@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Secret scan
+        run: |
+          if rg -n "(TREASURY_PRIVATE_KEY|QSTASH_CURRENT_SIGNING_KEY|QSTASH_NEXT_SIGNING_KEY|SUPABASE_SERVICE_ROLE_KEY|SUPABASE_SECRET_KEY|UPSTASH_REDIS_REST_TOKEN|PRIVY_APP_SECRET)\s*=\s*(0x|eyJ[A-Za-z0-9_-]{20,}|sk_[A-Za-z0-9]{20,}|sb_secret_[A-Za-z0-9]{20,}|[A-Za-z0-9+/]{40,})" --glob '!node_modules/**' --glob '!.git/**' --glob '!contracts/**' .; then
+            echo "::error::Secret value committed (env var = real value)"
+            exit 1
+          fi
+        shell: bash
+
+  # E2E penuh (P3 item 1+2): build production lokal + tunnel cloudflared +
+  # suite Playwright (smoke env-deploy BLOCKER + main-flow 12 test + proof
+  # on-chain via QStash tunnel). Dijalankan HANYA bila secret E2E dikonfigurasi
+  # (GitHub → Settings → Secrets and variables → Actions). Skip dengan pesan
+  # jelas bila belum dikonfigurasi (fork PR / repo tanpa secret).
+  e2e:
+    runs-on: ubuntu-latest
+    needs: quality
+    if: secrets.E2E_SUPABASE_URL != ''
+    env:
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.E2E_SUPABASE_PUBLISHABLE_KEY }}
+      NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.E2E_PRIVY_APP_ID }}
+      SUPABASE_SECRET_KEY: ${{ secrets.E2E_SUPABASE_SECRET_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      PRIVY_APP_SECRET: ${{ secrets.E2E_PRIVY_APP_SECRET }}
+      TREASURY_PRIVATE_KEY: ${{ secrets.E2E_TREASURY_PRIVATE_KEY }}
+      QSTASH_TOKEN: ${{ secrets.E2E_QSTASH_TOKEN }}
+      QSTASH_URL: ${{ secrets.E2E_QSTASH_URL }}
+      QSTASH_CURRENT_SIGNING_KEY: ${{ secrets.E2E_QSTASH_CURRENT_SIGNING_KEY }}
+      QSTASH_NEXT_SIGNING_KEY: ${{ secrets.E2E_QSTASH_NEXT_SIGNING_KEY }}
+      CRON_SECRET: ${{ secrets.E2E_CRON_SECRET }}
+      BASE_SEPOLIA_RPC_URL: ${{ secrets.E2E_BASE_SEPOLIA_RPC_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install cloudflared (tunnel QStash → runner localhost)
+        run: |
+          curl -L -o /tmp/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x /tmp/cloudflared
+          mkdir -p "$RUNNER_TEMP/opencode"
+          cp /tmp/cloudflared "$RUNNER_TEMP/opencode/cloudflared"
+        shell: bash
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Write .env.local from secrets
+        run: node scripts/ci/write-env.mjs
+
+      - name: Verify E2E env wiring
+        run: pnpm e2e:verify
+
+      - name: Run full E2E suite (tunnel + main-flow + proof on-chain)
+        run: node node_modules/@playwright/test/cli.js test
+        env:
+          E2E_TUNNEL: "1"
+          E2E_RETRIES: "0"
+          CLOUDFLARED_PATH: ${{ runner.temp }}/opencode/cloudflared
+        timeout-minutes: 20
+        shell: bash

@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/internal/keep-alive",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/internal/proofs/reconcile",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/internal/warehouses/lifecycle",
+      "schedule": "0 5 * * *"
+    }
+  ]
+}

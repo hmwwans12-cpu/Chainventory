@@ -1,0 +1,133 @@
+---
+title: Troubleshooting & FAQ
+description: Common issues and solutions for Chainventory users.
+---
+
+## Proof is stuck in "Pending"
+
+**What it means:** Your proof has been created but hasn't been submitted to the blockchain yet.
+
+**Common causes:**
+
+- The proof pipeline is processing other proofs (normal queue behavior)
+- The blockchain RPC is temporarily unavailable
+- The QStash delivery service is experiencing issues
+
+**What to do:**
+
+- Wait a few minutes — proofs are processed automatically
+- Check the Developer Console → Dependencies to see if the proof pipeline is healthy
+- If the proof remains pending for more than 10 minutes, check the Blockchain page for error details
+
+## Proof failed with an error
+
+**What it means:** The proof submission to the blockchain failed.
+
+**Common causes:**
+
+- Insufficient gas (treasury doesn't have enough test ETH)
+- RPC node is down
+- Smart contract error
+
+**What to do:**
+
+- Check the error message in the Blockchain page
+- If it's a gas issue, the treasury needs more Base Sepolia ETH (use the faucet in Developer Console)
+- If it's an RPC issue, it should resolve automatically when the RPC comes back online
+- In the Developer Console, you can manually retry failed proofs
+
+## Warehouse is suspended
+
+**What it means:** Your warehouse has been suspended due to inactivity.
+
+**Why it happens:** Warehouses that have no stock movements for 27 days are automatically suspended to keep the system healthy.
+
+**What to do:**
+
+- Perform any stock movement (Stock In, Stock Out, Adjustment, or Reversal) to reactivate the warehouse
+- Suspended warehouses cannot process new movements — you need to reactivate first
+
+## Cannot create a second warehouse
+
+**What it means:** You already have an active warehouse.
+
+**Why it happens:** Each account can only create one warehouse. This is a design constraint to keep the system simple.
+
+**What to do:**
+
+- Use your existing warehouse
+- If you need a separate warehouse, you can join another warehouse using a warehouse code
+- If you need to transfer ownership, use the ownership transfer feature in Settings
+
+## Stock Out fails with "Insufficient Stock"
+
+**What it means:** You're trying to remove more stock than is currently available.
+
+**What to do:**
+
+- Check the current balance in Products
+- Reduce the quantity to match the available stock
+- If you believe the balance is wrong, check the movement history for discrepancies
+
+## Stock Out fails with "Stale Stock"
+
+**What it means:** The stock balance has changed since you opened the form. This is a concurrency protection to prevent accidental overselling.
+
+**What to do:**
+
+- Refresh the page to see the current balance
+- Re-enter the quantity with the updated balance in mind
+
+## Join request was rejected
+
+**What it means:** The warehouse owner or manager rejected your request to join.
+
+**What to do:**
+
+- Contact the warehouse owner to discuss why
+- You can request again if the situation changes
+
+## Real-time updates not working
+
+**What it means:** Other team members' changes aren't appearing in your browser.
+
+**Common causes:**
+
+- Browser tab is in the background (some browsers throttle background tabs)
+- Network connection is unstable
+- Supabase Realtime connection was interrupted
+
+**What to do:**
+
+- Refresh the page
+- Check your internet connection
+- If the issue persists, it should resolve when the connection is re-established
+
+## How do I know if my data is verified on blockchain?
+
+**What to do:**
+
+1. Go to **Blockchain** in the dashboard
+2. Look for proofs with status **Confirmed**
+3. Click on a proof to see the transaction hash
+4. Click the link to view it on BaseScan
+
+## Is this real cryptocurrency?
+
+**No.** Chainventory runs on **Base Sepolia** — a free test network. The ETH used for gas and faucet claims has no real value. It's used only for data integrity verification.
+
+## Can I use Chainventory without blockchain?
+
+**Not really.** Blockchain verification is a core feature. Every important stock movement automatically creates a proof. You don't need to do anything special — it happens in the background.
+
+## How do I export my data?
+
+**For users:** Ask your warehouse Owner or Manager to use the Developer Console export feature.
+
+**For Owners/Managers:**
+
+1. Go to Developer Console (if you have access)
+2. Click **Export proofs (CSV)** or **Export audit logs (CSV)**
+3. The file downloads automatically
+
+Sensitive fields (like raw payload data) are never included in exports.

@@ -1,0 +1,83 @@
+---
+title: Blockchain & Verification
+description: How Chainventory uses blockchain to provide tamper-evident proof of inventory records.
+---
+
+## Why Blockchain?
+
+We use blockchain as an **additional verification layer** for important records. It provides proof of integrity and a tamper-evident history — while staying completely out of your way.
+
+- Your inventory is managed normally — nothing about daily work changes.
+- Important records get an additional, verifiable proof of authenticity.
+- Records cannot be silently altered after the fact.
+- You never need to understand crypto to use the product.
+
+## How It Works
+
+### 1. You Perform a Stock Movement
+
+When you do a Stock In, Stock Out, Adjustment, or Reversal, the system records the movement normally in the database.
+
+### 2. A Proof is Created
+
+The system automatically creates a **proof** — a cryptographic record that includes:
+
+- A hash of the movement data (product, quantity, timestamp, performer)
+- A unique proof ID
+- The warehouse contract address
+
+### 3. Proof is Anchored to Blockchain
+
+The proof is submitted to your warehouse's smart contract on **Base Sepolia** (a free test network). This anchors the record to the blockchain, making it:
+
+- **Verifiable:** Anyone can check the proof on BaseScan.
+- **Immutable:** Once anchored, the record cannot be changed.
+- **Transparent:** The blockchain provides a public audit trail.
+
+### 4. Verification Status
+
+Proofs go through several states:
+
+| Status            | Meaning                                                  |
+| ----------------- | -------------------------------------------------------- |
+| **Pending**       | Proof created, waiting to be submitted to blockchain     |
+| **Submitted**     | Transaction sent to blockchain, waiting for confirmation |
+| **Confirmed**     | Transaction confirmed on blockchain (≥2 confirmations)   |
+| **Failed**        | Submission failed (can be retried manually)              |
+| **Manual Review** | Requires manual intervention                             |
+
+## Viewing Proofs
+
+1. Navigate to **Blockchain** in the dashboard.
+2. See all proofs with their current status.
+3. Click on a proof to view details including the transaction hash.
+
+## Verifying on BaseScan
+
+Every confirmed proof has a transaction hash. You can verify it independently:
+
+1. Copy the transaction hash from the proof details.
+2. Visit [sepolia.basescan.org](https://sepolia.basescan.org).
+3. Paste the transaction hash in the search bar.
+4. Verify the transaction details match your record.
+
+<Callout type="warning">
+  Base Sepolia is a **test network** — it uses free test ETH, not real money.
+  The verification proves data integrity, not financial value.
+</Callout>
+
+## Testnet faucet
+
+To interact with the blockchain (deploy warehouses, submit proofs), you need test ETH on Base Sepolia. Chainventory provides a built-in faucet:
+
+- **Amount:** 0.001 ETH per claim
+- **Cooldown:** 12 hours between claims
+- **Access:** Owner and Manager roles only
+
+The faucet is available in the Developer Console under Treasury.
+
+## Privacy & Security
+
+- **Payload is never exposed:** Only the hash of your data is stored on-chain.
+- **No wallet required for daily use:** An embedded wallet is created for you automatically.
+- **Server-side only:** Private keys never leave the server. The treasury signer is used only for deploying warehouses and submitting proofs.

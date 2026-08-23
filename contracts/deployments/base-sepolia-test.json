@@ -1,0 +1,15 @@
+{
+  "chainId": 84532,
+  "chainName": "Base Sepolia",
+  "note": "TEST factory untuk E2E (P3). TERPISAH dari production (base-sepolia.json). Factory ini memakai TREASURY PRODUCTION (0x463841123df8f45F2d58bBFCD276493750Bbf004) sebagai proofRecorder — SAMA dengan production, sesuai keputusan user (satu wallet mudah dipantau). Isolasi hanya di level FACTORY: warehouse E2E ter-deploy ke factory ini, bukan factory production. JANGAN pernah dijadikan WAREHOUSE_FACTORY_ADDRESS production.",
+  "contracts": {
+    "WarehouseFactory": {
+      "version": "1.0.0",
+      "address": "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+      "deploymentBlock": 45679709,
+      "deployedAt": "2026-08-19T18:05:00Z",
+      "abiPath": "out/WarehouseFactory.sol/WarehouseFactory.json",
+      "proofRecorder": "0x463841123df8f45F2d58bBFCD276493750Bbf004"
+    }
+  }
+}
