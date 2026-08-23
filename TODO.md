@@ -37,7 +37,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 
 - [x] Buat project Supabase Free.
 - [ ] Migrasikan JWT signing key menjadi asymmetric/JWKS.
-- [ ] Konfigurasi Supabase Auth: email dan Google. (email ✅ live; Google ✅ kode (`signInWithGoogleAction` + `/auth/callback`) — aktivasi provider di dashboard Supabase masih manual)
+- [ ] Konfigurasi Supabase Auth: email dan Google. (✅✅ keduanya live & terverifikasi 2026-08-24)
 - [x] Buat tabel `users`, relasi ke `auth.users`, serta profile bootstrap.
 - [x] Aktifkan RLS pada seluruh tabel aplikasi.
 - [x] Buat helper database untuk membership/permission.
@@ -65,7 +65,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 
 ## P1 — Identity, Wallet, dan Akses
 
-- [x] Implement login/sign-up Supabase: email dan Google. (email ✅ live; Google ✅ kode + tombol di login/signup — aktivasi provider dashboard masih manual)
+- [x] Implement login/sign-up Supabase: email dan Google. (✅✅ keduanya live & terverifikasi 2026-08-24)
 - [x] Integrasikan Privy memakai custom-auth token Supabase.
 - [x] Aktifkan embedded wallet dan external wallet.
 - [x] Tambahkan Base Sepolia network guard serta switch-network UX.
@@ -200,7 +200,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 
 ## Sisa Pekerjaan Terbuka (hasil audit 2026-08-23; diperbarui setelah batch A–E)
 
-1. **Aktivasi Google provider di dashboard Supabase** — kode aplikasi ✅ (`signInWithGoogleAction`, `/auth/callback`, tombol di login/signup); tinggal enable provider + redirect URL di Supabase.
+1. ~~Aktivasi Google provider di dashboard Supabase~~ ✅ (2026-08-24) — provider aktif & diverifikasi live (`/auth/v1/authorize?provider=google` → 302 ke accounts.google.com dengan client ID produksi). Catatan deploy: saat go-live Vercel, set `NEXT_PUBLIC_APP_URL` ke domain produksi dan tambahkan domain itu di Auth → URL Configuration.
 2. **JWT asymmetric/JWKS** — migrasi signing key Supabase belum dilakukan.
 3. **Offline state UI** — state offline eksplisit belum ada (Live/Reconnecting/Outdated ✅).
 4. **Degraded QStash/RPC/Supabase tests** — fail-closed Redis faucet ✅; degraded pipeline lain belum.
