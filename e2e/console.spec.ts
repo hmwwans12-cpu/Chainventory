@@ -35,7 +35,7 @@ test.describe.serial("developer console", () => {
     await ctx?.close();
     await deniedCtx?.close();
     const userIds = [state.allowed?.userId, state.denied?.userId].filter(
-      (id): id is string => Boolean(id),
+      (id): id is string => Boolean(id)
     );
     await wipeWallets(userIds);
     await wipeUsers(userIds);
@@ -70,7 +70,7 @@ test.describe.serial("developer console", () => {
     await page.goto("/console");
     await expect(page).toHaveURL(/\/console/, { timeout: 20_000 });
     await expect(
-      page.getByRole("heading", { name: "Developer Console" }),
+      page.getByRole("heading", { name: "Developer Console" })
     ).toBeVisible();
     await expect(page.getByText("Signed in as")).toBeVisible();
     await expect(page.getByText(ALLOWED_EMAIL)).toBeVisible();
@@ -97,7 +97,7 @@ test.describe.serial("developer console", () => {
     await page.goto("/console");
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 });
     await expect(
-      page.getByRole("heading", { name: "Dashboard" }),
+      page.getByRole("heading", { name: "Dashboard" })
     ).toBeVisible();
     await page.close();
   });
@@ -107,7 +107,7 @@ test.describe.serial("developer console", () => {
     const page = await ctx.newPage();
     await page.goto("/console");
     await expect(
-      page.getByRole("heading", { name: "Developer Console" }),
+      page.getByRole("heading", { name: "Developer Console" })
     ).toBeVisible();
 
     const html = await page.content();
@@ -116,16 +116,16 @@ test.describe.serial("developer console", () => {
     if (privateKey) {
       expect(
         low.includes(privateKey),
-        "treasury private key must never render",
+        "treasury private key must never render"
       ).toBe(false);
     }
     expect(
       html.includes("sb_secret_"),
-      "supabase secret key prefix must never render",
+      "supabase secret key prefix must never render"
     ).toBe(false);
     expect(
       html.includes("sk_"),
-      "stripe-style secret prefix must never render",
+      "stripe-style secret prefix must never render"
     ).toBe(false);
     await page.close();
   });

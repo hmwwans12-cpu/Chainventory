@@ -36,12 +36,12 @@ Tidak ada konflik baru dengan spesifikasi. Penyelarasan/keputusan:
 
 ## 4. Skill yang Dipakai dan Alasannya
 
-| Skill | Alasan |
-|---|---|
-| `supabase` | Prasyarat wajib untuk seluruh work-stream Supabase: migration framework, RLS, JWT/JWKS, Realtime, GRANT Data API, keamanan auth. |
-| `supabase-postgres-best-practices` | Menulis migration `users` + RLS + trigger profile bootstrap + index yang benar sejak awal (expand-migrate-contract, PK/Role/RLS policy). |
-| `brainstorming` (sudah dimuat) | Memastikan desain/rencana disepakati sebelum implementasi (kepatuhan alur kerja). |
-| `find-skills` (opsional saat eksekusi) | Jika butuh skill spesifik untuk Foundry/Foundry toolchain. |
+| Skill                                  | Alasan                                                                                                                                   |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase`                             | Prasyarat wajib untuk seluruh work-stream Supabase: migration framework, RLS, JWT/JWKS, Realtime, GRANT Data API, keamanan auth.         |
+| `supabase-postgres-best-practices`     | Menulis migration `users` + RLS + trigger profile bootstrap + index yang benar sejak awal (expand-migrate-contract, PK/Role/RLS policy). |
+| `brainstorming` (sudah dimuat)         | Memastikan desain/rencana disepakati sebelum implementasi (kepatuhan alur kerja).                                                        |
+| `find-skills` (opsional saat eksekusi) | Jika butuh skill spesifik untuk Foundry/Foundry toolchain.                                                                               |
 
 Skill `caveman`, `design-*`, `ui-ux-*`, `web-design-guidelines`, `grill-me`, `improve-codebase-architecture`, `convex-quickstart`, `customize-opencode`, `high-end-visual-design`, `frontend-design`, `shadcn` tidak relevan untuk work-stream ini.
 
@@ -82,6 +82,7 @@ Browser ──JWT──▶ Next.js (Proxy + Route Handler) ──▶ Supabase (A
 ## 6. File/Folder yang Akan Dibuat/Dimodifikasi
 
 ### Work-stream A (Supabase)
+
 ```
 supabase/
 ├── migrations/
@@ -91,9 +92,11 @@ supabase/
 ├── config.toml                         # hanya jika CLI init lokal diperlukan
 └── seed.sql (opsional, dev)
 ```
+
 Modifikasi: `.env.example`/`.env.local` (project URL/keys dari project nyata), `app/api/health/route.ts` (verifikasi nyata ke Supabase read-only), `lib/supabase/*` (sudah ada; hanya penyesuaian config), `app/api/health/cron` (opsional route untuk cron terautentikasi).
 
 ### Work-stream B (Blockchain)
+
 ```
 contracts/
 ├── foundry.toml
@@ -112,6 +115,7 @@ contracts/
 └── deployments/
     └── base-sepolia.json              # registry: address, block, ABI path, version
 ```
+
 Modifikasi: `lib/blockchain/chains.ts` (RPC adapter primary/fallback fungsional), `lib/blockchain/contracts.ts` (ABI + address loader dari registry), `.env.example` (TREASURY_ADDRESS misal).
 
 ## 7. Dependency Baru yang Diperlukan
@@ -119,23 +123,24 @@ Modifikasi: `lib/blockchain/chains.ts` (RPC adapter primary/fallback fungsional)
 **Runtime JS:** (belum ada kebutuhan baru untuk Supabase work-stream; untuk blockchain work-stream runtime: `viem` sudah ada; `ethers` tidak diperlukan — konsisten memakai viem).
 **Dev/JS:** `@supabase/supabase-js` (sudah ada); CLI global: `supabase` (npm `-g`/`npx supabase`) — perlu diinstall di mesin.
 **Solidity/Foundry:**
+
 - `forge-std` (Git submodule / `forge install foundry-rs/forge-std`)
 - `@openzeppelin/contracts` (npm atau `forge install OpenZeppelin/openzeppelin-contracts`)
 - Foundry toolchain (`foundryup`/`forge` binary) — perlu diinstall.
-**Ops:** Vercel Cron (Hobby) untuk keep-alive; akun Supabase free; faucet Base Sepolia untuk treasury.
+  **Ops:** Vercel Cron (Hobby) untuk keep-alive; akun Supabase free; faucet Base Sepolia untuk treasury.
 
 > Semua install menunggu review rencana ini. Toolchain Foundry + CLI Supabase tidak ada di mesin (hasil audit env 2026-08-14).
 
 ## 8. Risiko Implementasi
 
-1. **Akses dashboard Supabase & kredensial:** membuat project Free, konfigurasi JWKS, dan ambil anon/service key butuh akun dashboard Supabase (atau CLI login + access token). Jika tidak tersedia, work-stream A terblokir pada langkah "buat project nyata". *Mitigasi: sediakan panduan langkah dashboard; pekerjaan migration SQL + RLS + trigger dapat ditulis dan diuji lokal (supabase start / Postgres) meski eksekusi project nyata menunggu kredensial.*
-2. **Toolchain belum ada:** `supabase` CLI, Foundry (`forge`/`cast`/`anvil`), Docker tidak terinstall. *Mitigasi: install bertahap (npm global / foundryup); verifikasi `--version` sebelum dipakai. Docker tidak wajib bila memakai Supabase cloud.*
-3. **Faucet Base Sepolia:** funding treasury butuh faucet yang mungkin rate-limited/queue (mis. Alchemy/Coinbase faucet). Saldo minimum untuk deploy+proof. *Mitigasi: buat EOA, request faucet, verifikasi via RPC; dokumentasi prosedur funding.*
-4. **JWKS hanya di dashboard:** tidak bisa fully CLI. Risiko salah urutan (Privy butuh JWKS). *Mitigasi: lakukan sebelum integrasi Privy; dokumentasi langkah Dashboard.*
-5. **Kontrak v1 immutable:** kesalahan desain tidak bisa di-patch. *Mitigasi: Forge unit/fuzz test menyeluruh (signature, nonce, expiry, wrong chain/factory, duplicate proof, ownership) sebelum deploy; gunakan deployment di Base Sepolia testnet.*
-6. **Realtime salah scope:** mengaktifkan tabel berlebihan memboroskan resource free-tier. *Mitigasi: publication dibatasi daftar eksplisit.*
-7. **Expand–migrate–contract:** risiko jika migration pertama sudah mengandung breaking change. *Mitigasi: migration 0001 bersifat additive murni (buat tabel/RLS/policy), tidak ada rename/drop.*
-8. **Env/secret:** treasury private key dan service-role tidak boleh bocor. *Mitigasi: hanya di env server; `.env*` gitignore; CI secret scan sudah ada.*
+1. **Akses dashboard Supabase & kredensial:** membuat project Free, konfigurasi JWKS, dan ambil anon/service key butuh akun dashboard Supabase (atau CLI login + access token). Jika tidak tersedia, work-stream A terblokir pada langkah "buat project nyata". _Mitigasi: sediakan panduan langkah dashboard; pekerjaan migration SQL + RLS + trigger dapat ditulis dan diuji lokal (supabase start / Postgres) meski eksekusi project nyata menunggu kredensial._
+2. **Toolchain belum ada:** `supabase` CLI, Foundry (`forge`/`cast`/`anvil`), Docker tidak terinstall. _Mitigasi: install bertahap (npm global / foundryup); verifikasi `--version` sebelum dipakai. Docker tidak wajib bila memakai Supabase cloud._
+3. **Faucet Base Sepolia:** funding treasury butuh faucet yang mungkin rate-limited/queue (mis. Alchemy/Coinbase faucet). Saldo minimum untuk deploy+proof. _Mitigasi: buat EOA, request faucet, verifikasi via RPC; dokumentasi prosedur funding._
+4. **JWKS hanya di dashboard:** tidak bisa fully CLI. Risiko salah urutan (Privy butuh JWKS). _Mitigasi: lakukan sebelum integrasi Privy; dokumentasi langkah Dashboard._
+5. **Kontrak v1 immutable:** kesalahan desain tidak bisa di-patch. _Mitigasi: Forge unit/fuzz test menyeluruh (signature, nonce, expiry, wrong chain/factory, duplicate proof, ownership) sebelum deploy; gunakan deployment di Base Sepolia testnet._
+6. **Realtime salah scope:** mengaktifkan tabel berlebihan memboroskan resource free-tier. _Mitigasi: publication dibatasi daftar eksplisit._
+7. **Expand–migrate–contract:** risiko jika migration pertama sudah mengandung breaking change. _Mitigasi: migration 0001 bersifat additive murni (buat tabel/RLS/policy), tidak ada rename/drop._
+8. **Env/secret:** treasury private key dan service-role tidak boleh bocor. _Mitigasi: hanya di env server; `.env*` gitignore; CI secret scan sudah ada._
 
 ## 9. Security Concern (dari awal)
 
@@ -151,20 +156,24 @@ Modifikasi: `lib/blockchain/chains.ts` (RPC adapter primary/fallback fungsional)
 ## 10. Testing Strategy
 
 **Work-stream A (Supabase):**
+
 - Migration diuji lokal: `supabase db reset` + seed → verifikasi tabel, trigger bootstrap users (insert ke `auth.users` analog menghasilkan row `users`), RLS policy sebagai `anon`/`authenticated` (bukan service-role).
 - Uji RLS: akses langsung ditolak untuk tabel tanpa policy; UPDATE tanpa `WITH CHECK` ditolak; akses user lain tidak bocor.
 - Health check: jalankan server, panggil `/api/health` → JSON status + dependencies; cron dry-run manual.
 - Integration test (Vitest + Supabase client) untuk profile bootstrap & membership helper bila relevan.
 
 **Work-stream B (Blockchain):**
+
 - Forge unit/fuzz: EIP-712 signature valid/expired/wrong chain/wrong factory, `deploymentNonce` increment, one-active-warehouse enforcement, duplicate `proofId` ditolak, ownership/Proof Recorder access control, reentrancy.
 - Smoke test Base Sepolia setelah deploy: deploy factory, create warehouse (relay via script), verify owner + recorder, catat address/block/ABI ke registry.
 - Verifikasi registry: address terverifikasi di explorer (jika explorer API tersedia); ABI & version sesuai `deployments/base-sepolia.json`.
 
 **CI (sudah ada `.github/workflows/ci.yml`):**
+
 - Ditambah job contract test (`forge test`) bila toolchain tersedia di CI runner; maintain lint/typecheck/test/build.
 
 **Definition of Done (WORKFLOW §10):**
+
 - Migration + RLS lulus uji, service-role tidak dipakai user flow.
 - Treasury funding tervalidasi saldo sebelum deploy kontrak.
 - Forge tests hijau; kontrak terdeploy & terverifikasi; registry terisi.

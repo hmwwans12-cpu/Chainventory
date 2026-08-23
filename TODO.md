@@ -159,7 +159,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 - [x] Implement warehouse suspension dan ownership transfer UI.
 - [x] Implement Realtime subscription per warehouse dengan cleanup saat account/warehouse berubah. (✅ `use-warehouse-realtime.ts`; halaman movements punya channel tersendiri)
 - [x] Implement `Live`, `Reconnecting`, dan `Data may be outdated` states. (✅ pill global di header + mesin status murni `lib/realtime/status.ts`)
-- [ ] Implement loading, skeleton, empty, error, disabled, permission-denied, offline states. (sebagian besar ✅; offline state belum)
+- [x] Implement loading, skeleton, empty, error, disabled, permission-denied, offline states. (✅ offline ditambahkan 2026-08-24: `useOnline` + pill Offline di RealtimeIndicator)
 - [x] Implement in-app notifications.
 - [x] Implement responsive dan accessibility QA.
 - [x] Implement CSV export berdasarkan permission. (✅ `/api/warehouses/export` + tombol di Products/Movements)
@@ -202,7 +202,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 
 1. ~~Aktivasi Google provider di dashboard Supabase~~ ✅ (2026-08-24) — provider aktif & diverifikasi live (`/auth/v1/authorize?provider=google` → 302 ke accounts.google.com dengan client ID produksi). Catatan deploy: saat go-live Vercel, set `NEXT_PUBLIC_APP_URL` ke domain produksi dan tambahkan domain itu di Auth → URL Configuration.
 2. **JWT asymmetric/JWKS** — migrasi signing key Supabase belum dilakukan.
-3. **Offline state UI** — state offline eksplisit belum ada (Live/Reconnecting/Outdated ✅).
+3. ~~Offline state UI~~ ✅ (2026-08-24) — `hooks/use-online.ts` + status Offline eksplisit di indikator realtime.
 4. **Degraded QStash/RPC/Supabase tests** — fail-closed Redis faucet ✅; degraded pipeline lain belum.
 5. **Wallet migration/ownership transfer on-chain** untuk Owner.
 6. **E2E main-flow lokal penuh** — butuh keputusan tunnel cloudflared + pemakaian treasury production (suite sudah siap di `ci.yml`).

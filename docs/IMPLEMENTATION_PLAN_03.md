@@ -57,11 +57,11 @@ Tidak ada konflik baru. Penyelarasan/keputusan:
 
 ## 4. Skill yang Dipakai dan Alasannya
 
-| Skill | Alasan |
-|---|---|
-| `supabase` | Seluruh work-stream Supabase: migration framework, RLS, JWT/JWKS, Realtime, GRANT Data API, keamanan auth. |
-| `supabase-postgres-best-practices` | Migration `users` + RLS + trigger bootstrap + index yang benar sejak awal. |
-| `brainstorming` | Kepatuhan alur kerja: rencana disepakati sebelum implementasi. |
+| Skill                              | Alasan                                                                                                     |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `supabase`                         | Seluruh work-stream Supabase: migration framework, RLS, JWT/JWKS, Realtime, GRANT Data API, keamanan auth. |
+| `supabase-postgres-best-practices` | Migration `users` + RLS + trigger bootstrap + index yang benar sejak awal.                                 |
+| `brainstorming`                    | Kepatuhan alur kerja: rencana disepakati sebelum implementasi.                                             |
 
 Lainnya (`caveman`, `design-*`, `ui-ux-*`, `shadcn`, `web-design-guidelines`, `grill-me`, `improve-codebase-architecture`, `convex-quickstart`, `customize-opencode`, `find-skills`, `frontend-design`, `high-end-visual-design`) tidak relevan untuk work-stream ini.
 
@@ -102,6 +102,7 @@ Browser ──JWT──▶ Next.js (Proxy + Route Handler) ──▶ Supabase (A
 ## 6. File/Folder yang Akan Dibuat/Dimodifikasi
 
 ### Work-stream A (Supabase)
+
 ```
 supabase/
 ├── migrations/
@@ -110,9 +111,11 @@ supabase/
 │   └── README.md                       # aturan expand–migrate–contract
 └── seed.sql (opsional, dev)
 ```
+
 Modifikasi: `.env.example`/`.env.local` (project URL/keys), `app/api/health/route.ts` (verifikasi nyata read-only ke Supabase — tetap public), `lib/supabase/*` (penyesuaian config bila perlu).
 
 ### Work-stream B (Blockchain)
+
 ```
 contracts/
 ├── foundry.toml
@@ -131,6 +134,7 @@ contracts/
 └── deployments/
     └── base-sepolia.json              # registry: address, block, ABI path, version
 ```
+
 Modifikasi: `lib/blockchain/chains.ts` (retry/failover), `lib/blockchain/contracts.ts` (ABI + address loader dari registry), `.env.example` (TREASURY_ADDRESS dll).
 
 ## 7. Dependency Baru yang Diperlukan
@@ -168,12 +172,14 @@ Modifikasi: `lib/blockchain/chains.ts` (retry/failover), `lib/blockchain/contrac
 ## 10. Testing Strategy
 
 **Work-stream A (Supabase):**
+
 - Migration diuji lokal (`supabase db reset` + seed): tabel users, trigger bootstrap, RLS policy sebagai `anon`/`authenticated` (bukan service-role).
 - Uji RLS: akses langsung ditolak untuk tabel tanpa policy; UPDATE tanpa `WITH CHECK` ditolak; data antar user tidak bocor.
 - Health check: jalankan server, panggil `/api/health` → JSON status + dependencies; cron dry-run manual.
 - Integration test (Vitest + Supabase client) untuk profile bootstrap & membership helper bila relevan.
 
 **Work-stream B (Blockchain):**
+
 - Forge unit/fuzz: EIP-712 signature valid/expired/wrong chain/wrong factory, `deploymentNonce` increment, one-active-warehouse enforcement, duplicate `proofId` ditolak, ownership/Proof Recorder access control, reentrancy.
 - Smoke test Base Sepolia setelah deploy: deploy factory, create warehouse (relay via script), verify owner + recorder, catat address/block/ABI ke registry.
 - Verifikasi registry: address terverifikasi di explorer (bila tersedia); ABI & version sesuai `deployments/base-sepolia.json`.
@@ -181,6 +187,7 @@ Modifikasi: `lib/blockchain/chains.ts` (retry/failover), `lib/blockchain/contrac
 **CI (sudah ada):** tambah job contract test (`forge test`) bila toolchain tersedia di CI runner; maintain lint/typecheck/test/build.
 
 **Definition of Done (WORKFLOW §10):**
+
 - Migration + RLS lulus uji; service-role tidak dipakai user flow.
 - Treasury funding tervalidasi saldo sebelum deploy kontrak.
 - Forge tests hijau; kontrak terdeploy & terverifikasi; registry terisi.
@@ -201,12 +208,14 @@ Modifikasi: `lib/blockchain/chains.ts` (retry/failover), `lib/blockchain/contrac
 ## Hasil Eksekusi (Execution 02, Selesai — 2026-08-14)
 
 ### P0 Supabase Foundation — SELESAI
+
 - **Project nyata:** `yxsieqqiksqckfrqozlb` ("ChaInventory", ap-southeast-1, Postgres 17.6, JWKS ES256 asymmetric aktif). Kredensial: publishable + secret key (model key 2026) dipakai; `anon`/`service_role` legacy JWT dicadangkan sebagai fallback.
 - **Migration terpasang** (via Management API, karena CLI butuh DB password): `0001_users_and_rls.sql` (tabel `users` 1:1 auth.users + trigger bootstrap + RLS + `keepalive_ping` security-definer) dan `0002_realtime_publication.sql` (Realtime publication). Diverifikasi: kolom, `relrowsecurity=true`, trigger, policy `users_select_own`/`users_update_own`, fungsi `handle_new_user`/`set_updated_at`/`keepalive_ping`, `keepalive_ping()` → `true`.
 - **Uji RLS antar user (pass):** 2 user dibuat via Admin API; Alice bisa SELECT/UPDATE baris sendiri, SELECT baris Bob kosong, UPDATE baris Bob berdampak 0 baris (RLS mencegah modifikasi). User test dibersihkan.
 - **Health + keep-alive terverifikasi:** `/api/health` → 200 `supabase:true`; `/api/internal/keep-alive` → 401 tanpa secret / secret salah, 200 `database:true` dengan `CRON_SECRET` benar.
 
 ### P0 Blockchain Foundation — SELESAI
+
 - **Toolchain:** Foundry + OZ 5.7 (`evm_version=cancun` karena `mcopy`), Base Sepolia (chain 84532).
 - **RPC:** Infura `bd704d…` primer, drpc.org fallback (sempat 500).
 - **Treasury:** `0x463841123df8f45F2d58bBFCD276493750Bbf004` = Proof Recorder. Danaan 0.1 ETH; sisa `0.099987339664320199 ETH`.
@@ -217,6 +226,7 @@ Modifikasi: `lib/blockchain/chains.ts` (retry/failover), `lib/blockchain/contrac
 - **Validasi:** typecheck 0, lint 0, test 11/11 (Vitest) + 26/26 (Forge), build 25 routes — semua hijau.
 
 ### Isu / Lanjutan
+
 - **BASE_SCAN_API_KEY sudah tersedia** → source contract terverifikasi di BaseScan: Factory `0x5e44…e10` (https://sepolia.basescan.org/address/0x5e44f80585Ec50CBB64a76b3ffD099A156502e10#code) dan Warehouse smoke test `0xdF9cA7…` (https://sepolia.basescan.org/address/0xdF9cA75707f6109d447dA0eE943Ef09733da2926#code), keduanya status "already verified" via BaseScan API (compiler v0.8.29, EVM cancun, optimizer 200). `BASESCAN_API_KEY` ditambahkan ke `.env.example` (server-only) dan `.env.local` (gitignored). DESIGN.md §39 "View on BaseScan" kini menunjuk ke source terverifikasi.
 - Eksposur secret (treasury key + Supabase) di chat sesuai keputusan user "pakai apa adanya"; rotasi tetap disarankan sebelum produksi.
 - **P0 selesai 100%** (termasuk source verification). **P1 dieksekusi via `docs/IMPLEMENTATION_PLAN_04.md` (v04)** — Step 1–4 selesai, Step 5 (Proof Pipeline) tersisa.

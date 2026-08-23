@@ -1,5 +1,5 @@
 allowBuilds:
-  '@reown/appkit': true
+  "@reown/appkit": true
   bufferutil: true
   esbuild: true
   keccak: true

@@ -5,8 +5,9 @@ Mandat sumber: DESIGN §25/§28 (Google), §36 (Bulk CSV), §63 (Realtime states
 P2 API Security (fail-open/closed), TODO.md "Sisa Pekerjaan Terbuka".
 
 ## A. Google OAuth (kecil)
+
 - `signInWithGoogleAction` di app/actions/auth.ts → `signInWithOAuth({provider:"google",
-  options:{redirectTo:<origin>/auth/callback}})`; origin dari `headers()`.
+options:{redirectTo:<origin>/auth/callback}})`; origin dari `headers()`.
 - Route `app/auth/callback/route.ts`: `exchangeCodeForSession` → redirect `/dashboard`;
   gagal → `/login?error=oauth`. Login page membaca searchParams → banner error via prop
   `initialError` pada LoginForm.
@@ -15,8 +16,9 @@ P2 API Security (fail-open/closed), TODO.md "Sisa Pekerjaan Terbuka".
 - Langkah manual user: aktifkan provider Google di Supabase Auth.
 
 ## B. Realtime + status Live/Reconnecting/Outdated (sedang)
+
 - `lib/realtime/status.ts`: mesin status murni (`live | reconnecting | outdated`)
-  + transisi (subscribed / lost / refresh-ok / elapsed>15s saat reconnecting).
+  - transisi (subscribed / lost / refresh-ok / elapsed>15s saat reconnecting).
 - `components/realtime/use-warehouse-realtime.ts` (client hook):
   - Channel `wh:{warehouseId}` postgres_changes untuk `products`, `stock_movements`,
     `inventory_balances`, `join_requests` (filter warehouse_id) + `notifications`
@@ -31,6 +33,7 @@ P2 API Security (fail-open/closed), TODO.md "Sisa Pekerjaan Terbuka".
 - Unit test transisi status murni.
 
 ## C. CSV Export (kecil-sedang)
+
 - `GET /api/warehouses/export?type=products|movements&warehouseId=` dengan guard order
   standar (`requireUser` → `requirePermission(PRODUCT_EXPORT|MOVEMENT_READ)`).
 - Generator `toCsv()` murni di lib/inventory/csv.ts (escaping RFC: kutip ganda, CRLF).
@@ -39,6 +42,7 @@ P2 API Security (fail-open/closed), TODO.md "Sisa Pekerjaan Terbuka".
   `hasPermission(role, …)`.
 
 ## D. CSV Import (terbesar)
+
 - Parser murni `parseProductsCsv(text)`: BOM, quoted field, validasi header
   `sku,name,category,unit,description,initial_qty`, batas **1000 baris / 1MB**.
 - Preview ala DESIGN §36: "Valid rows N / Invalid rows M" + daftar error per baris +
@@ -53,9 +57,11 @@ P2 API Security (fail-open/closed), TODO.md "Sisa Pekerjaan Terbuka".
 - Unit test parser (BOM, quoting, baris rusak, limit).
 
 ## E. Uji ketahanan (kecil)
+
 - Faucet rate limit: Redis tak terkonfigurasi / throw → **fail-closed** (denied).
 - Kontrak RLS bypass (live-env, auto-skip tanpa env): anon client insert `products`
   ditolak; baca lintas tenant kosong.
 
 ## Validasi tiap tahap
+
 prettier → tsc → eslint → vitest → build → contrast; update kotak TODO.md sesuai bukti.

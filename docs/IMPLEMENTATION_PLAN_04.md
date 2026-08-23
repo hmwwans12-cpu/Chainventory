@@ -73,8 +73,8 @@ Migration `supabase/migrations/0009_proof_pipeline.sql` (di-apply live, diverifi
 Architecture review (laporan `architecture-review-*.html`) menemukan 7 deepening opportunities. User menetapkan **dua blocker** yang wajib beres SEBELUM Step 5 dimulai, plus urutan kerja sisanya. Status per candidate:
 
 - ✅ **C1 — Route-handler seam collapse**: `lib/api-handler.ts` (parse→auth→role→permission→dispatch + error→HTTP terpusat: `rpcErrorStatus(error_code)` + satu regex fallback `fromPostgrestError`, bukan regex per-handler); refactor 4 handler (`wallets/sync`, `warehouses/membership`, `inventory/products`, `inventory/movements`) jadi tipis; `proofPending` frozen TIDAK lagi diekspos di response movements (parsial C4). Typecheck/lint/build hijau.
-- ✅ **C2 — Permission matrix TS vs SQL (BLOCKER, drift reject-join sudah ditemukan)**: SQL security-definer `private.can_assign_role` = satu-satunya sumber kebenaran. `reject_join` yang hardcode `private.has_role(... 'OWNER') OR has_role(... 'MANAGER')` diganti helper `private.can_manage_join_requests(...)` yang TURUN DARI `can_assign_role` (bukan list role hardcode) → konsisten dengan `JOIN_REQUEST_APPROVE` TS. RBAC **contract test** live (TS vs SQL 25 kombinasi + behavior, 29/29) + Vitest env-gated `lib/auth/rbac-contract.test.ts`. Detail akibat drift di §7.14. *(migration 0008)*
-- ✅ **C4 — Proof pipeline seam (BLOCKER)**: `proofPending` frozen `false` TIDAK lagi diekspos di response movements route. Modul `lib/proof/` dibangun: `jcs.ts` (RFC 8785, test vector RFC), `hash.ts` (Keccak-256, `hash_version=1`), `types.ts`/`pipeline.ts`/`mock.ts` (seam outbox→submit→confirm mockable). 17 unit test PASS. *(persiapan Step 5 — adaptor QStash/treasury nyata menyusul)*
+- ✅ **C2 — Permission matrix TS vs SQL (BLOCKER, drift reject-join sudah ditemukan)**: SQL security-definer `private.can_assign_role` = satu-satunya sumber kebenaran. `reject_join` yang hardcode `private.has_role(... 'OWNER') OR has_role(... 'MANAGER')` diganti helper `private.can_manage_join_requests(...)` yang TURUN DARI `can_assign_role` (bukan list role hardcode) → konsisten dengan `JOIN_REQUEST_APPROVE` TS. RBAC **contract test** live (TS vs SQL 25 kombinasi + behavior, 29/29) + Vitest env-gated `lib/auth/rbac-contract.test.ts`. Detail akibat drift di §7.14. _(migration 0008)_
+- ✅ **C4 — Proof pipeline seam (BLOCKER)**: `proofPending` frozen `false` TIDAK lagi diekspos di response movements route. Modul `lib/proof/` dibangun: `jcs.ts` (RFC 8785, test vector RFC), `hash.ts` (Keccak-256, `hash_version=1`), `types.ts`/`pipeline.ts`/`mock.ts` (seam outbox→submit→confirm mockable). 17 unit test PASS. _(persiapan Step 5 — adaptor QStash/treasury nyata menyusul)_
 - ✅ **C3 — Wallet sync pipeline**: `useWalletSync` hook (`lib/wallets/use-wallet-sync.ts`, "use client") benar-benar memanggil `/api/wallets/sync` saat wallet berubah (state syncing/synced/error, dedupe via ref); verifier Privy fail-closed (tanpa token → `PRIVY_VERIFICATION_FAILED`, bukan warning) dan dibuat injectable adapter (`PrivyVerifier` param di `syncWallet`). `lib/wallets/sync-client.ts` murni (`parseCaip2ChainId` CAIP-2→number, `walletToSyncBody` yang lowercase address, `syncWallets` dedupe `skip`). 16 unit test (sync 6 + sync-client 10). Konsekuensi: E2E lama tanpa token kini 401 (intended).
 - ✅ **C5 — Dead auth abstractions**: `lib/auth/session.ts` dihapus (`getCurrentUser`/`isAuthenticated` digantikan `requireUser` di api-handler); `isAtLeast`/`ROLE_RANK` mati dihapus dari permissions.ts; daftar protected route = satu sumber `lib/routes.ts` (dipakai middleware; matcher `proxy.ts` tetap literal karena Next static-parse `config`, dijaga sinkron oleh test `lib/routes.test.ts`).
 - ✅ **C6 — Wallet address validation**: `lib/validators/address.ts` = satu `addressSchema` bersama (`isAddress` + lowercase deterministik via `.transform`) dipakai wallet sync (`lib/validators/wallet.ts`) dan movement (`actorWallet` via `emptyToNullAddressSchema`, "" → null). Konsisten dengan RPC `register_wallet` (`lower(p_address)`) dan perbandingan on-chain. 8 unit test. Assert RPC `p_address` di `sync.test.ts` dikoreksi ke lowercase.
@@ -130,12 +130,12 @@ Architecture review (laporan `architecture-review-*.html`) menemukan 7 deepening
 
 ## 4. Skill yang Dipakai dan Alasannya
 
-| Skill | Alasan |
-|---|---|
-| `supabase` | Migration baru (wallets/warehouses/memberships/products/inventory/proof), RLS policies, RPC `apply_stock_movement`, Realtime, auth providers. |
-| `supabase-postgres-best-practices` | Trigger unit immutability, row lock + conditional update, NUMERIC(24,3), index, RPC function authoring yang benar. |
-| `brainstorming` | Kepatuhan alur kerja: rencana disepakati sebelum implementasi. |
-| `shadcn` | Form/komponen UI P1 (login/wallet/join/movement) sesuai design system yang ada. |
+| Skill                              | Alasan                                                                                                                                        |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase`                         | Migration baru (wallets/warehouses/memberships/products/inventory/proof), RLS policies, RPC `apply_stock_movement`, Realtime, auth providers. |
+| `supabase-postgres-best-practices` | Trigger unit immutability, row lock + conditional update, NUMERIC(24,3), index, RPC function authoring yang benar.                            |
+| `brainstorming`                    | Kepatuhan alur kerja: rencana disepakati sebelum implementasi.                                                                                |
+| `shadcn`                           | Form/komponen UI P1 (login/wallet/join/movement) sesuai design system yang ada.                                                               |
 
 ## 5. Architecture yang Akan Dipakai
 
@@ -172,56 +172,69 @@ Browser ──Supabase session──▶ Next.js (Proxy + Route Handler + Server 
 > Semua tabel P1 mengikuti aturan RLS defense-in-depth: RLS aktif, policy `TO authenticated` + predicate ownership, GRANT eksplisit. Numeric = `NUMERIC(24,3)`. Timestamp = `timestamptz`. ID = `uuid default gen_random_uuid()`.
 
 ### 7.1 `wallets`
+
 - `id uuid pk`, `user_id uuid not null references public.users(id) on delete cascade`, `address text not null`, `wallet_type text not null check ('embedded'|'external')`, `is_primary boolean not null default false`, `verification_state text not null default 'unverified'` (`'unverified'|'verified'`), `verified_at timestamptz`, `created_at`, `updated_at`.
 - Unique `(user_id, address)`; **satu primary per user** via partial unique index `unique (user_id) where is_primary`.
 - RLS: pemilik (`user_id = auth.uid()`) bisa SELECT; mutasi hanya lewat server flow (verify/transfer).
 
 ### 7.2 `warehouses`
+
 - `id uuid pk`, `warehouse_code text not null unique` (auto-generated, non-predictable, e.g. `CHV-XXXXXXXX`), `name text not null`, `company_name text`, `warehouse_type text`, `owner_user_id uuid not null references public.users(id)`, `on_chain_owner_wallet text not null` (address **wallet owner** yang tercatat di kontrak — bukan alamat kontrak), `contract_address text` (alamat kontrak warehouse), `status text not null default 'active' check ('active'|'suspended')`, `created_at`, `suspended_at`, `updated_at`.
 - Satu aktif per user (off-chain) via partial unique `unique (owner_user_id) where status = 'active'`; on-chain enforcement tetap via Factory.
 - RLS: member/pemilik bisa SELECT; mutasi via server.
 
 ### 7.3 `warehouse_deployments`
+
 - `id uuid pk`, `warehouse_id uuid references warehouses(id)`, `factory_address text not null`, `chain_id int not null`, `owner_address text not null`, `warehouse_code_hash bytea/hex text not null`, `deployment_nonce bigint not null`, `expiry bigint not null`, `signature bytes text not null`, `status text not null default 'pending'` (`'pending'|'submitting'|'submitted'|'confirmed'|'failed'`), `tx_hash text`, `error text`, `idempotency_key text unique not null`, `created_at`, `updated_at`.
 - Idempotency: `idempotency_key` unique + TTL 24 jam (di-purge job atau filter created_at).
 
 ### 7.4 `memberships`
+
 - `id uuid pk`, `warehouse_id uuid not null references warehouses(id) on delete cascade`, `user_id uuid not null references public.users(id) on delete cascade`, `role text not null` (OWNER/MANAGER/STAFF/AUDITOR/VIEWER), `status text not null default 'active'` (PENDING|ACTIVE|SUSPENDED — konsisten `MEMBERSHIP_STATUS`), `joined_at timestamptz`, `created_at`, `updated_at`.
 - Unique `(warehouse_id, user_id)`.
 
 ### 7.5 `join_requests`
+
 - `id uuid pk`, `warehouse_id uuid not null references warehouses(id) on delete cascade`, `user_id uuid not null references public.users(id) on delete cascade`, `status text not null default 'pending'` (`'pending'|'approved'|'rejected'|'cancelled'`), `role text` (NULL saat pending; diisi saat approve sesuai matrix), `decided_by uuid references public.users(id)`, `decided_at timestamptz`, `reason text`, `created_at`, `updated_at`.
 - Unique `(warehouse_id, user_id)` untuk menghindari join ganda.
 
 ### 7.6 `products`
+
 - `id uuid pk`, `warehouse_id uuid not null references warehouses(id) on delete cascade`, `sku text not null`, `name text not null`, `category text`, `unit text not null`, `low_stock_threshold numeric(24,3) not null default 0`, `status text not null default 'active'` (`'active'|'archived'`), `created_at`, `updated_at`.
 - **Unique (warehouse_id, sku)** — SKU unique per warehouse.
 - Trigger: unit immutable setelah movement pertama.
 
 ### 7.7 `inventory_balances`
+
 - `id uuid pk`, `warehouse_id uuid not null references warehouses(id) on delete cascade`, `product_id uuid not null references products(id) on delete cascade`, `quantity numeric(24,3) not null default 0`, `version bigint not null default 0`, `updated_at timestamptz`, `updated_by uuid references public.users(id)`.
 - Unique `(warehouse_id, product_id)`. Hanya diubah via RPC.
 
 ### 7.8 `stock_movements` (ledger append-only)
+
 - `id uuid pk`, `warehouse_id uuid not null`, `product_id uuid not null references products(id)`, `movement_type text not null check ('stock_in'|'stock_out'|'adjustment'|'reversal')`, `quantity numeric(24,3) not null`, `actor_user_id uuid references public.users(id)`, `actor_wallet text`, `role_at_time text`, `reason text`, `reference text`, `reversal_of uuid references stock_movements(id)`, `status text not null default 'committed'` (`'pending_approval'|'committed'|'rejected'`), `approved_by uuid references public.users(id)`, `approved_at timestamptz`, `expected_balance_version bigint`, `created_at`.
 - **Tidak ada UPDATE/DELETE dari UI**; koreksi = movement baru.
 
 ### 7.9 `proofs`
+
 - `id uuid pk`, `warehouse_id uuid not null`, `warehouse_address text not null`, `movement_id uuid references stock_movements(id)`, `payload jsonb not null` (immutable), `payload_version int not null default 1`, `payload_hash text not null` (0x-hex Keccak-256), `status text not null default 'pending'` (`'pending'|'submitted'|'confirming'|'confirmed'|'retrying'|'manual_review'|'failed'`), `tx_hash text`, `confirmation_count int not null default 0`, `attempt_count int not null default 0`, `error text`, `created_at`, `updated_at`.
 - `payload_hash` unique.
 
 ### 7.10 `proof_outbox`
+
 - `id uuid pk`, `proof_id uuid not null references proofs(id) on delete cascade`, `status text not null default 'pending'` (`'pending'|'leased'|'sent'|'failed'`), `lease_expires_at timestamptz`, `lease_token text`, `attempt_count int not null default 0`, `next_attempt_at timestamptz`, `created_at`, `updated_at`.
 
 ### 7.11 `audit_logs`
+
 - `id uuid pk`, `warehouse_id uuid references warehouses(id)`, `actor_user_id uuid references public.users(id)`, `action text not null`, `entity text not null`, `entity_id text`, `before_state jsonb`, `after_state jsonb`, `related_tx_hash text`, `status text`, `created_at timestamptz`.
 - Append-only dari normal UI (PRD §22). RLS: OWNER/MANAGER read; INSERT via trigger/RPC (bukan client).
 
 ### 7.12 RPC `apply_stock_movement`
+
 - Signature (usulan): `apply_stock_movement(p_warehouse_id uuid, p_product_id uuid, p_movement_type text, p_quantity numeric, p_expected_balance_version bigint, p_reason text, p_reference text, p_reversal_of uuid, p_idempotency_key text, p_actor_wallet text) returns table (movement_id uuid, balance_version bigint, proof_pending boolean, error_code text, message text)`.
 - Logika: validasi role (via `memberships` + `canAssignRole` matrix sisi DB) → `SELECT ... FOR UPDATE` produk+balance → cek version (STALE_STOCK) → cek stok cukup (INSUFFICIENT_STOCK) → tulis movement → update balance/version → audit log → buat proof + outbox (payload JCS+hash) → commit satu transaksi.
 
 ### 7.13 Schema Hardening (grill-me 2026-08-15 → migration 0007, SUDAH TERAPAN)
+
 Keputusan user atas temuan review skema (T1–T6). Semua terverifikasi live (verify-0007 7/7, harden-rpc E2E 18/18, regresi suite lama tetap lulus):
 
 - **T1 (approve_stock_adjustment race)**: `approve_stock_adjustment` kini `SELECT ... FOR UPDATE` pada movement SELALU, lalu conditional `UPDATE ... WHERE status='pending_approval' RETURNING`; `not found` → `raise 'movement already processed'`. Double-approve paralel → yang kedua ditolak.
@@ -231,6 +244,7 @@ Keputusan user atas temuan review skema (T1–T6). Semua terverifikasi live (ver
 - **T5 (warehouses identity)**: trigger `warehouses_identity_immutable` (BEFORE UPDATE) tolak perubahan `warehouse_code`/`owner_user_id`/`on_chain_owner_wallet`/`contract_address` oleh role `authenticated`; `name`/`company_name`/`warehouse_type`/`status` tetap editable owner. Kolom identitas hanya lewat fungsi security-definer (server flow / ownership transfer async).
 
 ### 7.14 RBAC drift reject-join (v05, migration 0008) — akibat konkret
+
 Temuan: `reject_join` SQL memakai `private.has_role(... 'OWNER') OR has_role(... 'MANAGER')` (0005:252-253), sementara konsep TS-nya `JOIN_REQUEST_APPROVE` (permissions.ts) — dua mekanisme untuk satu pertanyaan "siapa boleh menolak join".
 
 - **Akibat saat ini: TIDAK ada window escalation.** `JOIN_REQUEST_APPROVE` TS hanya dimiliki OWNER/MANAGER (MANAGER_PERMS + OWNER_PERMS), dan SQL juga hanya membolehkan OWNER/MANAGER. Setiap kombinasi role menghasilkan keputusan yang sama → tidak ada role yang bisa reject padahal seharusnya tidak. Verifikasi via RBAC contract test.
@@ -240,15 +254,15 @@ Temuan: `reject_join` SQL memakai `private.has_role(... 'OWNER') OR has_role(...
 
 ## 8. Dependency Baru yang Diperlukan
 
-| Paket | Alasan | Kategori |
-|---|---|---|
-| `@privy-io/react-auth` | PrivyProvider client + embedded/external wallet UI | runtime |
-| `@privy-io/server-auth` | verifikasi custom-auth token server-side | runtime |
-| `@upstash/redis` | rate limiting fail-closed, job lease | runtime |
-| `@upstash/qstash` | async proof job delivery signed | runtime |
-| `jcs` (RFC 8785) atau implementasi kecil sendiri | JSON canonicalization untuk payload proof | runtime (keputusan: pakai `jcs` yang teruji; fallback implementasi manual jika size constraint) |
-| `viem` (sudah ada) | treasury signer submit proof, baca nonce on-chain | existing |
-| CLI `supabase` (sudah ada) | migration local/CI | dev |
+| Paket                                            | Alasan                                             | Kategori                                                                                        |
+| ------------------------------------------------ | -------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `@privy-io/react-auth`                           | PrivyProvider client + embedded/external wallet UI | runtime                                                                                         |
+| `@privy-io/server-auth`                          | verifikasi custom-auth token server-side           | runtime                                                                                         |
+| `@upstash/redis`                                 | rate limiting fail-closed, job lease               | runtime                                                                                         |
+| `@upstash/qstash`                                | async proof job delivery signed                    | runtime                                                                                         |
+| `jcs` (RFC 8785) atau implementasi kecil sendiri | JSON canonicalization untuk payload proof          | runtime (keputusan: pakai `jcs` yang teruji; fallback implementasi manual jika size constraint) |
+| `viem` (sudah ada)                               | treasury signer submit proof, baca nonce on-chain  | existing                                                                                        |
+| CLI `supabase` (sudah ada)                       | migration local/CI                                 | dev                                                                                             |
 
 > Kredensial yang butuh user (Free tier): **Privy app** (`NEXT_PUBLIC_PRIVY_APP_ID` + `PRIVY_APP_SECRET`), **Upstash** (`UPSTASH_REDIS_REST_URL` + token, `QSTASH_TOKEN` + signing keys), dan **Google OAuth** di Supabase dashboard. Env baru ditambahkan ke `.env.example` (server-only) + `lib/env.ts`.
 
@@ -278,6 +292,7 @@ Temuan: `reject_join` SQL memakai `private.has_role(... 'OWNER') OR has_role(...
 ## 11. Testing Strategy
 
 **Supabase (migration + RLS + RPC):**
+
 - Migration baru terpasang ke project nyata (Management API) + diverifikasi kolom/policy/trigger/index.
 - Uji RLS antar-role (OWNER/MANAGER/STAFF/VIEWER vs tabel memberships/join_requests/products/movements/proofs).
 - Uji `apply_stock_movement`: stock in/out, INSUFFICIENT_STOCK, STALE_STOCK (wrong version), negative stock, reversal, adjustment pending_approval→committed.
@@ -285,6 +300,7 @@ Temuan: `reject_join` SQL memakai `private.has_role(... 'OWNER') OR has_role(...
 - Integration test Vitest untuk membership helper & escalation ban (lanjut dari permissions.test.ts).
 
 **Blockchain/P1 (tanpa deploy baru):**
+
 - Wallet flow test manual di dev server (embedded wallet muncul, network guard).
 - Create warehouse: relay smoke test ke Factory nyata dengan user EOA baru (jika gas cukup) atau local fork.
 - Proof: unit test JCS+hash vector (RFC 8785 test cases), submit via treasury signer ke Warehouse nyata (recordProof) bila memungkinkan.

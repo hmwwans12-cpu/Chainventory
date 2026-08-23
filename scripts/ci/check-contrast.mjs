@@ -35,7 +35,8 @@ const RULES = [
   },
   {
     pattern: /\btext-muted-foreground\/[1-7]0\b/g,
-    label: "text-muted-foreground with reduced opacity (use text-muted-foreground)",
+    label:
+      "text-muted-foreground with reduced opacity (use text-muted-foreground)",
     allowHoverOnly: true,
   },
   {

@@ -55,11 +55,11 @@ isikan langsung ke `.env.local` (sudah di-`.gitignore`).
 
 Dari **Settings → API Keys** (atau dialog **Connect** di dashboard):
 
-| Variabel (nama di project kita) | Nilai yang diambil | Dari mana |
-|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Project URL `https://<ref>.supabase.co` | Halaman project / Connect |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` | API Keys → Publishable and secret tab |
-| `SUPABASE_SECRET_KEY` | `sb_secret_...` (server-only) | API Keys → Publishable and secret tab |
+| Variabel (nama di project kita)        | Nilai yang diambil                      | Dari mana                             |
+| -------------------------------------- | --------------------------------------- | ------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Project URL `https://<ref>.supabase.co` | Halaman project / Connect             |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...`                    | API Keys → Publishable and secret tab |
+| `SUPABASE_SECRET_KEY`                  | `sb_secret_...` (server-only)           | API Keys → Publishable and secret tab |
 
 > Jika karena suatu alasan hanya tersedia kunci legacy, ambil `anon` (untuk client) dan `service_role` (untuk server) dari tab **Legacy API Keys**. Project ini tetap mendukung keduanya, tetapi kunci baru adalah jalur yang disarankan.
 
@@ -69,7 +69,7 @@ JWT signing key **asymmetric/JWKS** harus aktif **sebelum** Privy custom-auth di
 
 1. Di project kamu, buka menu **Authentication** (sidebar kiri).
 2. Klik **JWT** (submenu Authentication → JWT Keys).
-   - *(Di dashboard terbaru menu ini ada di Authentication → JWT; kalau tidak ada, coba Settings → JWT Signing Keys — dashboard lama mengarahkan ke menu baru.)*
+   - _(Di dashboard terbaru menu ini ada di Authentication → JWT; kalau tidak ada, coba Settings → JWT Signing Keys — dashboard lama mengarahkan ke menu baru.)_
 3. Lihat bagian **Signing keys**:
    - **Project baru:** harus sudah tampil asymmetric key (algoritma **RSA** atau **Elliptic Curves/ECDSA**) dengan status aktif/standby. → Jika sudah asymmetric, **JWKS sudah aktif, lanjut ke Langkah 5.**
    - **Project lama (symmetric HS256):** klik **Migrate JWT secret**, tunggu dibuatkannya standby key asymmetric, lalu klik **Rotate keys**, dan (setelah app terverifikasi) **Revoke** legacy secret.
@@ -82,7 +82,7 @@ JWT signing key **asymmetric/JWKS** harus aktif **sebelum** Privy custom-auth di
 
 1. Buka **Authentication → Providers** (atau **Sign In / Providers**).
 2. **Email:** aktifkan **Email** provider. Matikan opsi "Confirm email" bila ingin demo tanpa konfirmasi (opsional untuk dev; nyalakan kembali sebelum produksi).
-3. **Google:** aktifkan **Google**, isi **Client ID** + **Client Secret** dari Google Cloud Console (proyek OAuth dengan redirect URI Supabase). *Opsional untuk fase ini; bisa menyusul.*
+3. **Google:** aktifkan **Google**, isi **Client ID** + **Client Secret** dari Google Cloud Console (proyek OAuth dengan redirect URI Supabase). _Opsional untuk fase ini; bisa menyusul._
 
 ### Langkah 6 — Buat `.env.local` (JANGAN di-commit)
 
@@ -102,6 +102,7 @@ CRON_SECRET=<string acak >= 16 karakter, server-only>
 ### Langkah 7 — Konfirmasi ke saya
 
 Setelah selesai, kabari bahwa project sudah dibuat + JWKS sudah asymmetric + `.env.local` terisi. Saya akan:
+
 1. Menjalankan migration SQL (`users` + RLS) via Supabase CLI/panel SQL.
 2. Menjalankan health check + keep-alive dengan kredensial nyata.
 3. Melanjutkan verifikasi End-to-End Supabase.

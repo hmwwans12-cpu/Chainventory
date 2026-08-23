@@ -1,0 +1,6 @@
+# Submodule vendor (forge-std, openzeppelin-contracts) — bukan kode kita
+contracts/lib/
+
+# Lockfile & artefak tooling
+pnpm-lock.yaml
+supabase/.temp/

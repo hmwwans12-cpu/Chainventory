@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    # Audit dependency mingguan (Senin 03:00 UTC) — saran #13.
+    - cron: "0 3 * * 1"
 
 jobs:
   quality:
@@ -28,6 +31,9 @@ jobs:
 
       - name: Lint
         run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
 
       - name: Test
         run: pnpm test
@@ -107,3 +113,25 @@ jobs:
           CLOUDFLARED_PATH: ${{ runner.temp }}/opencode/cloudflared
         timeout-minutes: 20
         shell: bash
+
+  # Dependency audit (TECHSTACK �7 / TODO "dependency audit belum").
+  # Gagal bila ada vuln HIGH/critical di dependencies produksi.
+  deps-audit:
+    runs-on: ubuntu-latest
+    # NON-BLOCKING sementara: 2 high saat ini transitive (Privy -> wagmi ->
+    # coinbase cdp-sdk -> axios); butuh keputusan override dependency.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high

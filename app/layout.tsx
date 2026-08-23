@@ -45,6 +45,12 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "Chainventory",
   },
+  twitter: {
+    card: "summary",
+    title: "Chainventory — Inventory Management with Blockchain Verification",
+    description:
+      "Real-time inventory, role-based access, and verifiable blockchain proof for every stock movement.",
+  },
   robots: {
     index: true,
     follow: true,

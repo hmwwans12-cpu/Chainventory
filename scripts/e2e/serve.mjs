@@ -70,13 +70,13 @@ if (!env.WAREHOUSE_FACTORY_ADDRESS) {
     const reg = JSON.parse(
       readFileSync(
         resolve(root, "contracts/deployments/base-sepolia-test.json"),
-        "utf8",
-      ),
+        "utf8"
+      )
     );
     env.WAREHOUSE_FACTORY_ADDRESS = reg.contracts.WarehouseFactory.address;
   } catch {
     throw new Error(
-      "base-sepolia-test.json missing — deploy test factory first.",
+      "base-sepolia-test.json missing — deploy test factory first."
     );
   }
 }
@@ -85,7 +85,7 @@ function run(cmd, args, opts = {}) {
   return new Promise((res, rej) => {
     const child = spawn(cmd, args, { stdio: "inherit", ...opts });
     child.on("exit", (code) =>
-      code === 0 ? res() : rej(new Error(`${cmd} exited ${code}`)),
+      code === 0 ? res() : rej(new Error(`${cmd} exited ${code}`))
     );
     child.on("error", rej);
   });
@@ -113,7 +113,7 @@ async function startTunnel() {
     ["tunnel", "--url", `http://localhost:${port}`, "--no-autoupdate"],
     // cloudflared menulis banner tunnel ke STDERR — pipe keduanya untuk
     // menemukan URL trycloudflare (stdout cloudflared sering diam).
-    { stdio: ["ignore", "pipe", "pipe"] },
+    { stdio: ["ignore", "pipe", "pipe"] }
   );
   let buf = "";
   const timer = setTimeout(() => child.kill(), 30_000);
@@ -128,7 +128,7 @@ async function startTunnel() {
       child.stderr.on("data", onData);
       child.on("error", reject);
       child.on("exit", (code) =>
-        reject(new Error(`cloudflared exited ${code} before URL ready`)),
+        reject(new Error(`cloudflared exited ${code} before URL ready`))
       );
     });
   } finally {
@@ -154,7 +154,7 @@ async function main() {
     await run(process.execPath, [nextBin, "build"], { env });
   }
   console.log(
-    `[e2e] serving on :${port} with test factory ${env.WAREHOUSE_FACTORY_ADDRESS}`,
+    `[e2e] serving on :${port} with test factory ${env.WAREHOUSE_FACTORY_ADDRESS}`
   );
   await run(process.execPath, [nextBin, "start", "-p", String(port)], { env });
 }

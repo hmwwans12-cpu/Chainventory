@@ -57,12 +57,12 @@ Gunakan kalau butuh drip kecil-kecilan, atau faucet lain rate-limited.
 
 ## Troubleshooting
 
-| Masalah | Solusi |
-|---------|--------|
-| Semua faucet rate-limited | Tunggu 24h, atau pakai CDP faucet (1000 claims/hari) |
-| Transaksi pending lama | Base Sepolia biasanya ~2s. Kalau > 5 menit, cek di BaseScan |
-| Balance 0, sisa klaim 0 | Prioritas tinggi — demo bisa gagal. Pakai Option A atau B |
-| RPC error di console | Cek health endpoint `/api/health` — mungkin RPC down |
+| Masalah                   | Solusi                                                      |
+| ------------------------- | ----------------------------------------------------------- |
+| Semua faucet rate-limited | Tunggu 24h, atau pakai CDP faucet (1000 claims/hari)        |
+| Transaksi pending lama    | Base Sepolia biasanya ~2s. Kalau > 5 menit, cek di BaseScan |
+| Balance 0, sisa klaim 0   | Prioritas tinggi — demo bisa gagal. Pakai Option A atau B   |
+| RPC error di console      | Cek health endpoint `/api/health` — mungkin RPC down        |
 
 ---
 

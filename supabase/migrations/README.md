@@ -37,10 +37,10 @@ supabase db push             # terapkan ke project cloud
 
 ## Daftar migration
 
-| File | Isi |
-|---|---|
-| `0001_users_and_rls.sql` | Tabel `users` (1:1 `auth.users`), trigger bootstrap, RLS, GRANT, helper health. |
-| `0002_realtime_publication.sql` | Whitelist Realtime (awal: `users`). |
+| File                            | Isi                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------- |
+| `0001_users_and_rls.sql`        | Tabel `users` (1:1 `auth.users`), trigger bootstrap, RLS, GRANT, helper health. |
+| `0002_realtime_publication.sql` | Whitelist Realtime (awal: `users`).                                             |
 
 > Migration P1 menambahkan tabel warehouses/memberships/join_requests/products/
 > inventory_balances/stock_movements/proofs/proof_outbox/audit_logs/notifications

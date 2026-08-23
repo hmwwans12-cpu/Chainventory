@@ -61,3 +61,6 @@ contracts/broadcast/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# supabase CLI local state
+supabase/.temp/
