@@ -207,7 +207,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 5. **Wallet migration/ownership transfer on-chain** untuk Owner.
 6. **E2E main-flow lokal penuh** — butuh keputusan tunnel cloudflared + pemakaian treasury production (suite sudah siap di `ci.yml`).
 7. **Redeploy Factory ke solc 0.8.36** — pin sudah bersih & 26 test hijau; bytecode lama tak bisa dipatch (butuh alamat baru + gas).
-8. **Branch protection** GitHub — verifikasi manual di settings repo.
+8. ~~Branch protection GitHub~~ ✅ (2026-08-24) — rule `main` aktif via API: required check `quality` (strict), force-push & delete diblokir, linear history wajib, admin bypass disengaja utk solo dev.
 9. **SUPABASE_MANAGEMENT_TOKEN** kedaluwarsa (401) — segarkan di `.env.local` bila perlu eksekusi SQL live.
 10. **Verifikasi live RLS bypass test** — `rls-bypass.contract.test.ts` auto-skip tanpa env server; jalankan dengan env penuh untuk bukti live.
 11. **Apply migrasi 0025–0026 ke database live** — file siap (0025 race-safe idempotent insert `create_user_paid_stock_intent`; 0026 penggantian `auth.role()` deprecated dengan cek JWT claims eksplisit + hardening sesi anonim). Eksekusi butuh SQL live (segarkan `SUPABASE_MANAGEMENT_TOKEN`) atau `supabase db push`.
