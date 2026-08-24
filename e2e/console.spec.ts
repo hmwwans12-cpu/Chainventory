@@ -73,7 +73,9 @@ test.describe.serial("developer console", () => {
       page.getByRole("heading", { name: "Developer Console" })
     ).toBeVisible();
     await expect(page.getByText("Signed in as")).toBeVisible();
-    await expect(page.getByText(ALLOWED_EMAIL)).toBeVisible();
+    // Email tampil di header (user chip) DAN di konten console — ambil
+    // kemunculan pertama agar lolos strict mode Playwright.
+    await expect(page.getByText(ALLOWED_EMAIL).first()).toBeVisible();
     await page.close();
   });
 
