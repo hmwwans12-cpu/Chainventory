@@ -94,29 +94,29 @@ Proses blockchain (panah `Route Handler → Treasury → Base Sepolia`) **tidak 
 
 ### 4.1 Tabel Inti
 
-| Tabel                   | Peran                                                                                                                       |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `users`                 | Profil aplikasi, terikat ke `auth.users` Supabase dan Privy user ID.                                                        |
-| `wallets`               | Riwayat embedded/external wallet; tepat satu primary aktif per user.                                                        |
-| `warehouses`            | Warehouse code, `owner_user_id`, `on_chain_owner_wallet_id`/address, status active/suspended, alamat contract Base Sepolia. |
-| `warehouse_deployments` | Lifecycle EIP-712 deployment, `deploymentNonce`, signature metadata, tx hash, dan error.                                    |
-| `memberships`           | User–warehouse–role (OWNER, MANAGER, STAFF, AUDITOR, VIEWER).                                                               |
-| `join_requests`         | Request join berstatus pending/approved/rejected/cancelled.                                                                 |
-| `products`              | SKU unik per warehouse, unit immutable setelah movement, low-stock threshold, status active/archived.                       |
-| `inventory_balances`    | Saldo stok terkini per product; `quantity NUMERIC(24,3)` dan `version`. **Bukan ledger.**                                   |
-| `stock_movements`       | Ledger immutable Stock In/Out/Adjustment/Reversal; quantity canonical, actor, reason/reference, relasi reversal.            |
-| `proofs`                | Payload versi, hash Keccak-256, status proof, tx hash, confirmation count, retry/error state.                               |
-| `proof_outbox`          | Job durable untuk dispatch ke QStash, lease, attempt count, jadwal retry.                                                   |
-| `idempotency_records`   | Key UUID, fingerprint request, respons final, expired 24 jam.                                                               |
-| `audit_logs`            | Peristiwa keamanan dan perubahan penting yang append-only.                                                                  |
-| `faucet_claims`         | Klaim test ETH per wallet/user, status, tx hash, waktu eligible berikutnya.                                                 |
-| `notifications`         | In-app notification yang ditargetkan ke user.                                                                               |
+| Tabel                   | Peran                                                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `users`                 | Profil aplikasi, terikat ke `auth.users` Supabase dan Privy user ID.                                                                                          |
+| `wallets`               | Riwayat embedded/external wallet; tepat satu primary aktif per user.                                                                                          |
+| `warehouses`            | Warehouse code, `owner_user_id`, `on_chain_owner_wallet_id`/address, status active/suspended, alamat contract Base Sepolia.                                   |
+| `warehouse_deployments` | Lifecycle EIP-712 deployment, `deploymentNonce`, signature metadata, tx hash, dan error.                                                                      |
+| `memberships`           | User–warehouse–role (OWNER, MANAGER, STAFF, AUDITOR, VIEWER).                                                                                                 |
+| `join_requests`         | Request join berstatus pending/approved/rejected/cancelled.                                                                                                   |
+| `products`              | SKU unik per warehouse, unit immutable setelah movement, low-stock threshold, status active/archived.                                                         |
+| `inventory_balances`    | Saldo stok terkini per product; `quantity NUMERIC(24,3)` dan `version`. **Bukan ledger.**                                                                     |
+| `stock_movements`       | Ledger immutable Stock In/Out/Adjustment/Reversal; quantity canonical, actor, reason/reference, relasi reversal. `idempotency_key` scoped per `warehouse_id`. |
+| `proofs`                | Payload versi, hash Keccak-256, status proof, tx hash, confirmation count, retry/error state.                                                                 |
+| `proof_outbox`          | Job durable untuk dispatch ke QStash, lease, attempt count, jadwal retry.                                                                                     |
+| `stock_intents`         | User-paid intent v2: wallet member menandatangani proof on-chain (0024+). Status: pending/submitted/committed/failed.                                         |
+| `audit_logs`            | Peristiwa keamanan dan perubahan penting yang append-only.                                                                                                    |
+| `faucet_claims`         | Klaim test ETH per wallet/user, status, tx hash, waktu eligible berikutnya.                                                                                   |
+| `notifications`         | In-app notification yang ditargetkan ke user.                                                                                                                 |
 
 ### 4.2 Aturan Integritas
 
 - `inventory_balances` hanya berubah lewat PostgreSQL function atomik. Tidak ada update stok langsung dari browser atau Route Handler biasa.
 - Dalam transaksi database yang sama: buat `stock_movement` → ubah saldo kondisional → tambah audit log → buat `proof` + `proof_outbox`.
-- Stock In/Out langsung berstatus `committed`; Adjustment/Reversal diawali `pending_approval` dan baru menjadi `committed` setelah Owner/Manager menyetujui.
+- Stock In/Out langsung berstatus `committed`; Adjustment diawali `pending_approval` dan baru menjadi `committed` setelah Owner/Manager menyetujui. Reversal langsung `committed` (Manager/Owner saja).
 - `stock_movements`, `proofs`, dan `audit_logs` append-only. Koreksi tidak mengubah row lama.
 - Semua quantity disimpan `NUMERIC(24,3)`; payload proof menyimpannya sebagai string decimal kanonis (misal `"2.500"`).
 - Semua tabel tenant memiliki `warehouse_id` bila relevan, RLS aktif, foreign key, unique index sesuai scope warehouse, timestamp UTC.
@@ -269,3 +269,55 @@ Bila tetap pause atau cron gagal, Developer Console menampilkan status **degrade
 - Deployment preview dari Vercel dipakai untuk UI/API review; Base Sepolia smoke test dijalankan terpisah agar test ETH tidak habis karena setiap PR.
 - Setelah deploy production demo, jalankan smoke test manual: auth, wallet switch, warehouse deploy, one Stock In, one Stock Out, proof confirmation, dan Developer Console health.
 - Definition of done mewajibkan seluruh invariant PRD, test terkait, migration yang reversible, audit event, dan UI state error/loading selesai.
+
+---
+
+## 12. Security Model (2026-08-24)
+
+### 12.1 Mutation Path
+
+Semua mutation sensitif mengikuti pipeline:
+
+```text
+Browser
+  ?
+Next.js Middleware (auth guard)
+  ?
+Route Handler (BFF)
+  ? auth ? rate limit ? permission ? warehouse active ? validation
+SECURITY DEFINER RPC (PostgreSQL)
+  ? role check ? product/balance FOR UPDATE ? business rules
+PostgreSQL (RLS tenant boundary + triggers)
+```
+
+Direct table mutation dari authenticated **ditolak** (REVOKE INSERT/UPDATE/DELETE).
+
+### 12.2 RPC Inventory
+
+| RPC                             | Fungsi                                                    | Hardening                                                                                         |
+| ------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `apply_stock_movement`          | Atomic: lock product+balance, validate, insert, audit     | qty > 0, warehouse active, product active, FOR UPDATE lock, reversal direction + concurrency lock |
+| `archive_product`               | Atomic archive: lock product+balance, check qty=0, update | auth.uid() only (bukan parameter), MANAGER/OWNER, qty=0                                           |
+| `create_user_paid_stock_intent` | User-paid intent v2                                       | warehouse active, role check, wallet verified, product active, payload_hash conflict              |
+| `create_product_rpc`            | Create product                                            | warehouse active, role check                                                                      |
+| `update_product_rpc`            | Update product                                            | warehouse active, archived read-only, role check                                                  |
+
+### 12.3 Lock Ordering
+
+Konsisten di seluruh mutation:
+
+```text
+product FOR UPDATE
+  ?
+balance FOR UPDATE
+  ?
+reversal original FOR UPDATE (bila reversal)
+```
+
+### 12.4 Defense Layers
+
+1. **UI**: role-based button visibility + suspended banner
+2. **BFF**: requirePermission + requireRateLimit + requireActiveWarehouse
+3. **RPC**: SECURITY DEFINER dengan otorisasi internal
+4. **Trigger**: warehouse active � product status role � warehouse_id immutable � unit immutable
+5. **RLS**: tenant boundary (warehouse_id scoping) � SELECT only untuk authenticated
