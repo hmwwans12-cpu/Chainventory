@@ -73,8 +73,10 @@ export default async function DashboardLayout({
           />
         </Suspense>
         <main className="bg-muted/30 flex-1">
-          {/* Skeleton resmi dashboard-01: container query scope + ritme halaman */}
-          <div className="@container/main mx-auto w-full px-4 py-4 md:px-6 md:py-6">
+          {/* Skeleton resmi dashboard-01: container query scope + ritme halaman.
+              max-w 1600px: konten dashboard tidak meregang tak terbatas di
+              ultrawide (konsistensi visual, temuan audit UI #9). */}
+          <div className="@container/main mx-auto w-full max-w-[1600px] px-4 py-4 md:px-6 md:py-6">
             {children}
           </div>
         </main>

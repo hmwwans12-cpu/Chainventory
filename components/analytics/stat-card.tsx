@@ -112,7 +112,8 @@ export function StatCard({
     </>
   );
 
-  if (!href) return <Card className="@container/card">{body}</Card>;
+  if (!href)
+    return <Card className="@container/card min-h-[148px] gap-4">{body}</Card>;
 
   return (
     <Link
@@ -123,7 +124,7 @@ export function StatCard({
         "focus-visible:ring-2 focus-visible:outline-none"
       )}
     >
-      <Card className="@container/card">{body}</Card>
+      <Card className="@container/card min-h-[148px] gap-4">{body}</Card>
     </Link>
   );
 }

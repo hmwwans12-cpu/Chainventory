@@ -45,9 +45,9 @@ export function EmptyState({
   secondaryAction?: { label: string; href?: string; onClick?: () => void };
 }) {
   return (
-    <div className="border-border bg-card/50 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-16 text-center">
-      <span className="bg-primary/10 text-primary flex size-12 items-center justify-center rounded-full">
-        <Icon aria-hidden="true" className="size-6" />
+    <div className="border-border bg-card/50 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center">
+      <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
+        <Icon aria-hidden="true" className="size-5" />
       </span>
       <h3 className="font-display text-foreground mt-2 text-base font-semibold">
         {title}
