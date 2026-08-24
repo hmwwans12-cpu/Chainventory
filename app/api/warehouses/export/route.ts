@@ -5,7 +5,7 @@ import { toCsv } from "@/lib/inventory/csv";
 import { logger } from "@/lib/logger";
 
 /**
- * CSV Export berbasis permission (TODO P2; DESIGN §36 round-trip).
+ * CSV Export berbasis permission — SELESAI (DESIGN §36 round-trip + §84.5 encoding).
  * Read-only: guard order standar lalu streaming teks sederhana.
  * GET /api/warehouses/export?type=products|movements&warehouseId=<uuid>
  */

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Users, RefreshCcw } from "lucide-react";
+import { Users } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -7,9 +7,9 @@ import {
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
 import { embedOne } from "@/lib/inventory/types";
+import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Button } from "@/components/ui/button";
 import { MembersPage } from "@/components/members/members-page";
 import type { MemberListItem, PendingJoinRequest } from "@/lib/members/types";
 
@@ -71,23 +71,11 @@ export default async function MembersPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader title="Members" description={`${active.name} · team.`} />
-        <div className="border-border bg-card/50 flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-16 text-center">
-          <span className="bg-destructive/10 text-destructive flex size-12 items-center justify-center rounded-full">
-            <Users aria-hidden="true" className="size-6" />
-          </span>
-          <h3 className="font-display text-foreground mt-2 text-base font-semibold">
-            Unable to load members.
-          </h3>
-          <p className="text-muted-foreground max-w-sm text-sm">
-            Something went wrong while retrieving your team. Please try again.
-          </p>
-          <div className="mt-4">
-            <Button render={<a href={`/members`} />}>
-              <RefreshCcw aria-hidden="true" />
-              Retry
-            </Button>
-          </div>
-        </div>
+        <ErrorState
+          icon={Users}
+          title="Unable to load members."
+          description="Something went wrong while retrieving your team. Please try again."
+        />
       </div>
     );
   }

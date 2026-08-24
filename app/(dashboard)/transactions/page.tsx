@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
-import { ArrowLeftRight, RefreshCcw } from "lucide-react";
+import { ArrowLeftRight } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
+import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Button } from "@/components/ui/button";
 import { TransactionsPage } from "@/components/transactions/transactions-page";
 import type { MovementListItem, MovementStatus } from "@/lib/inventory/types";
 
@@ -123,23 +123,11 @@ export default async function TransactionsPageRoute({
           title="Transactions"
           description={`${active.name} · ledger.`}
         />
-        <div className="border-border bg-card/50 flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-16 text-center">
-          <span className="bg-destructive/10 text-destructive flex size-12 items-center justify-center rounded-full">
-            <ArrowLeftRight aria-hidden="true" className="size-6" />
-          </span>
-          <h3 className="font-display text-foreground mt-2 text-base font-semibold">
-            Unable to load transactions.
-          </h3>
-          <p className="text-muted-foreground max-w-sm text-sm">
-            Something went wrong while retrieving the ledger. Please try again.
-          </p>
-          <div className="mt-4">
-            <Button render={<a href={`/transactions`} />}>
-              <RefreshCcw aria-hidden="true" />
-              Retry
-            </Button>
-          </div>
-        </div>
+        <ErrorState
+          icon={ArrowLeftRight}
+          title="Unable to load transactions."
+          description="Something went wrong while retrieving the ledger. Please try again."
+        />
       </div>
     );
   }

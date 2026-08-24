@@ -17,7 +17,7 @@ const LABELS: Record<RealtimeStatus | "offline", string> = {
 /**
  * Indikator status koneksi realtime (DESIGN §63) di SiteHeader.
  * Sengaja kecil & tenang; hanya berubah saat koneksi bermasalah.
- * Browser offline → status eksplisit "Offline" (TODO P2), bukan menyaru
+ * Browser offline → status eksplisit "Offline" (SELESAI), bukan menyaru
  * "Reconnecting" padahal tidak ada jaringan sama sekali.
  */
 export function RealtimeIndicator({

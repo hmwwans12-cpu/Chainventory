@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
-import { ArrowDownToLine, RefreshCcw } from "lucide-react";
+import { ArrowDownToLine } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
+import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Button } from "@/components/ui/button";
 import { MovementsPage } from "@/components/inventory/movements-page";
 import {
   embedOne,
@@ -90,23 +90,11 @@ export default async function StockMovementsPageRoute({
           title="Stock Movement"
           description={`${active.name} · ledger.`}
         />
-        <div className="border-border bg-card/50 flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-16 text-center">
-          <span className="bg-destructive/10 text-destructive flex size-12 items-center justify-center rounded-full">
-            <ArrowDownToLine aria-hidden="true" className="size-6" />
-          </span>
-          <h3 className="font-display text-foreground mt-2 text-base font-semibold">
-            Unable to load movements.
-          </h3>
-          <p className="text-muted-foreground max-w-sm text-sm">
-            Something went wrong while retrieving the ledger. Please try again.
-          </p>
-          <div className="mt-4">
-            <Button render={<a href={`/inventory/movements`} />}>
-              <RefreshCcw aria-hidden="true" />
-              Retry
-            </Button>
-          </div>
-        </div>
+        <ErrorState
+          icon={ArrowDownToLine}
+          title="Unable to load movements."
+          description="Something went wrong while retrieving the ledger. Please try again."
+        />
       </div>
     );
   }

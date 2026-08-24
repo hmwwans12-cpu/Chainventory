@@ -1,7 +1,7 @@
 import type { BulkProductRow } from "@/lib/inventory/products-client";
 
 /**
- * CSV util untuk import/export produk (DESIGN §36 + TODO P2 CSV).
+ * CSV util untuk import/export produk (DESIGN §36 + §84.5)  final.
  *
  * Parser mengikuti RFC 4180: BOM, quoted field, koma/newline di dalam
  * kutip, CRLF/LF. Pemetaan kolom berbasis HEADER sehingga urutan kolom

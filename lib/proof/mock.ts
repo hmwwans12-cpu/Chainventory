@@ -1,11 +1,8 @@
 import type {
   ProofOutboxAdapter,
-  ProofPipeline,
-  ProofPipelineDeps,
   ProofRecord,
   ProofTreasuryAdapter,
 } from "@/lib/proof/types";
-import { createProofPipeline } from "@/lib/proof/pipeline";
 
 /**
  * Adaptor in-memory (candidate C4): memungkinkan alur proof diuji dan
@@ -69,17 +66,4 @@ export function createMockTreasury(behavior?: {
       },
     },
   };
-}
-
-export interface MockProofPipeline extends ProofPipeline {
-  outbox: ProofOutboxAdapter;
-  treasury: ProofTreasuryAdapter;
-}
-
-export function createMockProofPipeline(
-  deps?: Partial<ProofPipelineDeps>
-): MockProofPipeline {
-  const outbox = deps?.outbox ?? createMockOutbox().adapter;
-  const treasury = deps?.treasury ?? createMockTreasury().adapter;
-  return { ...createProofPipeline({ outbox, treasury }), outbox, treasury };
 }

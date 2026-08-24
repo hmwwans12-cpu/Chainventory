@@ -57,7 +57,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
           />
         </FormField>
 
-        <Button type="submit" className="mt-2" disabled={pending}>
+        <Button type="submit" className="mt-2 w-full" disabled={pending}>
           {pending ? "Signing in…" : "Continue"}
         </Button>
       </form>

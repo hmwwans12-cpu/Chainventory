@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
-import { Package, RefreshCcw } from "lucide-react";
+import { Package } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
+import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Button } from "@/components/ui/button";
 import { ProductsPage } from "@/components/inventory/products-page";
 import type { ProductRow } from "@/lib/inventory/types";
 
@@ -87,24 +87,11 @@ export default async function ProductsPageRoute({
           title="Products"
           description={`${active.name} · inventory.`}
         />
-        <div className="border-border bg-card/50 flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-16 text-center">
-          <span className="bg-destructive/10 text-destructive flex size-12 items-center justify-center rounded-full">
-            <Package aria-hidden="true" className="size-6" />
-          </span>
-          <h3 className="font-display text-foreground mt-2 text-base font-semibold">
-            Unable to load inventory.
-          </h3>
-          <p className="text-muted-foreground max-w-sm text-sm">
-            Something went wrong while retrieving your inventory. Please try
-            again.
-          </p>
-          <div className="mt-4">
-            <Button render={<a href={`/inventory/products`} />}>
-              <RefreshCcw aria-hidden="true" />
-              Retry
-            </Button>
-          </div>
-        </div>
+        <ErrorState
+          icon={Package}
+          title="Unable to load inventory."
+          description="Something went wrong while retrieving your inventory. Please try again."
+        />
       </div>
     );
   }

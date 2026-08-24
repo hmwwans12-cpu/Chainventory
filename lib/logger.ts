@@ -41,19 +41,3 @@ export const logger = pino({
       ? { target: "pino-pretty", options: { colorize: true } }
       : undefined,
 });
-
-/** Attach a request id + correlation context to a child logger. */
-export function createRequestLogger(req: {
-  url?: string;
-  method?: string;
-  headers?: Headers;
-}) {
-  const requestId = crypto.randomUUID();
-
-  return logger.child({
-    requestId,
-    method: req.method,
-    url: req.url,
-    ip: req.headers?.get("x-forwarded-for") ?? undefined,
-  });
-}

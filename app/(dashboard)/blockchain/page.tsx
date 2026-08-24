@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
-import { Link2, RefreshCcw } from "lucide-react";
+import { Link2 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
+import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Button } from "@/components/ui/button";
 import { BlockchainPage } from "@/components/blockchain/blockchain-page";
 import type { DeploymentSummary, ProofRow } from "@/lib/blockchain/types";
 
@@ -91,23 +91,11 @@ export default async function BlockchainPageRoute({
           title="Blockchain"
           description={`${active.name} · on-chain status.`}
         />
-        <div className="border-border bg-card/50 flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-16 text-center">
-          <span className="bg-destructive/10 text-destructive flex size-12 items-center justify-center rounded-full">
-            <Link2 aria-hidden="true" className="size-6" />
-          </span>
-          <h3 className="font-display text-foreground mt-2 text-base font-semibold">
-            Unable to load blockchain status.
-          </h3>
-          <p className="text-muted-foreground max-w-sm text-sm">
-            Something went wrong while retrieving proof data. Please try again.
-          </p>
-          <div className="mt-4">
-            <Button render={<a href={`/blockchain`} />}>
-              <RefreshCcw aria-hidden="true" />
-              Retry
-            </Button>
-          </div>
-        </div>
+        <ErrorState
+          icon={Link2}
+          title="Unable to load blockchain status."
+          description="Something went wrong while retrieving proof data. Please try again."
+        />
       </div>
     );
   }
