@@ -34,7 +34,7 @@ export function GET() {
       status,
       service: "chainventory",
       timestamp: new Date().toISOString(),
-      version: "0.1.0",
+      version: "0.1.5",
       dependencies,
       latencyMs,
     },
