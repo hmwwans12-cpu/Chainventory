@@ -55,7 +55,9 @@ export default async function DashboardLayout({
       >
         Skip to content
       </a>
-      <AppSidebar isDeveloper={isDeveloper} />
+      <Suspense fallback={null}>
+        <AppSidebar isDeveloper={isDeveloper} />
+      </Suspense>
       <SidebarInset id="main-content">
         <Suspense fallback={<div className="h-14 shrink-0 border-b" />}>
           <SiteHeader

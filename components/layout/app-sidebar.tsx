@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { SquareTerminal } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
@@ -31,6 +31,14 @@ import { NAV_ITEMS, FOOTER_NAV_ITEMS, type NavItem } from "@/lib/navigation";
  */
 export function AppSidebar({ isDeveloper = false }: { isDeveloper?: boolean }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Audit #2 (tactical): bawa konteks `?warehouse=` saat pindah menu agar
+  // user multi-warehouse tidak diam-diam fallback ke membership pertama.
+  // Struktural (switcher global + cookie) mengikuti rekomendasi berikutnya.
+  const warehouseParam = searchParams.get("warehouse");
+  const withWarehouse = (href: string) =>
+    warehouseParam ? `${href}?warehouse=${warehouseParam}` : href;
 
   const isActive = (item: NavItem) =>
     item.children
@@ -60,7 +68,7 @@ export function AppSidebar({ isDeveloper = false }: { isDeveloper?: boolean }) {
               {NAV_ITEMS.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
-                    render={<Link href={item.href} />}
+                    render={<Link href={withWarehouse(item.href)} />}
                     isActive={isActive(item)}
                     tooltip={item.title}
                   >
@@ -72,7 +80,7 @@ export function AppSidebar({ isDeveloper = false }: { isDeveloper?: boolean }) {
                       {item.children.map((child) => (
                         <SidebarMenuSubItem key={child.href}>
                           <SidebarMenuSubButton
-                            render={<Link href={child.href} />}
+                            render={<Link href={withWarehouse(child.href)} />}
                             isActive={pathname.startsWith(child.href)}
                           >
                             {child.title}
@@ -95,7 +103,7 @@ export function AppSidebar({ isDeveloper = false }: { isDeveloper?: boolean }) {
               {isDeveloper ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    render={<Link href={devItem.href} />}
+                    render={<Link href={withWarehouse(devItem.href)} />}
                     isActive={pathname.startsWith(devItem.href)}
                     tooltip={devItem.title}
                   >
@@ -107,7 +115,7 @@ export function AppSidebar({ isDeveloper = false }: { isDeveloper?: boolean }) {
               {FOOTER_NAV_ITEMS.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
-                    render={<Link href={item.href} />}
+                    render={<Link href={withWarehouse(item.href)} />}
                     isActive={pathname.startsWith(item.href)}
                     tooltip={item.title}
                   >
