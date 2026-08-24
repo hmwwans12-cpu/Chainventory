@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -71,6 +71,8 @@ import {
   PROOF_STATUS_META,
 } from "@/components/inventory/movement-detail-sheet";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
+import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
+import { debounce } from "@/lib/realtime/debounce";
 import { cn, formatDateTime } from "@/lib/utils";
 
 const PAGE_SIZE = 25;
@@ -129,6 +131,7 @@ export function MovementsPage({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [movements, setMovements] =
     React.useState<MovementListItem[]>(initialMovements);
@@ -164,12 +167,16 @@ export function MovementsPage({
   const [supabase] = React.useState(() => createSupabaseClient());
 
   // Realtime (DESIGN §41) — Live/Reconnecting indicator + auto refresh.
+  // P2-05: event beruntun di-debounce 400ms — N realtime event → 1 fetch.
   React.useEffect(() => {
-    const refreshFirst = async () => {
+    const refreshNow = async () => {
       const items = await fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1);
       setMovements(items);
       setHasMore(items.length === PAGE_SIZE);
     };
+    const refreshFirst = debounce(() => {
+      void refreshNow();
+    }, 400);
     const channel = supabase
       .channel(`movements-${warehouseId}`)
       .on(
@@ -196,6 +203,7 @@ export function MovementsPage({
         setLiveStatus(status === "SUBSCRIBED" ? "live" : "reconnecting");
       });
     return () => {
+      refreshFirst.cancel();
       supabase.removeChannel(channel);
     };
   }, [warehouseId, supabase]);
@@ -218,7 +226,8 @@ export function MovementsPage({
 
   const switchWarehouse = (id: string) => {
     if (id === warehouseId) return;
-    router.replace(`${pathname}?warehouse=${id}`);
+    // P2-03: helper terpusat — preserve filter, reset param warehouse-dependent.
+    router.replace(switchWarehouseUrl(pathname, searchParams, id));
   };
 
   return (

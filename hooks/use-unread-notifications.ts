@@ -4,18 +4,26 @@ import * as React from "react";
 
 import { createClient } from "@/lib/supabase/client";
 import { fetchUnreadCount } from "@/lib/notifications/notifications-client";
+import { unreadStore } from "@/lib/notifications/unread-store";
 
 /**
- * Unread count untuk SidebarMenuBadge (temuan #8).
+ * Unread count untuk SidebarMenuBadge (temuan #8; P2-06 store bersama).
  *
  * Sengaja polling ringan (60s + saat tab kembali visible) — BUKAN channel
  * realtime kedua: NotificationBell di header sudah memegang channel
  * `notifications:<userId>`; dua subscriber dengan nama sama berisiko saling
  * mengganggu lifecycle removeChannel. Badge sidebar hanya butuh sinyal
  * "ada yang belum dibaca", bukan update per-detik.
+ *
+ * Nilai dibaca dari `unreadStore` sehingga realtime event yang diterima
+ * bell langsung terlihat di badge — tanpa menunggu polling berikutnya.
  */
 export function useUnreadNotifications(enabled = true): number {
-  const [unread, setUnread] = React.useState(0);
+  const unread = React.useSyncExternalStore(
+    unreadStore.subscribe,
+    unreadStore.getSnapshot,
+    () => 0
+  );
 
   React.useEffect(() => {
     if (!enabled) return;
@@ -28,7 +36,7 @@ export function useUnreadNotifications(enabled = true): number {
       } = await supabase.auth.getUser();
       if (!user || cancelled) return;
       const count = await fetchUnreadCount(supabase);
-      if (!cancelled) setUnread(count);
+      if (!cancelled) unreadStore.set(count);
     }
 
     void refresh();

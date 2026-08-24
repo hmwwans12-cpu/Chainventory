@@ -9,6 +9,7 @@ import {
   type RealtimeStatus,
   nextRealtimeStatus,
 } from "@/lib/realtime/status";
+import { debounce } from "@/lib/realtime/debounce";
 
 /**
  * Realtime per warehouse (DESIGN §63): berlanggana postgres_changes untuk
@@ -48,9 +49,13 @@ export function useWarehouseRealtime(
       setStatus((current) => nextRealtimeStatus(current, event));
     };
 
+    // P2-05: burst realtime event (movement→proof→movement…) di-debounce
+    // 400ms — N event hanya memicu SATU router.refresh().
+    const refreshDebounced = debounce(() => router.refresh(), 400);
+
     const onDataChange = () => {
       dispatch({ type: "data" });
-      router.refresh();
+      refreshDebounced();
     };
 
     const start = async () => {
@@ -127,6 +132,7 @@ export function useWarehouseRealtime(
 
     return () => {
       disposed = true;
+      refreshDebounced.cancel();
       if (retryTimer) clearTimeout(retryTimer);
       if (tickTimer) clearInterval(tickTimer);
       document.removeEventListener("visibilitychange", onVisible);

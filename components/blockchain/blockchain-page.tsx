@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -41,6 +41,8 @@ import {
   type ProofRow,
 } from "@/lib/blockchain/types";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
+import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
+import { debounce } from "@/lib/realtime/debounce";
 import { cn, formatDateTime } from "@/lib/utils";
 
 const PROOF_LIMIT = 50;
@@ -82,8 +84,9 @@ export function BlockchainPage({
   totalProofs: number;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
 
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [proofsState, setProofsState] = React.useState<ProofRow[]>(proofs);
   const [totalProofsState, setTotalProofsState] = React.useState(totalProofs);
   const [liveStatus, setLiveStatus] = React.useState<"live" | "reconnecting">(
@@ -100,6 +103,9 @@ export function BlockchainPage({
       setProofsState(next.rows);
       setTotalProofsState(next.total);
     };
+    const refreshDebounced = debounce(() => {
+      void refresh();
+    }, 400);
     const channel = supabase
       .channel(`blockchain-${warehouseId}`)
       .on(
@@ -110,19 +116,21 @@ export function BlockchainPage({
           table: "proofs",
           filter: `warehouse_id=eq.${warehouseId}`,
         },
-        refresh
+        refreshDebounced
       )
       .subscribe((status) => {
         setLiveStatus(status === "SUBSCRIBED" ? "live" : "reconnecting");
       });
     return () => {
+      refreshDebounced.cancel();
       supabase.removeChannel(channel);
     };
   }, [warehouseId, supabase]);
 
   const switchWarehouse = (id: string) => {
     if (id === warehouseId) return;
-    router.replace(`${pathname}?warehouse=${id}`);
+    // P2-01: helper terpusat.
+    router.replace(switchWarehouseUrl(pathname, searchParams, id));
   };
 
   const retry = async (proof: ProofRow) => {

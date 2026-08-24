@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeftRight,
   ChevronLeft,
@@ -39,6 +39,7 @@ import {
 } from "@/components/inventory/movement-detail-sheet";
 import type { MovementListItem } from "@/lib/inventory/types";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
+import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import { cn, formatDateTime } from "@/lib/utils";
 
 function shortWallet(wallet: string | null): string {
@@ -67,6 +68,7 @@ export function TransactionsPage({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [detailTarget, setDetailTarget] =
     React.useState<MovementListItem | null>(null);
@@ -88,11 +90,8 @@ export function TransactionsPage({
 
   const switchWarehouse = (id: string) => {
     if (id === warehouseId) return;
-    const url = new URLSearchParams();
-    url.set("warehouse", id);
-    if (type) url.set("type", type);
-    if (proof) url.set("proof", proof);
-    router.replace(`${pathname}?${url.toString()}`);
+    // P2-01: helper terpusat — preserve type/proof, reset pagination.
+    router.replace(switchWarehouseUrl(pathname, searchParams, id));
   };
 
   return (

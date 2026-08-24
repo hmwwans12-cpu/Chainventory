@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Check,
   Copy,
@@ -63,6 +63,7 @@ import {
   transferOwnership,
 } from "@/lib/warehouses/members-client";
 import type { MemberListItem, PendingJoinRequest } from "@/lib/members/types";
+import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { formatDate } from "@/lib/utils";
 
@@ -93,6 +94,7 @@ export function MembersPage({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [changing, setChanging] = React.useState<Set<string>>(new Set());
   const [removeTarget, setRemoveTarget] = React.useState<MemberListItem | null>(
@@ -154,7 +156,8 @@ export function MembersPage({
 
   const switchWarehouse = (id: string) => {
     if (id === warehouseId) return;
-    router.replace(`${pathname}?warehouse=${id}`);
+    // P2-01: helper terpusat.
+    router.replace(switchWarehouseUrl(pathname, searchParams, id));
   };
 
   const copyInvite = async () => {

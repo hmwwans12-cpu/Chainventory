@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Popover } from "@base-ui/react/popover";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -22,6 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { unreadStore } from "@/lib/notifications/unread-store";
 import { cn } from "@/lib/utils";
 
 const PANEL_LIMIT = 12;
@@ -40,7 +48,15 @@ const PANEL_LIMIT = 12;
 export function NotificationBell() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  // P2-06: unread count dibagi via store — badge sidebar ikut segar instan.
+  const unreadCount = useSyncExternalStore(
+    unreadStore.subscribe,
+    unreadStore.getSnapshot,
+    () => 0
+  );
+  const setUnreadCount = useCallback((next: number) => {
+    unreadStore.set(next);
+  }, []);
   const [notifications, setNotificationsState] = useState<NotificationRow[]>(
     []
   );
@@ -156,6 +172,8 @@ export function NotificationBell() {
       if (channel) void supabase.removeChannel(channel);
       if (popTimer.current) clearTimeout(popTimer.current);
     };
+    // setUnreadCount stabil (useCallback []).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refresh = useCallback(async () => {
@@ -167,7 +185,7 @@ export function NotificationBell() {
     ]);
     setUnreadCount(count);
     setNotifications(rows);
-  }, []);
+  }, [setUnreadCount]);
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
@@ -183,7 +201,7 @@ export function NotificationBell() {
       if (supabase && !n.read_at) {
         const { ok } = await markNotificationsRead(supabase, [n.id]);
         if (ok) {
-          setUnreadCount((c) => Math.max(0, c - 1));
+          setUnreadCount(unreadCount - 1);
           setNotifications((rows) =>
             rows.map((r) =>
               r.id === n.id ? { ...r, read_at: new Date().toISOString() } : r
@@ -194,7 +212,7 @@ export function NotificationBell() {
       router.push(notificationHref(n));
       setOpen(false);
     },
-    [router]
+    [router, unreadCount, setUnreadCount]
   );
 
   const handleMarkAllRead = useCallback(async () => {
@@ -208,7 +226,7 @@ export function NotificationBell() {
       setNotifications((rows) => rows.map((r) => ({ ...r, read_at: now })));
       setAnnouncement("All notifications marked as read");
     }
-  }, [unreadCount]);
+  }, [unreadCount, setUnreadCount]);
 
   const grouped = useMemo(() => {
     const manyWarehouses = Object.keys(warehouseNames).length > 1;

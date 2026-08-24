@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Eye,
   FileUp,
@@ -42,6 +42,7 @@ import {
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { hasPermission, PERMISSIONS, type Role } from "@/lib/auth/permissions";
+import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import type { ProductRow } from "@/lib/inventory/types";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import {
@@ -71,17 +72,24 @@ export function ProductsPage({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  // H-05: ganti filter status produk dengan membawa q & warehouse.
+  // P2-04: satu tempat membangun URL query produk (q + warehouse + status)
+  // — sebelumnya logika ini ditulis ulang di tiga titik dan rawan inkonsisten.
+  const applyFilters = React.useCallback(
+    (nextQuery: string, nextStatus: "active" | "archived" | "all") => {
+      const params = new URLSearchParams();
+      if (nextQuery.trim()) params.set("q", nextQuery.trim());
+      if (warehouseId) params.set("warehouse", warehouseId);
+      if (nextStatus !== "active") params.set("status", nextStatus);
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, warehouseId]
+  );
+
   const setStatus = (value: "active" | "archived" | "all") => {
-    const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (statusFilter !== "active") params.set("status", statusFilter);
-    if (warehouseId) params.set("warehouse", warehouseId);
-    if (statusFilter !== "active") params.set("status", statusFilter);
-    if (value !== "active") params.set("status", value);
-    const qs = params.toString();
-    router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    applyFilters(query, value);
   };
 
   const [searchInput, setSearchInput] = React.useState(query);
@@ -111,12 +119,7 @@ export function ProductsPage({
   // berjalan di server (Supabase ilike), bukan filter frontend.
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      const params = new URLSearchParams();
-      if (searchInput.trim()) params.set("q", searchInput.trim());
-      if (warehouseId) params.set("warehouse", warehouseId);
-      if (statusFilter !== "active") params.set("status", statusFilter);
-      const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      applyFilters(searchInput, statusFilter ?? "active");
     }, 350);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,11 +129,8 @@ export function ProductsPage({
 
   const switchWarehouse = (id: string) => {
     if (id === warehouseId) return;
-    const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (statusFilter !== "active") params.set("status", statusFilter);
-    params.set("warehouse", id);
-    router.replace(`${pathname}?${params.toString()}`);
+    // P2-01: helper terpusat — preserve q/status, reset param warehouse-dependent.
+    router.replace(switchWarehouseUrl(pathname, searchParams, id));
   };
 
   return (

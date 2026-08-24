@@ -104,11 +104,7 @@ export default async function AnalyticsPage({
         title="Analytics"
         description={`${active.name} · stock movement overview.`}
         actions={
-          <AnalyticsControls
-            warehouses={warehouses}
-            activeId={active.id}
-            range={range}
-          >
+          <AnalyticsControls warehouses={warehouses} activeId={active.id}>
             <RangeTabs warehouseId={active.id} range={range} />
           </AnalyticsControls>
         }

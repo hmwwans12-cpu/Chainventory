@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NAV_SECTIONS, DEV_NAV_ITEM, type NavItem } from "@/lib/navigation";
 import { hasPermission, type Role } from "@/lib/auth/permissions";
+import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 
 /**
@@ -80,7 +81,8 @@ export function AppSidebar({
 
   const switchWarehouse = (id: string) => {
     if (id === active?.id) return;
-    router.push(`${pathname}?warehouse=${id}`);
+    // P2-02: preserve query state (filter/pagination valid di-reset saja).
+    router.push(switchWarehouseUrl(pathname, searchParams, id));
   };
 
   const visibleItems = (items: NavItem[]) =>

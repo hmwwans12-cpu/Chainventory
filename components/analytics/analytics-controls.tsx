@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   Select,
@@ -10,8 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
-import type { AnalyticsRange } from "@/lib/analytics/aggregate";
 
 /**
  * Kontrol header Analytics: switch warehouse (kalau >1) + child range tabs.
@@ -20,16 +20,15 @@ import type { AnalyticsRange } from "@/lib/analytics/aggregate";
 export function AnalyticsControls({
   warehouses,
   activeId,
-  range,
   children,
 }: {
   warehouses: WarehouseSummary[];
   activeId: string;
-  range: AnalyticsRange;
   children: ReactNode;
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -38,7 +37,8 @@ export function AnalyticsControls({
           value={activeId}
           onValueChange={(value) => {
             if (value !== null) {
-              router.replace(`${pathname}?warehouse=${value}&range=${range}`);
+              // P2-01: helper terpusat (preserve range, reset page).
+              router.replace(switchWarehouseUrl(pathname, searchParams, value));
             }
           }}
         >
