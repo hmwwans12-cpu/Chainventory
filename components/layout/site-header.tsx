@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { LogOut, Settings } from "lucide-react";
-
-import { signOutAction } from "@/app/actions/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Breadcrumb,
@@ -164,15 +162,20 @@ export function SiteHeader({
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {/* Server action signOut (app/actions/auth.ts) — audit #1 */}
-              <form action={signOutAction}>
-                <DropdownMenuItem
-                  render={<button type="submit" className="w-full" />}
-                >
-                  <LogOut aria-hidden="true" />
-                  Sign out
-                </DropdownMenuItem>
-              </form>
+              <DropdownMenuItem
+                onClick={async () => {
+                  const { createClient } =
+                    await import("@/lib/supabase/client");
+                  const supabase = createClient();
+                  await supabase.auth.signOut();
+                  // Full reload diperlukan: clear semua client state (Privy, Supabase).
+                  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+                  window.location.href = "/login";
+                }}
+              >
+                <LogOut aria-hidden="true" />
+                Sign out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
