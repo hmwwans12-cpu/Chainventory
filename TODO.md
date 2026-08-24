@@ -20,7 +20,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 > di bawah + spesifikasi `docs/superpowers/specs/2026-08-23-oauth-realtime-csv-design.md`.
 >
 > **Last verified — 2026-08-24 (run nyata, bukan angka manual):**
-> Vitest **209 passed / 25 skipped** · Forge **26 passed** · Playwright E2E lokal
+> Vitest **211 passed / 27 skipped** · Forge **26 passed** · Playwright E2E lokal
 > **18 passed** (termasuk proof on-chain via tunnel) · `tsc` PASS · `eslint` PASS ·
 > `build` PASS · `format:check` PASS · `check-contrast` PASS ·
 > `pnpm audit --prod --audit-level high` PASS (axios/ws di-patch via overrides).
