@@ -13,7 +13,6 @@ import {
 import { Logo } from "@/components/shared/logo";
 import { signOutAction } from "@/app/actions/auth";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
-import { AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -236,11 +235,13 @@ export function AppSidebar({
                         />
                       }
                     >
-                      <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                      {/* Span mandiri — AvatarFallback butuh konteks <Avatar.Root>
+                          yang tidak ada pada NavUser standalone (bug runtime). */}
+                      <span className="bg-sidebar-primary text-sidebar-primary-foreground font-display flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
                         {(user.name ?? user.email ?? "U")
                           .charAt(0)
                           .toUpperCase()}
-                      </AvatarFallback>
+                      </span>
                       <span className="flex min-w-0 flex-col leading-tight">
                         <span className="truncate text-sm font-medium">
                           {user.name ?? "User"}
