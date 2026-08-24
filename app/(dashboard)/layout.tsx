@@ -56,7 +56,18 @@ export default async function DashboardLayout({
         Skip to content
       </a>
       <Suspense fallback={null}>
-        <AppSidebar isDeveloper={isDeveloper} />
+        <AppSidebar
+          warehouses={warehouses ?? []}
+          user={
+            user
+              ? {
+                  name: profile?.display_name ?? null,
+                  email: profile?.email ?? user.email ?? null,
+                }
+              : null
+          }
+          isDeveloper={isDeveloper}
+        />
       </Suspense>
       <SidebarInset id="main-content">
         <Suspense fallback={<div className="h-14 shrink-0 border-b" />}>

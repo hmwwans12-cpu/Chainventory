@@ -55,6 +55,19 @@
   --chart-3: #247158;
   --chart-4: #e4d5c7;
   --chart-5: #1c3b30;
+
+  /* Sidebar panel (audit UI sidebar — token sebelumnya TIDAK pernah
+     didefinisikan sehingga bg-sidebar dkk tidak menghasilkan style).
+     Sidebar = panel terpisah: sedikit lebih terang dari background
+     (Dawn Pink), beda dari card, aksen hover memakai tone card. */
+  --sidebar: #ecdcc9;
+  --sidebar-foreground: #1c3b30;
+  --sidebar-primary: #186049;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f3ece5;
+  --sidebar-accent-foreground: #1c3b30;
+  --sidebar-border: #d4c2b2;
+  --sidebar-ring: #186049;
 }
 
 .dark {
@@ -81,6 +94,16 @@
   --input: #23493c;
   --ring: #6ab29b;
   --mint-soft: #a4dcc7;
+
+  /* Sidebar (dark, prepared) */
+  --sidebar: #10281f;
+  --sidebar-foreground: #e8f2ee;
+  --sidebar-primary: #6ab29b;
+  --sidebar-primary-foreground: #0e231b;
+  --sidebar-accent: #153227;
+  --sidebar-accent-foreground: #e8f2ee;
+  --sidebar-border: #23493c;
+  --sidebar-ring: #6ab29b;
 }
 
 @theme inline {
@@ -105,6 +128,15 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   --color-fun-green: var(--fun-green);
   --color-eden: var(--eden);
