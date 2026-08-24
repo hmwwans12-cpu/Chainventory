@@ -52,13 +52,13 @@ export async function GET(request: Request) {
 
     const matrix = [
       [
-        "sku",
-        "name",
-        "category",
-        "unit",
-        "description",
-        "low_stock_threshold",
-        "status",
+        "SKU",
+        "Name",
+        "Category",
+        "Unit",
+        "Description",
+        "Low Stock Threshold",
+        "Status",
       ],
       ...(data ?? []).map((p) => [
         p.sku ?? "",
@@ -93,18 +93,18 @@ export async function GET(request: Request) {
 
   const matrix = [
     [
-      "created_at",
-      "type",
-      "product_sku",
-      "quantity",
-      "status",
-      "actor_wallet",
-      "reason",
-      "reference",
+      "Created At (UTC)",
+      "Type",
+      "Product SKU",
+      "Quantity",
+      "Status",
+      "Actor Wallet",
+      "Reason",
+      "Reference",
     ],
     ...(data ?? []).map((m) => [
-      m.created_at ?? "",
-      m.movement_type ?? "",
+      fmtUtc(m.created_at),
+      humanType(m.movement_type),
       skuOf(m),
       String(m.quantity ?? ""),
       m.status ?? "",
@@ -116,6 +116,29 @@ export async function GET(request: Request) {
   return csvResponse(matrix, `movements-${warehouseId.slice(0, 8)}.csv`);
 }
 
+/** ISO timestamptz -> "YYYY-MM-DD HH:mm:ss" (UTC, detik) untuk Excel/CSV. */
+function fmtUtc(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toISOString().replace("T", " ").slice(0, 19);
+}
+
+function humanType(type: string | null | undefined): string {
+  switch (type) {
+    case "stock_in":
+      return "Stock In";
+    case "stock_out":
+      return "Stock Out";
+    case "adjustment":
+      return "Adjustment";
+    case "reversal":
+      return "Reversal";
+    default:
+      return type ?? "";
+  }
+}
+
 function skuOf(row: unknown): string {
   const products = (
     row as { products?: { sku?: string } | { sku?: string }[] | null }
@@ -125,7 +148,10 @@ function skuOf(row: unknown): string {
 }
 
 function csvResponse(matrix: string[][], filename: string): Response {
-  return new Response(toCsv(matrix), {
+  // BOM UTF-8: SATU-SATUNYA konteks di mana BOM memang diinginkan —
+  // tanpa ini Excel membuka CSV sebagai ANSI/latin1 ( karakter rusak).
+  const body = "\uFEFF" + toCsv(matrix);
+  return new Response(body, {
     status: 200,
     headers: {
       "Content-Type": "text/csv; charset=utf-8",

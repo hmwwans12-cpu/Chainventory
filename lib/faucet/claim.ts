@@ -13,7 +13,7 @@
  * key alone" — this implementation uses 6 layers.
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { FAUCET_AMOUNT_ETH, FAUCET_COOLDOWN_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 import { checkFaucetRateLimit } from "@/lib/faucet/rate-limit";
@@ -59,7 +59,9 @@ export async function claimFaucet(
   }
 
   // 3. Database claim via RPC (atomic: cooldown check + insert in one tx)
-  const supabase = await createClient();
+  // claim_faucet/confirm_faucet_claim hanya di-GRANT ke service_role
+  // (0022). Memakai client sesi user = "permission denied for function".
+  const supabase = createServiceClient();
   const amountWei = String(BigInt(parseFloat(FAUCET_AMOUNT_ETH) * 1e18));
 
   const { data: rpcData, error: rpcError } = await supabase.rpc(
