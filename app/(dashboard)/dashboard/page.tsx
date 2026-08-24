@@ -54,7 +54,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
-// (AGENT.md §6); cegah percobaan prerender saat env build minim.
+// (AGENT.md Â§6); cegah percobaan prerender saat env build minim.
 export const dynamic = "force-dynamic";
 
 export const metadata = {
@@ -271,7 +271,7 @@ export default async function DashboardPage({
         title="Dashboard"
         description="Overview of your warehouse inventory and activity."
       />
-      {/* 1. Profile / Wallet Card (DESIGN §30) — lokasi halaman dibawa breadcrumb header */}
+      {/* 1. Profile / Wallet Card (DESIGN Â§30) â€” lokasi halaman dibawa breadcrumb header */}
       <ProfileWalletCard
         name={displayName}
         role={active.role}
@@ -281,12 +281,7 @@ export default async function DashboardPage({
         contractAddress={active.contractAddress}
       />
 
-      <FaucetClaimCard
-        walletAddress={walletAddress}
-        balanceEth={balanceWei != null ? formatEthValue(balanceWei) : null}
-      />
-
-      {/* 2. Statistics Cards (DESIGN §31) — opsional hanya saat ada yang perlu ditindak */}
+      {/* 2. Statistics Cards (DESIGN Â§31) */}
       <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={Package}
@@ -324,7 +319,7 @@ export default async function DashboardPage({
           }}
           href={`/analytics?${whQuery}&range=${range}`}
         />
-        {/* Alert stats menyatu dengan grid utama (audit UI #3 — tanpa -mt-2) */}
+        {/* Alert stats menyatu dengan grid utama (audit UI #3 â€” tanpa -mt-2) */}
         {lowStockCount > 0 ? (
           <StatCard
             icon={TriangleAlert}
@@ -345,7 +340,13 @@ export default async function DashboardPage({
         ) : null}
       </div>
 
-      {/* 3. Charts (DESIGN §32) + Top Products (§33, hemat) */}
+      {/* Faucet: contextual alert — hanya tampil saat balance rendah (DESIGN §55) */}
+      <FaucetClaimCard
+        walletAddress={walletAddress}
+        balanceEth={balanceWei != null ? formatEthValue(balanceWei) : null}
+      />
+
+      {/* 3. Charts (DESIGN Â§32) + Top Products (Â§33, hemat) */}
       {analytics ? (
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-2">
@@ -377,16 +378,16 @@ export default async function DashboardPage({
         </div>
       ) : null}
 
-      {/* 4. Recent Stock Movement — seksi penuh ala DataTable resmi (§29) */}
+      {/* 4. Recent Stock Movement â€” seksi penuh ala DataTable resmi (Â§29) */}
       <RecentMovements items={recentMovements} warehouseId={active.id} />
 
-      {/* 5–6. Recent Transactions + Activity berdampingan (urutan §29 tetap) */}
+      {/* 5â€“6. Recent Transactions + Activity berdampingan (urutan Â§29 tetap) */}
       <div className="grid gap-4 lg:grid-cols-2">
         <RecentTransactions items={recentTransactions} />
         <RecentActivity items={recentActivity} />
       </div>
 
-      {/* Kartu warehouse — dipindah ke bawah sesuai aliran informasi §29 */}
+      {/* Kartu warehouse â€” dipindah ke bawah sesuai aliran informasi Â§29 */}
       <div className="border-border bg-card flex flex-wrap items-center gap-3 rounded-xl border p-5">
         <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full">
           <Warehouse aria-hidden="true" className="size-5" />
@@ -398,8 +399,8 @@ export default async function DashboardPage({
           <p className="text-muted-foreground truncate text-sm">
             {active.code}
             {active.contractAddress
-              ? " · deployed on-chain"
-              : " · not deployed"}
+              ? " Â· deployed on-chain"
+              : " Â· not deployed"}
           </p>
         </div>
         <Badge
@@ -410,7 +411,7 @@ export default async function DashboardPage({
         </Badge>
       </div>
 
-      {/* Von Restorff — satu-satunya elemen bernada peringatan di halaman ini */}
+      {/* Von Restorff â€” satu-satunya elemen bernada peringatan di halaman ini */}
       <InactivityBanner
         warehouseId={active.id}
         warehouseName={active.name}
@@ -418,7 +419,7 @@ export default async function DashboardPage({
         inactiveDays={inactiveDays}
       />
 
-      {/* Quick actions — target sentuh â‰¥44px (Fitts), di akhir aliran */}
+      {/* Quick actions â€” target sentuh Ã¢â€°Â¥44px (Fitts), di akhir aliran */}
       <div className="flex flex-wrap items-center gap-2">
         <Button render={<Link href={`/inventory/movements?${whQuery}`} />}>
           Stock Movements

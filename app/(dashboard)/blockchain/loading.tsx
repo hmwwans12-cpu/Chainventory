@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function Loading() {
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Blockchain" description="Loading on-chain status…" />
+      <PageHeader title="Audit Explorer" description="Loading audit trail…" />
       <div className="border-border rounded-xl border p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-2">

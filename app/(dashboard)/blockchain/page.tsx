@@ -44,7 +44,7 @@ export default async function BlockchainPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Blockchain"
+          title="Audit Explorer"
           description="Verification proofs, transaction hashes, and Base Sepolia status."
         />
         <EmptyState
@@ -92,12 +92,12 @@ export default async function BlockchainPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Blockchain"
+          title="Audit Explorer"
           description={`${active.name} · on-chain status.`}
         />
         <ErrorState
           icon={Link2}
-          title="Unable to load blockchain status."
+          title="Unable to load audit trail."
           description="Something went wrong while retrieving proof data. Please try again."
         />
       </div>
@@ -107,7 +107,7 @@ export default async function BlockchainPageRoute({
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Blockchain"
+        title="Audit Explorer"
         description={`${active.name} · Base Sepolia.`}
       />
       <BlockchainPage
