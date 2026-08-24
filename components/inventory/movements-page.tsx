@@ -218,7 +218,7 @@ export function MovementsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2">
           <span
             className={cn(
@@ -340,7 +340,7 @@ export function MovementsPage({
         />
       ) : (
         <div className="border-border rounded-xl border">
-          <Table>
+          <Table className="min-w-[820px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>

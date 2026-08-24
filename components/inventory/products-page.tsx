@@ -119,7 +119,7 @@ export function ProductsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2">
           <div className="relative w-full sm:w-64">
             <Search
@@ -218,7 +218,7 @@ export function ProductsPage({
         />
       ) : (
         <div className="border-border rounded-xl border">
-          <Table>
+          <Table className="min-w-[760px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>

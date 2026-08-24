@@ -1126,3 +1126,18 @@ CSV export wajib BOM UTF-8 (Excel), delimiter koma standar, timestamp `YYYY-MM-D
 
 - **Stock In/Out manual** = user-paid intent flow v2 (wallet member menandatangani proof).
 - **CSV initial stock** = server initialization flow via Owner/Manager ter-autentikasi — SENGAJA tidak melalui wallet-paid intent (bulk, tanpa interaksi wallet per baris). Invariant tetap terjaga karena kedua jalur sama-sama melalui RPC atomik + audit + proof.
+
+### 84.7 Toolbar Kontrak (semua halaman list)
+
+```text
+<div className="flex flex-wrap items-center justify-between gap-4">
+  <div>…search/filter…</div>
+  <div className="flex items-center gap-2">…primary actions…</div>
+</div>
+```
+
+- Gap toolbar = `gap-4` (Component tier). Dilarang `gap-3`/`gap-5`.
+- Tabel di dalam card wajib `min-w-[≥700px]` agar mobile scroll horizontal
+  (§49), bukan memampatkan kolom.
+- Profile/Wallet card: anatomy dua mode — desktop satu baris, mobile
+  identity + baris detail bertumpuk (`DetailRow`).

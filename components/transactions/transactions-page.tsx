@@ -87,7 +87,7 @@ export function TransactionsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {warehouses.length > 1 ? (
             <Select
@@ -168,7 +168,7 @@ export function TransactionsPage({
         />
       ) : (
         <div className="border-border rounded-xl border">
-          <Table>
+          <Table className="min-w-[720px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Transaction</TableHead>
