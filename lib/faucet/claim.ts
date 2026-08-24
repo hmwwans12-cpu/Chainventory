@@ -16,7 +16,10 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { FAUCET_AMOUNT_ETH, FAUCET_COOLDOWN_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
-import { checkFaucetRateLimit } from "@/lib/faucet/rate-limit";
+import {
+  checkFaucetRateLimit,
+  resetFaucetRateLimit,
+} from "@/lib/faucet/rate-limit";
 import { transferFaucetEth } from "@/lib/faucet/transfer";
 
 export interface ClaimResult {
@@ -83,16 +86,20 @@ export async function claimFaucet(
       };
     }
     logger.warn({ userId, error: message }, "faucet claim RPC failed");
+    // Klaim GAGAL sebelum tercatat -> jangan konsumsi jatah 12 jam.
+    await resetFaucetRateLimit(userId);
     return { ok: false, error: message };
   }
 
   const result = rpcData as { ok: boolean; claimId?: string; error?: string };
   if (!result.ok) {
+    await resetFaucetRateLimit(userId);
     return { ok: false, error: result.error ?? "claim failed" };
   }
 
   const claimId = result.claimId;
   if (!claimId) {
+    await resetFaucetRateLimit(userId);
     return { ok: false, error: "claim ID missing from RPC response" };
   }
 
@@ -111,6 +118,8 @@ export async function claimFaucet(
       { userId, claimId, error: transferResult.error },
       "faucet ETH transfer failed"
     );
+    // User tidak menerima ETH -> kembalikan jatah agar bisa retry.
+    await resetFaucetRateLimit(userId);
     return { ok: false, error: transferResult.error ?? "ETH transfer failed" };
   }
 
