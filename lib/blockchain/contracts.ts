@@ -40,7 +40,10 @@ function loadRegistry(): RegistryShape | null {
   );
 
   try {
-    const raw = readFileSync(registryPath, "utf-8");
+    let raw = readFileSync(registryPath, "utf-8");
+    // Windows tools (PowerShell 5.1 Set-Content) menulis UTF-8 WITH BOM;
+    // JSON.parse menolak karakter BOM di awal string — buang selalu.
+    raw = raw.replace(/^\uFEFF/, "");
     return JSON.parse(raw) as RegistryShape;
   } catch (err) {
     logger.warn({ err }, "contract registry not readable");
