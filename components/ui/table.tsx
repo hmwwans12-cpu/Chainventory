@@ -68,7 +68,8 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "text-muted-foreground h-10 px-2 text-left align-middle text-xs font-medium whitespace-nowrap",
+        // Density freeze (DESIGN §84.8): header 40px, gutter 16px.
+        "text-muted-foreground h-10 px-4 text-left align-middle text-xs font-medium whitespace-nowrap",
         className
       )}
       {...props}
@@ -80,7 +81,11 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (
     <td
       data-slot="table-cell"
-      className={cn("p-2 align-middle whitespace-nowrap", className)}
+      className={cn(
+        // Row 56px (audit UI #9): tinggi tetap + gutter 16px selaras header.
+        "h-14 px-4 align-middle whitespace-nowrap",
+        className
+      )}
       {...props}
     />
   );

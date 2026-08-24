@@ -50,8 +50,10 @@ function DeltaBadge({ delta }: { delta: Delta }) {
 /**
  * Statistic card — anatomi resmi SectionCards (dashboard-01):
  * Description label → nilai besar responsif (@[250px]/card) → Badge tren
- * outline di CardAction → CardFooter dua baris (takeaway + konteks).
- * Klik-able bila diberikan `href` — seluruh kartu satu target sentuh (Fitts).
+ * outline di CardAction → CardFooter SATU baris sekunder (temuan audit UI #4:
+ * takeaway + hint yang redundan digabung jadi satu baris — prioritas delta,
+ * fallback hint kontekstual). Klik-able bila diberikan `href` — seluruh
+ * kartu satu target sentuh (Fitts).
  */
 export function StatCard({
   icon: Icon,
@@ -70,11 +72,12 @@ export function StatCard({
 }) {
   const d = delta ? computeDelta(delta.current, delta.previous) : null;
 
-  const takeaway = d
+  // SATU baris sekunder: delta menang atas hint (informasi tidak duplikat).
+  const secondary = d
     ? d.kind === "new"
       ? "New activity this period"
       : `${d.kind === "up" ? "Up" : "Down"} ${Math.abs(d.pct).toFixed(1)}% this period`
-    : null;
+    : (hint ?? null);
 
   const body = (
     <>
@@ -92,21 +95,18 @@ export function StatCard({
           </CardAction>
         ) : null}
       </CardHeader>
-      {takeaway || hint ? (
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          {takeaway ? (
-            <div className="line-clamp-1 flex gap-2 font-medium">
-              {d && d.kind !== "new" ? (
-                d.kind === "up" ? (
-                  <ArrowUpRight aria-hidden="true" className="size-4" />
-                ) : (
-                  <ArrowDownRight aria-hidden="true" className="size-4" />
-                )
-              ) : null}
-              {takeaway}
-            </div>
-          ) : null}
-          {hint ? <div className="text-muted-foreground">{hint}</div> : null}
+      {secondary ? (
+        <CardFooter className="text-muted-foreground text-sm">
+          <div className="line-clamp-1 flex items-center gap-2">
+            {d && d.kind !== "new" ? (
+              d.kind === "up" ? (
+                <ArrowUpRight aria-hidden="true" className="size-4" />
+              ) : (
+                <ArrowDownRight aria-hidden="true" className="size-4" />
+              )
+            ) : null}
+            {secondary}
+          </div>
         </CardFooter>
       ) : null}
     </>

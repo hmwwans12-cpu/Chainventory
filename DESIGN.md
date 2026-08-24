@@ -1141,3 +1141,27 @@ CSV export wajib BOM UTF-8 (Excel), delimiter koma standar, timestamp `YYYY-MM-D
   (§49), bukan memampatkan kolom.
 - Profile/Wallet card: anatomy dua mode — desktop satu baris, mobile
   identity + baris detail bertumpuk (`DetailRow`).
+
+### 84.8 Table Density (frozen — default komponen `ui/table`)
+
+| Elemen     | Nilai                                                   |
+| ---------- | ------------------------------------------------------- |
+| Header row | tinggi `40px` (`h-10`), gutter `16px`, teks `xs` medium |
+| Body row   | tinggi `56px` (`h-14`), gutter `16px`, teks `sm`        |
+| Aksi       | target ≥40px                                            |
+
+Semua tabel — Products, Transactions, Members, Audit Trail, Recent
+Movements — mewarisi default ini; dilarang override padding per-tabel
+tanpa alasan terdokumentasi.
+
+### 84.9 Width Tiers
+
+| Tier          | Kelas            | Pemakaian                     |
+| ------------- | ---------------- | ----------------------------- |
+| PageContainer | `max-w-[1600px]` | dashboard/list/chart          |
+| NarrowContent | `max-w-[960px]`  | settings, halaman info ringan |
+| FormContainer | `max-w-[720px]`  | form panjang (bila perlu)     |
+
+StatCard: CardFooter **satu** baris sekunder — delta menang atas hint;
+dilarang menampilkan keduanya sekaligus. Section statistik dashboard
+satu grid utama; dilarang `-mt-*` untuk mengoreksi gap antar-grup.

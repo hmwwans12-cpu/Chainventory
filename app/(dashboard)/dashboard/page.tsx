@@ -315,29 +315,26 @@ export default async function DashboardPage({
           }}
           href={`/analytics?${whQuery}&range=${range}`}
         />
+        {/* Alert stats menyatu dengan grid utama (audit UI #3 — tanpa -mt-2) */}
+        {lowStockCount > 0 ? (
+          <StatCard
+            icon={TriangleAlert}
+            label="Low Stock"
+            value={String(lowStockCount)}
+            hint="Products at or below threshold"
+            href={`/inventory/products?${whQuery}`}
+          />
+        ) : null}
+        {(pendingRes.count ?? 0) > 0 ? (
+          <StatCard
+            icon={UserPlus}
+            label="Pending Requests"
+            value={String(pendingRes.count ?? 0)}
+            hint="Join requests awaiting review"
+            href={`/members?${whQuery}`}
+          />
+        ) : null}
       </div>
-      {lowStockCount > 0 || (pendingRes.count ?? 0) > 0 ? (
-        <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card -mt-2 grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs md:grid-cols-2">
-          {lowStockCount > 0 ? (
-            <StatCard
-              icon={TriangleAlert}
-              label="Low Stock"
-              value={String(lowStockCount)}
-              hint="Products at or below threshold"
-              href={`/inventory/products?${whQuery}`}
-            />
-          ) : null}
-          {(pendingRes.count ?? 0) > 0 ? (
-            <StatCard
-              icon={UserPlus}
-              label="Pending Requests"
-              value={String(pendingRes.count ?? 0)}
-              hint="Join requests awaiting review"
-              href={`/members?${whQuery}`}
-            />
-          ) : null}
-        </div>
-      ) : null}
 
       {/* 3. Charts (DESIGN §32) + Top Products (§33, hemat) */}
       {analytics ? (
