@@ -6,7 +6,6 @@ import {
   updateProductSchema,
 } from "@/lib/validators/inventory";
 import {
-  error,
   fromPostgrestError,
   invalid,
   notFound,
@@ -170,31 +169,14 @@ export async function DELETE(request: Request) {
   );
   if (inactive) return inactive;
 
-  // Tolak archive bila masih ada stok tersisa (DESIGN §34/§52 — inventory
-  // harus nol dulu sebelum produk diarsipkan). Pesan jelas untuk UI.
-  const { data: balance } = await supabase
-    .from("inventory_balances")
-    .select("quantity")
-    .eq("warehouse_id", parsed.data.warehouseId)
-    .eq("product_id", parsed.data.productId)
-    .maybeSingle();
+  // P1-03: archive via RPC atomik (lock product + balance dalam satu tx).
+  const { error: archiveError } = await supabase.rpc("archive_product", {
+    p_warehouse_id: parsed.data.warehouseId,
+    p_product_id: parsed.data.productId,
+    p_actor_user_id: auth.user.id,
+  });
 
-  const remaining = Number(balance?.quantity ?? 0);
-  if (remaining > 0) {
-    return error(
-      "Cannot archive a product with remaining stock. Move the remaining stock to zero first.",
-      "INVALID_INPUT",
-      409
-    );
-  }
-
-  const { error: updateError } = await supabase
-    .from("products")
-    .update({ status: "archived" })
-    .eq("id", parsed.data.productId)
-    .eq("warehouse_id", parsed.data.warehouseId);
-
-  if (updateError) return fromPostgrestError(updateError.message);
+  if (archiveError) return fromPostgrestError(archiveError.message);
 
   return ok({});
 }
