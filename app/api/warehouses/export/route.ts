@@ -148,11 +148,11 @@ function skuOf(row: unknown): string {
 }
 
 function csvResponse(matrix: string[][], filename: string): Response {
-  // BOM UTF-8 + baris "sep=," — BOM agar Excel membaca UTF-8, sep=, agar
-  // Excel dengan locale Indonesia (list separator ";") tetap memecah kolom
-  // per koma. Parser RFC4180 di sisi import sudah meng-skip BOM; baris
-  // sep tidak ada di template import sehingga tidak mengganggu round-trip.
-  const body = "\uFEFFsep=,\n" + toCsv(matrix);
+  // BOM UTF-8 agar Excel membaca file sebagai UTF-8. Catatan: baris hint
+  // "sep=," SENGAJA tidak dipakai — ia tidak reliable ketika BOM mendahuluinya,
+  // dan tampil sebagai baris sampah. Untuk Excel locale Indonesia (pemisah
+  // ";"), buka via Data > From Text/CSV, atau ubah List separator di Region.
+  const body = "\uFEFF" + toCsv(matrix);
   return new Response(body, {
     status: 200,
     headers: {
