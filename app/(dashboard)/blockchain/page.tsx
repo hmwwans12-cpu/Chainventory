@@ -12,6 +12,10 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { BlockchainPage } from "@/components/blockchain/blockchain-page";
 import type { DeploymentSummary, ProofRow } from "@/lib/blockchain/types";
 
+// Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
+// (AGENT.md §6); cegah percobaan prerender saat env build minim.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   robots: { index: false, follow: false },
 };

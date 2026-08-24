@@ -22,6 +22,10 @@ import { StatCard } from "@/components/analytics/stat-card";
 import { StockMovementChart } from "@/components/analytics/stock-movement-chart";
 import { TopProducts } from "@/components/analytics/top-products";
 
+// Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
+// (AGENT.md §6); cegah percobaan prerender saat env build minim.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   robots: { index: false, follow: false },
 };

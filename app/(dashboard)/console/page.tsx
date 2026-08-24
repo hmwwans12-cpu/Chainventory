@@ -12,6 +12,10 @@ import {
 } from "@/lib/console/data";
 import type { ConsoleInitialData, ConsoleSession } from "@/lib/console/types";
 
+// Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
+// (AGENT.md §6); cegah percobaan prerender saat env build minim.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   robots: { index: false, follow: false },
 };

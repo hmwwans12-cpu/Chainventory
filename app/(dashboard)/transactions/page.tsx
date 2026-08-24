@@ -12,6 +12,10 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { TransactionsPage } from "@/components/transactions/transactions-page";
 import type { MovementListItem, MovementStatus } from "@/lib/inventory/types";
 
+// Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
+// (AGENT.md §6); cegah percobaan prerender saat env build minim.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   robots: { index: false, follow: false },
 };
