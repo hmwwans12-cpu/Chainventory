@@ -103,6 +103,11 @@ export async function PATCH(request: Request) {
   const product = await getProduct(supabase, parsed.data.productId);
   if (!product) return notFound("Product not found.");
 
+  // P2-07: archived product read-only.
+  if (product.status === "archived") {
+    return invalid("Archived products cannot be edited.");
+  }
+
   const denied = await requirePermission(
     supabase,
     product.warehouse_id,
@@ -197,10 +202,10 @@ export async function DELETE(request: Request) {
 async function getProduct(
   supabase: SupabaseClient,
   productId: string
-): Promise<{ warehouse_id: string } | null> {
+): Promise<{ warehouse_id: string; status: string } | null> {
   const { data } = await supabase
     .from("products")
-    .select("warehouse_id")
+    .select("warehouse_id, status")
     .eq("id", productId)
     .maybeSingle();
   return data ?? null;

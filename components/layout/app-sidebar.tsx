@@ -272,7 +272,17 @@ export function AppSidebar({
                         </DropdownMenuLabel>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem render={<Link href="/settings" />}>
+                      <DropdownMenuItem
+                        render={
+                          <Link
+                            href={
+                              active
+                                ? `/settings?warehouse=${active.id}`
+                                : "/settings"
+                            }
+                          />
+                        }
+                      >
                         <Settings aria-hidden="true" />
                         Settings
                       </DropdownMenuItem>

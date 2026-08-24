@@ -88,7 +88,11 @@ export function TransactionsPage({
 
   const switchWarehouse = (id: string) => {
     if (id === warehouseId) return;
-    router.replace(`${pathname}?warehouse=${id}`);
+    const url = new URLSearchParams();
+    url.set("warehouse", id);
+    if (type) url.set("type", type);
+    if (proof) url.set("proof", proof);
+    router.replace(`${pathname}?${url.toString()}`);
   };
 
   return (

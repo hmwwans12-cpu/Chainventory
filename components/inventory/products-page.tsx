@@ -76,7 +76,9 @@ export function ProductsPage({
   const setStatus = (value: "active" | "archived" | "all") => {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
+    if (statusFilter !== "active") params.set("status", statusFilter);
     if (warehouseId) params.set("warehouse", warehouseId);
+    if (statusFilter !== "active") params.set("status", statusFilter);
     if (value !== "active") params.set("status", value);
     const qs = params.toString();
     router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
@@ -112,12 +114,13 @@ export function ProductsPage({
       const params = new URLSearchParams();
       if (searchInput.trim()) params.set("q", searchInput.trim());
       if (warehouseId) params.set("warehouse", warehouseId);
+      if (statusFilter !== "active") params.set("status", statusFilter);
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     }, 350);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchInput, warehouseId]);
+  }, [searchInput, warehouseId, statusFilter]);
 
   const refresh = () => router.refresh();
 
@@ -125,6 +128,7 @@ export function ProductsPage({
     if (id === warehouseId) return;
     const params = new URLSearchParams();
     if (query) params.set("q", query);
+    if (statusFilter !== "active") params.set("status", statusFilter);
     params.set("warehouse", id);
     router.replace(`${pathname}?${params.toString()}`);
   };

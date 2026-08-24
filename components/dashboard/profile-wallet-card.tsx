@@ -19,6 +19,7 @@ export function ProfileWalletCard({
   walletAddress,
   balanceEth,
   warehouseName,
+  warehouseId,
   contractAddress,
 }: {
   name: string;
@@ -26,13 +27,14 @@ export function ProfileWalletCard({
   walletAddress: string | null;
   balanceEth: string | null;
   warehouseName?: string;
+  warehouseId?: string;
   contractAddress?: string | null;
 }) {
   const initial = name.trim().charAt(0).toUpperCase() || "?";
 
   return (
     <Link
-      href="/settings"
+      href={warehouseId ? `/settings?warehouse=${warehouseId}` : "/settings"}
       aria-label="Open profile and wallet settings"
       className="focus-visible:ring-ring hover:ring-ring/40 block rounded-xl transition-shadow hover:ring-2 focus-visible:ring-2 focus-visible:outline-none"
     >

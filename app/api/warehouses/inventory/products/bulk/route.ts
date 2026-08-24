@@ -98,7 +98,10 @@ export async function POST(request: Request) {
       results.push({
         index: idx,
         ok: false,
-        error: error?.message ?? "Failed to insert row.",
+        error:
+          error?.code === "23505"
+            ? "SKU already exists in this warehouse."
+            : (error?.message ?? "Failed to insert row."),
       });
       continue;
     }
