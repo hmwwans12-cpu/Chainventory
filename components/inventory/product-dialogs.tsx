@@ -211,6 +211,16 @@ export function EditProductDialog({
           <DialogTitle>Edit Product</DialogTitle>
           <DialogDescription>{product.name}</DialogDescription>
         </DialogHeader>
+        {/* Meta line — kolom yang tersembunyi di tabel mobile tetap accessible
+            (temuan audit UI #7). */}
+        <p className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+          <span className="font-mono">{product.sku}</span>
+          {product.category ? <span>{product.category}</span> : null}
+          <span className="uppercase">{product.unit}</span>
+          {product.updatedAt ? (
+            <span>Updated {formatDate(product.updatedAt)}</span>
+          ) : null}
+        </p>
         {error ? <ErrorBanner message={error} /> : null}
         <ProductForm
           mode="edit"
