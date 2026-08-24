@@ -3,6 +3,14 @@ name: Preview E2E (staging)
 on:
   pull_request:
 
+# Mirror secret (lihat catatan ci.yml): secrets tidak boleh di job-level if.
+env:
+  HAS_PREVIEW_SECRETS: >-
+    ${{ secrets.VERCEL_TOKEN != '' &&
+        secrets.VERCEL_ORG_ID != '' &&
+        secrets.VERCEL_PROJECT_ID != '' &&
+        secrets.E2E_SUPABASE_URL != '' }}
+
 jobs:
   # Staging (P3 item 3a): deploy PR ke Vercel preview, lalu jalankan suite E2E
   # penuh terhadap URL preview (tanpa tunnel — preview publik sehingga QStash
@@ -11,14 +19,10 @@ jobs:
   # Diaktifkan hanya bila secret dikonfigurasi:
   #   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID  (deploy)
   #   E2E_* (sama dengan workflow CI)
-  # Fork PR / repo tanpa secret → job skip dengan pesan jelas.
+  # Fork PR / repo tanpa secret → job skip otomatis via env gate.
   staging:
     runs-on: ubuntu-latest
-    if: >
-      secrets.VERCEL_TOKEN != '' &&
-      secrets.VERCEL_ORG_ID != '' &&
-      secrets.VERCEL_PROJECT_ID != '' &&
-      secrets.E2E_SUPABASE_URL != ''
+    if: env.HAS_PREVIEW_SECRETS == 'true'
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
