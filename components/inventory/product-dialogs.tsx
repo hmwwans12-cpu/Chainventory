@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useWallets } from "@privy-io/react-auth";
 import {
   AlertTriangle,
   ArrowDownToLine,
@@ -53,6 +54,11 @@ import {
   applyMovement,
   type MovementType,
 } from "@/lib/inventory/movements-client";
+import {
+  finalizeStockIntent,
+  prepareStockIntent,
+  submitStockIntent,
+} from "@/lib/inventory/intents-client";
 import { newIdempotencyKey } from "@/lib/api-client";
 import type { ProductRow, StockMovementRow } from "@/lib/inventory/types";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
@@ -331,6 +337,8 @@ export function StockMovementDialog({
   >([]);
   const [targetsLoaded, setTargetsLoaded] = React.useState(false);
   const idempotencyKey = React.useRef<string | null>(null);
+  const { wallets } = useWallets();
+  const [phase, setPhase] = React.useState<string | null>(null);
 
   const selected = products.find((p) => p.id === selectedId);
   const meta = MOVEMENT_TYPE_META[movementType];
@@ -367,6 +375,145 @@ export function StockMovementDialog({
     };
   }, [open, movementType, selectedId, warehouseId]);
 
+  const sleep = (ms: number) =>
+    new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+  /**
+   * Flow v2 (PRD §32b): USER menandatangani & membayar gas proof on-chain.
+   * prepare -> eth_sendTransaction -> submit -> poll finalize (202 = pending).
+   */
+  const submitViaIntent = async (
+    qty: string
+  ): Promise<{ handled: boolean }> => {
+    const wallet =
+      wallets.find((w) => w.address && w.walletClientType !== "guest") ??
+      wallets[0];
+    if (!wallet?.address) {
+      setError(
+        "Connect a Base Sepolia wallet first — your signature pays for this record's on-chain proof."
+      );
+      return { handled: true };
+    }
+
+    if (!idempotencyKey.current) {
+      idempotencyKey.current = newIdempotencyKey();
+    }
+
+    setPhase("Preparing proof…");
+    const prep = await prepareStockIntent({
+      warehouseId,
+      productId: selected!.id,
+      movementType: movementType as "stock_in" | "stock_out",
+      quantity: qty,
+      expectedBalanceVersion:
+        selected!.balanceVersion != null
+          ? String(selected!.balanceVersion)
+          : null,
+      reason: reason.trim(),
+      idempotencyKey: idempotencyKey.current,
+      actorWallet: wallet.address,
+    });
+    if (!prep.ok) {
+      setError(prep.error);
+      idempotencyKey.current = null;
+      return { handled: true };
+    }
+
+    setPhase("Sign the transaction in your wallet…");
+    const provider = await wallet.getEthereumProvider();
+    let txHash: string;
+    try {
+      txHash = (await provider.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            to: prep.data.to,
+            data: prep.data.data,
+            chainId: `0x${prep.data.chainId.toString(16)}`,
+          },
+        ],
+      })) as string;
+    } catch (err) {
+      const code = (err as { code?: number })?.code;
+      idempotencyKey.current = null;
+      setPhase(null);
+      setError(
+        code === 4001
+          ? "Signature cancelled. Nothing was recorded and no gas was spent."
+          : "The wallet could not send the transaction. Please try again."
+      );
+      return { handled: true };
+    }
+    if (!txHash || typeof txHash !== "string") {
+      idempotencyKey.current = null;
+      setPhase(null);
+      setError("Wallet did not return a transaction hash.");
+      return { handled: true };
+    }
+
+    setPhase("Submitting transaction hash…");
+    const submitted = await submitStockIntent(prep.data.intentId, txHash);
+    if (!submitted.ok) {
+      // Tx mungkin sudah terlanjur mined saat submit gagal — coba finalize
+      // sekali sebelum menyerah, supaya stok tidak "hilang" di UI saja.
+      const direct = await finalizeStockIntent(prep.data.intentId);
+      if (!direct.ok || direct.data.status !== "committed") {
+        setPhase(null);
+        setError(submitted.error);
+        return { handled: true };
+      }
+    }
+
+    setPhase("Waiting for Base Sepolia confirmation…");
+    for (let attempt = 0; attempt < 15; attempt++) {
+      const fin = await finalizeStockIntent(prep.data.intentId);
+      if (fin.ok && fin.data.status === "committed") {
+        setPhase(null);
+        onOpenChange(false);
+        onSuccess();
+        const verb = movementType === "stock_in" ? "added to" : "removed from";
+        toast.add({
+          type: "success",
+          title: meta.label,
+          description: `${qty} ${selected!.unit} ${verb} ${selected!.name}. Proof signed by your wallet.`,
+        });
+        return { handled: true };
+      }
+      if (!fin.ok) {
+        if (fin.errorCode === "STALE_STOCK") {
+          setStale(true);
+          setError("Stock updated by another user. Refreshing inventory…");
+          setTimeout(() => {
+            onOpenChange(false);
+            onSuccess();
+          }, 1200);
+          return { handled: true };
+        }
+        if (
+          fin.errorCode === "INSUFFICIENT_STOCK" ||
+          fin.errorCode === "RPC_FAILED"
+        ) {
+          setPhase(null);
+          if (fin.errorCode === "INSUFFICIENT_STOCK") {
+            const balance = await readCurrentBalance(warehouseId, selected!.id);
+            setCurrentBalance(balance);
+            setError("Not enough stock available for this stock out.");
+          } else {
+            setError(fin.error);
+          }
+          return { handled: true };
+        }
+      }
+      await sleep(3000);
+    }
+
+    setPhase(null);
+    setError(
+      "Still waiting for confirmation. Your inventory updates automatically once the transaction is confirmed — you can safely close this."
+    );
+    return { handled: true };
+  };
+
   const submit = async () => {
     if (!selected) {
       setError("Select a product first.");
@@ -402,6 +549,18 @@ export function StockMovementDialog({
     setError(null);
     setStale(false);
     setCurrentBalance(null);
+
+    // Stock In/Out = user-paid intent flow v2 (PRD §32b).
+    if (movementType === "stock_in" || movementType === "stock_out") {
+      try {
+        await submitViaIntent(qty);
+        return;
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    // Adjustment/Reversal: server approval flow (bukan user-paid).
     if (!idempotencyKey.current) {
       idempotencyKey.current = newIdempotencyKey();
     }
@@ -425,14 +584,7 @@ export function StockMovementDialog({
     if (result.ok) {
       onOpenChange(false);
       onSuccess();
-      const verb =
-        movementType === "stock_in"
-          ? "added to"
-          : movementType === "stock_out"
-            ? "removed from"
-            : movementType === "adjustment"
-              ? "applied to"
-              : "reversed on";
+      const verb = movementType === "adjustment" ? "applied to" : "reversed on";
       toast.add({
         type: "success",
         title: meta.label,
@@ -491,6 +643,15 @@ export function StockMovementDialog({
           </p>
         ) : null}
         {error && !stale ? <ErrorBanner message={error} /> : null}
+        {phase ? (
+          <p
+            aria-live="polite"
+            className="bg-primary/10 text-primary flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+          >
+            <Loader2 aria-hidden="true" className="animate-spin" />
+            {phase}
+          </p>
+        ) : null}
         {currentBalance != null ? (
           <p className="text-muted-foreground text-xs">
             Current balance:{" "}
