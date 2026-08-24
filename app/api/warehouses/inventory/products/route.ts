@@ -62,19 +62,16 @@ export async function POST(request: Request) {
   );
   if (inactive) return inactive;
 
-  const { data, error } = await supabase
-    .from("products")
-    .insert({
-      warehouse_id: parsed.data.warehouseId,
-      sku: parsed.data.sku,
-      name: parsed.data.name,
-      category: parsed.data.category || null,
-      unit: parsed.data.unit,
-      low_stock_threshold: parsed.data.lowStockThreshold,
-      description: parsed.data.description || null,
-    })
-    .select("id")
-    .single();
+  // P0-01: mutation via SECURITY DEFINER RPC (direct INSERT/UPDATE revoked).
+  const { data, error } = await supabase.rpc("create_product_rpc", {
+    p_warehouse_id: parsed.data.warehouseId,
+    p_sku: parsed.data.sku,
+    p_name: parsed.data.name,
+    p_category: parsed.data.category || null,
+    p_unit: parsed.data.unit,
+    p_description: parsed.data.description || null,
+    p_low_stock_threshold: parsed.data.lowStockThreshold,
+  });
 
   if (error) return fromPostgrestError(error.message);
 
@@ -119,17 +116,17 @@ export async function PATCH(request: Request) {
   const inactive = await requireActiveWarehouse(supabase, product.warehouse_id);
   if (inactive) return inactive;
 
-  const { error } = await supabase
-    .from("products")
-    .update({
-      sku: parsed.data.sku,
-      name: parsed.data.name,
-      category: parsed.data.category || null,
-      unit: parsed.data.unit,
-      low_stock_threshold: parsed.data.lowStockThreshold,
-      description: parsed.data.description || null,
-    })
-    .eq("id", parsed.data.productId);
+  // P0-01: mutation via SECURITY DEFINER RPC (direct UPDATE revoked).
+  const { error } = await supabase.rpc("update_product_rpc", {
+    p_product_id: parsed.data.productId,
+    p_warehouse_id: product.warehouse_id,
+    p_sku: parsed.data.sku,
+    p_name: parsed.data.name,
+    p_category: parsed.data.category || null,
+    p_unit: parsed.data.unit || null,
+    p_description: parsed.data.description || null,
+    p_low_stock_threshold: parsed.data.lowStockThreshold,
+  });
 
   if (error) return fromPostgrestError(error.message);
 

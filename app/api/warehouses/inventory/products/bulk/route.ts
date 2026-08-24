@@ -79,19 +79,15 @@ export async function POST(request: Request) {
       continue;
     }
     const item = check.data;
-    const { data, error } = await supabase
-      .from("products")
-      .insert({
-        warehouse_id: parsed.data.warehouseId,
-        sku: item.sku,
-        name: item.name,
-        category: item.category || null,
-        unit: item.unit,
-        low_stock_threshold: item.lowStockThreshold || "0",
-        description: item.description || null,
-      })
-      .select("id")
-      .single();
+    const { data, error } = await supabase.rpc("create_product_rpc", {
+      p_warehouse_id: parsed.data.warehouseId,
+      p_sku: item.sku,
+      p_name: item.name,
+      p_category: item.category || null,
+      p_unit: item.unit,
+      p_low_stock_threshold: item.lowStockThreshold || "0",
+      p_description: item.description || null,
+    });
 
     if (error || !data) {
       failed += 1;
