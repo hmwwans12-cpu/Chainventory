@@ -168,7 +168,7 @@ export function TransactionsPage({
         />
       ) : (
         <div className="border-border rounded-xl border">
-          <Table className="min-w-[720px]">
+          <Table className="md:min-w-[720px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Transaction</TableHead>

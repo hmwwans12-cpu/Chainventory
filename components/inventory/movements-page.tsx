@@ -340,7 +340,7 @@ export function MovementsPage({
         />
       ) : (
         <div className="border-border rounded-xl border">
-          <Table className="min-w-[820px]">
+          <Table className="md:min-w-[820px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>

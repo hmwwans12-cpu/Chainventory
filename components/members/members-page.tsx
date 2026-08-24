@@ -344,7 +344,7 @@ export function MembersPage({
       ) : null}
 
       <div className="border-border rounded-xl border">
-        <Table className="min-w-[700px]">
+        <Table className="md:min-w-[700px]">
           <TableHeader>
             <TableRow>
               <TableHead>Member</TableHead>

@@ -218,7 +218,7 @@ export function ProductsPage({
         />
       ) : (
         <div className="border-border rounded-xl border">
-          <Table className="min-w-[760px]">
+          <Table className="md:min-w-[760px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>
