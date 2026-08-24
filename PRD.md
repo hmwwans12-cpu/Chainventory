@@ -1,13 +1,27 @@
 # PRD — Blockchain Inventory Management System
 
-**Status:** Draft for Review / Pre-Freeze
-**Version:** 2.0
-**Last Updated:** 2026-08-12
+**Status:** Approved / Frozen
+**Version:** 2.1
+**Last Updated:** 2026-08-24
 **Primary Network:** Base Sepolia Testnet
 **Database:** Supabase PostgreSQL
 **Authentication & Wallet:** Privy
 **Frontend:** Next.js + TypeScript
 **UI:** Tailwind CSS + shadcn/ui
+
+---
+
+## Architecture Change Log
+
+Perubahan arsitektur setelah freeze v2.0 dicatat di sini dan merujuk spesifikasi resminya.
+
+| Tanggal    | Perubahan                                                                                                                         | Referensi                                                                 |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 2026-08-22 | Transaction & dashboard redesign (drawer transaksi, RangeTabs deep-link, chart area)                                              | `docs/superpowers/specs/2026-08-22-transaction-and-dashboard-redesign.md` |
+| 2026-08-23 | Google OAuth, Realtime state machine, CSV import/export                                                                           | `docs/superpowers/specs/2026-08-23-oauth-realtime-csv-design.md`          |
+| 2026-08-23 | **Stock Intents v2** — member wallet menandatangani & membayar gas untuk Stock In/Out (`stock_intents`, RPC create/submit/commit) | `supabase/migrations/0024`, `0025`                                        |
+| 2026-08-24 | Faucet live (0022 diperbaiki), penggantian `auth.role()` → JWT claims (0026), rate limiter mutasi sensitif fail-closed            | `lib/security/rate-limit.ts`                                              |
+| 2026-08-24 | WarehouseFactory v2 (solc 0.8.36) terdeploy — peralihan aktif ditunggu keputusan                                                  | `contracts/deployments/base-sepolia.json`                                 |
 
 ---
 

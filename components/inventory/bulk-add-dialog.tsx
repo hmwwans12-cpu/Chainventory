@@ -1,5 +1,13 @@
 "use client";
 
+/*
+ * KEPUTUSAN FLOW (DESIGN §84.6): initial stock via CSV sengaja memakai
+ * server initialization flow (Owner/Manager ter-autentikasi), BUKAN
+ * wallet-paid intent v2 — bulk import tidak realistis menandatangani
+ * satu transaksi per baris. Invariant tetap terjaga: jalur server yang
+ * sama (RPC atomik + audit + proof) dengan alur manual.
+ */
+
 import * as React from "react";
 import {
   AlertTriangle,

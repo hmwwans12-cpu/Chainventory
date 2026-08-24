@@ -1076,3 +1076,53 @@ Berikut dianggap terkunci kecuali diubah secara eksplisit:
 - SEO-ready landing page
 - Simple non-crypto-user-friendly Web3 UX
 - Authentication flow: Supabase Auth (identitas) → Privy custom-auth (wallet) — lihat §25
+
+---
+
+## 84. UI Consistency Addendum (2026-08-24)
+
+### 84.1 Spacing Scale (frozen)
+
+| Tier      | Nilai                                             | Pemakaian               |
+| --------- | ------------------------------------------------- | ----------------------- |
+| Micro     | `4px` / `8px` (`gap-1`, `gap-2`)                  | icon↔label, label↔value |
+| Component | `12px` / `16px` (`gap-3`, `gap-4`)                | antar-field, dalam card |
+| Section   | `24px` / `32px` (`gap-6`, `gap-8`)                | antar-section halaman   |
+| Page      | `24px` mobile → `32px` desktop (`py-6`→`md:py-8`) | padding main content    |
+
+Nilai di luar skala (`gap-5`, `p-5`, dst.) tidak dipakai untuk kode baru.
+
+### 84.2 Card Anatomy & Density
+
+| Tipe                        | Min-height                      | Isi wajib                                   |
+| --------------------------- | ------------------------------- | ------------------------------------------- |
+| Stat card                   | `148px` (`min-h-[148px]`)       | label, value besar, delta/takeaway opsional |
+| Standard card               | konten-driven, `gap-4` internal | header + body                               |
+| Large content (tabel/chart) | auto                            | header + toolbar/body                       |
+
+Semua stat card memakai komponen `StatCard` — dilarang bikin stat ad-hoc.
+
+### 84.3 Main Content Width
+
+Dashboard main dibatasi `max-w-[1600px] mx-auto` agar proporsional di ultrawide.
+
+### 84.4 Status Color Semantics
+
+| Makna                         | Token                |
+| ----------------------------- | -------------------- |
+| Success / Stock In            | `primary` (+ icon ✓) |
+| Warning / Pending / Low stock | `warning`            |
+| Failed / danger               | `destructive`        |
+| Neutral / Archived            | `muted`              |
+| Info / Stock Out delta        | `secondary`          |
+
+Dilarang memakai raw palette Tailwind (amber/emerald/red) — audit 2026-08-24 telah membersihkan semuanya.
+
+### 84.5 CSV Export Encoding
+
+CSV export wajib BOM UTF-8 (Excel), delimiter koma standar, timestamp `YYYY-MM-DD HH:mm:ss` UTC. Baris hint `sep=` dilarang (tidak reliable dengan BOM).
+
+### 84.6 Keputusan Flow Stok
+
+- **Stock In/Out manual** = user-paid intent flow v2 (wallet member menandatangani proof).
+- **CSV initial stock** = server initialization flow via Owner/Manager ter-autentikasi — SENGAJA tidak melalui wallet-paid intent (bulk, tanpa interaksi wallet per baris). Invariant tetap terjaga karena kedua jalur sama-sama melalui RPC atomik + audit + proof.
