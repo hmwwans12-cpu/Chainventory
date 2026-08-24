@@ -170,10 +170,10 @@ export async function DELETE(request: Request) {
   if (inactive) return inactive;
 
   // P1-03: archive via RPC atomik (lock product + balance dalam satu tx).
+  // 0034: p_actor_user_id dihapus — auth.uid() di dalam RPC.
   const { error: archiveError } = await supabase.rpc("archive_product", {
     p_warehouse_id: parsed.data.warehouseId,
     p_product_id: parsed.data.productId,
-    p_actor_user_id: auth.user.id,
   });
 
   if (archiveError) return fromPostgrestError(archiveError.message);
