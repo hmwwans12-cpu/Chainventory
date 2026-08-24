@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { LogOut, Settings } from "lucide-react";
 
+import { signOutAction } from "@/app/actions/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Breadcrumb,
@@ -12,6 +14,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -103,21 +113,56 @@ export function SiteHeader({
         <RealtimeIndicator warehouseId={active?.id ?? null} />
         <NotificationBell />
         {user ? (
-          <div className="flex items-center gap-2 rounded-lg px-2 py-1.5">
-            <Avatar size="sm">
-              <AvatarFallback>
-                {(user.name ?? user.email ?? "U").charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="hidden flex-col leading-tight md:flex">
-              <span className="text-foreground text-sm font-medium">
-                {user.name ?? "User"}
-              </span>
-              <span className="text-muted-foreground text-xs">
-                {user.email}
-              </span>
-            </div>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <button
+                  type="button"
+                  aria-label="Account menu"
+                  className="hover:bg-muted/60 focus-visible:ring-ring flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors outline-none focus-visible:ring-2"
+                />
+              }
+            >
+              <Avatar size="sm">
+                <AvatarFallback>
+                  {(user.name ?? user.email ?? "U").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="hidden flex-col leading-tight md:flex">
+                <span className="text-foreground text-sm font-medium">
+                  {user.name ?? "User"}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  {user.email}
+                </span>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <span className="text-foreground block truncate text-sm font-medium">
+                  {user.name ?? "User"}
+                </span>
+                <span className="text-muted-foreground block truncate text-xs font-normal">
+                  {user.email}
+                </span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/settings" />}>
+                <Settings aria-hidden="true" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {/* Server action signOut (app/actions/auth.ts) — audit #1 */}
+              <form action={signOutAction}>
+                <DropdownMenuItem
+                  render={<button type="submit" className="w-full" />}
+                >
+                  <LogOut aria-hidden="true" />
+                  Sign out
+                </DropdownMenuItem>
+              </form>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <Skeleton className="size-8 rounded-full" />
         )}

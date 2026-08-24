@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createPublicClient, formatEther } from "viem";
-import { Building2, ExternalLink, User, Wallet } from "lucide-react";
+import { Building2, ExternalLink, LogOut, User, Wallet } from "lucide-react";
 
+import { signOutAction } from "@/app/actions/auth";
 import { baseSepolia, createChainTransport } from "@/lib/blockchain/chains";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -220,6 +221,24 @@ export default async function SettingsPage() {
           />
         )}
       </div>
+
+      {/* Account / sesi (audit #1) — logout diakses dari Settings juga */}
+      <Card>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <p className="text-foreground text-sm font-semibold">Account</p>
+            <p className="text-muted-foreground truncate text-xs">
+              Signed in as {email || user.email}
+            </p>
+          </div>
+          <form action={signOutAction}>
+            <Button variant="outline" size="sm" type="submit">
+              <LogOut aria-hidden="true" />
+              Sign out
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
