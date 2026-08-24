@@ -138,14 +138,17 @@ export function SiteHeader({
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <span className="text-foreground block truncate text-sm font-medium">
-                  {user.name ?? "User"}
-                </span>
-                <span className="text-muted-foreground block truncate text-xs font-normal">
-                  {user.email}
-                </span>
-              </DropdownMenuLabel>
+              {/* Label wajib berada dalam Group (konteks MenuGroup Base UI) */}
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>
+                  <span className="text-foreground block truncate text-sm font-medium">
+                    {user.name ?? "User"}
+                  </span>
+                  <span className="text-muted-foreground block truncate text-xs font-normal">
+                    {user.email}
+                  </span>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem render={<Link href="/settings" />}>
                 <Settings aria-hidden="true" />

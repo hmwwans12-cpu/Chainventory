@@ -143,7 +143,9 @@ export function AppSidebar({
                   />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuLabel>Active warehouse</DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>Active warehouse</DropdownMenuLabel>
+                  </DropdownMenuGroup>
                   {warehouses.map((w) => (
                     <DropdownMenuItem
                       key={w.id}
@@ -258,14 +260,16 @@ export function AppSidebar({
                       />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-56">
-                      <DropdownMenuLabel>
-                        <span className="block truncate text-sm font-medium">
-                          {user.name ?? "User"}
-                        </span>
-                        <span className="block truncate text-xs font-normal">
-                          {user.email}
-                        </span>
-                      </DropdownMenuLabel>
+                      <DropdownMenuGroup>
+                        <DropdownMenuLabel>
+                          <span className="block truncate text-sm font-medium">
+                            {user.name ?? "User"}
+                          </span>
+                          <span className="block truncate text-xs font-normal">
+                            {user.email}
+                          </span>
+                        </DropdownMenuLabel>
+                      </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem render={<Link href="/settings" />}>
                         <Settings aria-hidden="true" />
