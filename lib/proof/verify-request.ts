@@ -1,7 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 
 import { Receiver } from "@upstash/qstash";
-import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
@@ -44,24 +43,23 @@ export async function verifyQStashSignature(
 }
 
 /**
- * `verifySignatureAppRouter` yang di-hardening: SDK mengembalikan 403 untuk
- * header hilang, tetapi signature rusak (garbage / body tampered) melempar
- * `SignatureError` yang bocor menjadi HTTP 500. Wrapper ini memastikan semua
- * jalur gagal verifikasi → 403 (fail-closed), dan hanya error non-signature
- * yang diteruskan.
+ * Wrapper hardening untuk route internal proof.
+ *
+ * CATATAN (audit CI 2026-08-24): TIDAK memakai `verifySignatureAppRouter`
+ * dari SDK — versi SDK membangun `Receiver` di module-load dan langsung
+ * membaca env signing keys, sehingga BUILD gagal di lingkungan tanpa
+ * QStash keys (CI). Implementasi di bawah memakai `Receiver` lazy
+ * (verifyQStashSignature) dengan semantik fail-closed identik:
+ * semua kegagalan verifikasi -> 403, error lain diteruskan.
  */
 export function verifyQStashAppRouter(
   handler: (request: Request) => Promise<Response> | Response
 ) {
-  const guarded = verifySignatureAppRouter(handler);
   return async (request: Request): Promise<Response> => {
-    try {
-      return await guarded(request);
-    } catch (err) {
-      if (err instanceof Error && err.name === "SignatureError") {
-        return new Response("invalid signature", { status: 403 });
-      }
-      throw err;
+    const ok = await verifyQStashSignature(request);
+    if (!ok) {
+      return new Response("invalid signature", { status: 403 });
     }
+    return handler(request);
   };
 }
