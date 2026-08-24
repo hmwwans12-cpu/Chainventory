@@ -8,6 +8,7 @@ import {
   invalid,
   ok,
   readJson,
+  requireActiveWarehouse,
   requirePermission,
   requireRateLimit,
   requireUser,
@@ -54,6 +55,13 @@ export async function POST(request: Request) {
     PERMISSIONS.PRODUCT_BULK_IMPORT
   );
   if (denied) return denied;
+
+  // C-02: warehouse suspended menolak SEMUA mutation produk.
+  const inactive = await requireActiveWarehouse(
+    supabase,
+    parsed.data.warehouseId
+  );
+  if (inactive) return inactive;
 
   const results: RowResult[] = [];
   let created = 0;

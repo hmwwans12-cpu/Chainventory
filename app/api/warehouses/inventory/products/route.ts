@@ -12,6 +12,7 @@ import {
   notFound,
   ok,
   readJson,
+  requireActiveWarehouse,
   requirePermission,
   requireRateLimit,
   requireUser,
@@ -54,6 +55,13 @@ export async function POST(request: Request) {
     PERMISSIONS.PRODUCT_CREATE
   );
   if (denied) return denied;
+
+  // C-02: warehouse suspended menolak SEMUA mutation produk.
+  const inactive = await requireActiveWarehouse(
+    supabase,
+    parsed.data.warehouseId
+  );
+  if (inactive) return inactive;
 
   const { data, error } = await supabase
     .from("products")
@@ -103,6 +111,10 @@ export async function PATCH(request: Request) {
   );
   if (denied) return denied;
 
+  // C-02: warehouse suspended menolak SEMUA mutation produk.
+  const inactive = await requireActiveWarehouse(supabase, product.warehouse_id);
+  if (inactive) return inactive;
+
   const { error } = await supabase
     .from("products")
     .update({
@@ -145,6 +157,13 @@ export async function DELETE(request: Request) {
     PERMISSIONS.PRODUCT_ARCHIVE
   );
   if (denied) return denied;
+
+  // C-02: warehouse suspended menolak SEMUA mutation produk.
+  const inactive = await requireActiveWarehouse(
+    supabase,
+    parsed.data.warehouseId
+  );
+  if (inactive) return inactive;
 
   // Tolak archive bila masih ada stok tersisa (DESIGN §34/§52 — inventory
   // harus nol dulu sebelum produk diarsipkan). Pesan jelas untuk UI.

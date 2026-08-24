@@ -41,7 +41,24 @@ export function NotificationBell() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [notifications, setNotifications] = useState<NotificationRow[]>([]);
+  const [notifications, setNotificationsState] = useState<NotificationRow[]>(
+    []
+  );
+  // Ref mirror agar realtime callback selalu bandingkan dgn state terkini
+  // (audit M-05: closure snapshot lama bikin flash palsu).
+  const notificationsRef = useRef<NotificationRow[]>([]);
+  const setNotifications = (
+    value: NotificationRow[] | ((rows: NotificationRow[]) => NotificationRow[])
+  ) => {
+    const next =
+      typeof value === "function"
+        ? (value as (rows: NotificationRow[]) => NotificationRow[])(
+            notificationsRef.current
+          )
+        : value;
+    notificationsRef.current = next;
+    setNotificationsState(next);
+  };
   const [loading, setLoading] = useState(true);
   const [flashId, setFlashId] = useState<string | null>(null);
   const [badgePop, setBadgePop] = useState(false);
@@ -96,7 +113,7 @@ export function NotificationBell() {
               fetchRecentNotifications(supabase, PANEL_LIMIT),
             ]);
             const added = newRows.find(
-              (r) => !notifications.some((n) => n.id === r.id)
+              (r) => !notificationsRef.current.some((n) => n.id === r.id)
             );
             setNotifications(newRows);
             setUnreadCount(newCount);
@@ -139,7 +156,6 @@ export function NotificationBell() {
       if (channel) void supabase.removeChannel(channel);
       if (popTimer.current) clearTimeout(popTimer.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refresh = useCallback(async () => {

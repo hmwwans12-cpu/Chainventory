@@ -152,6 +152,25 @@ export async function requirePermission(
 }
 
 /**
+ * Gate warehouse lifecycle (audit C-02): warehouse suspended menolak
+ * SEMUA mutation produk — bukan cuma movement. Null = boleh lanjut.
+ */
+export async function requireActiveWarehouse(
+  supabase: SupabaseClient,
+  warehouseId: string
+): Promise<NextResponse | null> {
+  const { data } = await supabase
+    .from("warehouses")
+    .select("status")
+    .eq("id", warehouseId)
+    .maybeSingle();
+  if (!data || data.status !== "active") {
+    return forbidden("Warehouse is suspended or inactive.");
+  }
+  return null;
+}
+
+/**
  * Gate rate limit mutasi sensitif (TECHSTACK §6.1, fail-closed): panggil
  * SETELAH `requireUser` (butuh userId). Null → boleh lanjut; selain itu
  * 429 + Retry-After siap dikembalikan ke client.
