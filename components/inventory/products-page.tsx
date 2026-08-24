@@ -222,11 +222,11 @@ export function ProductsPage({
             <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Unit</TableHead>
+                <TableHead className="hidden xl:table-cell">Category</TableHead>
+                <TableHead className="hidden lg:table-cell">Unit</TableHead>
                 <TableHead className="text-right">Current Stock</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Updated</TableHead>
+                <TableHead className="hidden md:table-cell">Updated</TableHead>
                 <TableHead className="w-12">
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -255,10 +255,10 @@ export function ProductsPage({
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="text-muted-foreground hidden xl:table-cell">
                       {product.category ?? "—"}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="text-muted-foreground hidden lg:table-cell">
                       {product.unit}
                     </TableCell>
                     <TableCell className="text-right">
@@ -281,7 +281,7 @@ export function ProductsPage({
                         label={archived ? "Archived" : "Active"}
                       />
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
+                    <TableCell className="text-muted-foreground hidden text-xs md:table-cell">
                       {formatDate(product.updatedAt)}
                     </TableCell>
                     <TableCell>

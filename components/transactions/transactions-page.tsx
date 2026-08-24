@@ -175,9 +175,11 @@ export function TransactionsPage({
                 <TableHead>Type</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Blockchain</TableHead>
-                <TableHead>Actor</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Blockchain
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">Actor</TableHead>
+                <TableHead className="hidden lg:table-cell">Date</TableHead>
                 <TableHead className="w-12">
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -232,7 +234,7 @@ export function TransactionsPage({
                         label={statusMeta.label}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {m.proofTxHash && m.proofStatus === "confirmed" ? (
                         <a
                           href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
@@ -256,10 +258,10 @@ export function TransactionsPage({
                         <span className="text-muted-foreground text-xs">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-muted-foreground font-mono text-xs">
+                    <TableCell className="text-muted-foreground hidden font-mono text-xs lg:table-cell">
                       {shortWallet(m.actorWallet)}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
+                    <TableCell className="text-muted-foreground hidden text-xs lg:table-cell">
                       {formatDateTime(m.created_at)}
                     </TableCell>
                     <TableCell>

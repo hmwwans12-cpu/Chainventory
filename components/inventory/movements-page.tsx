@@ -347,9 +347,9 @@ export function MovementsPage({
                 <TableHead>Type</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Actor</TableHead>
-                <TableHead>Proof</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead className="hidden lg:table-cell">Actor</TableHead>
+                <TableHead className="hidden md:table-cell">Proof</TableHead>
+                <TableHead className="hidden lg:table-cell">Created</TableHead>
                 <TableHead className="w-12">
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -426,10 +426,10 @@ export function MovementsPage({
                         />
                       )}
                     </TableCell>
-                    <TableCell className="text-muted-foreground font-mono text-xs">
+                    <TableCell className="text-muted-foreground hidden font-mono text-xs lg:table-cell">
                       {shortWallet(m.actorWallet)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {m.proofTxHash && m.proofStatus === "confirmed" ? (
                         <a
                           href={`https://sepolia.basescan.org/tx/${m.proofTxHash}`}
@@ -453,7 +453,7 @@ export function MovementsPage({
                         <span className="text-muted-foreground text-xs">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
+                    <TableCell className="text-muted-foreground hidden text-xs lg:table-cell">
                       {formatDateTime(m.created_at)}
                     </TableCell>
                     <TableCell>

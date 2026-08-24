@@ -350,7 +350,7 @@ export function MembersPage({
               <TableHead>Member</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Joined</TableHead>
+              <TableHead className="hidden lg:table-cell">Joined</TableHead>
               <TableHead className="w-12">
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -441,7 +441,7 @@ export function MembersPage({
                       }
                     />
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
+                  <TableCell className="text-muted-foreground hidden text-xs lg:table-cell">
                     {member.joinedAt ? formatDate(member.joinedAt) : "—"}
                   </TableCell>
                   <TableCell>
