@@ -16,6 +16,7 @@ import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
