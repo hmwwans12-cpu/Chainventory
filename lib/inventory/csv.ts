@@ -104,9 +104,13 @@ export function parseCsvMatrix(
   return { rows, overflow: false };
 }
 
-/** Escape satu sel sesuai RFC 4180 (kutip ganda hanya saat perlu). */
+/** Escape satu sel sesuai RFC 4180 + mitigasi formula injection (M-03). */
 export function csvCell(value: string): string {
-  return /[",\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
+  // Nilai berawalan karakter eksekusi formula spreadsheet diberi awalan
+  // apostrof. Angka negatif murni ("-30") dikecualikan agar tetap bersih.
+  const safe =
+    /^[=+@]/.test(value) || /^-(?!\d)/.test(value) ? `'${value}` : value;
+  return /[",\r\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
 }
 
 /** Serialize matrix menjadi teks CSV (CRLF). */

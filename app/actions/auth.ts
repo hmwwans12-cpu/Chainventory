@@ -17,6 +17,16 @@ import { loginSchema, signupSchema } from "@/lib/validators/auth";
  * the Supabase session that Privy custom-auth will consume.
  */
 
+/**
+ * Whitelist tujuan post-login (audit H-01): hanya path internal relatif,
+ * tanpa protokol/double-slash — mencegah open redirect.
+ */
+function safeNext(value: FormDataEntryValue | null): string {
+  if (typeof value !== "string") return "/dashboard";
+  if (value.startsWith("/") && !value.startsWith("//")) return value;
+  return "/dashboard";
+}
+
 export async function loginAction(
   _prevState: unknown,
   formData: FormData
@@ -41,7 +51,8 @@ export async function loginAction(
     return { error: "Invalid email or password." };
   }
 
-  redirect("/dashboard");
+  // H-01: hormati tujuan awal user (?next=) — sudah di-whitelist.
+  redirect(safeNext(formData.get("next")));
 }
 
 export async function signupAction(
@@ -88,10 +99,12 @@ export async function resetPasswordAction(
     return { error: "Please enter your email address." };
   }
 
+  // H-02: recovery code dari email ditukar sesi lewat /auth/confirm
+  // (exchangeCodeForSession) SEBELUM halaman reset-password dipakai.
   const supabase = await createClient();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${env.NEXT_PUBLIC_APP_URL}/reset-password`,
+    redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/confirm?next=/reset-password`,
   });
 
   if (error) {

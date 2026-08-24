@@ -8,7 +8,13 @@ import { FormField } from "@/components/auth/form-field";
 import { GoogleButton, OAuthDivider } from "@/components/auth/google-button";
 import { loginAction } from "@/app/actions/auth";
 
-export function LoginForm({ initialError }: { initialError?: string }) {
+export function LoginForm({
+  initialError,
+  next,
+}: {
+  initialError?: string;
+  next?: string;
+}) {
   const [error, setError] = useState<string | null>(initialError ?? null);
   const [pending, startTransition] = useTransition();
 
@@ -26,6 +32,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
   return (
     <>
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+        {next ? <input type="hidden" name="next" value={next} /> : null}
         {error ? (
           <div
             role="alert"

@@ -182,7 +182,7 @@ export default async function DashboardPage({
       : row.inventory_balances;
     const qty =
       balanceRow?.quantity != null ? Number(balanceRow.quantity) : null;
-    if (qty != null && qty > 0 && qty <= threshold) lowStockCount += 1;
+    if (qty != null && qty <= threshold) lowStockCount += 1;
   }
 
   const recentMovements: RecentMovementItem[] = (

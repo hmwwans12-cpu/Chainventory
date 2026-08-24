@@ -25,6 +25,7 @@ export default async function ProductsPageRoute({
 }: {
   searchParams: Promise<{
     q?: string | string[];
+    status?: string | string[];
     warehouse?: string | string[];
   }>;
 }) {
@@ -38,6 +39,9 @@ export default async function ProductsPageRoute({
   const warehouseParam =
     typeof params.warehouse === "string" ? params.warehouse : undefined;
   const q = typeof params.q === "string" ? params.q.trim() : "";
+  const rawStatus = typeof params.status === "string" ? params.status : "";
+  const statusFilter =
+    rawStatus === "archived" || rawStatus === "all" ? rawStatus : "active"; // default: main inventory = produk aktif (H-05)
 
   const warehouses = await getMyWarehouses(supabase, user.id);
   const active = pickActiveWarehouse(warehouses, warehouseParam);
@@ -126,6 +130,7 @@ export default async function ProductsPageRoute({
         description={`${active.name} · inventory.`}
       />
       <ProductsPage
+        statusFilter={statusFilter}
         warehouseId={active.id}
         warehouses={warehouses}
         role={active.role}

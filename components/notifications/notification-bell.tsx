@@ -112,6 +112,24 @@ export function NotificationBell() {
             }
           }
         )
+        // M-07: UPDATE (mark-as-read di tab lain) ikut disinkronkan.
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          async () => {
+            const [newCount, newRows] = await Promise.all([
+              fetchUnreadCount(supabase),
+              fetchRecentNotifications(supabase, PANEL_LIMIT),
+            ]);
+            setNotifications(newRows);
+            setUnreadCount(newCount);
+          }
+        )
         .subscribe();
     }
 

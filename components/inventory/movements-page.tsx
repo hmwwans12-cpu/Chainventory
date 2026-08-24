@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   Plus,
   Scale,
+  TriangleAlert,
   Undo2,
   X,
 } from "lucide-react";
@@ -155,6 +156,10 @@ export function MovementsPage({
   const canReversal = hasPermission(role, PERMISSIONS.STOCK_REVERSAL);
   const canApprove = hasPermission(role, PERMISSIONS.STOCK_APPROVE_ADJUSTMENT);
   const canExport = hasPermission(role, PERMISSIONS.MOVEMENT_READ);
+  // H-06: warehouse suspended menolak SEMUA mutasi (0020) — jangan tampilkan
+  // affordance palsu di UI.
+  const suspended =
+    warehouses.find((w) => w.id === warehouseId)?.status === "suspended";
 
   const [supabase] = React.useState(() => createSupabaseClient());
 
@@ -276,6 +281,7 @@ export function MovementsPage({
                 {canAdjust ? (
                   <DropdownMenuItem
                     onClick={() => setMovementDialog({ type: "adjustment" })}
+                    disabled={suspended}
                   >
                     <Scale aria-hidden="true" />
                     Adjustment
@@ -284,6 +290,7 @@ export function MovementsPage({
                 {canReversal ? (
                   <DropdownMenuItem
                     onClick={() => setMovementDialog({ type: "reversal" })}
+                    disabled={suspended}
                   >
                     <Undo2 aria-hidden="true" />
                     Reversal
@@ -310,19 +317,33 @@ export function MovementsPage({
             <Button
               variant="outline"
               onClick={() => setMovementDialog({ type: "stock_out" })}
+              disabled={suspended}
             >
               <ArrowUpFromLine aria-hidden="true" />
               Stock Out
             </Button>
           ) : null}
           {canStockIn ? (
-            <Button onClick={() => setMovementDialog({ type: "stock_in" })}>
+            <Button
+              onClick={() => setMovementDialog({ type: "stock_in" })}
+              disabled={suspended}
+            >
               <Plus aria-hidden="true" />
               Stock In
             </Button>
           ) : null}
         </div>
       </div>
+
+      {suspended ? (
+        <p
+          role="status"
+          className="border-warning/40 bg-warning/15 text-warning flex items-center gap-2 rounded-xl border px-4 py-3 text-sm"
+        >
+          <TriangleAlert aria-hidden="true" className="size-4 shrink-0" />
+          Warehouse suspended — inventory mutations are temporarily unavailable.
+        </p>
+      ) : null}
 
       {movements.length === 0 ? (
         <EmptyState
@@ -399,7 +420,9 @@ export function MovementsPage({
                       </span>
                     </TableCell>
                     <TableCell>
-                      {m.status === "pending_approval" && canApprove ? (
+                      {m.status === "pending_approval" &&
+                      canApprove &&
+                      !suspended ? (
                         <div className="flex items-center gap-1.5">
                           <Button
                             size="sm"

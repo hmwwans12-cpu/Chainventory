@@ -60,15 +60,27 @@ export function ProductsPage({
   role,
   products,
   query,
+  statusFilter = "active",
 }: {
   warehouseId: string;
   warehouses: WarehouseSummary[];
   role: Role;
   products: ProductRow[];
   query: string;
+  statusFilter?: "active" | "archived" | "all";
 }) {
   const router = useRouter();
   const pathname = usePathname();
+
+  // H-05: ganti filter status produk dengan membawa q & warehouse.
+  const setStatus = (value: "active" | "archived" | "all") => {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (warehouseId) params.set("warehouse", warehouseId);
+    if (value !== "active") params.set("status", value);
+    const qs = params.toString();
+    router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+  };
 
   const [searchInput, setSearchInput] = React.useState(query);
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -105,7 +117,7 @@ export function ProductsPage({
     }, 350);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchInput]);
+  }, [searchInput, warehouseId]);
 
   const refresh = () => router.refresh();
 
@@ -163,6 +175,22 @@ export function ProductsPage({
               </SelectContent>
             </Select>
           ) : null}
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => {
+              if (value !== null)
+                setStatus(value as "active" | "archived" | "all");
+            }}
+          >
+            <SelectTrigger size="sm" aria-label="Product status filter">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+              <SelectItem value="all">All</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex items-center gap-2">
           {canExport ? (
@@ -238,7 +266,6 @@ export function ProductsPage({
                 const low =
                   !archived &&
                   product.quantity != null &&
-                  Number(product.quantity) > 0 &&
                   Number(product.quantity) <= Number(product.lowStockThreshold);
                 return (
                   <TableRow

@@ -32,11 +32,24 @@ export async function sendJson(
   init: { method?: string; body?: unknown },
   fetcher: Fetcher = fetch
 ): Promise<{ status: number; json: unknown }> {
-  const res = await fetcher(path, {
-    method: init.method ?? "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(init.body ?? {}),
-  });
+  let res: Response;
+  try {
+    res = await fetcher(path, {
+      method: init.method ?? "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(init.body ?? {}),
+    });
+  } catch {
+    // M-08: network down / DNS / reset — jangan biarkan exception membuat
+    // UI hang; petakan ke failure standar (status 0).
+    return {
+      status: 0,
+      json: {
+        ok: false,
+        error: "Network error. Please check your connection and try again.",
+      },
+    };
+  }
   let json: unknown = null;
   try {
     json = await res.json();

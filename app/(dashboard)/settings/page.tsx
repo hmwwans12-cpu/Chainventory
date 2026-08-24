@@ -35,7 +35,11 @@ export const metadata = {
  * Halaman Settings (DESIGN §30) — target klik ProfileWalletCard.
  * Read-only profile & wallet & warehouse info; tidak ada aksi destruktif.
  */
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ warehouse?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -63,7 +67,8 @@ export default async function SettingsPage() {
   const email =
     (profileRes.data?.email as string | undefined) ?? user.email ?? "";
   const walletAddress = (walletRes.data?.address as string | undefined) ?? null;
-  const active = pickActiveWarehouse(warehouses, undefined);
+  const sp = await searchParams;
+  const active = pickActiveWarehouse(warehouses, sp.warehouse);
   const balanceWei = await fetchWalletBalance(walletAddress);
 
   return (

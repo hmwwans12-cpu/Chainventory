@@ -5,7 +5,6 @@ import {
   Users,
   ChartNoAxesCombined,
   Bell,
-  Settings,
   Blocks,
   type LucideIcon,
 } from "lucide-react";
@@ -22,8 +21,8 @@ export type NavItem = {
 };
 
 /**
- * Sidebar navigation (DESIGN §13).
- * Blockchain-related section stays secondary — not a primary nav entry.
+ * Sidebar navigation (DESIGN Â§13).
+ * Blockchain-related section stays secondary â€” not a primary nav entry.
  */
 export const NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -68,6 +67,4 @@ export const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export const FOOTER_NAV_ITEMS: NavItem[] = [
-  { title: "Settings", href: "/settings", icon: Settings },
-];
+export const FOOTER_NAV_ITEMS: NavItem[] = [];

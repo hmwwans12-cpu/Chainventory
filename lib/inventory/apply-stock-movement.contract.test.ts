@@ -418,6 +418,37 @@ async function applyMovement(
           p_expected_balance_version: 5,
         });
         expect(r.error_code).toBe("NOT_FOUND");
+
+        // 15) C-02: Reversal terhadap STOCK_OUT MENGEMBALIKAN stok (+qty).
+        // Saldo 97 @v5. Out 90 -> v6 (7). Reversal out-90 -> v7 (97 kembali).
+        // Kode lama (selalu kurangi) akan menjawab INSUFFICIENT_STOCK di sini.
+        r = await applyMovement(ownerTok, {
+          ...base,
+          p_movement_type: "stock_out",
+          p_quantity: 90,
+          p_expected_balance_version: 5,
+        });
+        expect(r.error_code).toBeNull();
+        expect(r.balance_version).toBe(6);
+        const c02OutMovementId = r.movement_id;
+
+        r = await applyMovement(ownerTok, {
+          ...base,
+          p_movement_type: "reversal",
+          p_quantity: 90,
+          p_expected_balance_version: 6,
+          p_reversal_of: c02OutMovementId,
+        });
+        expect(r.error_code).toBeNull();
+        expect(r.balance_version).toBe(7);
+
+        const restoredBalance = await selectRows(
+          PUBLISHABLE!,
+          ownerTok,
+          "inventory_balances",
+          `warehouse_id=eq.${warehouseId}&product_id=eq.${productId}&select=quantity`
+        );
+        expect(Number(restoredBalance[0]?.quantity)).toBe(97);
       } finally {
         // Cleanup: hapus warehouse (cascade products/balances/movements/
         // memberships), lalu hapus user auth (cascade public.users).

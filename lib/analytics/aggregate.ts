@@ -104,8 +104,13 @@ function fillDailyGaps(
 /**
  * Rapikan string desimal DB (`35.500` → `35.5`), pertahankan integer tanpa
  * titik (`0`, `10`). Hanya untuk tampilan; RPC tetap mengembalikan nilai asli.
+ *
+ * FIX C-01 (audit 2026-08-24): regex lama `replace(/0+$/, "")` menghapus
+ * nol di SELURUH string -> "10" jadi "1", "100" jadi "1", "0" jadi "".
+ * Trailing-zero hanya boleh disentuh di bagian FRAKSI.
  */
-function normalizeDecimal(value: string): string {
+export function normalizeDecimal(value: string): string {
+  if (!value.includes(".")) return value;
   const trimmed = value.replace(/0+$/, "");
   return trimmed.endsWith(".") ? trimmed.slice(0, -1) : trimmed;
 }

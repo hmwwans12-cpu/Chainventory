@@ -71,13 +71,19 @@ export function TransactionsPage({
   const [detailTarget, setDetailTarget] =
     React.useState<MovementListItem | null>(null);
 
+  // H-04: merge dengan filter aktif (type/proof) agar pagination tidak
+  // menghapusnya — sebelumnya hanya page yang dikirim ulang.
   const goTo = (params: Record<string, string | undefined>) => {
     const url = new URLSearchParams();
     if (warehouseId) url.set("warehouse", warehouseId);
-    if (page > 1 || params.page) url.set("page", params.page ?? String(page));
-    if (params.type) url.set("type", params.type);
-    if (params.proof) url.set("proof", params.proof);
-    router.replace(`${pathname}?${url.toString()}`);
+    const nextType = params.type ?? type;
+    const nextProof = params.proof ?? proof;
+    const nextPage = params.page ?? String(page);
+    if (nextType) url.set("type", nextType);
+    if (nextProof) url.set("proof", nextProof);
+    if (nextPage !== "1") url.set("page", nextPage);
+    const qs = url.toString();
+    router.replace(`${pathname}${qs ? `?${qs}` : ""}`);
   };
 
   const switchWarehouse = (id: string) => {

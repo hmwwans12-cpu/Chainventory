@@ -12,9 +12,14 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const params = await searchParams;
+  const rawNext = params.next;
+  const safeNext =
+    rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//")
+      ? rawNext
+      : undefined;
   const oauthError =
     params.error === "oauth"
       ? "Google sign-in was cancelled or failed. Please try again."
@@ -31,7 +36,7 @@ export default async function LoginPage({
         </p>
       </div>
 
-      <LoginForm initialError={oauthError} />
+      <LoginForm initialError={oauthError} next={safeNext} />
 
       <div className="border-border flex flex-col gap-1.5 border-t pt-4 text-center text-sm">
         <p className="text-muted-foreground">
