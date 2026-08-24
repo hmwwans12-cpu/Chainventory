@@ -62,6 +62,39 @@ export async function POST(request: Request) {
   );
   if (inactive) return inactive;
 
+  const initialQtyRaw = (parsed.data.initialQuantity ?? "").trim();
+  const hasInitialQty = initialQtyRaw !== "" && Number(initialQtyRaw) > 0;
+
+  if (hasInitialQty) {
+    // P1-06: warehouse BELUM deployed -> create + initial stock ATOMIK dalam
+    // satu transaksi (tidak ada proof yang mungkin sebelum deployment).
+    const { data: wh } = await supabase
+      .from("warehouses")
+      .select("contract_address")
+      .eq("id", parsed.data.warehouseId)
+      .maybeSingle();
+
+    if (!wh?.contract_address) {
+      const { data: atomicData, error: atomicError } = await supabase.rpc(
+        "create_product_with_initial_stock",
+        {
+          p_warehouse_id: parsed.data.warehouseId,
+          p_sku: parsed.data.sku,
+          p_name: parsed.data.name,
+          p_category: parsed.data.category || null,
+          p_unit: parsed.data.unit,
+          p_description: parsed.data.description || null,
+          p_low_stock_threshold: parsed.data.lowStockThreshold,
+          p_initial_quantity: initialQtyRaw,
+        }
+      );
+      if (atomicError) return fromPostgrestError(atomicError.message);
+      return ok({ id: atomicData.id, initialStockApplied: true }, 201);
+    }
+    // Warehouse deployed: jatuh ke jalur dua langkah di bawah agar movement
+    // initial stock tetap mendapat proof on-chain (DESIGN §35).
+  }
+
   // P0-01: mutation via SECURITY DEFINER RPC (direct INSERT/UPDATE revoked).
   const { data, error } = await supabase.rpc("create_product_rpc", {
     p_warehouse_id: parsed.data.warehouseId,

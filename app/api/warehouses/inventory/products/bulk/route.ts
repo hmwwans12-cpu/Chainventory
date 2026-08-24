@@ -13,6 +13,7 @@ import {
   requireRateLimit,
   requireUser,
 } from "@/lib/api-handler";
+import { mapDbError } from "@/lib/domain/errors";
 
 /**
  * Bulk Add Products (DESIGN §36) — loop create satu-per-baris di server.
@@ -91,13 +92,15 @@ export async function POST(request: Request) {
 
     if (error || !data) {
       failed += 1;
+      // P1-09: pesan DB mentah dipetakan ke domain error katalog.
+      const mapped = error ? mapDbError(error.message) : null;
       results.push({
         index: idx,
         ok: false,
         error:
-          error?.code === "23505"
-            ? "SKU already exists in this warehouse."
-            : (error?.message ?? "Failed to insert row."),
+          mapped && mapped.code !== "DB_UNEXPECTED"
+            ? mapped.userMessage
+            : "Failed to insert row.",
       });
       continue;
     }

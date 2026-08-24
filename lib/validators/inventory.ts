@@ -53,6 +53,7 @@ export const createProductSchema = z.object({
     .max(500, "Description is too long.")
     .optional()
     .default(""),
+  initialQuantity: decimal3.optional(),
 });
 
 export const bulkProductRowSchema = z.object({

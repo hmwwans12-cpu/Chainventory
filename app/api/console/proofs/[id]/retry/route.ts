@@ -6,6 +6,7 @@ import { createProofServiceClient } from "@/lib/proof/supabase";
 import { publishProofJob } from "@/lib/proof/qstash";
 import { logger } from "@/lib/logger";
 import { invalid, ok, serverError } from "@/lib/api-handler";
+import { mapDbError } from "@/lib/domain/errors";
 
 /**
  * Manual retry proof (Developer Console — ARSITEKTUR §7.4).
@@ -37,11 +38,13 @@ export async function POST(
       p_actor_user_id: actor.user.id,
     });
     if (rpcError) {
-      // Tidak retryable / proof tidak ditemukan → 409, biar client tahu
-      // status tidak berubah (bukan kesalahan transien).
+      // P1-09: pesan DB mentah dipetakan ke katalog domain; status default
+      // tetap 409 (status tidak berubah — bukan kesalahan transien).
+      const mapped = mapDbError(rpcError.message);
+      const status = mapped.code === "DB_UNEXPECTED" ? 409 : mapped.httpStatus;
       return NextResponse.json(
-        { ok: false, error: rpcError.message },
-        { status: 409 }
+        { ok: false, error: mapped.userMessage, errorCode: mapped.code },
+        { status }
       );
     }
 

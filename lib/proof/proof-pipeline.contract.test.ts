@@ -298,9 +298,9 @@ async function sleep(ms: number): Promise<void> {
           expect(messageId).toBeTruthy();
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          if (/loopback/i.test(msg)) {
+          if (/loopback|no public base url/i.test(msg)) {
             console.log(
-              "QStash publish skipped (loopback localhost) — verified after deploy"
+              "QStash publish skipped (local env tanpa URL publik) — verified after deploy"
             );
           } else {
             throw err;

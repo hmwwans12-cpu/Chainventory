@@ -9,11 +9,12 @@ import { applyMovement } from "@/lib/inventory/movements-client";
 /**
  * Product client (BFF `/api/warehouses/inventory/products`).
  *
- * Catatan arsitektur (DESIGN §35): "Initial Quantity" TIDAK pernah di-INSERT
- * langsung ke `inventory_balances`. Produk dibuat dulu, lalu initial stock
- * masuk lewat `apply_stock_movement(stock_in)` — dua panggilan berurutan
- * (`createProductWithInitialStock`). Ini menjamin satu-satunya jalur mutasi
- * saldo tetap RPC (row lock + version + proof hook), bukan bypass.
+ * Initial stock (P1-06): bila warehouse BELUM deployed, BFF menjalankan
+ * create + initial stock ATOMIK via `create_product_with_initial_stock`
+ * (satu transaksi; respons `initialStockApplied: true`). Bila deployed,
+ * movement initial stock dibuat terpisah lewat `apply_stock_movement`
+ * agar proof on-chain ikut dibuat — kegagalan langkah ini ditandai
+ * `initialStockError` (produk tetap ada).
  */
 
 export const PRODUCTS_ROUTE = "/api/warehouses/inventory/products";
@@ -27,6 +28,7 @@ export type CreateProductInput = {
   unit: string;
   lowStockThreshold?: string;
   description?: string;
+  initialQuantity?: string;
 };
 
 export type UpdateProductInput = {
@@ -71,13 +73,16 @@ export type CreateProductWithInitialStockResult = {
 export async function createProduct(
   values: CreateProductInput,
   fetcher: Fetcher = fetch
-): Promise<ApiResult<{ id: string }>> {
+): Promise<ApiResult<{ id: string; initialStockApplied?: boolean }>> {
   const { status, json } = await sendJson(
     PRODUCTS_ROUTE,
     { body: values },
     fetcher
   );
-  return parseSuccess<{ id: string }>(status, json);
+  return parseSuccess<{ id: string; initialStockApplied?: boolean }>(
+    status,
+    json
+  );
 }
 
 export async function updateProduct(
@@ -119,28 +124,39 @@ export async function bulkCreateProducts(
 }
 
 /**
- * Create + (opsional) initial stock, dua panggilan berurutan.
- * Produk dibuat dulu (dapat id), lalu bila initialQuantity > 0 →
- * `apply_stock_movement(stock_in)` terpisah. Kegagalan di langkah kedua
- * TIDAK menggagalkan produk (produk sudah ada); ditandai `initialStockError`.
+ * Create + (opsional) initial stock.
+ * Warehouse belum deployed -> atomik di BFF (satu transaksi).
+ * Warehouse deployed       -> movement initial stock lewat
+ * `apply_stock_movement` terpisah agar proof dibuat; kegagalan ditandai
+ * `initialStockError` (produk sudah ada, TIDAK di-rollback).
  */
 export async function createProductWithInitialStock(
   values: CreateProductWithInitialStockInput,
   fetcher: Fetcher = fetch
 ): Promise<ApiResult<CreateProductWithInitialStockResult>> {
+  const qty = (values.initialQuantity ?? "").trim();
+  const wantsStock = qty !== "" && Number(qty) > 0;
+
   const created = await createProduct(values, fetcher);
   if (!created.ok) return created;
 
   const productId = created.data.id;
-  const qty = (values.initialQuantity ?? "").trim();
-  if (qty === "" || Number(qty) <= 0) {
+  if (wantsStock && created.data.initialStockApplied) {
     return {
       ok: true,
-      status: 200,
+      status: created.status,
+      data: { productId, initialStockApplied: true },
+    };
+  }
+  if (!wantsStock) {
+    return {
+      ok: true,
+      status: created.status,
       data: { productId, initialStockApplied: false },
     };
   }
 
+  // Jalur deployed (dengan proof): movement initial stock terpisah.
   const movement = await applyMovement(
     {
       warehouseId: values.warehouseId,
@@ -156,7 +172,7 @@ export async function createProductWithInitialStock(
   if (!movement.ok) {
     return {
       ok: true,
-      status: 200,
+      status: created.status,
       data: {
         productId,
         initialStockApplied: false,
@@ -166,7 +182,7 @@ export async function createProductWithInitialStock(
   }
   return {
     ok: true,
-    status: 200,
+    status: created.status,
     data: { productId, initialStockApplied: true },
   };
 }

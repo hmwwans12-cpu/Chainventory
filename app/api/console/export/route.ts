@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getConsoleActor } from "@/lib/console/guard";
 import { createProofServiceClient } from "@/lib/proof/supabase";
 import { csvFilename, toCsv } from "@/lib/console/csv";
-import { invalid, serverError } from "@/lib/api-handler";
+import { invalid, fromPostgrestError, serverError } from "@/lib/api-handler";
 
 /**
  * Export DB → CSV (Developer Console).
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         )
         .order("created_at", { ascending: false })
         .limit(limit);
-      if (error) return serverError(error.message);
+      if (error) return fromPostgrestError(error.message);
       return csvResponse(
         toCsv((data ?? []) as Record<string, unknown>[]),
         csvFilename("proofs")
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         )
         .order("created_at", { ascending: false })
         .limit(limit);
-      if (error) return serverError(error.message);
+      if (error) return fromPostgrestError(error.message);
       return csvResponse(
         toCsv((data ?? []) as Record<string, unknown>[]),
         csvFilename("audit-logs")

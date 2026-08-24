@@ -26,6 +26,7 @@ import {
   enforceMutationRateLimit,
   type MutationAction,
 } from "@/lib/security/rate-limit";
+import { mapDbError } from "@/lib/domain/errors";
 
 export type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -37,6 +38,11 @@ export type ErrorCode =
   | "NOT_FOUND"
   | "INSUFFICIENT_STOCK"
   | "STALE_STOCK"
+  | "IDEMPOTENCY_CONFLICT"
+  | "PRODUCT_EXISTS"
+  | "DUPLICATE_RECORD"
+  | "PRODUCT_ARCHIVED"
+  | "WAREHOUSE_SUSPENDED"
   | "UNSUPPORTED_NETWORK"
   | "PRIVY_VERIFICATION_FAILED"
   | "RATE_LIMITED"
@@ -55,11 +61,8 @@ const RPC_ERROR_STATUS: Record<string, number> = {
   NOT_FOUND: 404,
   INSUFFICIENT_STOCK: 409,
   STALE_STOCK: 409,
+  IDEMPOTENCY_CONFLICT: 409,
 };
-
-/** Pola pesan error PostgREST yang merupakan penolakan otorisasi (→ 403). */
-const AUTHZ_ERROR_RE =
-  /not authenticated|insufficient|row-level security|not a member|not owner of|warehouse not found|join request already|join request not|already a member|warehouse not accepting|cannot remove owner|owner cannot leave|unit is immutable|movement not|new row violates|duplicate key/i;
 
 export function json(body: unknown, status = 200) {
   return NextResponse.json(body, { status });
@@ -87,14 +90,19 @@ export function rpcErrorStatus(errorCode: string | undefined): number {
   return errorCode ? (RPC_ERROR_STATUS[errorCode] ?? 500) : 500;
 }
 
-export function isAuthzError(message: string): boolean {
-  return AUTHZ_ERROR_RE.test(message);
-}
-
-/** Map pesan error PostgREST/DB ke respons terstruktur (403 vs 500). */
+/**
+ * Map pesan error PostgREST/DB → respons terstruktur via katalog domain
+ * (P1-09): pesan database mentah tidak pernah dikirim ke client — detail
+ * penuh hanya di log server.
+ */
 export function fromPostgrestError(message: string): NextResponse {
   logger.warn({ err: message }, "PostgREST request rejected");
-  return isAuthzError(message) ? forbidden(message) : serverError(message);
+  const mapped = mapDbError(message);
+  return error(
+    mapped.userMessage,
+    mapped.code === "DB_UNEXPECTED" ? "RPC_FAILED" : mapped.code,
+    mapped.httpStatus
+  );
 }
 
 /** Parse JSON body dengan aman; `{ ok: false }` bila bukan JSON valid. */

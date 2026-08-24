@@ -23,11 +23,12 @@ import {
   readJson,
   requireRateLimit,
   requireUser,
-  serverError,
+  rpcErrorStatus,
 } from "@/lib/api-handler";
 import { hashProofPayload } from "@/lib/proof/hash";
 import { buildProofPayload } from "@/lib/proof/payload";
 import { publishProofJob } from "@/lib/proof/qstash";
+import { computeRequestFingerprint } from "@/lib/inventory/fingerprint";
 
 /**
  * Stock movement server flow (P1 Step 4 + Step 5 proof hook).
@@ -123,6 +124,35 @@ export async function POST(request: Request) {
         return forbidden("Insufficient permission.");
       }
 
+      // P1-10: actorWallet diturunkan server-side dari wallet TERVERIFIKASI
+      // milik actor — nilai client tidak dipercaya sebagai identitas.
+      // Client boleh mengirim alamatnya, tapi wajib cocok dengan salah satu
+      // wallet verified; bila tidak mengirim, pakai wallet primary verified.
+      const { data: wallets } = await supabase
+        .from("wallets")
+        .select("address, is_primary")
+        .eq("user_id", auth.user.id)
+        .eq("verification_state", "verified");
+      const verified = wallets ?? [];
+      const requestedWallet = parsed.data.actorWallet?.toLowerCase() ?? null;
+      let actorWallet: string | null;
+      if (requestedWallet) {
+        const match = verified.find(
+          (w) => w.address.toLowerCase() === requestedWallet
+        );
+        if (!match) {
+          return forbidden(
+            "actorWallet is not a verified wallet of this account."
+          );
+        }
+        actorWallet = match.address;
+      } else {
+        actorWallet =
+          verified.find((w) => w.is_primary)?.address ??
+          verified[0]?.address ??
+          null;
+      }
+
       // Data untuk payload proof (hanya bila warehouse sudah di-deploy).
       const [warehouse, product] = await Promise.all([
         supabase
@@ -155,13 +185,25 @@ export async function POST(request: Request) {
           reason: parsed.data.reason || null,
           reference: parsed.data.reference || null,
           actorUserId: auth.user.id,
-          actorWallet: parsed.data.actorWallet,
+          actorWallet,
           expectedBalanceVersion: parsed.data.expectedBalanceVersion,
           occurredAt: new Date().toISOString(),
         });
         proofPayload = payload;
         proofPayloadHash = hashProofPayload(payload);
       }
+
+      const requestFingerprint = computeRequestFingerprint({
+        warehouseId: parsed.data.warehouseId,
+        productId: parsed.data.productId,
+        movementType: parsed.data.movementType,
+        quantity: parsed.data.quantity,
+        expectedBalanceVersion: parsed.data.expectedBalanceVersion,
+        reason: parsed.data.reason || null,
+        reference: parsed.data.reference || null,
+        reversalOf: parsed.data.reversalOf ?? null,
+        actorWallet,
+      });
 
       const { data, error } = await supabase.rpc("apply_stock_movement", {
         p_warehouse_id: parsed.data.warehouseId,
@@ -173,24 +215,22 @@ export async function POST(request: Request) {
         p_reference: parsed.data.reference || null,
         p_reversal_of: parsed.data.reversalOf,
         p_idempotency_key: parsed.data.idempotencyKey || null,
-        p_actor_wallet: parsed.data.actorWallet,
+        p_actor_wallet: actorWallet,
         p_movement_id: movementId,
         p_proof_payload: proofPayload,
         p_proof_payload_hash: proofPayloadHash,
+        p_request_fingerprint: requestFingerprint,
       });
 
       if (error) {
         logger.warn({ err: error.message }, "apply_stock_movement rejected");
-        return serverError(error.message);
+        // P1-09: pesan DB mentah tidak dikirim ke client.
+        return fromPostgrestError(error.message);
       }
 
       const row = Array.isArray(data) ? data[0] : data;
       if (row?.error_code) {
-        const status =
-          row.error_code === "INSUFFICIENT_STOCK" ||
-          row.error_code === "STALE_STOCK"
-            ? 409
-            : 400;
+        const status = rpcErrorStatus(row.error_code);
         return json(
           { ok: false, error: row.message, errorCode: row.error_code },
           status
