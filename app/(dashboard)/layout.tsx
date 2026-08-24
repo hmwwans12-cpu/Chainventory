@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SiteHeader } from "@/components/layout/site-header";
+import { PageTransition } from "@/components/shared/page-transition";
 import { createClient } from "@/lib/supabase/server";
 import { getMyWarehouses } from "@/lib/warehouses/current-warehouse";
 import { isDeveloperAllowed } from "@/lib/console/guard";
@@ -77,7 +78,7 @@ export default async function DashboardLayout({
               max-w 1600px: konten dashboard tidak meregang tak terbatas di
               ultrawide (konsistensi visual, temuan audit UI #9). */}
           <div className="@container/main mx-auto w-full max-w-[1600px] px-4 py-4 md:px-6 md:py-6">
-            {children}
+            <PageTransition>{children}</PageTransition>
           </div>
         </main>
       </SidebarInset>
