@@ -3,15 +3,22 @@ name: Preview E2E (staging)
 on:
   pull_request:
 
-# Mirror secret (lihat catatan ci.yml): secrets tidak boleh di job-level if.
-env:
-  HAS_PREVIEW_SECRETS: >-
-    ${{ secrets.VERCEL_TOKEN != '' &&
-        secrets.VERCEL_ORG_ID != '' &&
-        secrets.VERCEL_PROJECT_ID != '' &&
-        secrets.E2E_SUPABASE_URL != '' }}
-
 jobs:
+  preview-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
+    steps:
+      - name: Evaluate preview/E2E secret availability
+        id: gate
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ] || [ -z "${{ secrets.E2E_SUPABASE_URL }}" ]; then
+            echo "::notice::Preview/E2E secrets not configured - staging job will be skipped."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
   # Staging (P3 item 3a): deploy PR ke Vercel preview, lalu jalankan suite E2E
   # penuh terhadap URL preview (tanpa tunnel — preview publik sehingga QStash
   # delivery berjalan natural, sekaligus memvalidasi hardening VERCEL_URL).
@@ -19,10 +26,11 @@ jobs:
   # Diaktifkan hanya bila secret dikonfigurasi:
   #   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID  (deploy)
   #   E2E_* (sama dengan workflow CI)
-  # Fork PR / repo tanpa secret → job skip otomatis via env gate.
+  # Fork PR / repo tanpa secret → job skip otomatis via gate.
   staging:
     runs-on: ubuntu-latest
-    if: env.HAS_PREVIEW_SECRETS == 'true'
+    needs: preview-gate
+    if: needs.preview-gate.outputs.enabled == 'true'
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

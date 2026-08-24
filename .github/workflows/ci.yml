@@ -8,11 +8,6 @@ on:
     # Audit dependency mingguan (Senin 03:00 UTC) — saran #13.
     - cron: "0 3 * * 1"
 
-# Mirror secret ke env workflow-level: konteks `secrets` TIDAK boleh dipakai
-# di job-level `if:` (penyebab CI merah "0 jobs" sebelumnya).
-env:
-  HAS_E2E_SECRETS: ${{ secrets.E2E_SUPABASE_URL != '' }}
-
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -59,10 +54,25 @@ jobs:
   # on-chain via QStash tunnel). Dijalankan HANYA bila secret E2E dikonfigurasi
   # (GitHub → Settings → Secrets and variables → Actions). Skip dengan pesan
   # jelas bila belum dikonfigurasi (fork PR / repo tanpa secret).
+  e2e-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
+    steps:
+      - name: Evaluate E2E secret availability
+        id: gate
+        run: |
+          if [ -z "${{ secrets.E2E_SUPABASE_URL }}" ]; then
+            echo "::notice::E2E secrets not configured - e2e job will be skipped."
+            echo "enabled=false" >> "`$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "`$GITHUB_OUTPUT"
+          fi
+
   e2e:
     runs-on: ubuntu-latest
-    needs: quality
-    if: env.HAS_E2E_SECRETS == 'true'
+    needs: [quality, e2e-gate]
+    if: needs.e2e-gate.outputs.enabled == 'true'
     env:
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
