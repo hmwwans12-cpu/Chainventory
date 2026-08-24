@@ -36,7 +36,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 ## P0 — Supabase Foundation
 
 - [x] Buat project Supabase Free.
-- [ ] Migrasikan JWT signing key menjadi asymmetric/JWKS.
+- [x] Migrasikan JWT signing key menjadi asymmetric/JWKS. (✅ terverifikasi live 2026-08-24: /.well-known/jwks.json mengekspos ES256)
 - [ ] Konfigurasi Supabase Auth: email dan Google. (✅✅ keduanya live & terverifikasi 2026-08-24)
 - [x] Buat tabel `users`, relasi ke `auth.users`, serta profile bootstrap.
 - [x] Aktifkan RLS pada seluruh tabel aplikasi.
@@ -189,7 +189,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 - [x] Integration test migration, RLS, trigger unit immutability, atomic stock, stale version, negative stock.
 - [x] Contract Forge/fuzz test dan Base Sepolia smoke test.
 - [x] Test QStash duplicate delivery, lease, retry, confirmation polling, manual review.
-- [ ] Playwright E2E: login → wallet → deploy → member → product → Stock In/Out → realtime → proof. (suite lengkap sudah dikonfigurasi di `ci.yml` job `e2e`; jalankan lokal butuh tunnel + treasury)
+- [x] Playwright E2E: login → wallet → deploy → member → product → Stock In/Out → realtime → proof. (✅ 2026-08-24 lokal penuh via cloudflared tunnel: smoke + main-flow 12 termasuk proof on-chain QStash NYATA + console 3 = hijau semua; eksekusi CI tinggal isi secret E2E_*)
 - [x] Test embedded dan external wallet.
 - [ ] Test fail-closed Redis dan degraded QStash/RPC/Supabase state. (fail-closed Redis ✅ 2 test faucet; degraded QStash/RPC/Supabase belum)
 - [x] Review bundle size, dependency licenses, accessibility, mobile layout, SEO landing page.
@@ -201,12 +201,12 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 ## Sisa Pekerjaan Terbuka (hasil audit 2026-08-23; diperbarui setelah batch A–E)
 
 1. ~~Aktivasi Google provider di dashboard Supabase~~ ✅ (2026-08-24) — provider aktif & diverifikasi live (`/auth/v1/authorize?provider=google` → 302 ke accounts.google.com dengan client ID produksi). Catatan deploy: saat go-live Vercel, set `NEXT_PUBLIC_APP_URL` ke domain produksi dan tambahkan domain itu di Auth → URL Configuration.
-2. **JWT asymmetric/JWKS** — migrasi signing key Supabase belum dilakukan.
+2. ~~JWT asymmetric/JWKS~~ ✅ (ES256 aktif sejak project init — Supabase kini default asimetris).
 3. ~~Offline state UI~~ ✅ (2026-08-24) — `hooks/use-online.ts` + status Offline eksplisit di indikator realtime.
 4. **Degraded QStash/RPC/Supabase tests** — fail-closed Redis faucet ✅; degraded pipeline lain belum.
-5. **Wallet migration/ownership transfer on-chain** untuk Owner.
-6. **E2E main-flow lokal penuh** — butuh keputusan tunnel cloudflared + pemakaian treasury production (suite sudah siap di `ci.yml`).
-7. **Redeploy Factory ke solc 0.8.36** — pin sudah bersih & 26 test hijau; bytecode lama tak bisa dipatch (butuh alamat baru + gas).
+5. **Wallet migration/ownership transfer on-chain** untuk Owner — klarifikasi audit: kontrak `Warehouse.transferOwnership()` SUDAH ada (onlyOwner); yang belum dibangun adalah alur end-to-end (tx on-chain ditandatangani Owner via Privy + sinkron `on_chain_owner_wallet`) — butuh desain flow.
+6. ~~E2E main-flow lokal penuh~~ ✅ (2026-08-24, 18 test hijau termasuk proof on-chain nyata; CI otomatis jalan begitu secret E2E_* diisi).
+7. **Redeploy Factory solc 0.8.36** — ✅ v2 terdeploy (`0x3811...8Bf48`, tx `0xdc249aca…`) & tercatat di registry. Tersisa satu langkah manual: alihkan `WAREHOUSE_FACTORY_ADDRESS` ke v2 saat siap (v1 tetap melayani warehouse eksisting).
 8. ~~Branch protection GitHub~~ ✅ (2026-08-24) — rule `main` aktif via API: required check `quality` (strict), force-push & delete diblokir, linear history wajib, admin bypass disengaja utk solo dev.
 9. **SUPABASE_MANAGEMENT_TOKEN** kedaluwarsa (401) — segarkan di `.env.local` bila perlu eksekusi SQL live.
 10. **Verifikasi live RLS bypass test** — `rls-bypass.contract.test.ts` auto-skip tanpa env server; jalankan dengan env penuh untuk bukti live.
