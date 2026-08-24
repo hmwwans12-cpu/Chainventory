@@ -83,7 +83,7 @@ export const bulkCreateProductsSchema = z.object({
   products: z
     .array(bulkProductRowSchema)
     .min(1, "Add at least one product.")
-    .max(500, "Too many products in one import (max 500)."),
+    .max(1_000, "Too many products in one import (max 1,000)."),
 });
 
 export const updateProductSchema = createProductSchema
