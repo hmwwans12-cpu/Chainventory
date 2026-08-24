@@ -1,8 +1,20 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+
 import { encodeFunctionData, keccak256, toBytes, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it } from "vitest";
 
 import { getWarehouseFactory } from "@/lib/blockchain/contracts";
+
+// Artifact forge hanya ada setelah `forge build` — auto-skip di CI.
+const FACTORY_ARTIFACT = path.join(
+  process.cwd(),
+  "contracts",
+  "out",
+  "WarehouseFactory.sol",
+  "WarehouseFactory.json"
+);
 import {
   buildDeploymentDomain,
   buildDeploymentTypedData,
@@ -143,28 +155,31 @@ describe("deployment signature", () => {
   });
 });
 
-describe("deployWarehouse calldata (ABI struct + bytes)", () => {
-  it("selector cocok dengan signature fungsi", () => {
-    const factory = getWarehouseFactory();
-    const selector = keccak256(
-      toBytes("deployWarehouse((address,bytes32,uint256,uint256),bytes)")
-    ).slice(0, 10);
-    const calldata = encodeFunctionData({
-      abi: factory.abi,
-      functionName: "deployWarehouse",
-      args: [
-        {
-          owner: "0x0000000000000000000000000000000000000001",
-          warehouseCodeHash: `0x${"ef".repeat(32)}` as Hex,
-          deploymentNonce: BigInt(0),
-          expiry: BigInt(1234567890),
-        },
-        `0x${"11".repeat(65)}` as Hex,
-      ],
+describe.skipIf(!existsSync(FACTORY_ARTIFACT))(
+  "deployWarehouse calldata (ABI struct + bytes)",
+  () => {
+    it("selector cocok dengan signature fungsi", () => {
+      const factory = getWarehouseFactory();
+      const selector = keccak256(
+        toBytes("deployWarehouse((address,bytes32,uint256,uint256),bytes)")
+      ).slice(0, 10);
+      const calldata = encodeFunctionData({
+        abi: factory.abi,
+        functionName: "deployWarehouse",
+        args: [
+          {
+            owner: "0x0000000000000000000000000000000000000001",
+            warehouseCodeHash: `0x${"ef".repeat(32)}` as Hex,
+            deploymentNonce: BigInt(0),
+            expiry: BigInt(1234567890),
+          },
+          `0x${"11".repeat(65)}` as Hex,
+        ],
+      });
+      expect(calldata.startsWith(selector)).toBe(true);
     });
-    expect(calldata.startsWith(selector)).toBe(true);
-  });
-});
+  }
+);
 
 describe("revert reason mapping (one-active-warehouse ≠ 500 mentah)", () => {
   it("mengenali pesan Factory dan memetakan ke pesan user", () => {
