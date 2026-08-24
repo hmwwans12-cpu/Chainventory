@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { APP_VERSION } from "@/lib/version";
 import { supabaseClientKey, supabaseUrl } from "@/lib/supabase/config";
 
 /**
@@ -34,7 +35,7 @@ export function GET() {
       status,
       service: "chainventory",
       timestamp: new Date().toISOString(),
-      version: "0.1.5",
+      version: APP_VERSION,
       dependencies,
       latencyMs,
     },

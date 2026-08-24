@@ -20,10 +20,12 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 > di bawah + spesifikasi `docs/superpowers/specs/2026-08-23-oauth-realtime-csv-design.md`.
 >
 > **Last verified — 2026-08-24 (run nyata, bukan angka manual):**
-> Vitest **211 passed / 27 skipped** · Forge **26 passed** · Playwright E2E lokal
+> Vitest **223 passed / 30 skipped** · Forge **26 passed** · Playwright E2E lokal
 > **18 passed** (termasuk proof on-chain via tunnel) · `tsc` PASS · `eslint` PASS ·
 > `build` PASS · `format:check` PASS · `check-contrast` PASS ·
 > `pnpm audit --prod --audit-level high` PASS (axios/ws di-patch via overrides).
+> (Batch audit 0.1.5 P0/P1 menambah 12 test unit baru; live-env contract tests
+> auto-skip tanpa env server — jalankan dengan env penuh untuk bukti live.)
 
 ---
 
@@ -218,3 +220,14 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 10. **Verifikasi live RLS bypass test** — `rls-bypass.contract.test.ts` auto-skip tanpa env server; jalankan dengan env penuh untuk bukti live.
 11. ~~Apply migrasi 0025–0026 ke database live~~ ✅ (2026-08-24) — ternyata 0022 & 0024 juga belum ter-apply; seluruhnya sudah dieksekusi via `supabase db query --linked` dan terverifikasi live (tabel `faucet_claims`+`stock_intents`, RPC intents race-safe, trigger berbasis `auth.jwt()` tanpa sesi anonim lolos). BONUS: 3 bug fatal di 0022 ditemukan & diperbaiki sebelum apply pertama (predikat index memakai `now()` non-IMMUTABLE → 42P17; typo `end begin;`; panggilan `public.write_audit(7 arg)` yang tidak ada → diganti `private.write_audit(9 arg)` + cooldown 12 jam dicek eksplisit).
 12. **Rate limit mutasi sensitif (audit N-2, diimplementasikan 2026-08-23)** — limiter fail-closed per user+IP kini ada untuk stock movement/intent, product write (tunggal+bulk), warehouse create/deployment, membership/ownership, dan wallet sync (`lib/security/rate-limit.ts`); faucet tetap memakai cooldown 12 jam tersendiri. Belum terverifikasi live melawan Upstash production.
+13. **Audit 0.1.5 — P0/P1 security & integrity (2026-08-24)**:
+    - ~~P0-01/02: tutup direct product mutation~~ ✅ migration `0037` (REVOKE + `create_product_rpc`/`update_product_rpc`).
+    - ~~P0-03: RLS test attacker authenticated~~ ✅ `rls-bypass.contract.test.ts` — STAFF/MANAGER direct INSERT/UPDATE/archive/unarchive + cross-tenant SELECT (live-env, auto-skip tanpa env server).
+    - ~~P1-01/02/03: idempotency fingerprint + race + scope constraint~~ ✅ migration `0038` (`request_fingerprint`, partial unique `(warehouse_id, idempotency_key)`, `ON CONFLICT DO NOTHING` + re-select → `IDEMPOTENT`/`IDEMPOTENCY_CONFLICT`); BFF menghitung fingerprint (`lib/inventory/fingerprint.ts`). **REGRESI 0035 dipulihkan**: blok proof+outbox & notifikasi adjustment kembali dalam transaksi yang sama.
+    - ~~P1-06: initial stock atomik~~ ✅ migration `0039` `create_product_with_initial_stock` — dipakai BFF saat warehouse belum deployed; warehouse deployed tetap dua langkah ber-proof (DESIGN §35/§1128).
+    - ~~P1-09: canonical error catalog~~ ✅ `lib/domain/errors.ts` + `fromPostgrestError` sanitizing; movements/console-export/bulk/retry routes tidak lagi mengirim pesan DB mentah.
+    - ~~P1-10: actorWallet client-controlled~~ ✅ diturunkan server-side dari wallet verified `auth.uid()`; nilai client ditolak 403 bila tidak cocok.
+    - P1-04 (reversal approval) diselesaikan sebagai keputusan bisnis: reversal langsung `committed` oleh MANAGER/OWNER — didokumentasikan di §4.2/ARSITEKTUR; separation-of-duties opsional menyusul.
+    - ~~Sisa P2 UI refactor~~ ✅ (2026-08-24): `lib/warehouses/warehouse-url.ts` (switch terpusat: sidebar/products/movements/transactions/members/blockchain/analytics; preserve query, reset page), duplikasi filter products-page dihapus, realtime debounce 400ms (`lib/realtime/debounce.ts`) di dashboard hook + movements + blockchain, unread store bersama (`lib/notifications/unread-store.ts`) untuk badge sidebar ↔ bell.
+    - **Verifikasi live 2026-08-24**: migrasi `0038–0039` TER-APPLY ke DB live via Management API (fingerprint arg ✓, kolom ✓, index scoped ✓, RPC atomik ✓); contract test live hijau — rls-bypass 3/3 (P0-03 terbukti), apply-stock-movement ✓, reversal-concurrency ✓, proof-pipeline ✓ (blok proof restore terbukti membuat proof+outbox).
+14. ~~Apply migrasi 0038–0039 ke database live~~ ✅ (2026-08-24, lihat item 13). Tersisa opsional: jalankan E2E penuh & deploy preview untuk verifikasi visual refactor UI.

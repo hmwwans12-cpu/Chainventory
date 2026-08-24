@@ -1126,6 +1126,7 @@ CSV export wajib BOM UTF-8 (Excel), delimiter koma standar, timestamp `YYYY-MM-D
 
 - **Stock In/Out manual** = user-paid intent flow v2 (wallet member menandatangani proof).
 - **CSV initial stock** = server initialization flow via Owner/Manager ter-autentikasi — SENGAJA tidak melalui wallet-paid intent (bulk, tanpa interaksi wallet per baris). Invariant tetap terjaga karena kedua jalur sama-sama melalui RPC atomik + audit + proof.
+- **Create produk + Initial Quantity (P1-06)**: warehouse BELUM deployed → ATOMIK satu transaksi via `create_product_with_initial_stock` (belum ada kontrak → memang belum ada proof yang mungkin); warehouse SUDAH deployed → create lalu movement `stock_in` terpisah agar proof on-chain ikut dibuat (kegagalan movement ditandai `initialStockError`, produk tidak di-rollback).
 
 ### 84.7 Toolbar Kontrak (semua halaman list)
 

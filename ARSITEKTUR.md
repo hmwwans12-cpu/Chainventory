@@ -104,7 +104,7 @@ Proses blockchain (panah `Route Handler → Treasury → Base Sepolia`) **tidak 
 | `join_requests`         | Request join berstatus pending/approved/rejected/cancelled.                                                                                                   |
 | `products`              | SKU unik per warehouse, unit immutable setelah movement, low-stock threshold, status active/archived.                                                         |
 | `inventory_balances`    | Saldo stok terkini per product; `quantity NUMERIC(24,3)` dan `version`. **Bukan ledger.**                                                                     |
-| `stock_movements`       | Ledger immutable Stock In/Out/Adjustment/Reversal; quantity canonical, actor, reason/reference, relasi reversal. `idempotency_key` scoped per `warehouse_id`. |
+| `stock_movements`       | Ledger immutable Stock In/Out/Adjustment/Reversal; quantity canonical, actor, reason/reference, relasi reversal. `idempotency_key` scoped per `warehouse_id` (partial unique index) + `request_fingerprint` SHA-256 untuk deteksi konflik replay. |
 | `proofs`                | Payload versi, hash Keccak-256, status proof, tx hash, confirmation count, retry/error state.                                                                 |
 | `proof_outbox`          | Job durable untuk dispatch ke QStash, lease, attempt count, jadwal retry.                                                                                     |
 | `stock_intents`         | User-paid intent v2: wallet member menandatangani proof on-chain (0024+). Status: pending/submitted/committed/failed.                                         |
@@ -296,13 +296,25 @@ Direct table mutation dari authenticated **ditolak** (REVOKE INSERT/UPDATE/DELET
 
 | RPC                             | Fungsi                                                    | Hardening                                                                                         |
 | ------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `apply_stock_movement`          | Atomic: lock product+balance, validate, insert, audit     | qty > 0, warehouse active, product active, FOR UPDATE lock, reversal direction + concurrency lock |
+| `apply_stock_movement`          | Atomic: lock product+balance, validate, insert, audit     | qty > 0, warehouse active, product active, FOR UPDATE lock, reversal direction + concurrency lock; idempotency: fingerprint (`IDEMPOTENT` vs `IDEMPOTENCY_CONFLICT`) + `ON CONFLICT DO NOTHING` race-safe (0038) |
 | `archive_product`               | Atomic archive: lock product+balance, check qty=0, update | auth.uid() only (bukan parameter), MANAGER/OWNER, qty=0                                           |
 | `create_user_paid_stock_intent` | User-paid intent v2                                       | warehouse active, role check, wallet verified, product active, payload_hash conflict              |
 | `create_product_rpc`            | Create product                                            | warehouse active, role check                                                                      |
+| `create_product_with_initial_stock` | Create + initial stock ATOMIK (satu transaksi; rollback total bila stock_in gagal) | warehouse active, role check; dipakai BFF saat warehouse belum deployed (P1-06) |
 | `update_product_rpc`            | Update product                                            | warehouse active, archived read-only, role check                                                  |
 
-### 12.3 Lock Ordering
+### 12.3 Idempotency & Actor Identity
+
+- `idempotency_key` di-scope `(warehouse_id, idempotency_key)` pada level lookup DAN constraint database (partial unique index) — scope logika dan scope DB identik.
+- BFF menghitung `request_fingerprint` (SHA-256 canonical payload: warehouse, product, type, quantity, expected version, reason/reference, reversalOf, actorWallet) dan menyimpannya bersama movement. Key sama + payload sama → replay `IDEMPOTENT`; key sama + payload beda → `IDEMPOTENCY_CONFLICT` (409).
+- Insert movement race-safe: `INSERT ... ON CONFLICT ... DO NOTHING` lalu re-select; request yang kalah race menerima jawaban idempotent/konflik, bukan error database generik.
+- `actor_wallet` pada movement gratisan DITURUNKAN server-side dari wallet TERVERIFIKASI milik `auth.uid()` (primary verified). Nilai client hanya diterima bila cocok dengan salah satu wallet verified; selain itu 403.
+
+### 12.4 Domain Error Catalog
+
+Semua respons gagal melewati katalog `lib/domain/errors.ts`: pesan database mentah tidak pernah dikirim ke client — dipetakan ke `{ code, httpStatus, userMessage }` kanonik (mis. `PRODUCT_EXISTS` 409, `IDEMPOTENCY_CONFLICT` 409, sisanya `RPC_FAILED` 500 generik). Detail penuh hanya di log server.
+
+### 12.5 Lock Ordering
 
 Konsisten di seluruh mutation:
 
@@ -314,7 +326,7 @@ balance FOR UPDATE
 reversal original FOR UPDATE (bila reversal)
 ```
 
-### 12.4 Defense Layers
+### 12.6 Defense Layers
 
 1. **UI**: role-based button visibility + suspended banner
 2. **BFF**: requirePermission + requireRateLimit + requireActiveWarehouse
