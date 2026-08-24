@@ -43,12 +43,16 @@ export async function GET(request: Request) {
       )
       .eq("warehouse_id", warehouseId)
       .order("sku")
-      .limit(EXPORT_ROW_CAP);
+      .limit(EXPORT_ROW_CAP + 1);
 
     if (error) {
       logger.warn({ err: error.message }, "products export query failed");
       return new Response("Export failed.", { status: 500 });
     }
+
+    // Deteksi truncation: bila rows > cap, berarti ada data yang tidak ikut.
+    const truncated = (data?.length ?? 0) > EXPORT_ROW_CAP;
+    if (truncated) data?.splice(EXPORT_ROW_CAP);
 
     const matrix = [
       [
@@ -70,7 +74,11 @@ export async function GET(request: Request) {
         p.status ?? "",
       ]),
     ];
-    return csvResponse(matrix, `products-${warehouseId.slice(0, 8)}.csv`);
+    return csvResponse(
+      matrix,
+      `products-${warehouseId.slice(0, 8)}.csv`,
+      truncated
+    );
   }
 
   // movements
@@ -84,12 +92,15 @@ export async function GET(request: Request) {
     )
     .eq("warehouse_id", warehouseId)
     .order("created_at", { ascending: false })
-    .limit(EXPORT_ROW_CAP);
+    .limit(EXPORT_ROW_CAP + 1);
 
   if (error) {
     logger.warn({ err: error.message }, "movements export query failed");
     return new Response("Export failed.", { status: 500 });
   }
+
+  const movTruncated = (data?.length ?? 0) > EXPORT_ROW_CAP;
+  if (movTruncated) data?.splice(EXPORT_ROW_CAP);
 
   const matrix = [
     [
@@ -113,7 +124,11 @@ export async function GET(request: Request) {
       m.reference ?? "",
     ]),
   ];
-  return csvResponse(matrix, `movements-${warehouseId.slice(0, 8)}.csv`);
+  return csvResponse(
+    matrix,
+    `movements-${warehouseId.slice(0, 8)}.csv`,
+    movTruncated
+  );
 }
 
 /** ISO timestamptz -> "YYYY-MM-DD HH:mm:ss" (UTC, detik) untuk Excel/CSV. */
@@ -147,7 +162,11 @@ function skuOf(row: unknown): string {
   return products?.sku ?? "";
 }
 
-function csvResponse(matrix: string[][], filename: string): Response {
+function csvResponse(
+  matrix: string[][],
+  filename: string,
+  truncated = false
+): Response {
   // BOM UTF-8 agar Excel membaca file sebagai UTF-8. Catatan: baris hint
   // "sep=," SENGAJA tidak dipakai — ia tidak reliable ketika BOM mendahuluinya,
   // dan tampil sebagai baris sampah. Untuk Excel locale Indonesia (pemisah
@@ -159,6 +178,7 @@ function csvResponse(matrix: string[][], filename: string): Response {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
+      "X-Export-Truncated": truncated ? "true" : "false",
     },
   });
 }
