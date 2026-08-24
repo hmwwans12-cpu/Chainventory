@@ -27,7 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EmptyState } from "@/components/shared/empty-state";
-import { cn } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 
 /**
  * Recent Stock Movement (DESIGN §29) — bahasa visual DataTable resmi
@@ -189,13 +189,4 @@ export function RecentMovements({
       ) : null}
     </Card>
   );
-}
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }

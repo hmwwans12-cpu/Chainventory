@@ -303,7 +303,7 @@ export function BlockchainPage({
               <AlertTriangle aria-hidden="true" className="size-4" />
             </span>
             <div className="flex flex-col gap-0.5">
-              <h3 className="text-foreground text-sm font-semibold">
+              <h3 className="font-display text-foreground text-sm font-semibold">
                 Blockchain confirmation failed.
               </h3>
               <p className="text-muted-foreground text-xs text-pretty">

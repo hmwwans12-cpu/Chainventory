@@ -25,8 +25,11 @@ function computeDelta(current: string, previous: string): Delta | null {
     return { pct: 100, kind: "new" };
   }
   const pct = ((c - p) / p) * 100;
-  if (pct === 0) return null;
-  return { pct, kind: pct > 0 ? "up" : "down" };
+  // Round ke 1 desimal SEBELUM guard (audit #6): -0.04% akan tampil
+  // sebagai "-0.0%" / "Down 0.0%" — perlakukan sebagai tanpa perubahan.
+  const rounded = Math.round(pct * 10) / 10;
+  if (rounded === 0) return null;
+  return { pct: rounded, kind: rounded > 0 ? "up" : "down" };
 }
 
 function DeltaBadge({ delta }: { delta: Delta }) {

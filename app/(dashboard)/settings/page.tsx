@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import { createPublicClient, formatEther } from "viem";
+import { createPublicClient } from "viem";
 import { Building2, ExternalLink, LogOut, User, Wallet } from "lucide-react";
 
 import { signOutAction } from "@/app/actions/auth";
+import { formatEthValue } from "@/lib/utils";
 import { baseSepolia, createChainTransport } from "@/lib/blockchain/chains";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -135,7 +136,7 @@ export default async function SettingsPage() {
                       <p className="text-muted-foreground text-xs">Balance</p>
                       <p className="text-foreground text-sm font-semibold tabular-nums">
                         {balanceWei != null
-                          ? `${formatEth(balanceWei)} ETH`
+                          ? `${formatEthValue(balanceWei)} ETH`
                           : "Unavailable"}
                       </p>
                     </div>
@@ -265,10 +266,4 @@ async function fetchWalletBalance(
     );
     return null;
   }
-}
-
-function formatEth(wei: bigint): string {
-  return Number(formatEther(wei)).toLocaleString("en-US", {
-    maximumFractionDigits: 4,
-  });
 }

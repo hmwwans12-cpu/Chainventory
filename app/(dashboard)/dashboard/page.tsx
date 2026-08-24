@@ -1,6 +1,7 @@
+import { formatEthValue } from "@/lib/utils";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createPublicClient, formatEther } from "viem";
+import { createPublicClient } from "viem";
 import {
   ArrowRight,
   Layers,
@@ -266,6 +267,10 @@ export default async function DashboardPage({
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
+      <PageHeader
+        title="Dashboard"
+        description="Overview of your warehouse inventory and activity."
+      />
       {/* 1. Profile / Wallet Card (DESIGN §30) — lokasi halaman dibawa breadcrumb header */}
       <ProfileWalletCard
         name={displayName}
@@ -463,10 +468,4 @@ function daysSince(iso: string): number {
     );
     return null;
   }
-}
-
-function formatEthValue(wei: bigint): string {
-  return Number(formatEther(wei)).toLocaleString("en-US", {
-    maximumFractionDigits: 4,
-  });
 }

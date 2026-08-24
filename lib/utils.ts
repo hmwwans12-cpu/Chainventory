@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { formatEther } from "viem";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -26,5 +27,15 @@ export function formatDateTime(iso: string): string {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+  });
+}
+
+/**
+ * Wei -> string ETH dengan locale terkunci & presisi 4 desimal
+ * (audit DRY #5: sebelumnya duplikat di settings & dashboard).
+ */
+export function formatEthValue(wei: bigint): string {
+  return Number(formatEther(wei)).toLocaleString("en-US", {
+    maximumFractionDigits: 4,
   });
 }

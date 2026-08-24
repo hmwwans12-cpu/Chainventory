@@ -261,7 +261,7 @@ export function MembersPage({
             </span>
             <h2
               id="join-requests-heading"
-              className="text-foreground text-sm font-semibold"
+              className="font-display text-foreground text-sm font-semibold"
             >
               Join requests
             </h2>

@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
@@ -14,8 +15,10 @@ function ActionButton({
   variant?: "default" | "outline";
 }) {
   if (href) {
+    // Link (bukan <a> mentah) — client-side navigation, tanpa full reload
+    // (audit typography/logic #2; paritas dengan ErrorState).
     return (
-      <Button variant={variant} render={<a href={href} />}>
+      <Button variant={variant} render={<Link href={href} />}>
         {label}
       </Button>
     );

@@ -7,6 +7,13 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
+ * Pluralization defensif: siap kalau nanti ada range 1 hari (audit #7).
+ */
+function rangeLabel(days: number): string {
+  return `${days} ${days === 1 ? "day" : "days"}`;
+}
+
+/**
  * Range selector chart Stock In/Out (DESIGN §32: 7/30/90 hari).
  * Deep-linkable via `?range=` — link biasa (bukan state client) agar tetap
  * server-render + dapat di-share. `basePath` memungkinkan dipakai di halaman
@@ -45,7 +52,7 @@ export function RangeTabs({
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {r} days
+            {rangeLabel(r)}
           </Link>
         );
       })}

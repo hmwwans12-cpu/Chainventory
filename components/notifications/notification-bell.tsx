@@ -226,7 +226,7 @@ export function NotificationBell() {
             <Popover.Popup className="border-border bg-popover text-popover-foreground shadow-elevated w-[min(calc(100vw-1.5rem),24rem)] rounded-lg border outline-none">
               <div className="border-b-border/60 flex items-center justify-between gap-2 border-b px-3 py-2.5">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-foreground text-sm font-semibold">
+                  <h2 className="font-display text-foreground text-sm font-semibold">
                     Notifications
                   </h2>
                   {unreadCount > 0 ? (
