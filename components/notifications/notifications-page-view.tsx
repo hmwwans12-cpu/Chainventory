@@ -28,6 +28,7 @@ import { debounce } from "@/lib/realtime/debounce";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PanelCard } from "@/components/shared/panel-card";
 import { cn } from "@/lib/utils";
 
 /**
@@ -224,7 +225,7 @@ export function NotificationsPageView({
           description="Join requests, blockchain updates, and warehouse events will show up here."
         />
       ) : (
-        <div className="border-border bg-card rounded-xl border">
+        <PanelCard padding="none" className="bg-card">
           <ul>
             {grouped.map(({ n, showGroup }) => {
               const meta = NOTIFICATION_TYPE_META[n.type];
@@ -328,7 +329,7 @@ export function NotificationsPageView({
               </Button>
             </div>
           ) : null}
-        </div>
+        </PanelCard>
       )}
     </div>
   );

@@ -93,11 +93,14 @@ export function Hero() {
           >
             <Button
               size="lg"
-              className="h-12 px-7 text-base"
+              className="group h-12 px-7 text-base transition-transform duration-150 ease-out hover:scale-[1.02] [@media(hover:hover)_and_(pointer:fine)]:active:scale-[0.98]"
               render={<Link href="/signup" />}
             >
               Create Warehouse
-              <ArrowRight aria-hidden="true" />
+              <ArrowRight
+                aria-hidden="true"
+                className="transition-transform duration-150 ease-out group-hover:translate-x-0.5"
+              />
             </Button>
             <Button
               size="lg"
@@ -214,7 +217,7 @@ export function Hero() {
 
           <motion.div
             variants={item}
-            className="bg-popover text-popover-foreground shadow-elevated absolute- top-5- right-4 flex rotate-2 items-center gap-2 rounded-xl border px-3 py-2"
+            className="bg-popover text-popover-foreground shadow-elevated absolute top-5 right-4 flex rotate-2 items-center gap-2 rounded-xl border px-3 py-2"
           >
             <BadgeCheck aria-hidden="true" className="text-primary size-4" />
             <div className="flex flex-col">
@@ -229,7 +232,7 @@ export function Hero() {
 
           <motion.div
             variants={item}
-            className="bg-popover text-popover-foreground shadow-elevated absolute- bottom-5- gap-2- left-6 flex rotate-2 items-center rounded-xl border px-3 py-2"
+            className="bg-popover text-popover-foreground shadow-elevated absolute bottom-5 left-6 flex rotate-2 items-center gap-2 rounded-xl border px-3 py-2"
           >
             <Wifi aria-hidden="true" className="text-primary size-4" />
             <div className="flex flex-col">

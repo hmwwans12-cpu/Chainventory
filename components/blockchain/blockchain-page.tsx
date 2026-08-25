@@ -43,6 +43,7 @@ import {
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import { debounce } from "@/lib/realtime/debounce";
+import { PanelCard } from "@/components/shared/panel-card";
 import { cn, formatDateTime } from "@/lib/utils";
 
 const PROOF_LIMIT = 50;
@@ -223,7 +224,7 @@ export function BlockchainPage({
       </div>
 
       {/* Status warehouse on-chain */}
-      <div className="border-border rounded-xl border p-4 sm:p-5">
+      <PanelCard className="p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-1.5">
             <div className="flex items-center gap-2">
@@ -301,11 +302,14 @@ export function BlockchainPage({
             ) : null}
           </div>
         </div>
-      </div>
+      </PanelCard>
 
       {/* DESIGN §74 — Failure Recovery */}
       {failedProofs.length > 0 ? (
-        <div className="border-border bg-card/50 flex flex-col gap-3 rounded-xl border p-4 sm:p-5">
+        <PanelCard
+          variant="dashed"
+          className="bg-card/50 flex flex-col gap-3 p-4 sm:p-5"
+        >
           <div className="flex items-start gap-2.5">
             <span className="bg-destructive/15 text-destructive flex size-9 shrink-0 items-center justify-center rounded-full">
               <AlertTriangle aria-hidden="true" className="size-4" />
@@ -374,7 +378,7 @@ export function BlockchainPage({
               );
             })}
           </div>
-        </div>
+        </PanelCard>
       ) : null}
 
       {/* Proofs ledger */}
@@ -385,7 +389,7 @@ export function BlockchainPage({
           description="Proofs are generated automatically for committed stock operations. They will appear here with their Base Sepolia transaction hash."
         />
       ) : (
-        <div className="border-border rounded-xl border">
+        <PanelCard padding="none">
           <Table>
             <TableHeader>
               <TableRow>
@@ -468,7 +472,7 @@ export function BlockchainPage({
               })}
             </TableBody>
           </Table>
-        </div>
+        </PanelCard>
       )}
     </div>
   );

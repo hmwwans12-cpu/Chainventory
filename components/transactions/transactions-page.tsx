@@ -40,6 +40,7 @@ import {
 import type { MovementListItem } from "@/lib/inventory/types";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
+import { PanelCard } from "@/components/shared/panel-card";
 import { cn, formatDateTime } from "@/lib/utils";
 
 function shortWallet(wallet: string | null): string {
@@ -176,7 +177,7 @@ export function TransactionsPage({
           }
         />
       ) : (
-        <div className="border-border rounded-xl border">
+        <PanelCard padding="none">
           <Table className="md:min-w-[720px]">
             <TableHeader>
               <TableRow>
@@ -288,7 +289,7 @@ export function TransactionsPage({
               })}
             </TableBody>
           </Table>
-        </div>
+        </PanelCard>
       )}
 
       {totalPages > 1 ? (

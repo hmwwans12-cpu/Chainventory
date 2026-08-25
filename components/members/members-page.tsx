@@ -6,6 +6,7 @@ import {
   Check,
   Copy,
   Crown,
+  Loader2,
   LogOut,
   MoreHorizontal,
   UserMinus,
@@ -64,6 +65,7 @@ import {
 } from "@/lib/warehouses/members-client";
 import type { MemberListItem, PendingJoinRequest } from "@/lib/members/types";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
+import { PanelCard } from "@/components/shared/panel-card";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { formatDate } from "@/lib/utils";
 
@@ -254,99 +256,98 @@ export function MembersPage({
       </div>
 
       {showRequests ? (
-        <section
-          aria-labelledby="join-requests-heading"
-          className="border-border bg-card rounded-xl border"
-        >
-          <div className="border-border flex items-center gap-2 border-b px-4 py-3">
-            <span className="bg-warning/15 text-warning flex size-7 items-center justify-center rounded-full">
-              <UserPlus aria-hidden="true" className="size-4" />
-            </span>
-            <h2
-              id="join-requests-heading"
-              className="font-display text-foreground text-sm font-semibold"
-            >
-              Join requests
-            </h2>
-            <StatusBadge
-              tone="pending"
-              label={`${pendingRequests.length} pending`}
-            />
-          </div>
-          <ul className="divide-border divide-y">
-            {pendingRequests.map((request) => {
-              const chosen = roleChoice[request.requestId] ?? "";
-              const busy = processing.has(request.requestId);
-              return (
-                <li
-                  key={request.requestId}
-                  className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <p className="text-foreground truncate text-sm font-medium">
-                      {request.displayName ?? "Unnamed user"}
-                    </p>
-                    <p className="text-muted-foreground truncate text-xs">
-                      {request.email}
-                      {request.requestedAt
-                        ? ` · requested ${formatDate(request.requestedAt)}`
-                        : ""}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Select
-                      value={chosen || undefined}
-                      onValueChange={(value) => {
-                        if (value !== null) {
-                          setRoleChoice((prev) => ({
-                            ...prev,
-                            [request.requestId]: value as Role,
-                          }));
-                        }
-                      }}
-                    >
-                      <SelectTrigger
+        <section aria-labelledby="join-requests-heading">
+          <PanelCard padding="none" className="bg-card">
+            <div className="border-border flex items-center gap-2 border-b px-4 py-3">
+              <span className="bg-warning/15 text-warning flex size-7 items-center justify-center rounded-full">
+                <UserPlus aria-hidden="true" className="size-4" />
+              </span>
+              <h2
+                id="join-requests-heading"
+                className="font-display text-foreground text-sm font-semibold"
+              >
+                Join requests
+              </h2>
+              <StatusBadge
+                tone="pending"
+                label={`${pendingRequests.length} pending`}
+              />
+            </div>
+            <ul className="divide-border divide-y">
+              {pendingRequests.map((request) => {
+                const chosen = roleChoice[request.requestId] ?? "";
+                const busy = processing.has(request.requestId);
+                return (
+                  <li
+                    key={request.requestId}
+                    className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-foreground truncate text-sm font-medium">
+                        {request.displayName ?? "Unnamed user"}
+                      </p>
+                      <p className="text-muted-foreground truncate text-xs">
+                        {request.email}
+                        {request.requestedAt
+                          ? ` · requested ${formatDate(request.requestedAt)}`
+                          : ""}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Select
+                        value={chosen || undefined}
+                        onValueChange={(value) => {
+                          if (value !== null) {
+                            setRoleChoice((prev) => ({
+                              ...prev,
+                              [request.requestId]: value as Role,
+                            }));
+                          }
+                        }}
+                      >
+                        <SelectTrigger
+                          size="sm"
+                          className="w-36"
+                          aria-label={`Role for ${request.displayName ?? request.email}`}
+                          disabled={busy}
+                        >
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {assignableRoles.map((r) => (
+                            <SelectItem key={r} value={r}>
+                              {ROLE_META[r].label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
                         size="sm"
-                        className="w-36"
-                        aria-label={`Role for ${request.displayName ?? request.email}`}
+                        onClick={() => handleApprove(request)}
+                        disabled={!chosen || busy}
+                      >
+                        <Check aria-hidden="true" />
+                        Approve
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRejectTarget(request)}
                         disabled={busy}
                       >
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {assignableRoles.map((r) => (
-                          <SelectItem key={r} value={r}>
-                            {ROLE_META[r].label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      size="sm"
-                      onClick={() => handleApprove(request)}
-                      disabled={!chosen || busy}
-                    >
-                      <Check aria-hidden="true" />
-                      Approve
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setRejectTarget(request)}
-                      disabled={busy}
-                    >
-                      <X aria-hidden="true" />
-                      Reject
-                    </Button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                        <X aria-hidden="true" />
+                        Reject
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </PanelCard>
         </section>
       ) : null}
 
-      <div className="border-border rounded-xl border">
+      <PanelCard padding="none">
         <Table className="md:min-w-[700px]">
           <TableHeader>
             <TableRow>
@@ -487,7 +488,7 @@ export function MembersPage({
             })}
           </TableBody>
         </Table>
-      </div>
+      </PanelCard>
 
       {rejectTarget ? (
         <RejectJoinDialog
@@ -616,7 +617,12 @@ function RejectJoinDialog({
             Cancel
           </Button>
           <Button variant="destructive" onClick={reject} disabled={busy}>
-            {busy ? "Rejecting…" : "Reject request"}
+            {busy ? (
+              <Loader2 aria-hidden="true" className="animate-spin" />
+            ) : (
+              <X />
+            )}
+            Reject request
           </Button>
         </div>
       </DialogContent>
@@ -688,7 +694,12 @@ function RemoveMemberDialog({
             Cancel
           </Button>
           <Button variant="destructive" onClick={remove} disabled={busy}>
-            {busy ? "Removing…" : "Remove member"}
+            {busy ? (
+              <Loader2 aria-hidden="true" className="animate-spin" />
+            ) : (
+              <UserMinus aria-hidden="true" />
+            )}
+            Remove member
           </Button>
         </div>
       </DialogContent>
@@ -769,7 +780,12 @@ function LeaveWarehouseDialog({
             </Button>
           ) : (
             <Button variant="destructive" onClick={leave} disabled={busy}>
-              {busy ? "Leaving…" : "Leave warehouse"}
+              {busy ? (
+                <Loader2 aria-hidden="true" className="animate-spin" />
+              ) : (
+                <LogOut aria-hidden="true" />
+              )}
+              Leave warehouse
             </Button>
           )}
         </div>

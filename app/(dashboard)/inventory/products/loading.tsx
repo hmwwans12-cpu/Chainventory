@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/shared/page-header";
+import { PanelCard } from "@/components/shared/panel-card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProductsPageLoading() {
@@ -8,7 +9,7 @@ export default function ProductsPageLoading() {
         title="Products"
         description="Manage your warehouse inventory."
       />
-      <div className="border-border rounded-xl border">
+      <PanelCard padding="none">
         <div className="flex flex-col">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
@@ -28,7 +29,7 @@ export default function ProductsPageLoading() {
             </div>
           ))}
         </div>
-      </div>
+      </PanelCard>
     </div>
   );
 }

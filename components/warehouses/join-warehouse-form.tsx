@@ -8,6 +8,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, Check, Clock, KeyRound, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PanelCard } from "@/components/shared/panel-card";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/auth/form-field";
 import { requestJoin } from "@/lib/warehouses/join-client";
@@ -237,7 +238,7 @@ export function JoinWarehouseForm() {
             ))}
           </ol>
 
-          <div className="border-border bg-muted/40 rounded-xl border">
+          <PanelCard padding="none" className="bg-muted/40">
             <div className="flex flex-col gap-1 px-4 py-3.5">
               <span className="text-muted-foreground text-xs">
                 Warehouse code
@@ -259,7 +260,7 @@ export function JoinWarehouseForm() {
                 Pending approval
               </span>
             </div>
-          </div>
+          </PanelCard>
 
           <Button
             size="lg"
@@ -354,14 +355,17 @@ export function JoinWarehouseForm() {
         </div>
 
         {!ready || !authenticated ? (
-          <div className="border-border flex flex-col items-start gap-3 rounded-xl border border-dashed p-4">
+          <PanelCard
+            variant="dashed"
+            className="flex flex-col items-start gap-3"
+          >
             <p className="text-foreground text-sm">
               Please sign in to continue.
             </p>
             <Button variant="outline" size="sm" render={<Link href="/login" />}>
               Go to login
             </Button>
-          </div>
+          </PanelCard>
         ) : (
           <form
             onSubmit={(event) => {

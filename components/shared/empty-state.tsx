@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { PanelCard } from "@/components/shared/panel-card";
 
 function ActionButton({
   label,
@@ -48,7 +49,10 @@ export function EmptyState({
   secondaryAction?: { label: string; href?: string; onClick?: () => void };
 }) {
   return (
-    <div className="border-border bg-card/50 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center">
+    <PanelCard
+      variant="dashed"
+      className="bg-card/50 flex flex-col items-center justify-center gap-2 px-6 py-12 text-center"
+    >
       <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
         <Icon aria-hidden="true" className="size-5" />
       </span>
@@ -66,6 +70,6 @@ export function EmptyState({
           ) : null}
         </div>
       )}
-    </div>
+    </PanelCard>
   );
 }

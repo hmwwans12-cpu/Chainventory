@@ -26,6 +26,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { RealtimeIndicator } from "@/components/realtime/realtime-indicator";
+import { useSignOut } from "@/hooks/use-sign-out";
 import { NAV_ITEMS } from "@/lib/navigation";
 
 /**
@@ -65,6 +66,7 @@ export function SiteHeader({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const signOut = useSignOut();
 
   const warehouseParam =
     typeof searchParams.get("warehouse") === "string"
@@ -162,17 +164,7 @@ export function SiteHeader({
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={async () => {
-                  const { createClient } =
-                    await import("@/lib/supabase/client");
-                  const supabase = createClient();
-                  await supabase.auth.signOut();
-                  // Full reload diperlukan: clear semua client state (Privy, Supabase).
-                  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-                  window.location.href = "/login";
-                }}
-              >
+              <DropdownMenuItem onClick={() => void signOut()}>
                 <LogOut aria-hidden="true" />
                 Sign out
               </DropdownMenuItem>

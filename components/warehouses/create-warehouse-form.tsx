@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PanelCard } from "@/components/shared/panel-card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -480,7 +481,7 @@ export function CreateWarehouseForm() {
             </div>
           </div>
 
-          <div className="border-border bg-muted/40 rounded-xl border">
+          <PanelCard padding="none" className="bg-muted/40">
             <div className="flex flex-col gap-1 px-4 py-3.5">
               <span className="text-muted-foreground text-xs">
                 Warehouse code
@@ -526,7 +527,7 @@ export function CreateWarehouseForm() {
                 </div>
               </div>
             ) : null}
-          </div>
+          </PanelCard>
 
           <Button
             size="lg"
@@ -639,7 +640,10 @@ export function CreateWarehouseForm() {
           </div>
 
           {prepared ? (
-            <div className="border-border bg-muted/40 flex items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5">
+            <PanelCard
+              padding="none"
+              className="bg-muted/40 flex items-center justify-between gap-3 px-3.5 py-2.5"
+            >
               <span className="text-muted-foreground text-xs">
                 Warehouse code
               </span>
@@ -649,7 +653,7 @@ export function CreateWarehouseForm() {
               >
                 {prepared.warehouseCode}
               </code>
-            </div>
+            </PanelCard>
           ) : null}
           {refreshed ? (
             <p className="text-muted-foreground text-xs">
@@ -682,14 +686,17 @@ export function CreateWarehouseForm() {
         </div>
 
         {!ready || !authenticated ? (
-          <div className="border-border flex flex-col items-start gap-3 rounded-xl border border-dashed p-4">
+          <PanelCard
+            variant="dashed"
+            className="flex flex-col items-start gap-3"
+          >
             <p className="text-foreground text-sm">
               Please sign in to continue.
             </p>
             <Button variant="outline" size="sm" render={<Link href="/login" />}>
               Go to login
             </Button>
-          </div>
+          </PanelCard>
         ) : (
           <form
             onSubmit={(event) => {
@@ -782,7 +789,10 @@ export function CreateWarehouseForm() {
           </form>
         )}
 
-        <div className="bg-muted/40 border-border flex items-start gap-2.5 rounded-xl border p-3.5">
+        <PanelCard
+          padding="none"
+          className="bg-muted/40 flex items-start gap-2.5 p-3.5"
+        >
           <ShieldCheck
             aria-hidden="true"
             className="text-primary mt-0.5 size-4 shrink-0"
@@ -791,7 +801,7 @@ export function CreateWarehouseForm() {
             Deploying is signed once with your wallet and submitted on your
             behalf. Transaction fees are covered by Chainventory.
           </p>
-        </div>
+        </PanelCard>
       </div>
     </PhaseFade>
   );

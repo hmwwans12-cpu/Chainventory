@@ -24,6 +24,7 @@ import type { NotificationRow } from "@/lib/notifications/types";
 import { logger } from "@/lib/logger";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PanelCard } from "@/components/shared/panel-card";
 import { InactivityBanner } from "@/components/warehouses/inactivity-banner";
 import { ProfileWalletCard } from "@/components/dashboard/profile-wallet-card";
 import { FaucetClaimCard } from "@/components/faucet/faucet-claim-card";
@@ -387,8 +388,8 @@ export default async function DashboardPage({
         <RecentActivity items={recentActivity} />
       </div>
 
-      {/* Kartu warehouse â€” dipindah ke bawah sesuai aliran informasi Â§29 */}
-      <div className="border-border bg-card flex flex-wrap items-center gap-3 rounded-xl border p-5">
+      {/* Kartu warehouse — dipindah ke bawah sesuai aliran informasi §29 */}
+      <PanelCard className="bg-card flex flex-wrap items-center gap-3 p-5">
         <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full">
           <Warehouse aria-hidden="true" className="size-5" />
         </span>
@@ -409,7 +410,7 @@ export default async function DashboardPage({
         >
           {active.status}
         </Badge>
-      </div>
+      </PanelCard>
 
       {/* Von Restorff â€” satu-satunya elemen bernada peringatan di halaman ini */}
       <InactivityBanner

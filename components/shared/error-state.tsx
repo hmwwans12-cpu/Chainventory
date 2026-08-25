@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { TriangleAlert, RefreshCw, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PanelCard } from "@/components/shared/panel-card";
 
 /**
  * Error state (DESIGN §46): informative, dengan retry.
@@ -30,9 +31,10 @@ export function ErrorState({
   const handleRetry = onRetry ?? (() => router.refresh());
 
   return (
-    <div
+    <PanelCard
+      variant="dashed"
       role="alert"
-      className="border-border bg-card/50 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-16 text-center"
+      className="bg-card/50 flex flex-col items-center justify-center gap-2 px-6 py-16 text-center"
     >
       <span className="bg-destructive/15 text-destructive flex size-12 items-center justify-center rounded-full">
         <Icon aria-hidden="true" className="size-6" />
@@ -45,6 +47,6 @@ export function ErrorState({
         <RefreshCw aria-hidden="true" />
         Retry
       </Button>
-    </div>
+    </PanelCard>
   );
 }

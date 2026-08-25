@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Logo } from "@/components/shared/logo";
+import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { href: "/features", label: "Features" },
@@ -27,9 +29,14 @@ const NAV_LINKS = [
  * Floating pill bar. Hick's law: the only loud CTA is "Create Warehouse"
  * (the signup intent, DESIGN §23); "Login" stays a secondary ghost action.
  * On mobile the nav collapses into a sheet so targets stay large (Fitts).
+ * Audit UI/UX 0.1.8 §4: current-page indicator (dot + bg) dan hover yang
+ * lebih hidup (transition-all + scale halus, pointer-fine only).
  */
 export function MarketingHeader() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <header className="sticky top-3 z-40 px-4">
@@ -37,15 +44,31 @@ export function MarketingHeader() {
         <Logo />
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-muted-foreground hover:bg-muted hover:text-foreground relative rounded-full px-3 py-1.5 text-sm transition-colors before:absolute before:-inset-[6px] before:content-['']"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const active = isActive(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all duration-200 ease-out before:absolute before:-inset-[6px] before:content-[''] [@media(hover:hover)_and_(pointer:fine)]:hover:scale-[1.03]",
+                  active
+                    ? "text-foreground bg-muted font-medium"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "size-1 rounded-full transition-opacity duration-200",
+                    active ? "bg-primary opacity-100" : "opacity-0"
+                  )}
+                />
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -85,16 +108,32 @@ export function MarketingHeader() {
                 className="flex flex-col gap-1 px-4"
                 aria-label="Primary mobile"
               >
-                {NAV_LINKS.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className="text-foreground hover:bg-muted min-h-11 rounded-lg px-3 py-3 text-sm transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+                {NAV_LINKS.map((link) => {
+                  const active = isActive(link.href);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "flex min-h-11 items-center gap-2 rounded-lg px-3 py-3 text-sm transition-colors",
+                        active
+                          ? "text-foreground bg-muted font-medium"
+                          : "text-foreground hover:bg-muted"
+                      )}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "size-1 rounded-full",
+                          active ? "bg-primary" : "bg-transparent"
+                        )}
+                      />
+                      {link.label}
+                    </Link>
+                  );
+                })}
               </nav>
               <div className="mt-auto flex flex-col gap-2 p-4">
                 <Button

@@ -73,7 +73,7 @@ export function Security() {
               <Reveal
                 key={point.title}
                 delay={index * 0.04}
-                className="border-border bg-card flex flex-col gap-3 rounded-xl border p-6"
+                className="ring-foreground/10 bg-card flex flex-col gap-3 rounded-xl p-6 ring-1 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md"
               >
                 <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
                   <Icon aria-hidden="true" className="size-5" />

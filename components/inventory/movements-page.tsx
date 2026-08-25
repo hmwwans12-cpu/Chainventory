@@ -8,6 +8,7 @@ import {
   Check,
   ExternalLink,
   Eye,
+  Loader2,
   MoreHorizontal,
   Plus,
   Scale,
@@ -73,6 +74,7 @@ import {
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import { debounce } from "@/lib/realtime/debounce";
+import { PanelCard } from "@/components/shared/panel-card";
 import { cn, formatDateTime } from "@/lib/utils";
 
 const PAGE_SIZE = 25;
@@ -369,7 +371,7 @@ export function MovementsPage({
           }
         />
       ) : (
-        <div className="border-border rounded-xl border">
+        <PanelCard padding="none">
           <Table className="md:min-w-[820px]">
             <TableHeader>
               <TableRow>
@@ -503,7 +505,7 @@ export function MovementsPage({
               })}
             </TableBody>
           </Table>
-        </div>
+        </PanelCard>
       )}
 
       {hasMore ? (
@@ -631,7 +633,12 @@ function ApproveDialog({
             Cancel
           </Button>
           <Button onClick={approve} disabled={busy}>
-            {busy ? "Approving…" : "Approve"}
+            {busy ? (
+              <Loader2 aria-hidden="true" className="animate-spin" />
+            ) : (
+              <Check aria-hidden="true" />
+            )}
+            Approve
           </Button>
         </div>
       </DialogContent>
@@ -711,7 +718,12 @@ function RejectDialog({
             Cancel
           </Button>
           <Button variant="destructive" onClick={reject} disabled={busy}>
-            {busy ? "Rejecting…" : "Reject"}
+            {busy ? (
+              <Loader2 aria-hidden="true" className="animate-spin" />
+            ) : (
+              <X aria-hidden="true" />
+            )}
+            Reject
           </Button>
         </div>
       </DialogContent>

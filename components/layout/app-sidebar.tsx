@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
+import { useSignOut } from "@/hooks/use-sign-out";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import {
   DropdownMenu,
@@ -61,6 +62,7 @@ export function AppSidebar({
   isDeveloper?: boolean;
 }) {
   const unreadCount = useUnreadNotifications(warehouses.length > 0);
+  const signOut = useSignOut();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -292,17 +294,7 @@ export function AppSidebar({
                         Settings
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={async () => {
-                          const { createClient } =
-                            await import("@/lib/supabase/client");
-                          const supabase = createClient();
-                          await supabase.auth.signOut();
-                          // Full reload: clear Privy + Supabase client state.
-                          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-                          window.location.href = "/login";
-                        }}
-                      >
+                      <DropdownMenuItem onClick={() => void signOut()}>
                         <LogOut aria-hidden="true" />
                         Sign out
                       </DropdownMenuItem>

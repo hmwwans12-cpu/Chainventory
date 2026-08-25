@@ -1,13 +1,14 @@
 import { Bell } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
+import { PanelCard } from "@/components/shared/panel-card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NotificationsLoading() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Notifications" description="Loading inbox…" />
-      <div className="border-border overflow-hidden rounded-xl border">
+      <PanelCard padding="none" className="overflow-hidden">
         <div className="flex items-center justify-center gap-2 border-b px-6 py-4">
           <Bell aria-hidden="true" className="text-muted-foreground size-4" />
           <span className="text-muted-foreground text-sm">
@@ -29,7 +30,7 @@ export default function NotificationsLoading() {
             <Skeleton className="size-7 rounded-md" />
           </div>
         ))}
-      </div>
+      </PanelCard>
     </div>
   );
 }

@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PanelCard } from "@/components/shared/panel-card";
 import { hasPermission, PERMISSIONS, type Role } from "@/lib/auth/permissions";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import type { ProductRow } from "@/lib/inventory/types";
@@ -249,7 +250,7 @@ export function ProductsPage({
           }
         />
       ) : (
-        <div className="border-border rounded-xl border">
+        <PanelCard padding="none">
           <Table className="md:min-w-[760px]">
             <TableHeader>
               <TableRow>
@@ -380,7 +381,7 @@ export function ProductsPage({
               })}
             </TableBody>
           </Table>
-        </div>
+        </PanelCard>
       )}
 
       {createOpen ? (

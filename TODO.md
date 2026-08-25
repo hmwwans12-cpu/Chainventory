@@ -253,3 +253,12 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
     - ~~#3 microcopy form basi~~ ✅ "Applied atomically with product creation — if either fails, nothing is saved."
     - ~~#4 BOM 3 file~~ ✅ distrip (products-client, notifications & products-list contract test).
     - #5 P1-12 proof hash trust boundary tetap tercatat sebagai info arsitektur (bukan actionable saat ini).
+18. **Audit UI/UX 0.1.8 → rilis 0.1.9 (konsistensi & polish, 2025-08-25)**:
+    - ~~§1.1 typo Tailwind hero~~ ✅ `absolute- top-5-` dst. diperbaiki — badge floating hero kini ter-posisi benar.
+    - ~~§7 PanelCard~~ ✅ `components/shared/panel-card.tsx` (variant solid/dashed; padding none/compact/default/roomy) + migrasi 15+ file raw-div: shared empty/error states (dashed resmi), 6 loading.tsx skeleton, tabel products/movements/transactions/members/blockchain, panel notifikasi, kartu warehouse dashboard, info-panel & drop-zone form join/create, failure-recovery blockchain. Permukaan semantik berwarna (warning/destructive banner) SENGAJA raw div — warna border adalah bagian makna.
+    - ~~§8.1 loading-state button~~ ✅ konvensi tunggal spinner+label stabil di semua confirm dialog: members (reject/remove/leave), movements (approve/reject).
+    - ~~§3 page transition~~ ✅ `AnimatePresence mode="wait"` + exit 120ms (< enter 180ms); fade-in 150ms utk transisi skeleton→content; reduced-motion = fade saja.
+    - ~~§4 marketing nav active state~~ ✅ dot indicator + bg + aria-current, hover transition-all + scale halus (pointer-fine only), mobile sheet ikut aktif state.
+    - ~~§2 CTA micro-interaction~~ ✅ ArrowRight slide + scale 1.02 pada CTA utama; card features/security/features-page dapat hover lift+shadow.
+    - ~~§9 duplikasi sign-out~~ ✅ `hooks/use-sign-out.ts`.
+    - **Ditunda (butuh keputusan produk/aset):** screenshot landing, social proof, dark mode wiring (+fix scoping fumadocs), products pagination server-side, mobile card-list tabel, docs content, i18n ID/EN, command palette ⌘K.

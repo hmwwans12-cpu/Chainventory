@@ -1,13 +1,14 @@
 import { Users } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
+import { PanelCard } from "@/components/shared/panel-card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Members" description="Loading team…" />
-      <div className="border-border overflow-hidden rounded-xl border">
+      <PanelCard padding="none" className="overflow-hidden">
         <div className="flex items-center justify-center gap-2 border-b px-6 py-4">
           <Users aria-hidden="true" className="text-muted-foreground size-4" />
           <span className="text-muted-foreground text-sm">
@@ -28,7 +29,7 @@ export default function Loading() {
             <Skeleton className="h-4 w-16" />
           </div>
         ))}
-      </div>
+      </PanelCard>
     </div>
   );
 }

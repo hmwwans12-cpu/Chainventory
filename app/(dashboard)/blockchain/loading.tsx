@@ -1,13 +1,14 @@
 import { Link2 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
+import { PanelCard } from "@/components/shared/panel-card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Audit Explorer" description="Loading audit trail…" />
-      <div className="border-border rounded-xl border p-4 sm:p-5">
+      <PanelCard className="p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-2">
             <Skeleton className="h-4 w-40" />
@@ -22,8 +23,8 @@ export default function Loading() {
             ))}
           </div>
         </div>
-      </div>
-      <div className="border-border overflow-hidden rounded-xl border">
+      </PanelCard>
+      <PanelCard padding="none" className="overflow-hidden">
         <div className="flex items-center justify-center gap-2 border-b px-6 py-4">
           <Link2 aria-hidden="true" className="text-muted-foreground size-4" />
           <span className="text-muted-foreground text-sm">
@@ -44,7 +45,7 @@ export default function Loading() {
             <Skeleton className="h-4 w-20" />
           </div>
         ))}
-      </div>
+      </PanelCard>
     </div>
   );
 }
