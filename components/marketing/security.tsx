@@ -1,6 +1,7 @@
 import { Eye, FileCheck2, Lock, ShieldCheck } from "lucide-react";
 
 import { Reveal } from "@/components/marketing/reveal";
+import { SpotlightCard } from "@/components/marketing/spotlight-card";
 
 /**
  * Security section (DESIGN §22).
@@ -70,20 +71,21 @@ export function Security() {
           {rest.map((point, index) => {
             const Icon = point.icon;
             return (
-              <Reveal
-                key={point.title}
-                delay={index * 0.04}
-                className="ring-foreground/10 bg-card flex flex-col gap-3 rounded-xl p-6 ring-1 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
-                  <Icon aria-hidden="true" className="size-5" />
-                </span>
-                <h3 className="font-display text-foreground text-base font-semibold">
-                  {point.title}
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-                  {point.description}
-                </p>
+              <Reveal key={point.title} delay={index * 0.04} className="h-full">
+                <SpotlightCard
+                  className="ring-foreground/10 bg-card flex h-full flex-col gap-3 rounded-xl p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
+                  spotlightClassName="bg-primary/10"
+                >
+                  <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+                    <Icon aria-hidden="true" className="size-5" />
+                  </span>
+                  <h3 className="font-display text-foreground text-base font-semibold">
+                    {point.title}
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                    {point.description}
+                  </p>
+                </SpotlightCard>
               </Reveal>
             );
           })}

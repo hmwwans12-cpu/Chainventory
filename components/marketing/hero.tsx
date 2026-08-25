@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { SpotlightCard } from "@/components/marketing/spotlight-card";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -138,7 +139,10 @@ export function Hero() {
           className="relative mx-auto w-full max-w-md lg:max-w-none"
           aria-label="Chainventory dashboard preview"
         >
-          <div className="bg-primary/5 ring-primary/10 rounded-[2rem] p-2 ring-1">
+          <SpotlightCard
+            className="bg-primary/5 ring-primary/10 rounded-[2rem] p-2 ring-1"
+            spotlightClassName="bg-primary/15"
+          >
             <div className="shadow-elevated bg-card rounded-[calc(2rem-0.5rem)] p-6">
               <div className="border-border flex items-center justify-between border-b pb-4">
                 <div className="flex items-center gap-3">
@@ -213,7 +217,7 @@ export function Hero() {
                 </span>
               </div>
             </div>
-          </div>
+          </SpotlightCard>
 
           <motion.div
             variants={item}

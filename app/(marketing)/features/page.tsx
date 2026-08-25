@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shared/page-header";
+import { SpotlightCard } from "@/components/marketing/spotlight-card";
 
 export const metadata: Metadata = {
   title: "Features",
@@ -54,9 +55,10 @@ export default function FeaturesPage() {
       />
       <div className="grid gap-6 md:grid-cols-3">
         {FEATURE_GROUPS.map((group) => (
-          <section
+          <SpotlightCard
             key={group.title}
-            className="ring-foreground/10 bg-card flex flex-col gap-3 rounded-xl p-6 ring-1 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md"
+            className="ring-foreground/10 bg-card flex flex-col gap-3 rounded-xl p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
+            spotlightClassName="bg-primary/10"
           >
             <h2 className="font-display text-foreground text-lg font-semibold">
               {group.title}
@@ -75,7 +77,7 @@ export default function FeaturesPage() {
                 </li>
               ))}
             </ul>
-          </section>
+          </SpotlightCard>
         ))}
       </div>
     </div>

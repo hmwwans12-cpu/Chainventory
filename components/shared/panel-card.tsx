@@ -11,11 +11,14 @@ import { cn } from "@/lib/utils";
  * p-6). PanelCard menyatukan EDGE dan PADDING token:
  *   - variant="solid"  : ring halus `ring-1 ring-foreground/10` (System A)
  *   - variant="dashed" : untuk empty/error state (border dashed resmi)
+ *   - variant="tinted" : border solid NETRAL — warna border/bg dikirim via
+ *     className untuk permukaan semantik (banner warning/destructive);
+ *     tailwind-merge menyelesaikan konflik warna dengan benar
  *   - padding          : none | compact (12px) | default (16px) | roomy (24px)
  * Background tidak dipaksakan — kirim via className bila perlu (mis.
  * `bg-card/50`), agar migrasi tidak mengubah visual yang sudah benar.
  */
-type PanelVariant = "solid" | "dashed";
+type PanelVariant = "solid" | "dashed" | "tinted";
 type PanelPadding = "none" | "compact" | "default" | "roomy";
 
 const PADDING: Record<PanelPadding, string> = {
@@ -28,6 +31,7 @@ const PADDING: Record<PanelPadding, string> = {
 const VARIANT_EDGE: Record<PanelVariant, string> = {
   solid: "ring-foreground/10 ring-1",
   dashed: "border-border border border-dashed",
+  tinted: "border",
 };
 
 export function PanelCard({

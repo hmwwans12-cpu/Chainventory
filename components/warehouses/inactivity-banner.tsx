@@ -7,6 +7,7 @@ import {
   SUSPEND_ARCHIVE_DAYS,
 } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
+import { PanelCard } from "@/components/shared/panel-card";
 import { cn } from "@/lib/utils";
 
 /**
@@ -61,9 +62,10 @@ export function InactivityBanner({
   const critical = inactiveDays >= INACTIVITY_CRITICAL_DAYS;
 
   return (
-    <div
+    <PanelCard
+      padding="none"
       className={cn(
-        "flex flex-col items-start gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col items-start gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
         critical
           ? "border-destructive/30 bg-destructive/10"
           : "border-border bg-warning/10"
@@ -105,6 +107,6 @@ export function InactivityBanner({
         Buat Stock Movement
         <ArrowRight aria-hidden="true" />
       </Button>
-    </div>
+    </PanelCard>
   );
 }
