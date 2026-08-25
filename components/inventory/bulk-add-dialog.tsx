@@ -36,7 +36,6 @@ import {
   type BulkProductRow,
 } from "@/lib/inventory/products-client";
 import { applyMovement } from "@/lib/inventory/movements-client";
-import { newIdempotencyKey } from "@/lib/api-client";
 import { MAX_CSV_BYTES, parseProductsCsv } from "@/lib/inventory/csv";
 
 /**
@@ -153,6 +152,8 @@ export function BulkAddDialog({
     }
 
     // Fase 2: stok awal per baris via apply_stock_movement (BFF movements).
+    // P2-32: idempotency key DETERMINISTIK (warehouse+product+purpose) —
+    // retry/refresh browser tidak menciptakan movement duplikat.
     let applied = 0;
     let stockFailed = 0;
     for (const row of result.data.results) {
@@ -166,7 +167,7 @@ export function BulkAddDialog({
         movementType: "stock_in",
         quantity: qty,
         reason: "CSV initial stock",
-        idempotencyKey: newIdempotencyKey(),
+        idempotencyKey: `bulk:${warehouseId}:${row.productId}:initial-stock`,
       });
       if (moved.ok) {
         applied++;

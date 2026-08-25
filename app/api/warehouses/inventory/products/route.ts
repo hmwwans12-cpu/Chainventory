@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -17,16 +19,21 @@ import {
   requireUser,
   type SupabaseClient,
 } from "@/lib/api-handler";
+import { buildProofPayload } from "@/lib/proof/payload";
+import { hashProofPayload } from "@/lib/proof/hash";
+import { publishProofJob } from "@/lib/proof/qstash";
 
 /**
- * Product server flow (P1 Step 4). Mutasi produk via sini → INSERT/UPDATE
- * langsung (RLS role-level: STAFF/MANAGER/OWNER). Archive menuntut
- * PRODUCT_ARCHIVE (MANAGER/OWNER) — dicek di sini; unit immutable tetap
- * di-trigger DB.
+ * Product server flow. Product mutation adalah BFF-ONLY: direct PostgREST
+ * INSERT/UPDATE/DELETE products di-revoke (migration 0037) — BFF memanggil
+ * SECURITY DEFINER RPC di sini. Archive menuntut PRODUCT_ARCHIVE
+ * (MANAGER/OWNER); unit immutable tetap ditegakkan trigger DB.
  *
- * POST /api/warehouses/inventory/products        → create
- * PATCH /api/warehouses/inventory/products       → update
- * DELETE /api/warehouses/inventory/products      → archive
+ * POST   → create + initial stock ATOMIK (0041): produk + ledger movement +
+ *          proof/outbox intent dalam SATU transaksi, untuk SEMUA warehouse.
+ *          Blockchain confirmation tetap async lewat outbox/QStash.
+ * PATCH  → update
+ * DELETE → archive
  */
 
 export async function POST(request: Request) {
@@ -65,38 +72,44 @@ export async function POST(request: Request) {
   const initialQtyRaw = (parsed.data.initialQuantity ?? "").trim();
   const hasInitialQty = initialQtyRaw !== "" && Number(initialQtyRaw) > 0;
 
+  // ID di-generate di muka agar payload proof (yang memuat productId +
+  // movementId) dapat dibangun SEBELUM transaksi atomik berjalan (0041).
+  const productId = randomUUID();
+  const movementId = randomUUID();
+
+  let proofPayload: unknown = null;
+  let proofPayloadHash: string | null = null;
   if (hasInitialQty) {
-    // P1-06: warehouse BELUM deployed -> create + initial stock ATOMIK dalam
-    // satu transaksi (tidak ada proof yang mungkin sebelum deployment).
     const { data: wh } = await supabase
       .from("warehouses")
       .select("contract_address")
       .eq("id", parsed.data.warehouseId)
       .maybeSingle();
-
-    if (!wh?.contract_address) {
-      const { data: atomicData, error: atomicError } = await supabase.rpc(
-        "create_product_with_initial_stock",
-        {
-          p_warehouse_id: parsed.data.warehouseId,
-          p_sku: parsed.data.sku,
-          p_name: parsed.data.name,
-          p_category: parsed.data.category || null,
-          p_unit: parsed.data.unit,
-          p_description: parsed.data.description || null,
-          p_low_stock_threshold: parsed.data.lowStockThreshold,
-          p_initial_quantity: initialQtyRaw,
-        }
-      );
-      if (atomicError) return fromPostgrestError(atomicError.message);
-      return ok({ id: atomicData.id, initialStockApplied: true }, 201);
+    const contractAddress = wh?.contract_address;
+    if (contractAddress) {
+      const payload = buildProofPayload({
+        movementId,
+        warehouseId: parsed.data.warehouseId,
+        warehouseAddress: contractAddress,
+        productId,
+        sku: parsed.data.sku,
+        unit: parsed.data.unit,
+        movementType: "stock_in",
+        quantity: initialQtyRaw,
+        reason: "Initial stock",
+        reference: null,
+        actorUserId: auth.user.id,
+        actorWallet: null,
+        expectedBalanceVersion: "0",
+        occurredAt: new Date().toISOString(),
+      });
+      proofPayload = payload;
+      proofPayloadHash = hashProofPayload(payload);
     }
-    // Warehouse deployed: jatuh ke jalur dua langkah di bawah agar movement
-    // initial stock tetap mendapat proof on-chain (DESIGN §35).
   }
 
-  // P0-01: mutation via SECURITY DEFINER RPC (direct INSERT/UPDATE revoked).
-  const { data, error } = await supabase.rpc("create_product_rpc", {
+  // Atomic: product + ledger + balance + proof intent + audit, satu tx.
+  const { error } = await supabase.rpc("create_product_with_initial_stock", {
     p_warehouse_id: parsed.data.warehouseId,
     p_sku: parsed.data.sku,
     p_name: parsed.data.name,
@@ -104,11 +117,29 @@ export async function POST(request: Request) {
     p_unit: parsed.data.unit,
     p_description: parsed.data.description || null,
     p_low_stock_threshold: parsed.data.lowStockThreshold,
+    p_initial_quantity: hasInitialQty ? initialQtyRaw : null,
+    p_product_id: productId,
+    p_movement_id: hasInitialQty ? movementId : null,
+    p_proof_payload: proofPayload,
+    p_proof_payload_hash: proofPayloadHash,
   });
 
   if (error) return fromPostgrestError(error.message);
 
-  return ok({ id: data.id }, 201);
+  // Publish job proof SETELAH commit (bila proof dibuat). Gagal publish
+  // tidak menggagalkan request — reconciliation harian adalah safety net.
+  if (proofPayload) {
+    const { data: proofRow } = await supabase
+      .from("proofs")
+      .select("id")
+      .eq("movement_id", movementId)
+      .maybeSingle();
+    if (proofRow) {
+      await publishProofJob(proofRow.id).catch(() => undefined);
+    }
+  }
+
+  return ok({ id: productId }, 201);
 }
 
 export async function PATCH(request: Request) {

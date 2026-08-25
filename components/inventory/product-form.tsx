@@ -12,8 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
  * Form Product Creation/Edit (DESIGN §35).
  *
  * - "Initial Quantity" HANYA ada saat create, dan TIDAK ditulis langsung ke
- *   inventory_balances — stok awal masuk lewat `apply_stock_movement(stock_in)`
- *   terpisah setelah produk dibuat (lihat `createProductWithInitialStock`).
+ *   inventory_balances — create + stock_in awal berjalan sebagai SATU
+ *   transaksi atomik via `createProductWithInitialStock` (migration 0041).
  * - Unit dikunci setelah movement pertama (trigger DB); UI men-disabled
  *   input + menjelaskan alasannya.
  * - Semua angka string decimal (bukan native number), mencegah presisi float.

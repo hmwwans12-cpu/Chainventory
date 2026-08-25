@@ -129,11 +129,9 @@ export function CreateProductDialog({
     }
     onOpenChange(false);
     onCreated();
-    const qtyNote = result.data.initialStockError
-      ? ` Product was created, but initial stock could not be applied: ${result.data.initialStockError}`
-      : result.data.initialStockApplied
-        ? " Initial stock recorded."
-        : "";
+    const qtyNote = result.data.initialStockApplied
+      ? " Initial stock recorded."
+      : "";
     toast.add({
       type: "success",
       title: "Product created",
