@@ -42,7 +42,19 @@ describe("mapDbError (P1-09 domain error catalog)", () => {
     expect(mapDbError("FORBIDDEN").httpStatus).toBe(403);
     expect(mapDbError("NOT_FOUND").httpStatus).toBe(404);
     expect(mapDbError("UNAUTHENTICATED").httpStatus).toBe(401);
-    expect(mapDbError("INITIAL_STOCK_FAILED STALE_STOCK").httpStatus).toBe(409);
+  });
+
+  it("INITIAL_STOCK_FAILED -> kode sendiri 422 + causeCode asli (bukan STALE_STOCK)", () => {
+    // Audit 0.1.7 #2: penyebab asli jangan tersamar jadi STALE_STOCK.
+    const mapped = mapDbError("INITIAL_STOCK_FAILED INSUFFICIENT_STOCK");
+    expect(mapped.code).toBe("INITIAL_STOCK_FAILED");
+    expect(mapped.httpStatus).toBe(422);
+    expect(mapped.causeCode).toBe("INSUFFICIENT_STOCK");
+
+    const stale = mapDbError("INITIAL_STOCK_FAILED STALE_STOCK");
+    expect(stale.code).toBe("INITIAL_STOCK_FAILED");
+    expect(stale.httpStatus).toBe(422);
+    expect(stale.causeCode).toBe("STALE_STOCK");
   });
 
   it("pesan database asing TIDAK bocor -> DB_UNEXPECTED pesan generik", () => {

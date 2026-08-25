@@ -39,6 +39,7 @@ export type ErrorCode =
   | "INSUFFICIENT_STOCK"
   | "STALE_STOCK"
   | "IDEMPOTENCY_CONFLICT"
+  | "INITIAL_STOCK_FAILED"
   | "PRODUCT_EXISTS"
   | "DUPLICATE_RECORD"
   | "PRODUCT_ARCHIVED"
@@ -62,6 +63,7 @@ const RPC_ERROR_STATUS: Record<string, number> = {
   INSUFFICIENT_STOCK: 409,
   STALE_STOCK: 409,
   IDEMPOTENCY_CONFLICT: 409,
+  INITIAL_STOCK_FAILED: 422,
 };
 
 export function json(body: unknown, status = 200) {

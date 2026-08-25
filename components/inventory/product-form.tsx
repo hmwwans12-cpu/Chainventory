@@ -204,7 +204,8 @@ export function ProductForm({
                   aria-hidden="true"
                   className="mt-0.5 size-3 shrink-0"
                 />
-                Recorded as a separate Stock In after the product is created.
+                Applied atomically with product creation — if either fails,
+                nothing is saved.
               </p>
             )}
           </div>

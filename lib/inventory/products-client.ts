@@ -1,4 +1,4 @@
-﻿import {
+import {
   sendJson,
   parseSuccess,
   type ApiResult,
@@ -46,6 +46,7 @@ export type BulkProductRow = {
   unit: string;
   description?: string;
   lowStockThreshold?: string;
+  initialQuantity?: string;
 };
 
 export type BulkRowResult =

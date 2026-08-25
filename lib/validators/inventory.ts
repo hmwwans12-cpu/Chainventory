@@ -77,6 +77,7 @@ export const bulkProductRowSchema = z.object({
     .optional()
     .default(""),
   lowStockThreshold: decimal3.optional().default("0"),
+  initialQuantity: decimal3.optional(),
 });
 
 export const bulkCreateProductsSchema = z.object({

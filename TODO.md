@@ -247,3 +247,9 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
     - ~~`INACTIVITY_CRITICAL_DAYS` fitur nanggung~~ ✅ DIIMPLEMENTASIKAN (bukan dihapus): tier kritis ≥27 hari → banner merah + ikon AlertTriangle + judul dengan sisa hari (desain 3-tingkat PRD §20 kini lengkap: warning → critical → suspended).
     - ~~Realtime notifikasi tanpa debounce~~ ✅ 400ms di notifications-page-view (konsisten P2-05).
     - ~~try/catch dead branch create-warehouse-form~~ ✅ disederhanakan ke `.catch(() => undefined)`.
+17. **Audit bug/flow 0.1.7 → rilis 0.1.8 (bulk atomic + error code fix, 2026-08-25)**:
+    - ~~#1 bulk import dua-fasa~~ ✅ route bulk kini menerima `initialQuantity` per baris; baris ber-stok dibuat via RPC atomic `create_product_with_initial_stock` (+proof intent bila deployed) — product+ledger+balance+proof SATU transaksi per baris; state "produk ada, stok kosong" tidak lagi mungkin. Fase-2 loop di dialog dihapus.
+    - ~~#2 errorCode salah label STALE_STOCK~~ ✅ `INITIAL_STOCK_FAILED` kode sendiri (422) + `causeCode` penyebab asli diekstrak dari pesan RPC; dicek SEBELUM pola generik agar tak tersamar.
+    - ~~#3 microcopy form basi~~ ✅ "Applied atomically with product creation — if either fails, nothing is saved."
+    - ~~#4 BOM 3 file~~ ✅ distrip (products-client, notifications & products-list contract test).
+    - #5 P1-12 proof hash trust boundary tetap tercatat sebagai info arsitektur (bukan actionable saat ini).

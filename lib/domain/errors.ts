@@ -19,6 +19,7 @@ export type DomainErrorCode =
   | "INSUFFICIENT_STOCK"
   | "STALE_STOCK"
   | "IDEMPOTENCY_CONFLICT"
+  | "INITIAL_STOCK_FAILED"
   | "DB_UNEXPECTED";
 
 export interface DomainError {
@@ -26,6 +27,8 @@ export interface DomainError {
   httpStatus: number;
   /** Pesan aman untuk client — tidak memuat detail skema/database. */
   userMessage: string;
+  /** Kode penyebab asli dari RPC inner (mis. INSUFFICIENT_STOCK), bila ada. */
+  causeCode?: string;
 }
 
 const CATALOG: Record<DomainErrorCode, DomainError> = {
@@ -85,6 +88,12 @@ const CATALOG: Record<DomainErrorCode, DomainError> = {
     userMessage:
       "This idempotency key was already used for a different operation.",
   },
+  INITIAL_STOCK_FAILED: {
+    code: "INITIAL_STOCK_FAILED",
+    httpStatus: 422,
+    userMessage:
+      "Product creation was rolled back: initial stock could not be applied.",
+  },
   DB_UNEXPECTED: {
     code: "DB_UNEXPECTED",
     httpStatus: 500,
@@ -102,6 +111,20 @@ const AUTHZ_ERROR_RE =
  */
 export function mapDbError(rawMessage: string): DomainError {
   const message = rawMessage ?? "";
+
+  // Audit 0.1.7 #2: HARUS sebelum pola generik (insufficient/stale) —
+  // pesan "INITIAL_STOCK_FAILED <CAUSE>" memuat kode penyebab asli dari
+  // apply_stock_movement; jangan sampai tersamar jadi STALE_STOCK dll.
+  const stockFail = /INITIAL_STOCK_FAILED\s+([A-Z_]+)/.exec(message);
+  if (stockFail) {
+    return {
+      code: "INITIAL_STOCK_FAILED",
+      httpStatus: 422,
+      userMessage:
+        "Product creation was rolled back: initial stock could not be applied.",
+      causeCode: stockFail[1],
+    };
+  }
 
   if (/products_warehouse_sku|products_sku/i.test(message)) {
     return CATALOG.PRODUCT_EXISTS;
@@ -123,14 +146,6 @@ export function mapDbError(rawMessage: string): DomainError {
   }
   if (/IDEMPOTENCY_CONFLICT/i.test(message)) {
     return CATALOG.IDEMPOTENCY_CONFLICT;
-  }
-  // Kode raise eksplisit dari RPC milik sendiri (0037/0039 dst.).
-  if (/INITIAL_STOCK_FAILED/i.test(message)) {
-    return {
-      ...CATALOG.STALE_STOCK,
-      userMessage:
-        "Product created was rolled back: initial stock could not be applied.",
-    };
   }
   if (/\bFORBIDDEN\b|warehouse is suspended/i.test(message)) {
     return CATALOG.FORBIDDEN;

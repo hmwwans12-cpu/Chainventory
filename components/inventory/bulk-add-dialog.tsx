@@ -35,7 +35,6 @@ import {
   type BulkCreateResult,
   type BulkProductRow,
 } from "@/lib/inventory/products-client";
-import { applyMovement } from "@/lib/inventory/movements-client";
 import { MAX_CSV_BYTES, parseProductsCsv } from "@/lib/inventory/csv";
 
 /**
@@ -43,10 +42,10 @@ import { MAX_CSV_BYTES, parseProductsCsv } from "@/lib/inventory/csv";
  *
  * Tiga cara input: Manual Bulk Form / Paste Data (CSV) / Upload CSV.
  * Sebelum submit ada preview: "Valid rows: X / Invalid rows: Y" + Review Errors.
- * Import dua fase sesuai arsitektur saldo (products-client): (1) route bulk
- * membuat produk satu-per-baris; (2) baris dengan initial_qty>0 mendapat
- * Stock In via apply_stock_movement lewat BFF movements (bukan bypass) -
- * audit + proof individual mengalir otomatis. Hasil ditampilkan per-baris.
+ * Import ATOMIK per-baris (audit 0.1.7 #1): route bulk membuat setiap baris
+ * via `create_product_with_initial_stock` — product + initial stock +
+ * proof intent dalam SATU transaksi; gagal = rollback total, tidak ada
+ * state "produk ada, stok kosong". Hasil ditampilkan per-baris.
  */
 
 type Mode = "manual" | "paste" | "upload";
@@ -85,10 +84,6 @@ export function BulkAddDialog({
     { index: number; reason: string }[]
   >([]);
   const [results, setResults] = React.useState<BulkCreateResult | null>(null);
-  const [stockSummary, setStockSummary] = React.useState<{
-    applied: number;
-    failed: number;
-  } | null>(null);
   const [busy, setBusy] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
@@ -129,6 +124,8 @@ export function BulkAddDialog({
 
   const importRows = async () => {
     setBusy(true);
+    // Atomic per-baris: initialQuantity dikirim ke route bulk; baris
+    // ber-stok dibuat via RPC atomic (product+stock+proof satu transaksi).
     const result = await bulkCreateProducts(
       warehouseId,
       rows.map((r) => ({
@@ -138,6 +135,7 @@ export function BulkAddDialog({
         unit: r.unit,
         description: r.description,
         lowStockThreshold: r.lowStockThreshold,
+        initialQuantity: r.initialQty ?? undefined,
       }))
     );
     if (!result.ok) {
@@ -151,35 +149,7 @@ export function BulkAddDialog({
       return;
     }
 
-    // Fase 2: stok awal per baris via apply_stock_movement (BFF movements).
-    // P2-32: idempotency key DETERMINISTIK (warehouse+product+purpose) —
-    // retry/refresh browser tidak menciptakan movement duplikat.
-    let applied = 0;
-    let stockFailed = 0;
-    for (const row of result.data.results) {
-      if (!row.ok) continue;
-      const source = rows[row.index];
-      const qty = source?.initialQty;
-      if (!qty) continue;
-      const moved = await applyMovement({
-        warehouseId,
-        productId: row.productId,
-        movementType: "stock_in",
-        quantity: qty,
-        reason: "CSV initial stock",
-        idempotencyKey: `bulk:${warehouseId}:${row.productId}:initial-stock`,
-      });
-      if (moved.ok) {
-        applied++;
-      } else {
-        stockFailed++;
-      }
-    }
-
     setBusy(false);
-    setStockSummary(
-      stockFailed > 0 || applied > 0 ? { applied, failed: stockFailed } : null
-    );
     setResults(result.data);
     setStep("result");
     onImported();
@@ -456,13 +426,6 @@ export function BulkAddDialog({
                   {results.failed}
                 </span>{" "}
                 failed
-                {stockSummary
-                  ? ` · ${stockSummary.applied} stock-in applied${
-                      stockSummary.failed > 0
-                        ? ` · ${stockSummary.failed} failed`
-                        : ""
-                    }`
-                  : ""}
               </span>
             </div>
 

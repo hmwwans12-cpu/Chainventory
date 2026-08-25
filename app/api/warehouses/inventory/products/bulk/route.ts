@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -14,17 +16,23 @@ import {
   requireUser,
 } from "@/lib/api-handler";
 import { mapDbError } from "@/lib/domain/errors";
+import { buildProofPayload } from "@/lib/proof/payload";
+import { hashProofPayload } from "@/lib/proof/hash";
+import { publishProofJob } from "@/lib/proof/qstash";
 
 /**
  * Bulk Add Products (DESIGN §36) — loop create satu-per-baris di server.
  *
- * Bukan RPC bulk baru dan bukan all-or-nothing: setiap baris divalidasi ulang
- * dan di-INSERT sendiri-sendiri (logika sama dengan POST produk tunggal),
- * sehingga satu baris gagal tidak menggagalkan baris lainnya. Hasil dikembalikan
- * per-baris agar UI bisa menampilkan "created X, failed Y" beserta alasan.
+ * Audit 0.1.7 #1: baris DENGAN initialQuantity dibuat via RPC ATOMIK
+ * `create_product_with_initial_stock` (0041) — product + ledger + balance +
+ * proof/outbox intent dalam SATU transaksi; gagal = rollback total, tidak
+ * ada state "produk ada, stok kosong". Baris TANPA initialQuantity tetap
+ * lewat `create_product_rpc` (bulk cepat). Best-effort per-baris: satu
+ * baris gagal tidak menggagalkan yang lain; hasil per-baris untuk UI.
  *
  * POST /api/warehouses/inventory/products/bulk
- * Body: { warehouseId, products: [{ sku, name, category?, unit, description? }] }
+ * Body: { warehouseId, products: [{ sku, name, category?, unit,
+ *          description?, lowStockThreshold?, initialQuantity? }] }
  */
 
 type RowResult =
@@ -64,6 +72,14 @@ export async function POST(request: Request) {
   );
   if (inactive) return inactive;
 
+  // Contract address diambil sekali — dipakai untuk proof per baris ber-stok.
+  const { data: wh } = await supabase
+    .from("warehouses")
+    .select("contract_address")
+    .eq("id", parsed.data.warehouseId)
+    .maybeSingle();
+  const contractAddress = wh?.contract_address ?? null;
+
   const results: RowResult[] = [];
   let created = 0;
   let failed = 0;
@@ -80,17 +96,87 @@ export async function POST(request: Request) {
       continue;
     }
     const item = check.data;
-    const { data, error } = await supabase.rpc("create_product_rpc", {
-      p_warehouse_id: parsed.data.warehouseId,
-      p_sku: item.sku,
-      p_name: item.name,
-      p_category: item.category || null,
-      p_unit: item.unit,
-      p_low_stock_threshold: item.lowStockThreshold || "0",
-      p_description: item.description || null,
-    });
+    const qtyRaw = (item.initialQuantity ?? "").trim();
+    const hasQty = qtyRaw !== "" && Number(qtyRaw) > 0;
 
-    if (error || !data) {
+    let error: { message: string } | null = null;
+    let productId: string | null = null;
+
+    if (hasQty) {
+      // Atomic per-baris: product + stock_in + proof intent satu transaksi.
+      const productIdNew = randomUUID();
+      const movementId = randomUUID();
+      let proofPayload: unknown = null;
+      let proofPayloadHash: string | null = null;
+      if (contractAddress) {
+        const payload = buildProofPayload({
+          movementId,
+          warehouseId: parsed.data.warehouseId,
+          warehouseAddress: contractAddress,
+          productId: productIdNew,
+          sku: item.sku,
+          unit: item.unit,
+          movementType: "stock_in",
+          quantity: qtyRaw,
+          reason: "Initial stock",
+          reference: null,
+          actorUserId: auth.user.id,
+          actorWallet: null,
+          expectedBalanceVersion: "0",
+          occurredAt: new Date().toISOString(),
+        });
+        proofPayload = payload;
+        proofPayloadHash = hashProofPayload(payload);
+      }
+
+      const res = await supabase.rpc("create_product_with_initial_stock", {
+        p_warehouse_id: parsed.data.warehouseId,
+        p_sku: item.sku,
+        p_name: item.name,
+        p_category: item.category || null,
+        p_unit: item.unit,
+        p_description: item.description || null,
+        p_low_stock_threshold: item.lowStockThreshold || "0",
+        p_initial_quantity: qtyRaw,
+        p_product_id: productIdNew,
+        p_movement_id: movementId,
+        p_proof_payload: proofPayload,
+        p_proof_payload_hash: proofPayloadHash,
+      });
+      error = res.error ? { message: res.error.message } : null;
+      productId = res.error ? null : String(productIdNew);
+
+      if (!error && proofPayloadHash) {
+        // Publish job SETELAH commit per baris; reconciliation harian
+        // adalah safety net bila publish gagal.
+        try {
+          const { data: proofRow } = await supabase
+            .from("proofs")
+            .select("id")
+            .eq("movement_id", movementId)
+            .maybeSingle();
+          if (proofRow) {
+            await publishProofJob(proofRow.id).catch(() => undefined);
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    } else {
+      const res = await supabase.rpc("create_product_rpc", {
+        p_warehouse_id: parsed.data.warehouseId,
+        p_sku: item.sku,
+        p_name: item.name,
+        p_category: item.category || null,
+        p_unit: item.unit,
+        p_low_stock_threshold: item.lowStockThreshold || "0",
+        p_description: item.description || null,
+      });
+      error = res.error ? { message: res.error.message } : null;
+      productId = res.error ? null : String(res.data?.id ?? "");
+    }
+
+    if (error || !productId) {
       failed += 1;
       // P1-09: pesan DB mentah dipetakan ke domain error katalog.
       const mapped = error ? mapDbError(error.message) : null;
@@ -105,7 +191,7 @@ export async function POST(request: Request) {
       continue;
     }
     created += 1;
-    results.push({ index: idx, ok: true, productId: data.id });
+    results.push({ index: idx, ok: true, productId });
   }
 
   return ok({ created, failed, results });
