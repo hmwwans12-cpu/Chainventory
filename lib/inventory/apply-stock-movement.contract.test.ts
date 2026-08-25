@@ -319,8 +319,10 @@ async function applyMovement(
         });
         expect(r.error_code).toBe("STALE_STOCK");
 
-        // 8) Idempotency: key K dipakai sekali → v4; ulang → IDEMPOTENT + movement sama.
+        // 8) Idempotency + fingerprint (0040): key tanpa fingerprint ditolak;
+        //    replay = key+fp sama; payload beda = IDEMPOTENCY_CONFLICT.
         const key = `CT-KEY-${suffix}`;
+        const fpA = `fp-a-${suffix}`;
         r = await applyMovement(ownerTok, {
           ...base,
           p_movement_type: "stock_in",
@@ -328,20 +330,44 @@ async function applyMovement(
           p_expected_balance_version: 3,
           p_idempotency_key: key,
         });
+        // 8a) key ada, fingerprint NULL -> INVALID_INPUT (P1-01a).
+        expect(r.error_code).toBe("INVALID_INPUT");
+
+        r = await applyMovement(ownerTok, {
+          ...base,
+          p_movement_type: "stock_in",
+          p_quantity: 3,
+          p_expected_balance_version: 3,
+          p_idempotency_key: key,
+          p_request_fingerprint: fpA,
+        });
         expect(r.error_code).toBeNull();
         expect(r.balance_version).toBe(4);
         balanceVersion = 4;
         const keyMovementId = r.movement_id;
 
+        // 8b) replay dengan fingerprint SAMA -> IDEMPOTENT.
         r = await applyMovement(ownerTok, {
           ...base,
           p_movement_type: "stock_in",
           p_quantity: 3,
           p_expected_balance_version: 4,
           p_idempotency_key: key,
+          p_request_fingerprint: fpA,
         });
         expect(r.error_code).toBe("IDEMPOTENT");
         expect(r.movement_id).toBe(keyMovementId);
+
+        // 8c) key sama, fingerprint BEDA -> IDEMPOTENCY_CONFLICT (bukan replay).
+        r = await applyMovement(ownerTok, {
+          ...base,
+          p_movement_type: "stock_in",
+          p_quantity: 999,
+          p_expected_balance_version: 4,
+          p_idempotency_key: key,
+          p_request_fingerprint: `fp-b-${suffix}`,
+        });
+        expect(r.error_code).toBe("IDEMPOTENCY_CONFLICT");
 
         // 9) Reversal penuh dari movement stock_in key K → v5.
         r = await applyMovement(ownerTok, {
@@ -470,6 +496,120 @@ async function applyMovement(
           } catch {
             /* ignore */
           }
+        }
+      }
+    }, 60000);
+
+    it("concurrent reversals: hanya satu yang menang, lainnya INVALID_REVERSAL", async () => {
+      // P1-05/P2-24 audit 0.1.6: bukan lagi source-inspection — dua REQUEST
+      // PARALEL (dua transaksi DB nyata). FOR UPDATE pada movement asal
+      // membuat keduanya serialize: pemenang commit, yang kalah melihat
+      // cumulative reversed_total dan ditolak INVALID_REVERSAL.
+      const suffix = randomUUID();
+      const email = `contract-conc-${suffix}@test.local`;
+      const createdUser = await adminCreateUser(email);
+      let warehouseId = "";
+
+      try {
+        const token = await login(email);
+        const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
+          warehouse_code: `CC-${suffix.slice(0, 8)}`,
+          name: `Conc WH ${suffix.slice(0, 8)}`,
+          company_name: "Conc",
+          warehouse_type: "physical",
+          owner_user_id: createdUser.id,
+          on_chain_owner_wallet: "0x0000000000000000000000000000000000000001",
+        });
+        warehouseId = String(warehouse.id);
+
+        const product = await insertRow(SECRET!, SECRET!, "products", {
+          warehouse_id: warehouseId,
+          sku: `CONC-${suffix.slice(0, 8)}`,
+          name: "Conc Item",
+          unit: "pcs",
+        });
+        const productId = String(product.id);
+
+        await insertRow(SECRET!, SECRET!, "memberships", {
+          warehouse_id: warehouseId,
+          user_id: createdUser.id,
+          role: "OWNER",
+          status: "ACTIVE",
+          joined_at: new Date().toISOString(),
+        });
+
+        const base = {
+          p_warehouse_id: warehouseId,
+          p_product_id: productId,
+          p_reason: "concurrency test",
+          p_reference: null,
+          p_reversal_of: null,
+          p_idempotency_key: null,
+          p_actor_wallet: null,
+        };
+
+        // Original committed stock_in 100.
+        const original = await applyMovement(token, {
+          ...base,
+          p_movement_type: "stock_in",
+          p_quantity: 100,
+          p_expected_balance_version: 0,
+        });
+        expect(original.error_code).toBeNull();
+        const originalId = original.movement_id!;
+
+        // Dua reversal 70 PARALEL (total 140 > 100). Persis satu sukses.
+        const [a, b] = await Promise.all([
+          applyMovement(token, {
+            ...base,
+            p_movement_type: "reversal",
+            p_quantity: 70,
+            p_expected_balance_version: 1,
+            p_reversal_of: originalId,
+          }),
+          applyMovement(token, {
+            ...base,
+            p_movement_type: "reversal",
+            p_quantity: 70,
+            p_expected_balance_version: 1,
+            p_reversal_of: originalId,
+          }),
+        ]);
+
+        const results = [a, b];
+        const winners = results.filter((r) => r.error_code === null);
+        const losers = results.filter(
+          (r) => r.error_code === "INVALID_REVERSAL"
+        );
+        expect(winners).toHaveLength(1);
+        expect(losers).toHaveLength(1);
+
+        // Saldo final: 100 - 70 = 30 @version 2; tidak ada over-reversal.
+        const balance = await selectRows(
+          PUBLISHABLE!,
+          token,
+          "inventory_balances",
+          `warehouse_id=eq.${warehouseId}&product_id=eq.${productId}&select=quantity,version`
+        );
+        expect(Number(balance[0]?.quantity)).toBe(30);
+        expect(Number(balance[0]?.version)).toBe(2);
+      } finally {
+        if (warehouseId) {
+          try {
+            await deleteRow(
+              SECRET!,
+              SECRET!,
+              "warehouses",
+              `id=eq.${warehouseId}`
+            );
+          } catch {
+            /* ignore */
+          }
+        }
+        try {
+          await adminDeleteUser(createdUser.id);
+        } catch {
+          /* ignore */
         }
       }
     }, 60000);
