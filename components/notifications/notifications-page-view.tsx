@@ -24,6 +24,7 @@ import {
   notificationHref,
   type NotificationRow,
 } from "@/lib/notifications/types";
+import { debounce } from "@/lib/realtime/debounce";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -57,6 +58,14 @@ export function NotificationsPageView({
   const [announcement, setAnnouncement] = useState("");
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
   const popTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Audit sweep v0.1.7 #1: ref mirror agar realtime callback selalu membaca
+  // list terkini — closure `notifications` basi membuat deteksi "added"
+  // salah saat event beruntun (pola sama dengan notification-bell.tsx).
+  const notificationsRef = useRef<NotificationRow[]>(initialNotifications);
+
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -64,6 +73,33 @@ export function NotificationsPageView({
 
     let cancelled = false;
     let channel: RealtimeChannel | undefined;
+
+    // Audit #5: burst event → 1 refresh (pola P2-05 yang sama di tempat lain).
+    const refreshFromRealtime = debounce(async () => {
+      const [newCount, newRows, names] = await Promise.all([
+        fetchUnreadCount(supabase),
+        fetchRecentNotifications(supabase, pageSize),
+        supabase.from("warehouse_summaries").select("id, name"),
+      ]);
+      if (cancelled) return;
+      const added = newRows.find(
+        (r) => !notificationsRef.current.some((n) => n.id === r.id)
+      );
+      setUnreadCount(newCount);
+      setNotifications(newRows);
+      setWarehouseNames(
+        Object.fromEntries(
+          (names.data ?? []).map((w) => [w.id, w.name as string])
+        )
+      );
+      setHasMore(newRows.length >= pageSize);
+      if (added) {
+        setFlashId(added.id);
+        setAnnouncement("New notification");
+        if (popTimer.current) clearTimeout(popTimer.current);
+        popTimer.current = setTimeout(() => setFlashId(null), 1800);
+      }
+    }, 400);
 
     async function init() {
       const {
@@ -81,30 +117,8 @@ export function NotificationsPageView({
             table: "notifications",
             filter: `user_id=eq.${user.id}`,
           },
-          async () => {
-            const [newCount, newRows, names] = await Promise.all([
-              fetchUnreadCount(supabase),
-              fetchRecentNotifications(supabase, pageSize),
-              supabase.from("warehouse_summaries").select("id, name"),
-            ]);
-            if (cancelled) return;
-            const added = newRows.find(
-              (r) => !notifications.some((n) => n.id === r.id)
-            );
-            setUnreadCount(newCount);
-            setNotifications(newRows);
-            setWarehouseNames(
-              Object.fromEntries(
-                (names.data ?? []).map((w) => [w.id, w.name as string])
-              )
-            );
-            setHasMore(newRows.length >= pageSize);
-            if (added) {
-              setFlashId(added.id);
-              setAnnouncement("New notification");
-              if (popTimer.current) clearTimeout(popTimer.current);
-              popTimer.current = setTimeout(() => setFlashId(null), 1800);
-            }
+          () => {
+            void refreshFromRealtime();
           }
         )
         .subscribe();
@@ -113,10 +127,10 @@ export function NotificationsPageView({
     void init();
     return () => {
       cancelled = true;
+      refreshFromRealtime.cancel();
       if (channel) void supabase.removeChannel(channel);
       if (popTimer.current) clearTimeout(popTimer.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSize]);
 
   const handleRowClick = useCallback(

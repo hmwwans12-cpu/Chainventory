@@ -98,8 +98,6 @@ export const NAV_SECTIONS: NavSection[] = [
 /** Flatten semua item (untuk breadcrumb pageTitle lookup). */
 export const NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap((s) => s.items);
 
-export const FOOTER_NAV_ITEMS: NavItem[] = [];
-
 /** Developer console item — hanya tampil bila allowlist (ARSITEKTUR §7.4). */
 export const DEV_NAV_ITEM: NavItem = {
   title: "Developer Console",

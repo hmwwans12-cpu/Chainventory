@@ -312,11 +312,8 @@ export function CreateWarehouseForm() {
       return null;
     }
 
-    try {
-      await wallet.switchChain(BASE_SEPOLIA_CHAIN_ID).catch(() => undefined);
-    } catch {
-      // tetap lanjut: chainId domain EIP-712 sudah 84532.
-    }
+    // tetap lanjut walau switchChain gagal: chainId domain EIP-712 sudah 84532.
+    await wallet.switchChain(BASE_SEPOLIA_CHAIN_ID).catch(() => undefined);
 
     const raw = deployment.typedData;
     if (wallet.connectorType === "embedded") {

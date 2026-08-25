@@ -240,3 +240,10 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
     - ~~P2 docs drift~~ ✅ komentar route/client disinkronkan implementasi BFF-only + atomic.
     - Contract test diperluas: key+fp NULL → INVALID_INPUT; fp beda → IDEMPOTENCY_CONFLICT.
     - **Keputusan arsitektur menyusul (butuh owner decision):** P1-11 movement RPC BFF-only vs authenticated-by-design (butuh refactor actor param + service client); P1-12 proof hash trust boundary (keccak tidak tersedia di plpgsql — opsi: verify di processor / move ke service-only path); P1-08 bulk import job server-side; error mapping via structured codes penuh (P1-09); effective-schema.md + invariants.md docs.
+16. **Full-sweep audit v0.1.7 → hotfix 0.1.7.1 (2026-08-25)**:
+    - ~~Stale closure realtime notifications-page-view~~ ✅ ref mirror (`notificationsRef.current`) mencontoh pola bell yang benar — deteksi "added" akurat saat event beruntun.
+    - ~~2× `<a href>` internal~~ ✅ `InactivityBanner` + bell "View all" → `next/link` (bug class EmptyState).
+    - ~~`FOOTER_NAV_ITEMS` dead export~~ ✅ dihapus.
+    - ~~`INACTIVITY_CRITICAL_DAYS` fitur nanggung~~ ✅ DIIMPLEMENTASIKAN (bukan dihapus): tier kritis ≥27 hari → banner merah + ikon AlertTriangle + judul dengan sisa hari (desain 3-tingkat PRD §20 kini lengkap: warning → critical → suspended).
+    - ~~Realtime notifikasi tanpa debounce~~ ✅ 400ms di notifications-page-view (konsisten P2-05).
+    - ~~try/catch dead branch create-warehouse-form~~ ✅ disederhanakan ke `.catch(() => undefined)`.

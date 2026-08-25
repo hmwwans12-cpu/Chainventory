@@ -9,6 +9,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Popover } from "@base-ui/react/popover";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Bell, CheckCheck, ChevronRight, Inbox } from "lucide-react";
@@ -414,7 +415,7 @@ export function NotificationBell() {
                   variant="ghost"
                   size="sm"
                   className="text-muted-foreground w-full justify-between"
-                  render={<a href="/notifications" />}
+                  render={<Link href="/notifications" />}
                   onClick={() => setOpen(false)}
                 >
                   View all notifications
