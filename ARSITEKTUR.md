@@ -306,9 +306,14 @@ Direct table mutation dari authenticated **ditolak** (REVOKE INSERT/UPDATE/DELET
 ### 12.3 Idempotency & Actor Identity
 
 - `idempotency_key` di-scope `(warehouse_id, idempotency_key)` pada level lookup DAN constraint database (partial unique index) — scope logika dan scope DB identik.
-- BFF menghitung `request_fingerprint` (SHA-256 canonical payload: warehouse, product, type, quantity, expected version, reason/reference, reversalOf, actorWallet) dan menyimpannya bersama movement. Key sama + payload sama → replay `IDEMPOTENT`; key sama + payload beda → `IDEMPOTENCY_CONFLICT` (409).
+- `request_fingerprint` **WAJIB** saat `idempotency_key` ada — ditolak `INVALID_INPUT` di level RPC dan dijaga CHECK constraint DB (0040); baris legacy sudah di-backfill. BFF menghitung fingerprint (SHA-256 canonical payload). Key sama + payload sama → replay `IDEMPOTENT`; key sama + payload beda → `IDEMPOTENCY_CONFLICT` (409).
 - Insert movement race-safe: `INSERT ... ON CONFLICT ... DO NOTHING` lalu re-select; request yang kalah race menerima jawaban idempotent/konflik, bukan error database generik.
 - `actor_wallet` pada movement gratisan DITURUNKAN server-side dari wallet TERVERIFIKASI milik `auth.uid()` (primary verified). Nilai client hanya diterima bila cocok dengan salah satu wallet verified; selain itu 403.
+- **Known boundary** (0.1.6 audit P1-11/P1-12): RPC movement masih executable oleh authenticated; invariant otorisasi ditegakkan penuh di RPC, namun rate limit/verified-wallet/proof-hash adalah tanggung jawab trust boundary BFF — keputusan BFF-only penuh terdokumentasi di TODO.md sebagai keputusan arsitektur menyusul.
+
+### 12.4 Create Product + Initial Stock (Atomik Penuh)
+
+Satu domain operation untuk SEMUA warehouse (0041): produk + ledger movement + balance + proof/outbox intent + audit dalam SATU transaksi (`create_product_with_initial_stock`). BFF men-generate `productId`/`movementId` di muka agar payload proof dapat dibangun sebelum transaksi; blockchain confirmation tetap async via outbox/QStash. Tidak ada lagi branch deployed/undeployed — tidak mungkin state "produk ada, stok kosong".
 
 ### 12.4 Domain Error Catalog
 
