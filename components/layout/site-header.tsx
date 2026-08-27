@@ -131,11 +131,11 @@ export function SiteHeader({
             )
           }
           aria-label={t("common.open_command")}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted/60 focus-visible:ring-ring flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors outline-none focus-visible:ring-2"
+          className="text-muted-foreground hover:text-foreground hover:bg-muted/60 focus-visible:ring-ring flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors outline-none focus-visible:ring-3"
         >
           <Search aria-hidden="true" className="size-3.5" />
           <span className="hidden lg:inline">Search</span>
-          <kbd className="hidden font-mono text-[10px] lg:inline">⌘K</kbd>
+          <kbd className="hidden font-mono text-xs lg:inline">⌘K</kbd>
         </button>
         <RealtimeIndicator warehouseId={active?.id ?? null} />
         <NotificationBell />
@@ -146,7 +146,7 @@ export function SiteHeader({
                 <button
                   type="button"
                   aria-label={t("common.account_menu")}
-                  className="hover:bg-muted/60 focus-visible:ring-ring flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors outline-none focus-visible:ring-2"
+                  className="hover:bg-muted/60 focus-visible:ring-ring flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors outline-none focus-visible:ring-3"
                 />
               }
             >

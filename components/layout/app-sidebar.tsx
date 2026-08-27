@@ -127,7 +127,7 @@ export function AppSidebar({
                     {getInitials(active?.name, null, "W")}
                   </span>
                   <span className="flex min-w-0 flex-col leading-tight">
-                    <span className="text-muted-foreground text-[11px] uppercase">
+                    <span className="text-muted-foreground text-xs uppercase">
                       {t("common.active_warehouse")}
                     </span>
                     <span className="truncate text-sm font-medium">

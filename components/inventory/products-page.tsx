@@ -309,7 +309,7 @@ export function ProductsPage({
                 type="button"
                 onClick={() => setSearchInput("")}
                 aria-label="Clear search"
-                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center before:absolute before:-inset-2 before:content-['']"
+                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring focus-visible:ring-3 focus-visible:outline-none rounded absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center before:absolute before:-inset-2 before:content-['']"
               >
                 <X aria-hidden="true" className="size-3.5" />
               </button>
@@ -455,7 +455,7 @@ export function ProductsPage({
                     checked={allVisibleSelected}
                     onChange={toggleSelectAll}
                     aria-label="Select all products on this page"
-                    className="border-border focus-visible:ring-ring size-4 cursor-pointer rounded accent-[var(--primary)] focus-visible:outline-none focus-visible:ring-2"
+                    className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-2 focus-visible:outline-none focus-visible:ring-3"
                   />
                 </TableHead>
                 <TableHead>Product</TableHead>
@@ -488,7 +488,7 @@ export function ProductsPage({
                         checked={selected.has(product.id)}
                         onChange={() => toggleSelect(product.id)}
                         aria-label={`Select ${product.name}`}
-                        className="border-border focus-visible:ring-ring size-4 cursor-pointer rounded accent-[var(--primary)] focus-visible:outline-none focus-visible:ring-2"
+                        className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-2 focus-visible:outline-none focus-visible:ring-3"
                       />
                     </TableCell>
                     <TableCell>
@@ -556,7 +556,7 @@ export function ProductsPage({
                     checked={selected.has(product.id)}
                     onChange={() => toggleSelect(product.id)}
                     aria-label={`Select ${product.name}`}
-                    className="border-border focus-visible:ring-ring mt-1 size-4 shrink-0 cursor-pointer rounded accent-[var(--primary)] focus-visible:outline-none focus-visible:ring-2"
+                    className="border-border focus-visible:ring-ring mt-1 size-4 shrink-0 cursor-pointer rounded accent-[var(--primary)] focus-visible:outline-none focus-visible:ring-3"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

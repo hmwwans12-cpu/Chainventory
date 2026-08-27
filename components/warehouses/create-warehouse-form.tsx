@@ -552,7 +552,7 @@ export function CreateWarehouseForm() {
           <div className="flex flex-col gap-3">
             <Button
               variant="ghost"
-              size="xs"
+              size="sm"
               className="-ml-2 w-fit"
               render={<Link href="/onboarding" />}
             >
@@ -615,7 +615,7 @@ export function CreateWarehouseForm() {
           <div className="flex flex-col gap-3">
             <Button
               variant="ghost"
-              size="xs"
+              size="sm"
               className="-ml-2 w-fit"
               render={<Link href="/onboarding" />}
             >

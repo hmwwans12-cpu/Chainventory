@@ -204,7 +204,7 @@ export function MovementDetailSheet({
                         href={`${BASESCAN_URL}/tx/${movement.proofTxHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none mt-1 inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-xs"
+                        className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-3 focus-visible:outline-none mt-1 inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-xs"
                       >
                         <ExternalLink aria-hidden="true" className="size-3.5" />
                         View transaction on BaseScan

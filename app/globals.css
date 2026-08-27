@@ -45,7 +45,11 @@
      #6ab29b fails 3:1 on #186049; #a4dcc7 passes AA (4.86:1). */
   --mint-soft: #a4dcc7;
 
-  /* DESIGN.md §9 — Border radius */
+  /* DESIGN.md §9 — Border radius.
+     Tailwind `rounded-*` map to these tokens. Convention (audit UI #4):
+     use `rounded-lg` for BOTH controls and cards/panels app-wide — including
+     marketing — so radius stays consistent. Avoid mixing rounded-2xl /
+     rounded-xl / arbitrary rounded-[..] across surfaces. */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;

@@ -244,7 +244,7 @@ export function NotificationsPageView({
                     type="button"
                     onClick={() => void handleRowClick(n)}
                     className={cn(
-                      "group hover:bg-muted/60 focus-visible:bg-muted/70 focus-visible:ring-ring focus-visible:ring-2 flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors focus-visible:outline-none",
+                      "group hover:bg-muted/60 focus-visible:bg-muted/70 focus-visible:ring-ring focus-visible:ring-3 flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors focus-visible:outline-none",
                       unread && "bg-primary/5",
                       flashId === n.id &&
                         "motion-safe:animate-[notif-flash_1.6s_ease-out]"

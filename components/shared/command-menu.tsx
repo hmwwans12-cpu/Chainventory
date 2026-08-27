@@ -132,7 +132,7 @@ export function CommandMenu() {
                 results.length > 0 ? results[active]?.id : undefined
               }
               autoFocus
-              className="text-foreground placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:ring-2 h-11 w-full bg-transparent text-sm outline-none"
+              className="text-foreground placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:ring-3 h-11 w-full bg-transparent text-sm outline-none"
             />
             <kbd className="text-muted-foreground hidden rounded border px-1.5 py-0.5 font-mono text-xs sm:inline">
               ESC
@@ -164,7 +164,7 @@ export function CommandMenu() {
                       onClick={() => go(cmd)}
                       onMouseMove={() => setActive(i)}
                       className={cn(
-                        "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                        "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring",
                         i === active
                           ? "bg-muted text-foreground"
                           : "text-foreground hover:bg-muted/60"

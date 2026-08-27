@@ -31,14 +31,15 @@ export function CopyButton({
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(text);
+          setCopied(true);
+          window.setTimeout(() => setCopied(false), 1500);
         } catch {
-          // clipboard tidak tersedia — abaikan
+          // clipboard tidak tersedia — jangan pura-pura sukses
         }
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 1500);
       }}
+      title={label}
       className={cn(
-        "text-muted-foreground hover:text-foreground hover:bg-muted relative inline-flex shrink-0 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+        "text-muted-foreground hover:text-foreground hover:bg-muted relative inline-flex shrink-0 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring before:absolute before:content-[''] before:-inset-[9px]",
         size === "icon-xs" ? "size-7" : "size-8",
         className
       )}

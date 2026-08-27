@@ -31,8 +31,8 @@ export function BlockchainExplanation() {
     <section className="py-20 md:py-28">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <Reveal>
-          <div className="bg-primary/10 ring-primary/10 rounded-[2rem] p-2 ring-1">
-            <div className="bg-primary rounded-[calc(2rem-0.5rem)] px-6 py-12 md:px-12 md:py-16">
+          <div className="bg-primary/10 ring-primary/10 rounded-lg p-2 ring-1">
+            <div className="bg-primary rounded-lg px-6 py-12 md:px-12 md:py-16">
               <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
                 <div className="flex flex-col gap-5">
                   <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-foreground">
@@ -64,7 +64,7 @@ export function BlockchainExplanation() {
                   </ul>
                 </div>
 
-                <div className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10">
+                <div className="rounded-lg bg-white/5 p-6 ring-1 ring-white/10">
                   <span className="text-primary-foreground text-xs font-semibold">
                     {t("landing.blockchain.typical_record")}
                   </span>

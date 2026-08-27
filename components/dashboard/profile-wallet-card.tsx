@@ -38,7 +38,7 @@ export function ProfileWalletCard({
     <Link
       href={warehouseId ? `/settings?warehouse=${warehouseId}` : "/settings"}
       aria-label="Open profile and wallet settings"
-      className="focus-visible:ring-ring hover:ring-ring/40 block rounded-xl transition-shadow hover:ring-2 focus-visible:ring-2 focus-visible:outline-none"
+      className="focus-visible:ring-ring hover:ring-ring/40 block rounded-lg transition-shadow hover:ring-2 focus-visible:ring-3 focus-visible:outline-none"
     >
       <Card>
         {/*

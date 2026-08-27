@@ -72,7 +72,7 @@ export function Features() {
         </Reveal>
 
         <div className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-3">
-          <Reveal className="bg-primary/5 ring-primary/10 flex flex-col justify-between gap-6 rounded-2xl p-6 ring-1 md:col-span-2 md:row-span-2 md:p-8">
+          <Reveal className="bg-primary/5 ring-primary/10 flex flex-col justify-between gap-6 rounded-lg p-6 ring-1 md:col-span-2 md:row-span-2 md:p-8">
             <div className="flex flex-col gap-3">
               <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-xl">
                 <featured.icon aria-hidden="true" className="size-5" />
@@ -88,13 +88,13 @@ export function Features() {
               {featured.proof!.map((hash) => (
                 <span
                   key={hash}
-                  className="text-muted-foreground bg-card flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[11px]"
+                  className="text-muted-foreground bg-card flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-xs"
                 >
                   <Link2 aria-hidden="true" className="text-primary size-3" />
                   {hash}
                 </span>
               ))}
-              <span className="bg-primary text-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium">
+              <span className="bg-primary text-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
                 <ShieldCheck aria-hidden="true" className="size-3" />
                 {t("landing.features.verified")}
               </span>

@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { BaseScanLink } from "@/components/shared/basescan-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import {
@@ -255,17 +256,15 @@ export function BlockchainPage({
               ) : null}
             </div>
             {deploymentAddress ? (
-              <a
+              <BaseScanLink
                 href={`${BASESCAN_URL}/address/${deploymentAddress}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded inline-flex items-center gap-1.5 font-mono text-sm"
-                aria-label="View warehouse contract on BaseScan"
+                ariaLabel="View warehouse contract on BaseScan"
+                className="font-mono text-sm"
               >
                 <Link2 aria-hidden="true" className="size-4 shrink-0" />
                 {shortHash(deploymentAddress, 14, 10)}
                 <ExternalLink aria-hidden="true" className="size-3.5" />
-              </a>
+              </BaseScanLink>
             ) : (
               <span className="text-muted-foreground text-sm">
                 {contractAddress
@@ -274,15 +273,14 @@ export function BlockchainPage({
               </span>
             )}
             {deployment?.tx_hash ? (
-              <a
-                href={`${BASESCAN_URL}/tx/${deployment.tx_hash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded inline-flex items-center gap-1 text-xs"
-              >
-                Deployment tx {shortHash(deployment.tx_hash)}
-                <ExternalLink aria-hidden="true" className="size-3.5" />
-              </a>
+                <BaseScanLink
+                  href={`${BASESCAN_URL}/tx/${deployment.tx_hash}`}
+                  ariaLabel="View deployment transaction on BaseScan"
+                  className="text-xs"
+                >
+                  Deployment tx {shortHash(deployment.tx_hash)}
+                  <ExternalLink aria-hidden="true" className="size-3.5" />
+                </BaseScanLink>
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-4">
@@ -463,19 +461,17 @@ export function BlockchainPage({
                     </TableCell>
                     <TableCell>
                       {confirmed && proof.tx_hash ? (
-                        <a
-                          href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded inline-flex items-center gap-1.5 font-mono text-xs"
-                          aria-label="View transaction on BaseScan"
-                        >
-                          {shortHash(proof.tx_hash, 10, 6)}
-                          <ExternalLink
-                            aria-hidden="true"
-                            className="size-3.5"
-                          />
-                        </a>
+                          <BaseScanLink
+                            href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
+                            ariaLabel="View transaction on BaseScan"
+                            className="font-mono text-xs"
+                          >
+                            {shortHash(proof.tx_hash, 10, 6)}
+                            <ExternalLink
+                              aria-hidden="true"
+                              className="size-3.5"
+                            />
+                          </BaseScanLink>
                        ) : proof.error ? (
                          <Tooltip>
                            <TooltipTrigger
@@ -538,16 +534,14 @@ export function BlockchainPage({
                   <div className="flex items-center justify-between gap-2 text-xs">
                     <span className="text-muted-foreground">Blockchain</span>
                     {confirmed && proof.tx_hash ? (
-                      <a
-                        href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded inline-flex items-center gap-1.5 font-mono"
-                        aria-label="View transaction on BaseScan"
-                      >
-                        {shortHash(proof.tx_hash, 10, 6)}
-                        <ExternalLink aria-hidden="true" className="size-3.5" />
-                      </a>
+                        <BaseScanLink
+                          href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
+                          ariaLabel="View transaction on BaseScan"
+                          className="font-mono"
+                        >
+                          {shortHash(proof.tx_hash, 10, 6)}
+                          <ExternalLink aria-hidden="true" className="size-3.5" />
+                        </BaseScanLink>
                     ) : proof.error ? (
                       <span
                         className="text-destructive max-w-40 truncate font-mono"

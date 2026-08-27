@@ -53,7 +53,7 @@ export function Security() {
         </Reveal>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Reveal className="bg-primary/5 ring-primary/10 flex flex-col gap-4 rounded-2xl p-6 ring-1 sm:col-span-2 md:flex-row md:items-start md:gap-5 md:p-7">
+          <Reveal className="bg-primary/5 ring-primary/10 flex flex-col gap-4 rounded-lg p-6 ring-1 sm:col-span-2 md:flex-row md:items-start md:gap-5 md:p-7">
             <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-xl">
               <featured.icon aria-hidden="true" className="size-5" />
             </span>

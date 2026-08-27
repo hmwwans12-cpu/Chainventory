@@ -39,6 +39,7 @@ export function ThemeToggle() {
       size="icon-sm"
       onClick={toggle}
       aria-label={dark ? t("common.theme.light") : t("common.theme.dark")}
+      title={dark ? t("common.theme.light") : t("common.theme.dark")}
       aria-pressed={dark}
     >
       {dark ? (

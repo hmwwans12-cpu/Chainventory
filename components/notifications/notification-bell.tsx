@@ -272,7 +272,7 @@ export function NotificationBell() {
               {unreadCount > 0 ? (
                 <Badge
                   className={cn(
-                    "absolute -top-0.5 -right-0.5 size-5 items-center justify-center rounded-full p-0 text-xs tabular-nums",
+                    "absolute -top-0.5 -right-0.5 size-6 items-center justify-center rounded-full p-0 text-xs tabular-nums",
                     badgePop && "motion-safe:animate-[bell-pop_200ms_ease-out]"
                   )}
                   aria-hidden="true"
@@ -300,7 +300,7 @@ export function NotificationBell() {
                 </div>
                 <Button
                   variant="ghost"
-                  size="xs"
+                  size="sm"
                   onClick={handleMarkAllRead}
                   disabled={unreadCount === 0}
                   className="text-muted-foreground"
@@ -353,7 +353,7 @@ export function NotificationBell() {
                             type="button"
                             onClick={() => void handleRowClick(n)}
                             className={cn(
-                              "group focus-visible:bg-muted/70 focus-visible:ring-ring focus-visible:ring-2 flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors focus-visible:outline-none",
+                              "group focus-visible:bg-muted/70 focus-visible:ring-ring focus-visible:ring-3 flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors focus-visible:outline-none",
                               unread && "bg-primary/5",
                               flashId === n.id &&
                                 "motion-safe:animate-[notif-flash_1.6s_ease-out]"

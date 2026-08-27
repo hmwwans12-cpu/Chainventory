@@ -47,7 +47,7 @@ export function Testimonials() {
             <Reveal
               key={item.name}
               delay={i * 0.06}
-              className="ring-foreground/10 bg-card flex h-full flex-col gap-4 rounded-2xl p-6 ring-1"
+              className="ring-foreground/10 bg-card flex h-full flex-col gap-4 rounded-lg p-6 ring-1"
             >
               <div
                 className="text-primary flex gap-0.5"

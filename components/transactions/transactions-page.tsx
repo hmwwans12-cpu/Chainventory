@@ -257,7 +257,7 @@ export function TransactionsPage({
                           href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-xs"
+                          className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-3 focus-visible:outline-none inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-xs"
                           aria-label="View transaction on BaseScan"
                         >
                           <ExternalLink
@@ -357,7 +357,7 @@ export function TransactionsPage({
                         href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded mt-1 inline-flex min-h-7 items-center gap-1 text-xs"
+                        className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-3 focus-visible:outline-none rounded mt-1 inline-flex min-h-7 items-center gap-1 text-xs"
                         aria-label="View transaction on BaseScan"
                       >
                         <ExternalLink aria-hidden="true" className="size-3.5" />

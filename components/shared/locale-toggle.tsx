@@ -29,6 +29,7 @@ export function LocaleToggle() {
             variant="ghost"
             size="icon-sm"
             aria-label={t("common.language")}
+            title={t("common.language")}
           />
         }
       >

@@ -144,10 +144,10 @@ export function Hero() {
           aria-label="Chainventory dashboard preview"
         >
           <SpotlightCard
-            className="bg-primary/5 ring-primary/10 rounded-[2rem] p-2 ring-1"
+            className="bg-primary/5 ring-primary/10 rounded-lg p-2 ring-1"
             spotlightClassName="bg-primary/15"
           >
-            <div className="shadow-elevated bg-card rounded-[calc(2rem-0.5rem)] p-6">
+            <div className="shadow-elevated bg-card rounded-lg p-6">
               <div className="border-border flex items-center justify-between border-b pb-4">
                 <div className="flex items-center gap-3">
                   <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
@@ -162,7 +162,7 @@ export function Hero() {
                     </span>
                   </div>
                 </div>
-                <span className="text-primary bg-tradewind/15 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium">
+                <span className="text-primary bg-tradewind/15 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
                   <span className="bg-primary size-1.5 rounded-full" />
                   {t("landing.hero.live")}
                 </span>
@@ -232,7 +232,7 @@ export function Hero() {
               <span className="text-foreground text-xs font-semibold">
                 {t("landing.hero.proof_verified")}
               </span>
-              <span className="text-muted-foreground text-[11px]">
+              <span className="text-muted-foreground text-xs">
                 {t("landing.hero.tamper_evident")}
               </span>
             </div>
@@ -247,7 +247,7 @@ export function Hero() {
               <span className="text-foreground text-xs font-semibold">
                 {t("landing.hero.live_sync")}
               </span>
-              <span className="text-muted-foreground text-[11px]">
+              <span className="text-muted-foreground text-xs">
                 {t("landing.hero.updates_reach")}
               </span>
             </div>

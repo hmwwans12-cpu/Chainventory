@@ -46,7 +46,7 @@ export function RangeTabs({
             scroll={false}
             aria-current={active ? "true" : undefined}
             className={cn(
-              "focus-visible:ring-ring min-h-11 rounded-[calc(var(--radius-md)-2px)] px-3 py-2.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
+              "focus-visible:ring-ring min-h-11 rounded-[calc(var(--radius-md)-2px)] px-3 py-2.5 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none",
               active
                 ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"

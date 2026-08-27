@@ -128,7 +128,7 @@ function ToggleCell({
         checked={checked}
         onChange={onChange}
         aria-label={label}
-        className="border-border focus-visible:ring-ring h-5 w-9 cursor-pointer appearance-none rounded-full bg-muted transition-colors checked:bg-primary checked:after:translate-x-4 relative after:absolute after:left-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-background after:transition-transform focus-visible:outline-none focus-visible:ring-2"
+        className="border-border focus-visible:ring-ring h-5 w-9 cursor-pointer appearance-none rounded-full bg-muted transition-colors checked:bg-primary checked:after:translate-x-4 relative before:absolute before:content-[''] before:-inset-[10px] after:absolute after:left-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-background after:transition-transform focus-visible:outline-none focus-visible:ring-3"
       />
     </div>
   );

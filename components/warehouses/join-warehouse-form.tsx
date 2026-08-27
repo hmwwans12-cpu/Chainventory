@@ -231,7 +231,7 @@ export function JoinWarehouseForm() {
                 >
                   {step.label}
                 </span>
-                <span className="text-muted-foreground text-[11px] leading-snug text-pretty">
+                <span className="text-muted-foreground text-xs leading-snug text-pretty">
                   {step.sub}
                 </span>
               </li>
@@ -292,7 +292,7 @@ export function JoinWarehouseForm() {
           <div className="flex flex-col gap-3">
             <Button
               variant="ghost"
-              size="xs"
+              size="sm"
               className="-ml-2 w-fit"
               render={<Link href="/onboarding" />}
             >
@@ -428,7 +428,7 @@ export function JoinWarehouseForm() {
             >
               <span
                 className={cn(
-                  "flex size-6 items-center justify-center rounded-full text-[10px] tabular-nums",
+                  "flex size-7 items-center justify-center rounded-full text-xs tabular-nums",
                   index === 0
                     ? "bg-primary text-primary-foreground"
                     : "border-border bg-muted text-muted-foreground border"

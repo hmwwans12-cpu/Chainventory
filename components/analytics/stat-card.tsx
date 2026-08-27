@@ -117,7 +117,7 @@ export function StatCard({
       className={cn(
         "focus-visible:ring-ring rounded-xl transition-shadow",
         "hover:ring-ring/40 hover:ring-2",
-        "focus-visible:ring-2 focus-visible:outline-none"
+        "focus-visible:ring-3 focus-visible:outline-none"
       )}
     >
       <Card className="@container/card min-h-[148px] gap-4">{body}</Card>
