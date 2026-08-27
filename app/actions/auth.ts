@@ -114,12 +114,6 @@ export async function resetPasswordAction(
   return { error: null, success: true };
 }
 
-export async function signOutAction() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/login");
-}
-
 /**
  * Google OAuth (DESIGN §25/§28): Supabase Auth sebagai identitas utama.
  * PKCE flow - verifier disimpan di cookie oleh server client, kode

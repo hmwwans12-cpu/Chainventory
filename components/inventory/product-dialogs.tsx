@@ -625,7 +625,9 @@ export function StockMovementDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={(next) => (busy ? null : onOpenChange(next))}
+      // P0#5: izinkan tutup saat menunggu konfirmasi (DESIGN §73) — hanya
+      // blokir saat masih di fase signing agar signature tidak kebuang.
+      onOpenChange={(next) => (busy && !phase ? null : onOpenChange(next))}
     >
       <DialogContent>
         <DialogHeader>
@@ -654,10 +656,17 @@ export function StockMovementDialog({
         {phase ? (
           <p
             aria-live="polite"
-            className="bg-primary/10 text-primary flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+            className="bg-primary/10 text-primary flex flex-col gap-1 rounded-lg px-3 py-2 text-xs"
           >
-            <Loader2 aria-hidden="true" className="animate-spin" />
-            {phase}
+            <span className="flex items-center gap-2">
+              <Loader2 aria-hidden="true" className="animate-spin" />
+              {phase}
+            </span>
+            {/* DESIGN §73 — reassurance saat konfirmasi blockchain lama */}
+            <span className="text-primary/80">
+              You can safely leave this page — we&apos;ll notify you when
+              it&apos;s confirmed.
+            </span>
           </p>
         ) : null}
         {currentBalance != null ? (
@@ -672,7 +681,7 @@ export function StockMovementDialog({
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="movement-product">Product</Label>
             {product ? (
-              <div className="border-border flex h-8 items-center rounded-lg border px-2.5 text-sm">
+              <div className="ring-foreground/10 ring-1 flex h-8 items-center rounded-lg px-2.5 text-sm">
                 {product.name}
                 <span className="text-muted-foreground ml-auto font-mono text-xs">
                   {product.sku}
@@ -711,7 +720,7 @@ export function StockMovementDialog({
                       <SelectTrigger size="default" className="w-full">
                         <SelectValue placeholder="Select a movement" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[60]">
                         {reversalTargets.map((t) => (
                           <SelectItem key={t.id} value={t.id}>
                             {MOVEMENT_TYPE_META[t.movementType].label} ·{" "}
@@ -871,7 +880,7 @@ export function ProductDetailSheet({
 
   const low =
     product.quantity != null &&
-    Number(product.quantity) > 0 &&
+    Number(product.lowStockThreshold) > 0 &&
     Number(product.quantity) <= Number(product.lowStockThreshold);
 
   return (
@@ -886,7 +895,7 @@ export function ProductDetailSheet({
         </SheetHeader>
 
         <div className="flex flex-col gap-4 p-4">
-          <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="flex items-center justify-between rounded-lg ring-foreground/10 ring-1 p-3">
             <div className="flex flex-col gap-0.5">
               <span className="text-muted-foreground text-xs">
                 Current stock

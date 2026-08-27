@@ -11,12 +11,14 @@ import {
   MoreHorizontal,
   UserMinus,
   UserPlus,
+  Users,
   X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { EmptyState } from "@/components/shared/empty-state";
 import {
   Table,
   TableBody,
@@ -29,9 +31,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CopyButton } from "@/components/shared/copy-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,6 +124,57 @@ export function MembersPage({
   const canInvite = hasPermission(role, PERMISSIONS.JOIN_REQUEST_APPROVE);
   const isOwner = role === "OWNER";
   const assignableRoles = canManageRole(role);
+
+  // Email invite (audit: email invites)
+  const [inviteOpen, setInviteOpen] = React.useState(false);
+  const [inviteEmail, setInviteEmail] = React.useState("");
+  const [inviteRole, setInviteRole] = React.useState<Role>(
+    assignableRoles[0] ?? "STAFF"
+  );
+  const [inviteBusy, setInviteBusy] = React.useState(false);
+  const [inviteUrl, setInviteUrl] = React.useState<string | null>(null);
+  const [inviteSent, setInviteSent] = React.useState(false);
+  const [inviteError, setInviteError] = React.useState<string | null>(null);
+
+  const handleInvite = async () => {
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(inviteEmail)) {
+      setInviteError("Enter a valid email address.");
+      return;
+    }
+    setInviteBusy(true);
+    setInviteError(null);
+    try {
+      const res = await fetch("/api/warehouses/members/invite", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          warehouseId,
+          email: inviteEmail,
+          role: inviteRole,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.data?.acceptUrl) {
+        setInviteError(json?.error ?? "Could not create invitation.");
+      } else {
+        setInviteSent(Boolean(json.data.emailSent));
+        setInviteUrl(json.data.acceptUrl);
+        setInviteEmail("");
+        toast.add({
+          type: "success",
+          title: "Invitation created",
+          description: json.data.emailSent
+            ? "Invitation sent by email."
+            : "Share the link with the invitee.",
+        });
+      }
+    } catch {
+      setInviteError("Network error. Try again.");
+    } finally {
+      setInviteBusy(false);
+    }
+  };
+
   const showRequests =
     canInvite && assignableRoles.length > 0 && pendingRequests.length > 0;
 
@@ -208,7 +263,7 @@ export function MembersPage({
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2">
           {warehouses.length > 1 ? (
@@ -251,7 +306,127 @@ export function MembersPage({
             >
               <Copy aria-hidden="true" />
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setInviteUrl(null);
+                setInviteError(null);
+                setInviteOpen(true);
+              }}
+            >
+              <UserPlus aria-hidden="true" />
+              Invite by email
+            </Button>
           </div>
+        ) : null}
+
+        {canInvite ? (
+          <Dialog
+            open={inviteOpen}
+            onOpenChange={(open) => {
+              setInviteOpen(open);
+              if (!open) {
+                setInviteUrl(null);
+                setInviteError(null);
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Invite by email</DialogTitle>
+                <DialogDescription>
+                  Creates a single-use invite link bound to the email address.
+                  The recipient opens it while signed in with that email to
+                  join.
+                </DialogDescription>
+              </DialogHeader>
+              {inviteUrl ? (
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="invite-link">Invite link</Label>
+                  <div className="flex items-center gap-2">
+                    <code
+                      id="invite-link"
+                      className="bg-muted text-foreground flex-1 truncate rounded-md px-2 py-1.5 font-mono text-xs"
+                    >
+                      {`${typeof window !== "undefined" ? window.location.origin : ""}${inviteUrl}`}
+                    </code>
+                    <CopyButton
+                      text={`${typeof window !== "undefined" ? window.location.origin : ""}${inviteUrl}`}
+                      label="Copy invite link"
+                    />
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    {inviteSent
+                      ? "Invitation sent — they'll also get this link by email."
+                      : "Email delivery is not configured in this environment — share the link directly."}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="invite-email">Email</Label>
+                    <Input
+                      id="invite-email"
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      placeholder="teammate@company.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      disabled={inviteBusy}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="invite-role">Role</Label>
+                    <Select
+                      value={inviteRole}
+                      onValueChange={(value) => {
+                        if (value !== null) setInviteRole(value as Role);
+                      }}
+                    >
+                      <SelectTrigger id="invite-role" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {assignableRoles.map((r) => (
+                          <SelectItem key={r} value={r}>
+                            {ROLE_META[r].label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {inviteError ? (
+                    <p className="text-destructive text-xs">{inviteError}</p>
+                  ) : null}
+                </div>
+              )}
+              <DialogFooter>
+                {inviteUrl ? (
+                  <Button onClick={() => setInviteOpen(false)}>Done</Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => setInviteOpen(false)}
+                      disabled={inviteBusy}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleInvite} disabled={inviteBusy}>
+                      {inviteBusy ? (
+                        <Loader2 aria-hidden="true" className="animate-spin" />
+                      ) : (
+                        <UserPlus aria-hidden="true" />
+                      )}
+                      Create invite
+                    </Button>
+                  </>
+                )}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         ) : null}
       </div>
 
@@ -347,7 +522,15 @@ export function MembersPage({
         </section>
       ) : null}
 
-      <PanelCard padding="none">
+      {members.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No members yet"
+          description="Invite teammates with the warehouse code, or share the invite link above."
+        />
+      ) : (
+        <PanelCard padding="none">
+        <div className="hidden md:block overflow-x-auto">
         <Table className="md:min-w-[700px]">
           <TableHeader>
             <TableRow>
@@ -445,7 +628,7 @@ export function MembersPage({
                       }
                     />
                   </TableCell>
-                  <TableCell className="text-muted-foreground hidden text-xs lg:table-cell">
+                  <TableCell className="text-muted-foreground hidden text-xs tabular-nums lg:table-cell">
                     {member.joinedAt ? formatDate(member.joinedAt) : "—"}
                   </TableCell>
                   <TableCell>
@@ -486,9 +669,132 @@ export function MembersPage({
                 </TableRow>
               );
             })}
-          </TableBody>
+            </TableBody>
         </Table>
-      </PanelCard>
+        </div>
+        {/* Mobile: card list (audit N) */}
+        <ul className="divide-y md:hidden">
+          {members.map((member) => {
+            const isSelf = member.userId === myUserId;
+            const manageable =
+              !isSelf &&
+              member.role !== "OWNER" &&
+              canAssignRole(role, member.role);
+            const assignable = ROLES.filter(
+              (r) =>
+                r !== "OWNER" && canAssignRole(role, r) && r !== member.role
+            );
+            const roleMeta = ROLE_META[member.role];
+            const statusTone =
+              member.status === "ACTIVE"
+                ? "success"
+                : member.status === "PENDING"
+                  ? "pending"
+                  : "failed";
+            const statusLabel =
+              member.status === "ACTIVE"
+                ? "Active"
+                : member.status === "PENDING"
+                  ? "Pending"
+                  : "Suspended";
+            return (
+              <li
+                key={member.membershipId}
+                className="flex items-start justify-between gap-3 p-4"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className="text-foreground truncate font-medium">
+                    {member.displayName ?? "Unnamed member"}
+                    {isSelf ? (
+                      <span className="text-muted-foreground font-normal">
+                        {" "}
+                        (you)
+                      </span>
+                    ) : null}
+                  </span>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    {member.email}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    {manageable && assignable.length > 0 ? (
+                      <Select
+                        value={member.role}
+                        onValueChange={(value) => {
+                          if (value !== null && value !== member.role) {
+                            handleRoleChange(member, value);
+                          }
+                        }}
+                      >
+                        <SelectTrigger
+                          size="sm"
+                          className="w-32"
+                          disabled={changing.has(member.membershipId)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {assignable.map((r) => (
+                            <SelectItem key={r} value={r}>
+                              {ROLE_META[r].label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <StatusBadge
+                        tone={roleMeta.tone}
+                        label={roleMeta.label}
+                      />
+                    )}
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <StatusBadge tone={statusTone} label={statusLabel} />
+                    {member.joinedAt ? (
+                      <span className="text-muted-foreground text-xs">
+                        {formatDate(member.joinedAt)}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Actions for ${member.displayName ?? member.email}`}
+                      />
+                    }
+                  >
+                    <MoreHorizontal aria-hidden="true" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {isSelf ? (
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => setLeaveTarget(member)}
+                      >
+                        <LogOut aria-hidden="true" />
+                        Leave warehouse
+                      </DropdownMenuItem>
+                    ) : null}
+                    {manageable ? (
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => setRemoveTarget(member)}
+                      >
+                        <UserMinus aria-hidden="true" />
+                        Remove member
+                      </DropdownMenuItem>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </li>
+            );
+          })}
+        </ul>
+        </PanelCard>
+      )}
 
       {rejectTarget ? (
         <RejectJoinDialog

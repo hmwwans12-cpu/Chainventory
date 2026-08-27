@@ -11,6 +11,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Table,
   TableBody,
   TableCell,
@@ -113,12 +118,18 @@ export function ManualReviewTable({
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span
-                        className="text-muted-foreground block max-w-64 truncate text-xs"
-                        title={proof.error ?? ""}
-                      >
-                        {proof.error ?? proof.outbox?.error ?? "—"}
-                      </span>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <span className="text-muted-foreground block max-w-64 truncate text-xs" />
+                          }
+                        >
+                          {proof.error ?? proof.outbox?.error ?? "—"}
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {proof.error ?? proof.outbox?.error}
+                        </TooltipContent>
+                      </Tooltip>
                     </TableCell>
                     <TableCell className="text-right">
                       <span className="text-muted-foreground text-xs">

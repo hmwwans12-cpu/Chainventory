@@ -15,6 +15,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Logo } from "@/components/shared/logo";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { LocaleToggle } from "@/components/shared/locale-toggle";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -32,7 +34,11 @@ const NAV_LINKS = [
  * Audit UI/UX 0.1.8 §4: current-page indicator (dot + bg) dan hover yang
  * lebih hidup (transition-all + scale halus, pointer-fine only).
  */
-export function MarketingHeader() {
+export function MarketingHeader({
+  authenticated = false,
+}: {
+  authenticated?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isActive = (href: string) =>
@@ -72,17 +78,27 @@ export function MarketingHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hidden md:inline-flex"
-            render={<Link href="/login" />}
-          >
-            Login
-          </Button>
-          <Button size="sm" render={<Link href="/signup" />}>
-            Create Warehouse
-          </Button>
+          <LocaleToggle />
+          <ThemeToggle />
+          {authenticated ? (
+            <Button size="sm" render={<Link href="/dashboard" />}>
+              Dashboard
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden md:inline-flex"
+                render={<Link href="/login" />}
+              >
+                Login
+              </Button>
+              <Button size="lg" render={<Link href="/signup" />}>
+                Sign up
+              </Button>
+            </>
+          )}
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger
@@ -136,21 +152,36 @@ export function MarketingHeader() {
                 })}
               </nav>
               <div className="mt-auto flex flex-col gap-2 p-4">
-                <Button
-                  size="lg"
-                  render={
-                    <Link href="/signup" onClick={() => setOpen(false)} />
-                  }
-                >
-                  Create Warehouse
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  render={<Link href="/login" onClick={() => setOpen(false)} />}
-                >
-                  Login
-                </Button>
+                {authenticated ? (
+                  <Button
+                    size="lg"
+                    render={
+                      <Link href="/dashboard" onClick={() => setOpen(false)} />
+                    }
+                  >
+                    Dashboard
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      size="lg"
+                      render={
+                        <Link href="/signup" onClick={() => setOpen(false)} />
+                      }
+                    >
+                      Sign up
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      render={
+                        <Link href="/login" onClick={() => setOpen(false)} />
+                      }
+                    >
+                      Login
+                    </Button>
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>

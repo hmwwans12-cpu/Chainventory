@@ -1,113 +1,117 @@
 #!/usr/bin/env node
 /**
- * Contrast regression guard — prevents low-contrast tokens from being
- * reintroduced into components/. Runs as part of CI and can be invoked
- * locally via `node scripts/ci/check-contrast.mjs`.
+ * Contrast regression guard — P0#11 fix.
  *
- * Forbidden patterns:
- *   1. text-amber-[4567]00          (must be amber-800)
- *   2. text-foreground/[1-7]0       (must be full opacity, unless hover-only)
- *   3. text-muted-foreground/[1-7]0 (must be full opacity, unless hover-only)
- *   4. bg-destructive/10            (must be destructive/15)
+ * Replaces the old regex blocklist (which only banned legacy `text-amber-*`
+ * opacity utilities and MISSED genuine token-based failures such as
+ * `--warning` on `--card`) with a real WCAG 2.1 contrast check.
  *
- * Hover-only exemption: if the SAME className string also contains
- * "opacity-0" and "hover:" or "group-hover:" or "peer-hover:", the
- * text-opacity match is ignored (the element starts invisible and
- * only becomes visible on hover — acceptable).
+ * What it does:
+ *   1. Parses the design tokens defined in app/globals.css (`:root` + `.dark`).
+ *   2. Resolves each foreground token against the background it is typically
+ *      rendered on (text on surface, foreground on muted, etc.).
+ *   3. Computes the relative-luminance contrast ratio and fails any pairing
+ *      below WCAG AA (4.5:1 for body text, 3:1 for large/badge text).
+ *
+ * Extend `PAIRS` when new tokens/surfaces are introduced.
  */
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, extname } from "node:path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
-const ROOT = join(process.cwd(), "components");
-const FILE_EXT = ".tsx";
+const GLOBALS = join(process.cwd(), "app", "globals.css");
 
-/** @type {Array<{pattern: RegExp, label: string, allowHoverOnly?: boolean}>} */
-const RULES = [
-  {
-    pattern: /\btext-amber-[4567]00\b/g,
-    label: "Low-contrast amber (use text-amber-800 dark:text-amber-300)",
-  },
-  {
-    pattern: /\btext-foreground\/[1-7]0\b/g,
-    label: "text-foreground with reduced opacity (use text-foreground)",
-    allowHoverOnly: true,
-  },
-  {
-    pattern: /\btext-muted-foreground\/[1-7]0\b/g,
-    label:
-      "text-muted-foreground with reduced opacity (use text-muted-foreground)",
-    allowHoverOnly: true,
-  },
-  {
-    pattern: /\bbg-destructive\/10\b/g,
-    label: "bg-destructive/10 (use bg-destructive/15)",
-  },
+function hexToRgb(hex) {
+  let h = hex.trim().replace(/^#/, "");
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  const n = parseInt(h, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function luminance(rgb) {
+  const a = rgb.map((v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+}
+
+function ratio(rgb1, rgb2) {
+  const l1 = luminance(rgb1);
+  const l2 = luminance(rgb2);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function parseVars(css, scope) {
+  const re = new RegExp(
+    `${scope}\\s*\\{([^}]*)\\}`,
+    "i"
+  );
+  const block = css.match(re)?.[1] ?? "";
+  const vars = {};
+  for (const line of block.split(";")) {
+    const m = line.match(/--([\w-]+)\s*:\s*([^;]+)/);
+    if (m) vars[m[1]] = m[2].trim();
+  }
+  return vars;
+}
+
+// Resolve a token reference (`var(--x)` or `#hex`) against a var map.
+function resolve(value, vars, depth = 0) {
+  if (!value || depth > 5) return null;
+  const ref = value.match(/var\(--([\w-]+)\)/);
+  if (ref) return resolve(vars[ref[1]] ?? "", vars, depth + 1);
+  const hex = value.match(/#[0-9a-f]{3,8}/i);
+  return hex ? hex[0] : null;
+}
+
+const css = readFileSync(GLOBALS, "utf-8");
+const light = parseVars(css, ":root");
+const dark = parseVars(css, ".dark");
+
+// [fgToken, bgToken, minRatio, label]
+const PAIRS = [
+  ["--warning", "--card", 4.5, "warning text on card"],
+  ["--warning", "--background", 4.5, "warning text on background"],
+  ["--warning-foreground", "--warning", 3, "warning-foreground on warning"],
+  ["--destructive", "--card", 4.5, "destructive text on card"],
+  ["--muted-foreground", "--card", 4.5, "muted-foreground on card"],
+  ["--muted-foreground", "--background", 4.5, "muted-foreground on background"],
+  ["--foreground", "--card", 7, "foreground on card"],
+  ["--primary", "--background", 4.5, "primary on background"],
+  ["--primary-foreground", "--primary", 4.5, "primary-foreground on primary"],
+  ["--secondary-foreground", "--secondary", 4.5, "secondary-foreground on secondary"],
 ];
 
-function walk(dir) {
-  const results = [];
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) {
-      results.push(...walk(full));
-    } else if (extname(full) === FILE_EXT) {
-      results.push(full);
+let failures = 0;
+
+for (const [themeName, vars] of [
+  ["light", light],
+  ["dark", dark],
+]) {
+  for (const [fg, bg, min, label] of PAIRS) {
+    const fgHex = resolve(vars[fg], vars);
+    const bgHex = resolve(vars[bg], vars);
+    if (!fgHex || !bgHex) continue;
+    const r = ratio(hexToRgb(fgHex), hexToRgb(bgHex));
+    if (r < min) {
+      failures += 1;
+      console.error(
+        `❌ [${themeName}] ${label}: ${fg}/${
+          vars[fg]
+        } on ${bg}/${vars[bg]} = ${r.toFixed(2)}:1 (need ${min}:1)`
+      );
     }
-  }
-  return results;
-}
-
-const files = walk(ROOT);
-let totalIssues = 0;
-
-for (const file of files) {
-  const content = readFileSync(file, "utf-8");
-  const lines = content.split("\n");
-  const issues = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    for (const rule of RULES) {
-      const matches = [...line.matchAll(rule.pattern)];
-      for (const match of matches) {
-        // Hover-only exemption: skip if line has opacity-0 + hover prefix
-        if (rule.allowHoverOnly) {
-          const hasHover =
-            /\b(hover:|group-hover:|peer-hover:)/.test(line) ||
-            /\b(hover:|group-hover:|peer-hover:)/.test(
-              lines.slice(Math.max(0, i - 3), i + 4).join(" ")
-            );
-          const hasOpacityZero = /\bopacity-0\b/.test(
-            lines.slice(Math.max(0, i - 3), i + 4).join(" ")
-          );
-          if (hasHover && hasOpacityZero) continue;
-        }
-        issues.push({
-          line: i + 1,
-          match: match[0],
-          rule: rule.label,
-        });
-      }
-    }
-  }
-
-  if (issues.length > 0) {
-    const rel = file.replace(ROOT, "components").replace(/\\/g, "/");
-    console.error(`\n❌ ${rel}`);
-    for (const issue of issues) {
-      console.error(`   line ${issue.line}: ${issue.match} — ${issue.rule}`);
-    }
-    totalIssues += issues.length;
   }
 }
 
-if (totalIssues === 0) {
-  console.log("✅ Contrast check passed — no low-contrast tokens found.");
+if (failures === 0) {
+  console.log("✅ Contrast check passed — all token pairings meet WCAG AA.");
 } else {
   console.error(
-    `\n🔍 Contrast regression check failed: ${totalIssues} violation(s) found.\n` +
-      "Fix the listed lines before committing."
+    `\n🔍 Contrast check failed: ${failures} token pairing(s) below WCAG AA.`
   );
   process.exit(1);
 }

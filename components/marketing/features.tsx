@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ArrowLeftRight,
   Blocks,
@@ -8,6 +10,7 @@ import {
   Wifi,
 } from "lucide-react";
 
+import { useLocale } from "@/components/providers/locale-provider";
 import { Reveal } from "@/components/marketing/reveal";
 import { SpotlightCard } from "@/components/marketing/spotlight-card";
 
@@ -19,45 +22,40 @@ import { SpotlightCard } from "@/components/marketing/spotlight-card";
 const FEATURES = [
   {
     icon: Package,
-    title: "Centralized inventory",
-    description:
-      "Products, stock levels, and units in one place. Add individually or import in bulk from CSV.",
+    titleKey: "landing.features.f1_title",
+    descKey: "landing.features.f1_desc",
   },
   {
     icon: ArrowLeftRight,
-    title: "Stock in / stock out",
-    description:
-      "Every movement is recorded atomically- no lost updates or negative stock from concurrent edits.",
+    titleKey: "landing.features.f2_title",
+    descKey: "landing.features.f2_desc",
   },
   {
     icon: Wifi,
-    title: "Real-time sync",
-    description:
-      "Changes propagate to every connected team member instantly. No manual refresh required.",
+    titleKey: "landing.features.f3_title",
+    descKey: "landing.features.f3_desc",
   },
   {
     icon: Users,
-    title: "Role-based access",
-    description:
-      "Owners, managers, staff, auditors, and viewers each get exactly the access they need.",
+    titleKey: "landing.features.f4_title",
+    descKey: "landing.features.f4_desc",
   },
   {
     icon: Blocks,
-    title: "Verifiable records",
-    description:
-      "Important movements get a cryptographic proof you can verify anytime- without touching crypto yourself.",
+    titleKey: "landing.features.f5_title",
+    descKey: "landing.features.f5_desc",
     featured: true,
     proof: ["0x7f...c2", "0x3a...9d", "0x9c...41"],
   },
   {
     icon: ShieldCheck,
-    title: "Built-in security",
-    description:
-      "Server-side authorization, audited history, and an append-only trail of who did what.",
+    titleKey: "landing.features.f6_title",
+    descKey: "landing.features.f6_desc",
   },
 ];
 
 export function Features() {
+  const { t } = useLocale();
   const featured = FEATURES.find((f) => f.featured)!;
   const rest = FEATURES.filter((f) => !f.featured);
 
@@ -66,11 +64,10 @@ export function Features() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-6">
         <Reveal className="flex max-w-2xl flex-col gap-4">
           <h2 className="font-display text-foreground text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-            Everything a modern warehouse needs
+            {t("landing.features.title")}
           </h2>
           <p className="text-muted-foreground max-w-xl text-base leading-relaxed text-pretty">
-            Manage inventory the way a modern SaaS should feel- with trust and
-            verification layered underneath.
+            {t("landing.features.subtitle")}
           </p>
         </Reveal>
 
@@ -81,10 +78,10 @@ export function Features() {
                 <featured.icon aria-hidden="true" className="size-5" />
               </span>
               <h3 className="font-display text-foreground text-xl font-semibold">
-                {featured.title}
+                {t(featured.titleKey)}
               </h3>
               <p className="text-muted-foreground max-w-md text-sm leading-relaxed text-pretty md:text-base">
-                {featured.description}
+                {t(featured.descKey)}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -97,9 +94,9 @@ export function Features() {
                   {hash}
                 </span>
               ))}
-              <span className="bg-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium">
+              <span className="bg-primary text-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium">
                 <ShieldCheck aria-hidden="true" className="size-3" />
-                Verified
+                {t("landing.features.verified")}
               </span>
             </div>
           </Reveal>
@@ -108,7 +105,7 @@ export function Features() {
             const Icon = feature.icon;
             return (
               <Reveal
-                key={feature.title}
+                key={feature.titleKey}
                 delay={index * 0.04}
                 className="h-full"
               >
@@ -120,10 +117,10 @@ export function Features() {
                     <Icon aria-hidden="true" className="size-5" />
                   </span>
                   <h3 className="font-display text-foreground text-base font-semibold">
-                    {feature.title}
+                    {t(feature.titleKey)}
                   </h3>
                   <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-                    {feature.description}
+                    {t(feature.descKey)}
                   </p>
                 </SpotlightCard>
               </Reveal>

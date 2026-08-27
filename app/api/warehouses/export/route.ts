@@ -36,12 +36,24 @@ export async function GET(request: Request) {
     if (!hasPermission(role as Role, PERMISSIONS.PRODUCT_EXPORT)) {
       return forbidden("Insufficient permission.");
     }
-    const { data, error } = await supabase
+    let productsQuery = supabase
       .from("products")
       .select(
         "sku, name, category, unit, description, low_stock_threshold, status"
       )
-      .eq("warehouse_id", warehouseId)
+      .eq("warehouse_id", warehouseId);
+
+    // Bulk export: filter ke id terpilih (audit: bulk actions).
+    const idsParam = url.searchParams.get("ids");
+    if (idsParam) {
+      const ids = idsParam
+        .split(",")
+        .map((x) => x.trim())
+        .filter((x) => /^[0-9a-f-]{36}$/i.test(x));
+      if (ids.length) productsQuery = productsQuery.in("id", ids);
+    }
+
+    const { data, error } = await productsQuery
       .order("sku")
       .limit(EXPORT_ROW_CAP + 1);
 

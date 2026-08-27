@@ -50,9 +50,10 @@ import { MAX_CSV_BYTES, parseProductsCsv } from "@/lib/inventory/csv";
 
 type Mode = "manual" | "paste" | "upload";
 
-type DialogRow = BulkProductRow & { initialQty: string | null };
+type DialogRow = BulkProductRow & { id: string; initialQty: string | null };
 
 const MANUAL_EMPTY: DialogRow = {
+  id: "manual-0",
   name: "",
   sku: "",
   category: "",
@@ -114,7 +115,13 @@ export function BulkAddDialog({
       setInvalid(bad);
     } else {
       const parsed = parseProductsCsv(pasteText);
-      setRows(parsed.rows);
+      setRows(
+        parsed.rows.map((r, idx) => ({
+          ...r,
+          id: `parsed-${idx}-${Date.now()}`,
+          initialQty: null,
+        }))
+      );
       setInvalid(
         parsed.errors.map((e) => ({ index: e.index, reason: e.message }))
       );
@@ -238,7 +245,7 @@ export function BulkAddDialog({
                   </span>
                 </div>
                 {manualRows.map((row, i) => (
-                  <div key={i} className="grid grid-cols-12 items-center gap-2">
+                  <div key={row.id} className="grid grid-cols-12 items-center gap-2">
                     <Input
                       className="col-span-5"
                       value={row.name}
@@ -292,7 +299,10 @@ export function BulkAddDialog({
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    setManualRows((prev) => [...prev, { ...MANUAL_EMPTY }])
+                    setManualRows((prev) => [
+          ...prev,
+          { ...MANUAL_EMPTY, id: `manual-${prev.length + 1}-${Date.now()}` },
+        ])
                   }
                 >
                   <Plus aria-hidden="true" />
@@ -413,7 +423,7 @@ export function BulkAddDialog({
 
         {step === "result" && results ? (
           <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+            <div className="flex items-center justify-between rounded-lg ring-foreground/10 ring-1 px-4 py-3">
               <span className="text-foreground text-sm font-medium">
                 Import finished
               </span>

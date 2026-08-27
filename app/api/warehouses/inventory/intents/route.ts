@@ -22,6 +22,7 @@ import {
   invalid,
   ok,
   readJson,
+  requireActiveWarehouse,
   requirePermission,
   requireRateLimit,
   requireUser,
@@ -83,6 +84,14 @@ export async function POST(request: Request) {
         : PERMISSIONS.STOCK_OUT
     );
     if (denied) return denied;
+
+    // Audit C-02: tolak bila warehouse suspended/inactive.
+    const inactive = await requireActiveWarehouse(
+      supabase,
+      parsed.data.warehouseId
+    );
+    if (inactive) return inactive;
+
     const [{ data: warehouse }, { data: product }] = await Promise.all([
       supabase
         .from("warehouses")
@@ -171,10 +180,22 @@ export async function POST(request: Request) {
   const body = raw.body as { intentId?: string; txHash?: string };
   if (!body.intentId || typeof body.intentId !== "string")
     return invalid("Invalid intent id.");
-  if (action === "submit") {
-    if (!body.txHash || !/^0x[0-9a-fA-F]{64}$/.test(body.txHash))
-      return invalid("Invalid transaction hash.");
-    const { error: rpcError } = await supabase.rpc(
+   if (action === "submit") {
+     if (!body.txHash || !/^0x[0-9a-fA-F]{64}$/.test(body.txHash))
+       return invalid("Invalid transaction hash.");
+     const { data: intentWh } = await supabase
+       .from("stock_intents")
+       .select("warehouse_id")
+       .eq("id", body.intentId)
+       .maybeSingle();
+     if (!intentWh) return error("Stock intent not found.", "NOT_FOUND", 404);
+     // Audit C-02: tolak bila warehouse suspended/inactive.
+     const inactive = await requireActiveWarehouse(
+       supabase,
+       intentWh.warehouse_id
+     );
+     if (inactive) return inactive;
+     const { error: rpcError } = await supabase.rpc(
       "submit_user_paid_stock_intent",
       { p_id: body.intentId, p_tx_hash: body.txHash }
     );
@@ -198,6 +219,12 @@ export async function POST(request: Request) {
     if (intentError || !intent) {
       return error("Stock intent not found.", "NOT_FOUND", 404);
     }
+    // Audit C-02: tolak bila warehouse suspended/inactive.
+    const inactive = await requireActiveWarehouse(
+      supabase,
+      intent.warehouse_id
+    );
+    if (inactive) return inactive;
     if (intent.status === "committed")
       return ok({ movementId: intent.id, status: "committed" });
     if (!intent.tx_hash)

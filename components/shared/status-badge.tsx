@@ -31,7 +31,7 @@ const STATUS_META: Record<
   warning: {
     label: "Warning",
     icon: AlertTriangle,
-    className: "bg-warning/15 text-warning",
+    className: "bg-warning/15 text-warning font-medium",
   },
   failed: {
     label: "Failed",
@@ -41,12 +41,12 @@ const STATUS_META: Record<
   inactive: {
     label: "Inactive",
     icon: Ban,
-    className: "bg-muted text-muted-foreground",
+    className: "bg-muted text-foreground",
   },
   suspended: {
     label: "Suspended",
     icon: PauseCircle,
-    className: "bg-destructive/15 text-destructive",
+    className: "bg-foreground/10 text-foreground",
   },
 };
 

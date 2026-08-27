@@ -3,8 +3,10 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/marketing/hero";
 import { Problem } from "@/components/marketing/problem";
 import { Features } from "@/components/marketing/features";
+import { TrustedBy } from "@/components/marketing/trusted-by";
 import { HowItWorks } from "@/components/marketing/how-it-works";
 import { BlockchainExplanation } from "@/components/marketing/blockchain-explanation";
+import { Testimonials } from "@/components/marketing/testimonials";
 import { Security } from "@/components/marketing/security";
 import { Faq } from "@/components/marketing/faq";
 import { Cta } from "@/components/marketing/cta";
@@ -29,8 +31,10 @@ export default function LandingPage() {
       <Hero />
       <Problem />
       <Features />
+      <TrustedBy />
       <HowItWorks />
       <BlockchainExplanation />
+      <Testimonials />
       <Security />
       <Faq />
       <Cta />

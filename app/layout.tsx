@@ -5,6 +5,7 @@ import "./globals.css";
 
 import { PrivyProvider } from "@/components/providers/privy-provider";
 import { Toaster } from "@/components/ui/toast";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const sourceSans = Source_Sans_3({
   variable: "--font-sans",
@@ -71,12 +72,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <body
         className={`${sourceSans.variable} ${displayFallback.variable} flex min-h-full flex-col antialiased`}
       >
-        <PrivyProvider>{children}</PrivyProvider>
-        <Toaster />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();",
+          }}
+        />
+        <TooltipProvider delay={150}>
+          <PrivyProvider>{children}</PrivyProvider>
+          <Toaster />
+        </TooltipProvider>
       </body>
     </html>
   );

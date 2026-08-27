@@ -58,6 +58,13 @@ export function NotificationBell() {
   const setUnreadCount = useCallback((next: number) => {
     unreadStore.set(next);
   }, []);
+  // Mirror agar optimistik decrement selalu pakai nilai terkini (audit A3):
+  // cegah double-decrement saat klik cepat beberapa row sebelum re-render.
+  const unreadRef = useRef(unreadCount);
+  useEffect(() => {
+    unreadRef.current = unreadCount;
+  }, [unreadCount]);
+  const markedReadRef = useRef<Set<string>>(new Set());
   const [notifications, setNotificationsState] = useState<NotificationRow[]>(
     []
   );
@@ -199,10 +206,12 @@ export function NotificationBell() {
   const handleRowClick = useCallback(
     async (n: NotificationRow) => {
       const supabase = supabaseRef.current;
-      if (supabase && !n.read_at) {
+      if (supabase && !n.read_at && !markedReadRef.current.has(n.id)) {
+        markedReadRef.current.add(n.id);
         const { ok } = await markNotificationsRead(supabase, [n.id]);
         if (ok) {
-          setUnreadCount(unreadCount - 1);
+          unreadRef.current = Math.max(0, unreadRef.current - 1);
+          setUnreadCount(unreadRef.current);
           setNotifications((rows) =>
             rows.map((r) =>
               r.id === n.id ? { ...r, read_at: new Date().toISOString() } : r
@@ -213,7 +222,7 @@ export function NotificationBell() {
       router.push(notificationHref(n));
       setOpen(false);
     },
-    [router, unreadCount, setUnreadCount]
+    [router, setUnreadCount]
   );
 
   const handleMarkAllRead = useCallback(async () => {
@@ -263,7 +272,7 @@ export function NotificationBell() {
               {unreadCount > 0 ? (
                 <Badge
                   className={cn(
-                    "absolute -top-0.5 -right-0.5 size-4 items-center justify-center rounded-full p-0 text-[10px] tabular-nums",
+                    "absolute -top-0.5 -right-0.5 size-5 items-center justify-center rounded-full p-0 text-xs tabular-nums",
                     badgePop && "motion-safe:animate-[bell-pop_200ms_ease-out]"
                   )}
                   aria-hidden="true"
@@ -276,10 +285,13 @@ export function NotificationBell() {
         />
         <Popover.Portal>
           <Popover.Positioner align="end" sideOffset={8}>
-            <Popover.Popup className="border-border bg-popover text-popover-foreground shadow-elevated w-[min(calc(100vw-1.5rem),24rem)] rounded-lg border outline-none">
+            <Popover.Popup
+              aria-labelledby="notif-heading"
+              className="border-border bg-popover text-popover-foreground shadow-elevated w-[min(calc(100vw-1.5rem),24rem)] rounded-lg border outline-none"
+            >
               <div className="border-b-border/60 flex items-center justify-between gap-2 border-b px-3 py-2.5">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-display text-foreground text-sm font-semibold">
+                   <h2 id="notif-heading" className="font-display text-foreground text-sm font-semibold">
                     Notifications
                   </h2>
                   {unreadCount > 0 ? (
@@ -332,7 +344,7 @@ export function NotificationBell() {
                       return (
                         <li key={n.id}>
                           {showGroup ? (
-                            <p className="text-muted-foreground border-b-border/60 bg-muted/50 border-b px-3 py-1 text-[11px] font-medium tracking-wide uppercase">
+                            <p className="text-muted-foreground border-b-border/60 bg-muted/50 border-b px-3 py-1 text-xs font-medium tracking-wide uppercase">
                               {warehouseNames[n.warehouse_id ?? ""] ??
                                 "General"}
                             </p>
@@ -341,7 +353,7 @@ export function NotificationBell() {
                             type="button"
                             onClick={() => void handleRowClick(n)}
                             className={cn(
-                              "group focus-visible:bg-muted/70 flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors focus-visible:outline-none",
+                              "group focus-visible:bg-muted/70 focus-visible:ring-ring focus-visible:ring-2 flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors focus-visible:outline-none",
                               unread && "bg-primary/5",
                               flashId === n.id &&
                                 "motion-safe:animate-[notif-flash_1.6s_ease-out]"
@@ -383,7 +395,7 @@ export function NotificationBell() {
                                   {n.body}
                                 </span>
                               ) : null}
-                              <span className="text-muted-foreground mt-0.5 flex items-center gap-1 text-[11px]">
+                              <span className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
                                 <span>{formatTimeAgo(n.last_event_at)}</span>
                                 {n.times > 1 ? (
                                   <span className="bg-muted text-muted-foreground rounded-sm px-1">

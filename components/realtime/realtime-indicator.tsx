@@ -35,7 +35,7 @@ export function RealtimeIndicator({
       aria-live="polite"
       aria-label={`Realtime connection: ${LABELS[effective]}`}
       className={cn(
-        "hidden items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium sm:flex",
+        "flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium",
         effective === "live" && "bg-primary/10 text-primary",
         (effective === "reconnecting" || effective === "offline") &&
           "bg-muted text-muted-foreground",
@@ -52,11 +52,7 @@ export function RealtimeIndicator({
         )}
         aria-hidden="true"
       />
-      {effective === "live" ? (
-        <span className="sr-only">{LABELS[effective]}</span>
-      ) : (
-        LABELS[effective]
-      )}
+      {LABELS[effective]}
     </span>
   );
 }

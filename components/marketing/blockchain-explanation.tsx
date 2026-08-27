@@ -1,5 +1,8 @@
+"use client";
+
 import { Blocks, CheckCircle2 } from "lucide-react";
 
+import { useLocale } from "@/components/providers/locale-provider";
 import { Reveal } from "@/components/marketing/reveal";
 
 /**
@@ -10,19 +13,20 @@ import { Reveal } from "@/components/marketing/reveal";
  * gives this section more visual weight than the surrounding light sections.
  */
 const POINTS = [
-  "Your inventory is managed normally- nothing about daily work changes.",
-  "Important records get an additional, verifiable proof of authenticity.",
-  "Records cannot be silently altered after the fact.",
-  "You never need to understand crypto to use the product.",
+  "landing.blockchain.point1",
+  "landing.blockchain.point2",
+  "landing.blockchain.point3",
+  "landing.blockchain.point4",
 ];
 
 const RECORD_ROWS = [
-  { label: "Product", value: "Corrugated Box 50cm" },
-  { label: "Stock out", value: "120 units" },
-  { label: "Performed by", value: "A. Wijaya- STAFF" },
+  { labelKey: "landing.blockchain.col_product", value: "Corrugated Box 50cm" },
+  { labelKey: "landing.blockchain.col_stock_out", value: "120 units" },
+  { labelKey: "landing.blockchain.col_performed_by", value: "A. Wijaya- STAFF" },
 ];
 
 export function BlockchainExplanation() {
+  const { t } = useLocale();
   return (
     <section className="py-20 md:py-28">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
@@ -31,68 +35,69 @@ export function BlockchainExplanation() {
             <div className="bg-primary rounded-[calc(2rem-0.5rem)] px-6 py-12 md:px-12 md:py-16">
               <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
                 <div className="flex flex-col gap-5">
-                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white">
+                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-foreground">
                     <Blocks
                       aria-hidden="true"
-                      className="text-mint-soft size-3.5"
+                      className="text-primary-foreground size-3.5"
                     />
-                    Why blockchain?
+                    {t("landing.blockchain.badge")}
                   </span>
-                  <h2 className="font-display text-3xl font-semibold tracking-tight text-balance text-white md:text-4xl">
-                    Verification, without the complexity
+                  <h2 className="font-display text-3xl font-semibold tracking-tight text-balance text-primary-foreground md:text-4xl">
+                    {t("landing.blockchain.title")}
                   </h2>
-                  <p className="max-w-lg text-base leading-relaxed text-pretty text-white/90">
-                    We use blockchain as an additional verification layer for
-                    important records. It provides proof of integrity and a
-                    tamper-evident history- while staying completely out of your
-                    way.
+                  <p className="max-w-lg text-base leading-relaxed text-pretty text-primary-foreground/90">
+                    {t("landing.blockchain.subtitle")}
                   </p>
                   <ul className="flex flex-col gap-3">
                     {POINTS.map((point) => (
                       <li
                         key={point}
-                        className="flex items-start gap-2.5 text-sm leading-relaxed text-pretty text-white md:text-base"
+                        className="flex items-start gap-2.5 text-sm leading-relaxed text-pretty text-primary-foreground md:text-base"
                       >
                         <CheckCircle2
                           aria-hidden="true"
-                          className="text-mint-soft mt-0.5 size-4 shrink-0"
+                          className="text-primary-foreground mt-0.5 size-4 shrink-0"
                         />
-                        {point}
+                        {t(point)}
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 <div className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10">
-                  <span className="text-mint-soft text-xs font-semibold">
-                    A typical record
+                  <span className="text-primary-foreground text-xs font-semibold">
+                    {t("landing.blockchain.typical_record")}
                   </span>
                   <div className="mt-2">
                     {RECORD_ROWS.map((row) => (
                       <div
-                        key={row.label}
+                        key={row.labelKey}
                         className="flex items-center justify-between gap-4 border-b border-white/10 py-3"
                       >
-                        <span className="text-sm text-white/90">
-                          {row.label}
+                        <span className="text-sm text-primary-foreground/90">
+                          {t(row.labelKey)}
                         </span>
-                        <span className="text-sm font-medium text-white">
+                        <span className="text-sm font-medium text-primary-foreground">
                           {row.value}
                         </span>
                       </div>
                     ))}
                     <div className="flex items-center justify-between gap-4 pt-3">
-                      <span className="text-sm text-white/90">Proof</span>
-                      <span className="text-mint-soft inline-flex items-center gap-1.5 text-sm font-medium">
+                      <span className="text-sm text-primary-foreground/90">
+                        {t("landing.blockchain.proof")}
+                      </span>
+                      <span className="text-primary-foreground inline-flex items-center gap-1.5 text-sm font-medium">
                         <CheckCircle2 aria-hidden="true" className="size-4" />
-                        Verified
+                        {t("landing.blockchain.verified")}
                       </span>
                     </div>
                   </div>
                   <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
-                    <span className="text-xs text-white/90">Anchored on</span>
-                    <span className="text-xs font-medium text-white">
-                      Base Sepolia- block 12,845,201
+                    <span className="text-xs text-primary-foreground/90">
+                      {t("landing.blockchain.anchored_on")}
+                    </span>
+                    <span className="text-xs font-medium text-primary-foreground">
+                      {t("landing.blockchain.block")}
                     </span>
                   </div>
                 </div>

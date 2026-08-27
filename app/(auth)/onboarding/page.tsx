@@ -47,6 +47,7 @@ export default function OnboardingPage() {
             </div>
             <Button
               variant="default"
+              size="lg"
               render={<Link href="/onboarding/create" />}
             >
               Create Warehouse
@@ -68,7 +69,11 @@ export default function OnboardingPage() {
                 team.
               </p>
             </div>
-            <Button variant="outline" render={<Link href="/onboarding/join" />}>
+            <Button
+              variant="outline"
+              size="lg"
+              render={<Link href="/onboarding/join" />}
+            >
               Join Warehouse
             </Button>
           </CardContent>

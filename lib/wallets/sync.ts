@@ -101,6 +101,19 @@ export async function syncWallet(
     };
   }
 
+  // Gunakan hasil verifikasi, bukan buang: tolak bila session Privy sudah
+  // expired (audit: verify() sebelumnya dibuang begitu saja). Kepemilikan
+  // alamat sejati dijamin oleh linking Privy di client + tanda tangan
+  // on-chain; binding DB ke user terautentikasi terjadi via auth.uid() di
+  // RPC register_wallet (lihat catatan di header fungsi).
+  if (!verified.userId || verified.expiration * 1000 < Date.now()) {
+    return {
+      ok: false,
+      errorCode: "PRIVY_VERIFICATION_FAILED",
+      error: "Privy session expired.",
+    };
+  }
+
   // Register wallet via RPC security-definer (auth.uid() = session user).
   const { data, error } = await supabase.rpc("register_wallet", {
     p_address: address,
@@ -109,7 +122,7 @@ export async function syncWallet(
 
   if (error || !data) {
     logger.error(
-      { err: error?.message ?? "empty result", address },
+      { err: error?.message ?? "empty result", address, privyUserId: verified.userId },
       "register_wallet RPC failed"
     );
     return {

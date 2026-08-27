@@ -1,0 +1,58 @@
+---
+title: Transactions & Proofs
+description: Understand what on-chain transactions are, how they link to stock movements, and how to verify them.
+---
+
+## Overview
+
+In Chainventory, a **transaction** refers to the on-chain submission that anchors a stock movement's proof to the blockchain. Transactions are not payments — they are integrity records. No money moves; only a hash of your movement data is written to your warehouse contract on Base Sepolia.
+
+## How a Transaction Is Created
+
+1. You perform a stock movement (Stock In, Stock Out, Adjustment, or Reversal).
+2. The system computes a hash of the movement payload and creates a **proof** with a unique `proofId`.
+3. The proof enters the submission pipeline and is sent to your warehouse smart contract.
+4. The resulting transaction receives a `txHash` once broadcast.
+
+## Linking Movements to Transactions
+
+Each important movement carries a `proofId`. The proof stores the `txHash` once the transaction is confirmed. This creates a verifiable chain:
+
+```
+Stock Movement → Proof (hash) → Blockchain Transaction (txHash)
+```
+
+You can navigate from a movement directly to its proof, and from the proof to BaseScan using the transaction hash.
+
+## Transaction Lifecycle
+
+| State           | Meaning                                              |
+| --------------- | ---------------------------------------------------- |
+| Pending         | Proof created, queued for submission                 |
+| Submitted       | Transaction broadcast, awaiting confirmations        |
+| Confirmed       | ≥2 confirmations on Base Sepolia                     |
+| Failed          | Submission error — can be retried from Developer     |
+| Manual Review   | Flagged for operator attention                       |
+
+## Verifying a Transaction
+
+1. Open the movement and click its proof.
+2. Copy the `txHash`.
+3. Visit [sepolia.basescan.org](https://sepolia.basescan.org) and search the hash.
+4. Confirm the contract address matches your warehouse contract and the block timestamp is reasonable.
+
+<Callout type="tip">
+  Bookmark your warehouse contract address from the Blockchain page — verifying
+  any future proof is then a one-step search on BaseScan.
+</Callout>
+
+## What Is Stored On-Chain
+
+Only the **hash** of the movement data is stored on-chain. The plaintext payload (product, quantity, performer) stays in the database. This means:
+
+- The blockchain proves the record existed and was not altered.
+- No sensitive business data is publicly exposed.
+
+## Gas & Costs
+
+Transactions are paid for by the warehouse **treasury** signer using test ETH from the faucet. There is no cost to you, and Base Sepolia ETH has no real-world value.

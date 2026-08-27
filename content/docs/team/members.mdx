@@ -1,0 +1,59 @@
+---
+title: Members & Invitations
+description: Invite teammates, assign roles, and manage join requests and suspensions.
+---
+
+## Overview
+
+A warehouse is a shared workspace. You invite people by email, assign them a role, and they join after approval. Membership is managed from the **Members** page.
+
+## Inviting a Member
+
+1. Go to **Members**.
+2. Click **Invite Member**.
+3. Enter the invitee's email.
+4. Choose a role (Manager, Staff, Auditor, or Viewer).
+5. Click **Send Invite**.
+
+The invitee receives an email with a link. When they accept, a **join request** is created with status `PENDING`.
+
+## Join Requests
+
+Every new member must be approved before they can access the warehouse:
+
+1. A request is created with status `PENDING`.
+2. An **Owner** or **Manager** reviews and approves (or rejects) it.
+3. On approval, the member's status becomes `ACTIVE`.
+4. The member can now access the warehouse per their role.
+
+<Callout type="warning">
+  Managers can approve join requests, but they can only assign roles within
+  their own assignable set (Staff, Auditor, Viewer) — never another Manager or
+  Owner.
+</Callout>
+
+## Assigning & Changing Roles
+
+Open a member and click **Change Role**. The same rules from [Roles & Permissions](/docs/getting-started/roles) apply:
+
+- **Owner** can assign any role.
+- **Manager** can assign Staff, Auditor, Viewer only.
+- Role changes take effect immediately and are recorded in the audit log.
+
+## Removing a Member
+
+Owners and Managers can remove a member. Removed members lose access instantly and their sessions are invalidated. An Owner cannot be removed through the UI.
+
+## Suspending a Member
+
+Instead of removing, you can **suspend** a member:
+
+- They cannot access the warehouse.
+- Their existing sessions are invalidated.
+- They can be reactivated later by an Owner or Manager.
+
+Suspension is useful for temporary leaves or offboarding without losing history.
+
+## Membership Limits
+
+There is no hard cap on member count, but each account can belong to multiple warehouses via invites. Remember that each account can only **create** one warehouse of their own (see the FAQ).

@@ -21,6 +21,7 @@ import {
   notFound,
   ok,
   readJson,
+  requireActiveWarehouse,
   requireRateLimit,
   requireUser,
   rpcErrorStatus,
@@ -123,6 +124,13 @@ export async function POST(request: Request) {
       if (!permission || !hasPermission(role, permission)) {
         return forbidden("Insufficient permission.");
       }
+
+      // Audit C-02: tolak mutasi bila warehouse suspended/inactive.
+      const inactive = await requireActiveWarehouse(
+        supabase,
+        parsed.data.warehouseId
+      );
+      if (inactive) return inactive;
 
       // P1-10: actorWallet diturunkan server-side dari wallet TERVERIFIKASI
       // milik actor — nilai client tidak dipercaya sebagai identitas.
@@ -266,6 +274,13 @@ export async function POST(request: Request) {
         .maybeSingle();
       if (!movement.data) return notFound("Movement not found.");
 
+      // Audit C-02: tolak mutasi bila warehouse suspended/inactive.
+      const inactive = await requireActiveWarehouse(
+        supabase,
+        movement.data.warehouse_id
+      );
+      if (inactive) return inactive;
+
       const [warehouse, product] = await Promise.all([
         supabase
           .from("warehouses")
@@ -323,6 +338,20 @@ export async function POST(request: Request) {
     case "reject": {
       const parsed = rejectAdjustmentSchema.safeParse(raw.body);
       if (!parsed.success) return invalid(parsed.error.issues[0]?.message);
+
+      const movement = await supabase
+        .from("stock_movements")
+        .select("warehouse_id")
+        .eq("id", parsed.data.movementId)
+        .maybeSingle();
+      if (!movement.data) return notFound("Movement not found.");
+
+      // Audit C-02: tolak mutasi bila warehouse suspended/inactive.
+      const inactive = await requireActiveWarehouse(
+        supabase,
+        movement.data.warehouse_id
+      );
+      if (inactive) return inactive;
 
       const { data, error } = await supabase.rpc("reject_stock_adjustment", {
         p_movement_id: parsed.data.movementId,

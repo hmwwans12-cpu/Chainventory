@@ -1,0 +1,64 @@
+---
+title: Developer Console
+description: Allowlist management, on-chain explorer, faucet, and dependency health for developers.
+---
+
+## Overview
+
+The Developer Console is a power-user area for Owners and Managers. It exposes blockchain tooling, export utilities, and system health so you can operate and debug the verification layer.
+
+## Access
+
+Only **Owner** and **Manager** roles can open the Developer Console. It is linked from the dashboard sidebar under **Developer**.
+
+## Allowlist
+
+The allowlist controls which addresses or accounts are permitted to interact with your warehouse contract's sensitive operations. Use it to:
+
+- Restrict proof submission to known signers.
+- Add a new treasury/operator address.
+- Revoke an address that should no longer sign.
+
+<Callout type="warning">
+  Removing the active treasury signer without adding a replacement will cause
+  new proofs to fail. Always add the new address before removing the old one.
+</Callout>
+
+## On-Chain Explorer
+
+The explorer shows your warehouse contract and recent transactions:
+
+- Contract address and deployment block.
+- Recent `txHash` entries with status.
+- Direct links to [sepolia.basescan.org](https://sepolia.basescan.org) for each transaction.
+
+## Faucet (Treasury)
+
+To submit proofs, the treasury needs test ETH on Base Sepolia. The built-in faucet provides:
+
+- **Amount:** 0.001 ETH per claim
+- **Cooldown:** 12 hours between claims
+- **Access:** Owner and Manager only
+
+Claim from **Developer Console > Treasury** when the balance is low. Proofs will fail with a gas error if the treasury is empty.
+
+## Dependencies & Health
+
+The console surfaces the health of external dependencies:
+
+- **Proof pipeline** — queue depth and last processed time.
+- **QStash** — delivery service status.
+- **RPC node** — connectivity to Base Sepolia.
+
+If real-time proof confirmation is lagging, check here first.
+
+## Exports
+
+- **Export proofs (CSV)** — all proofs with status and txHash.
+- **Export audit logs (CSV)** — movement and membership events.
+
+Sensitive raw payloads are excluded from exports. See also [Analytics](/docs/operations/analytics) for metric exports.
+
+## Manual Retry
+
+Failed proofs can be retried manually from the console. This re-submits the anchored hash through the pipeline without altering the original movement record.

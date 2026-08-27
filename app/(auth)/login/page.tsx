@@ -50,7 +50,7 @@ export default async function LoginPage({
         </p>
         <Link
           href="/forgot-password"
-          className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-2"
+          className="text-muted-foreground hover:text-foreground text-sm font-medium underline underline-offset-2"
         >
           Forgot password?
         </Link>

@@ -1,0 +1,70 @@
+---
+title: Stock Movements
+description: Record stock in/out, transfers, adjustments, reversals, and follow the audit trail.
+---
+
+## Overview
+
+A **stock movement** is any change to a product's balance. Every movement is timestamped, attributed to the member who performed it, and (for important types) anchored to the blockchain as a proof. Movements are the heart of your inventory audit trail.
+
+## Movement Types
+
+| Type       | Effect on balance | Requires approval | Permission        |
+| ---------- | ----------------- | ----------------- | ----------------- |
+| Stock In   | Increases         | No                | `stock:in`        |
+| Stock Out  | Decreases         | No                | `stock:out`       |
+| Adjustment | Set to new value  | Owner/Manager     | `stock:adjustment`|
+| Reversal   | Undoes a movement | Owner/Manager     | `stock:reversal`  |
+
+See [Core Concepts](/docs/getting-started/concepts) for a detailed description of each type and its validation rules.
+
+## Performing a Movement
+
+1. Go to **Inventory > Movements**.
+2. Click **Stock In** or **Stock Out**.
+3. Select the product and enter the quantity.
+4. Add an optional note (e.g. supplier name or order reference).
+5. Submit. The balance updates in real-time for everyone.
+
+<Callout type="warning">
+  Stock Out validates against the live balance. If the balance changed since you
+  opened the form, the submission fails with **Stale Stock** — refresh and
+  re-enter the quantity.
+</Callout>
+
+## Transfers
+
+Chainventory models transfers as a paired Stock Out from one product context and a Stock In to another. Because each warehouse currently holds a single inventory scope, transfers are represented as two linked movements sharing a `transferId`. This keeps both sides independently verifiable on-chain.
+
+## Audit Trail
+
+Every movement records:
+
+- The product and quantity
+- The type and direction
+- The performing member
+- A timestamp (UTC)
+- An optional note
+- A linked proof ID once anchored
+
+You can open any movement to see its full detail and jump to its blockchain proof.
+
+## Filtering & Search
+
+The movements list supports filters by:
+
+- Product (or SKU)
+- Movement type
+- Date range
+- Member
+
+Combine filters to investigate a specific discrepancy quickly.
+
+## Approvals
+
+Adjustments and reversals require an Owner or Manager to approve before they affect the balance. Pending approvals show a **Pending** badge and can be approved or rejected from the movement detail view.
+
+<Callout type="info">
+  Rejected adjustments leave the original balance untouched and are recorded as a
+  rejected action in the audit trail for transparency.
+</Callout>

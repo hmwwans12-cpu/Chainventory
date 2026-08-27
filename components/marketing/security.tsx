@@ -1,5 +1,8 @@
+"use client";
+
 import { Eye, FileCheck2, Lock, ShieldCheck } from "lucide-react";
 
+import { useLocale } from "@/components/providers/locale-provider";
 import { Reveal } from "@/components/marketing/reveal";
 import { SpotlightCard } from "@/components/marketing/spotlight-card";
 
@@ -11,32 +14,29 @@ import { SpotlightCard } from "@/components/marketing/spotlight-card";
 const SECURITY_POINTS = [
   {
     icon: ShieldCheck,
-    title: "Defense in depth",
-    description:
-      "Database-level security backs up application-level checks so no single bug can expose your data.",
+    titleKey: "landing.security.s1_title",
+    descKey: "landing.security.s1_desc",
     featured: true,
   },
   {
     icon: Lock,
-    title: "Access you control",
-    description:
-      "Fine-grained roles decide who can view, edit, or approve- enforced server-side, not just in the UI.",
+    titleKey: "landing.security.s2_title",
+    descKey: "landing.security.s2_desc",
   },
   {
     icon: FileCheck2,
-    title: "Append-only audit history",
-    description:
-      "Every meaningful action is recorded. History can be reviewed but never silently edited.",
+    titleKey: "landing.security.s3_title",
+    descKey: "landing.security.s3_desc",
   },
   {
     icon: Eye,
-    title: "Transparent verification",
-    description:
-      "Each movement carries a verifiable proof you can inspect with a single click.",
+    titleKey: "landing.security.s4_title",
+    descKey: "landing.security.s4_desc",
   },
 ];
 
 export function Security() {
+  const { t } = useLocale();
   const featured = SECURITY_POINTS.find((point) => point.featured)!;
   const rest = SECURITY_POINTS.filter((point) => !point.featured);
 
@@ -45,11 +45,10 @@ export function Security() {
       <div className="mx-auto grid w-full max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.85fr_1.4fr] lg:gap-16">
         <Reveal className="flex max-w-md flex-col gap-4 lg:self-start">
           <h2 className="font-display text-foreground text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-            Trustworthy records, clear accountability
+            {t("landing.security.title")}
           </h2>
           <p className="text-muted-foreground text-base leading-relaxed text-pretty">
-            Security isn&apos;t an afterthought. It&apos;s layered into the
-            product from day one so your data stays accurate and answerable.
+            {t("landing.security.subtitle")}
           </p>
         </Reveal>
 
@@ -60,10 +59,10 @@ export function Security() {
             </span>
             <div className="flex flex-col gap-1.5">
               <h3 className="font-display text-foreground text-lg font-semibold">
-                {featured.title}
+                {t(featured.titleKey)}
               </h3>
               <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed text-pretty md:text-base">
-                {featured.description}
+                {t(featured.descKey)}
               </p>
             </div>
           </Reveal>
@@ -71,7 +70,11 @@ export function Security() {
           {rest.map((point, index) => {
             const Icon = point.icon;
             return (
-              <Reveal key={point.title} delay={index * 0.04} className="h-full">
+              <Reveal
+                key={point.titleKey}
+                delay={index * 0.04}
+                className="h-full"
+              >
                 <SpotlightCard
                   className="ring-foreground/10 bg-card flex h-full flex-col gap-3 rounded-xl p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
                   spotlightClassName="bg-primary/10"
@@ -80,10 +83,10 @@ export function Security() {
                     <Icon aria-hidden="true" className="size-5" />
                   </span>
                   <h3 className="font-display text-foreground text-base font-semibold">
-                    {point.title}
+                    {t(point.titleKey)}
                   </h3>
                   <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-                    {point.description}
+                    {t(point.descKey)}
                   </p>
                 </SpotlightCard>
               </Reveal>

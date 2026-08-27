@@ -43,6 +43,8 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { NAV_SECTIONS, DEV_NAV_ITEM, type NavItem } from "@/lib/navigation";
+import { getInitials } from "@/lib/utils";
+import { useLocale } from "@/components/providers/locale-provider";
 import { hasPermission, type Role } from "@/lib/auth/permissions";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
@@ -66,6 +68,7 @@ export function AppSidebar({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { t } = useLocale();
 
   const warehouseParam = searchParams.get("warehouse");
   const active =
@@ -116,19 +119,19 @@ export function AppSidebar({
                   render={
                     <SidebarMenuButton
                       size="lg"
-                      aria-label="Switch active warehouse"
+                      aria-label={t("common.switch_warehouse")}
                     />
                   }
                 >
                   <span className="bg-sidebar-primary text-sidebar-primary-foreground font-display flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-semibold">
-                    {(active?.name ?? "W").charAt(0).toUpperCase()}
+                    {getInitials(active?.name, null, "W")}
                   </span>
                   <span className="flex min-w-0 flex-col leading-tight">
                     <span className="text-muted-foreground text-[11px] uppercase">
-                      Warehouse
+                      {t("common.active_warehouse")}
                     </span>
                     <span className="truncate text-sm font-medium">
-                      {active?.name ?? "No warehouse"}
+                      {active?.name ?? t("common.no_warehouse")}
                     </span>
                   </span>
                   <ChevronsUpDown
@@ -167,8 +170,8 @@ export function AppSidebar({
           return (
             <React.Fragment key={section.label}>
               {si > 0 ? <SidebarSeparator /> : null}
-              <SidebarGroup>
-                <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+                <SidebarGroup>
+                  <SidebarGroupLabel>{t(section.i18nKey ?? section.label)}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {items.map((item) => (
@@ -179,7 +182,7 @@ export function AppSidebar({
                           tooltip={item.title}
                         >
                           <item.icon aria-hidden="true" />
-                          <span>{item.title}</span>
+                          <span>{t(item.i18nKey ?? item.title)}</span>
                         </SidebarMenuButton>
                         {item.title === "Notifications" && unreadCount > 0 ? (
                           <SidebarMenuBadge className="bg-destructive/15 text-destructive tabular-nums">
@@ -196,7 +199,7 @@ export function AppSidebar({
                                   }
                                   isActive={pathname.startsWith(child.href)}
                                 >
-                                  {child.title}
+                                  {t(child.i18nKey ?? child.title)}
                                 </SidebarMenuSubButton>
                               </SidebarMenuSubItem>
                             ))}
@@ -223,7 +226,7 @@ export function AppSidebar({
                     tooltip={DEV_NAV_ITEM.title}
                   >
                     <SquareTerminal aria-hidden="true" />
-                    <span>{DEV_NAV_ITEM.title}</span>
+                    <span>{t(DEV_NAV_ITEM.i18nKey ?? DEV_NAV_ITEM.title)}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -243,14 +246,12 @@ export function AppSidebar({
                       render={
                         <SidebarMenuButton
                           size="lg"
-                          aria-label="Account menu"
+                          aria-label={t("common.account_menu")}
                         />
                       }
                     >
-                      <span className="bg-sidebar-primary text-sidebar-primary-foreground font-display flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
-                        {(user.name ?? user.email ?? "U")
-                          .charAt(0)
-                          .toUpperCase()}
+                      <span className="bg-sidebar-primary text-sidebar-primary-foreground font-display flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-semibold">
+                        {getInitials(user.name, user.email, "U")}
                       </span>
                       <span className="flex min-w-0 flex-col leading-tight">
                         <span className="truncate text-sm font-medium">
@@ -291,12 +292,12 @@ export function AppSidebar({
                         }
                       >
                         <Settings aria-hidden="true" />
-                        Settings
+                        {t("common.settings")}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => void signOut()}>
                         <LogOut aria-hidden="true" />
-                        Sign out
+                        {t("common.sign_out")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

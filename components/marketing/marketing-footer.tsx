@@ -38,7 +38,7 @@ export function MarketingFooter() {
           </p>
           <span className="text-muted-foreground bg-background border-border mt-1 inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium">
             <span className="bg-primary size-1.5 rounded-full" />
-            Base Sepolia- test network
+            Base Sepolia · test network
           </span>
         </div>
 

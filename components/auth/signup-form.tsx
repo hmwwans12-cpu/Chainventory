@@ -66,12 +66,14 @@ export function SignupForm() {
 
         <FormField id="gender" label="Gender">
           <Select name="gender">
-            <SelectTrigger id="gender" aria-label="Gender">
+              <SelectTrigger className="h-11 w-full" aria-label="Gender">
               <SelectValue placeholder="Select gender" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="MALE">Male</SelectItem>
               <SelectItem value="FEMALE">Female</SelectItem>
+              <SelectItem value="OTHER">Other</SelectItem>
+              <SelectItem value="UNDISCLOSED">Prefer not to say</SelectItem>
             </SelectContent>
           </Select>
         </FormField>

@@ -8,21 +8,35 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const LOW_BALANCE_ETH = 0.003;
 
-export function FaucetClaimCard({
-  walletAddress,
-  balanceEth,
-}: {
-  walletAddress: string | null;
-  balanceEth: string | null;
-}) {
+export function FaucetClaimCard({ walletAddress }: { walletAddress: string | null }) {
   const [busy, setBusy] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
   const [txHash, setTxHash] = React.useState<string | null>(null);
-  const balance = balanceEth === null ? null : Number(balanceEth);
+  const [balance, setBalance] = React.useState<string | null>(null);
+
+  // Saldo di-fetch client-side agar halaman dashboard tidak memblock menunggu
+  // RPC Base Sepolia (audit #7). null = belum tahu / gagal -> jangan nudging.
+  React.useEffect(() => {
+    if (!walletAddress) return;
+    let cancelled = false;
+    fetch(`/api/wallet/balance?address=${encodeURIComponent(walletAddress)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { balance?: string | null } | null) => {
+        if (!cancelled && body) setBalance(body.balance ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setBalance(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [walletAddress]);
+
+  const balanceNum = balance === null ? null : Number(balance);
   // Probe saldo GAGAL (null/NaN) bukan berarti saldo rendah — jangan
   // tampilkan nudging "Low balance" berdasarkan ketidaktahuan.
   const confirmedLow =
-    balance !== null && !Number.isNaN(balance) && balance < LOW_BALANCE_ETH;
+    balanceNum !== null && !Number.isNaN(balanceNum) && balanceNum < LOW_BALANCE_ETH;
   if (!walletAddress || !confirmedLow) return null;
 
   async function claim() {

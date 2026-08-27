@@ -1,7 +1,5 @@
-import { formatEthValue } from "@/lib/utils";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createPublicClient } from "viem";
 import {
   ArrowRight,
   Layers,
@@ -13,15 +11,15 @@ import {
   Warehouse,
 } from "lucide-react";
 
-import { baseSepolia, createChainTransport } from "@/lib/blockchain/chains";
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
 import { fetchAnalytics, parseRange } from "@/lib/analytics/aggregate";
 import type { NotificationRow } from "@/lib/notifications/types";
-import { logger } from "@/lib/logger";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PanelCard } from "@/components/shared/panel-card";
@@ -76,6 +74,8 @@ export default async function DashboardPage({
   }>;
 }) {
   const supabase = await createClient();
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -111,19 +111,19 @@ export default async function DashboardPage({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Dashboard"
-          description="Overview of your warehouse inventory and activity."
+          title={t("dashboard.title")}
+          description={t("dashboard.description")}
         />
         <EmptyState
           icon={Package}
-          title="No warehouse yet"
-          description="Create a warehouse to start managing inventory, or join one with a warehouse code."
+          title={t("dashboard.empty_title")}
+          description={t("dashboard.empty_desc")}
           primaryAction={{
-            label: "Create Warehouse",
+            label: t("dashboard.create_warehouse"),
             href: "/onboarding/create",
           }}
           secondaryAction={{
-            label: "Join Warehouse",
+            label: t("dashboard.join_warehouse"),
             href: "/onboarding/join",
           }}
         />
@@ -140,7 +140,6 @@ export default async function DashboardPage({
     notifRes,
     lowStockRes,
     pendingRes,
-    balanceWei,
   ] = await Promise.all([
     fetchAnalytics(supabase, active.id, range),
     supabase
@@ -171,7 +170,6 @@ export default async function DashboardPage({
       .select("id", { count: "exact", head: true })
       .eq("warehouse_id", active.id)
       .eq("status", "pending"),
-    fetchWalletBalance(walletAddress),
   ]);
 
   // Low stock: aturan sama persis dengan halaman Products.
@@ -183,7 +181,7 @@ export default async function DashboardPage({
       : row.inventory_balances;
     const qty =
       balanceRow?.quantity != null ? Number(balanceRow.quantity) : null;
-    if (qty != null && qty <= threshold) lowStockCount += 1;
+    if (qty != null && threshold > 0 && qty <= threshold) lowStockCount += 1;
   }
 
   const recentMovements: RecentMovementItem[] = (
@@ -263,21 +261,20 @@ export default async function DashboardPage({
 
   const inactiveDays = daysSince(active.lastActivityAt);
 
-  const rangeHint = `vs previous ${range} days`;
+  const rangeHint = t("dashboard.vs_previous").replace("{n}", String(range));
   const whQuery = `warehouse=${active.id}`;
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
       <PageHeader
-        title="Dashboard"
-        description="Overview of your warehouse inventory and activity."
+        title={t("dashboard.title")}
+        description={t("dashboard.description")}
       />
       {/* 1. Profile / Wallet Card (DESIGN Â§30) â€” lokasi halaman dibawa breadcrumb header */}
       <ProfileWalletCard
         name={displayName}
         role={active.role}
         walletAddress={walletAddress}
-        balanceEth={balanceWei != null ? formatEthValue(balanceWei) : null}
         warehouseName={active.name}
         contractAddress={active.contractAddress}
       />
@@ -286,21 +283,21 @@ export default async function DashboardPage({
       <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={Package}
-          label="Total Products"
+          label={t("dashboard.total_products")}
           value={String(analytics?.totalProducts ?? 0)}
-          hint="Active products in this warehouse"
+          hint={t("dashboard.active_products")}
           href={`/inventory/products?${whQuery}`}
         />
         <StatCard
           icon={Layers}
-          label="Total Stock"
+          label={t("dashboard.total_stock")}
           value={analytics?.totalStock ?? "0"}
-          hint="Units across all products"
+          hint={t("dashboard.units_all")}
           href={`/inventory/products?${whQuery}`}
         />
         <StatCard
           icon={PackagePlus}
-          label="Stock In"
+          label={t("dashboard.stock_in")}
           value={analytics?.period.stockIn ?? "0"}
           hint={rangeHint}
           delta={{
@@ -311,7 +308,7 @@ export default async function DashboardPage({
         />
         <StatCard
           icon={PackageMinus}
-          label="Stock Out"
+          label={t("dashboard.stock_out")}
           value={analytics?.period.stockOut ?? "0"}
           hint={rangeHint}
           delta={{
@@ -320,39 +317,42 @@ export default async function DashboardPage({
           }}
           href={`/analytics?${whQuery}&range=${range}`}
         />
-        {/* Alert stats menyatu dengan grid utama (audit UI #3 â€” tanpa -mt-2) */}
-        {lowStockCount > 0 ? (
-          <StatCard
-            icon={TriangleAlert}
-            label="Low Stock"
-            value={String(lowStockCount)}
-            hint="Products at or below threshold"
-            href={`/inventory/products?${whQuery}`}
-          />
-        ) : null}
-        {(pendingRes.count ?? 0) > 0 ? (
-          <StatCard
-            icon={UserPlus}
-            label="Pending Requests"
-            value={String(pendingRes.count ?? 0)}
-            hint="Join requests awaiting review"
-            href={`/members?${whQuery}`}
-          />
-        ) : null}
       </div>
 
+      {/* Alert stats — section terpisah (audit C4) supaya grid utama 4-kolom
+          selalu prediktabel dan tidak reflow saat kondisi terpenuhi. */}
+      {lowStockCount > 0 || (pendingRes.count ?? 0) > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {lowStockCount > 0 ? (
+            <StatCard
+              icon={TriangleAlert}
+              label={t("dashboard.low_stock")}
+              value={String(lowStockCount)}
+              hint={t("dashboard.at_below_threshold")}
+              href={`/inventory/products?${whQuery}`}
+            />
+          ) : null}
+          {(pendingRes.count ?? 0) > 0 ? (
+            <StatCard
+              icon={UserPlus}
+              label={t("dashboard.pending_requests")}
+              value={String(pendingRes.count ?? 0)}
+              hint={t("dashboard.join_awaiting")}
+              href={`/members?${whQuery}`}
+            />
+          ) : null}
+        </div>
+      ) : null}
+
       {/* Faucet: contextual alert — hanya tampil saat balance rendah (DESIGN §55) */}
-      <FaucetClaimCard
-        walletAddress={walletAddress}
-        balanceEth={balanceWei != null ? formatEthValue(balanceWei) : null}
-      />
+      <FaucetClaimCard walletAddress={walletAddress} />
 
       {/* 3. Charts (DESIGN Â§32) + Top Products (Â§33, hemat) */}
       {analytics ? (
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Stock In / Out</CardTitle>
+              <CardTitle>{t("dashboard.stock_in_out")}</CardTitle>
               <CardAction>
                 <RangeTabs
                   warehouseId={active.id}
@@ -369,7 +369,7 @@ export default async function DashboardPage({
           {analytics.topProducts.length > 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle>Top Products</CardTitle>
+                <CardTitle>{t("dashboard.top_products")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <TopProducts products={analytics.topProducts} />
@@ -400,8 +400,8 @@ export default async function DashboardPage({
           <p className="text-muted-foreground truncate text-sm">
             {active.code}
             {active.contractAddress
-              ? " Â· deployed on-chain"
-              : " Â· not deployed"}
+              ? ` · ${t("dashboard.deployed_on_chain")}`
+              : ` · ${t("dashboard.not_deployed")}`}
           </p>
         </div>
         <Badge
@@ -422,21 +422,24 @@ export default async function DashboardPage({
 
       {/* Quick actions â€” target sentuh Ã¢â€°Â¥44px (Fitts), di akhir aliran */}
       <div className="flex flex-wrap items-center gap-2">
-        <Button render={<Link href={`/inventory/movements?${whQuery}`} />}>
-          Stock Movements
+        <Button
+          variant="outline"
+          render={<Link href={`/inventory/movements?${whQuery}`} />}
+        >
+          {t("dashboard.stock_movements")}
           <ArrowRight aria-hidden="true" />
         </Button>
         <Button
           variant="outline"
           render={<Link href={`/inventory/products?${whQuery}`} />}
         >
-          Products
+          {t("dashboard.products")}
         </Button>
         <Button
           variant="outline"
           render={<Link href={`/analytics?${whQuery}&range=${range}`} />}
         >
-          Analytics
+          {t("dashboard.analytics")}
         </Button>
       </div>
     </div>
@@ -445,29 +448,8 @@ export default async function DashboardPage({
 
 /** Hari sejak aktivitas terakhir (helper modul, bukan di body render). */
 function daysSince(iso: string): number {
-  return Math.max(
-    0,
-    Math.floor((Date.now() - new Date(iso).getTime()) / DAY_MS)
-  );
-}
-
-/** Saldo Base Sepolia untuk alamat wallet; gagal jaringan -> null (bukan error fatal). */ async function fetchWalletBalance(
-  address: string | null
-): Promise<bigint | null> {
-  if (!address) return null;
-  try {
-    const client = createPublicClient({
-      chain: baseSepolia,
-      transport: createChainTransport(),
-    });
-    return await client.getBalance({
-      address: address as `0x${string}`,
-    });
-  } catch (err) {
-    logger.warn(
-      { err: err instanceof Error ? err.message : "balance probe failed" },
-      "dashboard wallet balance probe failed"
-    );
-    return null;
-  }
+  const t = iso ? new Date(iso).getTime() : NaN;
+  // Audit: lastActivityAt bisa null -> new Date(null) = Invalid Date -> NaN.
+  if (!Number.isFinite(t)) return 0;
+  return Math.max(0, Math.floor((Date.now() - t) / DAY_MS));
 }

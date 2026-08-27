@@ -12,6 +12,11 @@ import {
 
 import { Button } from "@/components/ui/button";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Table,
   TableBody,
   TableCell,
@@ -28,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ErrorState } from "@/components/shared/error-state";
 import {
   BASESCAN_URL,
   PROOF_STATUS_META,
@@ -96,16 +102,26 @@ export function BlockchainPage({
   const [busyProof, setBusyProof] = React.useState<string | null>(null);
 
   const [supabase] = React.useState(() => createSupabaseClient());
+  const [realtimeError, setRealtimeError] = React.useState<string | null>(null);
 
   // Realtime (DESIGN §41) — status proof berubah → refresh daftar.
-  React.useEffect(() => {
-    const refresh = async () => {
+  // On failure we KEEP the last known data and surface a notice (UI/UX #8).
+  const refreshProofsSafe = React.useCallback(async () => {
+    try {
       const next = await fetchProofs(supabase, warehouseId);
       setProofsState(next.rows);
       setTotalProofsState(next.total);
-    };
+      setRealtimeError(null);
+    } catch {
+      setRealtimeError(
+        "Live update failed — showing the last known proofs."
+      );
+    }
+  }, [supabase, warehouseId]);
+
+  React.useEffect(() => {
     const refreshDebounced = debounce(() => {
-      void refresh();
+      void refreshProofsSafe();
     }, 400);
     const channel = supabase
       .channel(`blockchain-${warehouseId}`)
@@ -243,7 +259,7 @@ export function BlockchainPage({
                 href={`${BASESCAN_URL}/address/${deploymentAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:text-primary/80 inline-flex items-center gap-1.5 font-mono text-sm"
+                className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded inline-flex items-center gap-1.5 font-mono text-sm"
                 aria-label="View warehouse contract on BaseScan"
               >
                 <Link2 aria-hidden="true" className="size-4 shrink-0" />
@@ -262,7 +278,7 @@ export function BlockchainPage({
                 href={`${BASESCAN_URL}/tx/${deployment.tx_hash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:text-primary/80 inline-flex items-center gap-1 text-xs"
+                className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded inline-flex items-center gap-1 text-xs"
               >
                 Deployment tx {shortHash(deployment.tx_hash)}
                 <ExternalLink aria-hidden="true" className="size-3.5" />
@@ -331,7 +347,7 @@ export function BlockchainPage({
               return (
                 <div
                   key={proof.id}
-                  className="border-border flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
+                  className="ring-foreground/10 ring-1 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2"
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
                     <StatusBadge
@@ -346,12 +362,16 @@ export function BlockchainPage({
                   </div>
                   <div className="flex items-center gap-2">
                     {proof.error ? (
-                      <span
-                        className="text-muted-foreground max-w-56 truncate text-xs"
-                        title={proof.error}
-                      >
-                        {proof.error}
-                      </span>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <span className="text-muted-foreground block max-w-56 truncate text-xs" />
+                          }
+                        >
+                          {proof.error}
+                        </TooltipTrigger>
+                        <TooltipContent>{proof.error}</TooltipContent>
+                      </Tooltip>
                     ) : null}
                     {terminal ? (
                       <span className="text-muted-foreground text-xs">
@@ -390,7 +410,21 @@ export function BlockchainPage({
         />
       ) : (
         <PanelCard padding="none">
-          <Table>
+          {realtimeError ? (
+            proofsState.length === 0 ? (
+              <ErrorState
+                title="Couldn't load proofs"
+                description={realtimeError}
+                onRetry={refreshProofsSafe}
+              />
+            ) : (
+              <p className="text-muted-foreground border-border bg-muted/40 border-b px-4 py-2 text-sm">
+                {realtimeError}
+              </p>
+            )
+          ) : null}
+          <div className="hidden md:block overflow-x-auto">
+          <Table className="min-w-[640px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Proof</TableHead>
@@ -433,7 +467,7 @@ export function BlockchainPage({
                           href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary hover:text-primary/80 inline-flex items-center gap-1.5 font-mono text-xs"
+                          className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded inline-flex items-center gap-1.5 font-mono text-xs"
                           aria-label="View transaction on BaseScan"
                         >
                           {shortHash(proof.tx_hash, 10, 6)}
@@ -442,14 +476,18 @@ export function BlockchainPage({
                             className="size-3.5"
                           />
                         </a>
-                      ) : proof.error ? (
-                        <span
-                          className="text-destructive text-xs"
-                          title={proof.error}
-                        >
-                          {shortHash(proof.error, 16, 8)}
-                        </span>
-                      ) : (
+                       ) : proof.error ? (
+                         <Tooltip>
+                           <TooltipTrigger
+                             render={
+                               <span className="text-destructive block max-w-56 truncate text-xs" />
+                             }
+                           >
+                             {shortHash(proof.error, 16, 8)}
+                           </TooltipTrigger>
+                           <TooltipContent>{proof.error}</TooltipContent>
+                         </Tooltip>
+                       ) : (
                         <span className="text-muted-foreground text-xs">—</span>
                       )}
                     </TableCell>
@@ -464,7 +502,7 @@ export function BlockchainPage({
                         ) : null}
                       </span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
+                    <TableCell className="text-muted-foreground text-xs tabular-nums">
                       {formatDateTime(proof.created_at)}
                     </TableCell>
                   </TableRow>
@@ -472,6 +510,68 @@ export function BlockchainPage({
               })}
             </TableBody>
           </Table>
+          </div>
+          {/* Mobile: card list (audit N) */}
+          <ul className="divide-y md:hidden">
+            {proofsState.map((proof) => {
+              const meta = PROOF_STATUS_META[proof.status];
+              const confirmed = proof.status === "confirmed";
+              return (
+                <li key={proof.id} className="flex flex-col gap-2 p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-foreground font-mono text-sm">
+                      {shortHash(proof.payload_hash)}
+                    </span>
+                    {meta ? (
+                      <StatusBadge tone={meta.tone} label={meta.label} />
+                    ) : (
+                      <span className="text-muted-foreground text-xs">
+                        {proof.status}
+                      </span>
+                    )}
+                  </div>
+                  {proof.movement_id ? (
+                    <p className="text-muted-foreground font-mono text-xs">
+                      movement {proof.movement_id.slice(0, 8)}
+                    </p>
+                  ) : null}
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-muted-foreground">Blockchain</span>
+                    {confirmed && proof.tx_hash ? (
+                      <a
+                        href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded inline-flex items-center gap-1.5 font-mono"
+                        aria-label="View transaction on BaseScan"
+                      >
+                        {shortHash(proof.tx_hash, 10, 6)}
+                        <ExternalLink aria-hidden="true" className="size-3.5" />
+                      </a>
+                    ) : proof.error ? (
+                      <span
+                        className="text-destructive max-w-40 truncate font-mono"
+                        title={proof.error}
+                      >
+                        {shortHash(proof.error, 16, 8)}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-muted-foreground">Attempts</span>
+                    <span className="text-muted-foreground font-mono tabular-nums">
+                      {proof.attempt_count}
+                    </span>
+                  </div>
+                  <p className="text-muted-foreground text-xs tabular-nums">
+                    {formatDateTime(proof.created_at)}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
         </PanelCard>
       )}
     </div>

@@ -39,3 +39,18 @@ export function formatEthValue(wei: bigint): string {
     maximumFractionDigits: 4,
   });
 }
+
+/**
+ * Inisial untuk avatar — satu sumber (audit C1). Menangani null, undefined,
+ * DAN string kosong (""). `fallback` dipakai bila tak ada nama/email.
+ */
+export function getInitials(
+  name?: string | null,
+  email?: string | null,
+  fallback = "?"
+): string {
+  const source = (name || email || "").trim();
+  if (!source) return fallback;
+  return source.charAt(0).toUpperCase();
+}
+

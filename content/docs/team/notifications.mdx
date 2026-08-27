@@ -1,0 +1,43 @@
+---
+title: Notifications
+description: Notification types, read/unread state, and real-time delivery.
+---
+
+## Overview
+
+Chainventory keeps you informed about inventory events through in-app notifications. They are delivered in real-time and surfaced via the bell icon in the top bar.
+
+## Notification Types
+
+- **Low-Stock Alert** — a product dropped to or below its threshold.
+- **Join Request** — someone requested to join your warehouse (Owners/Managers).
+- **Join Approved/Rejected** — the outcome of your own request.
+- **Approval Required** — an Adjustment or Reversal is waiting for your approval.
+- **Movement Recorded** — a team member performed a stock movement (configurable).
+- **Proof Confirmed** — a movement's blockchain proof reached Confirmed status.
+- **Warehouse Suspended** — your warehouse hit the 27-day inactivity limit.
+
+## Read / Unread State
+
+Notifications start as **unread** and show a badge count on the bell icon. Clicking a notification marks it read and (where relevant) navigates to the related record. You can mark all as read from the notification panel.
+
+## Real-Time Delivery
+
+Notifications use Supabase Realtime. When an event happens, connected clients receive it within seconds — no polling or refresh required. If your tab was backgrounded or disconnected, missed notifications are delivered on reconnect and reconciled against the server's record.
+
+<Callout type="info">
+  If real-time updates stop appearing, refresh the page to re-establish the
+  Realtime connection. Background browser tabs may be throttled by the browser.
+</Callout>
+
+## Preferences
+
+Owners and Managers can tune which notification types are enabled from **Settings > Notifications**. Per-member muting of non-critical alerts (like generic movement recordings) helps reduce noise on busy warehouses.
+
+## Email Digests
+
+Critical events (low-stock, suspension, join requests) are also sent by email so you're covered even when you're not logged in. Routine movement notifications are in-app only unless you opt into email digests.
+
+## Permissions
+
+All roles receive notifications relevant to their access. Auditors and Viewers, for example, won't get "Approval Required" notices since they cannot approve.

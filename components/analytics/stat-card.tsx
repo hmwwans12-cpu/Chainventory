@@ -98,20 +98,13 @@ export function StatCard({
           </CardAction>
         ) : null}
       </CardHeader>
-      {secondary ? (
-        <CardFooter className="text-muted-foreground text-sm">
-          <div className="line-clamp-1 flex items-center gap-2">
-            {d && d.kind !== "new" ? (
-              d.kind === "up" ? (
-                <ArrowUpRight aria-hidden="true" className="size-4" />
-              ) : (
-                <ArrowDownRight aria-hidden="true" className="size-4" />
-              )
-            ) : null}
-            {secondary}
-          </div>
-        </CardFooter>
-      ) : null}
+        {secondary ? (
+          <CardFooter className="text-muted-foreground text-sm">
+            <div className="line-clamp-1 flex items-center gap-2">
+              {secondary}
+            </div>
+          </CardFooter>
+        ) : null}
     </>
   );
 

@@ -1,8 +1,12 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ChevronRight, Wallet } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { getInitials } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { WalletBalance } from "@/components/shared/wallet-balance";
 
 /**
  * Profile / Wallet Card (DESIGN §30) — elemen pembuka Dashboard.
@@ -10,14 +14,13 @@ import { Card, CardContent } from "@/components/ui/card";
  * Seluruh kartu adalah satu target klik menuju Settings (Profile & Wallet):
  * target besar sesuai Fitts. Menampilkan Name, Role, Wallet Address, dan
  * Base Sepolia Balance; Warehouse + Contract Address opsional bila ada.
- * Sengaja tenang — kontras visual disiapkan untuk InactivityBanner
- * (Von Restorff), bukan di sini.
+ * Saldo di-stream via <WalletBalance> (Suspense) — halaman tidak memblock
+ * menunggu RPC (audit #7).
  */
 export function ProfileWalletCard({
   name,
   role,
   walletAddress,
-  balanceEth,
   warehouseName,
   warehouseId,
   contractAddress,
@@ -25,12 +28,11 @@ export function ProfileWalletCard({
   name: string;
   role: string;
   walletAddress: string | null;
-  balanceEth: string | null;
   warehouseName?: string;
   warehouseId?: string;
   contractAddress?: string | null;
 }) {
-  const initial = name.trim().charAt(0).toUpperCase() || "?";
+  const initial = getInitials(name, null, "?");
 
   return (
     <Link
@@ -55,8 +57,14 @@ export function ProfileWalletCard({
                 <span className="text-foreground truncate text-sm font-semibold">
                   {name}
                 </span>
-                <Badge variant="secondary" className="uppercase">
-                  {role}
+                <Badge variant="secondary">
+                  {{
+                    OWNER: "Owner",
+                    MANAGER: "Manager",
+                    STAFF: "Staff",
+                    AUDITOR: "Auditor",
+                    VIEWER: "Viewer",
+                  }[role] ?? role}
                 </Badge>
               </div>
               {walletAddress ? (
@@ -83,14 +91,25 @@ export function ProfileWalletCard({
             {contractAddress ? (
               <DetailRow label="Contract" value={shorten(contractAddress)} />
             ) : null}
-            <DetailRow label="Balance" value={`${balanceEth ?? "—"} ETH`} />
+            <DetailRow
+              label="Balance"
+              value={
+                <Suspense fallback={<span>—</span>}>
+                  <WalletBalance address={walletAddress} suffix=" ETH" />
+                </Suspense>
+              }
+            />
           </div>
 
           <div className="hidden items-center gap-2 ps-2 sm:ms-auto sm:flex">
             <div className="flex flex-col items-end gap-0.5">
-              <span className="text-foreground text-lg font-semibold tracking-tight tabular-nums">
-                {balanceEth ?? "—"}
-              </span>
+              <Suspense fallback={<Skeleton className="h-6 w-20" />}>
+                <WalletBalance
+                  address={walletAddress}
+                  suffix=""
+                  className="text-foreground text-lg font-semibold tracking-tight tabular-nums"
+                />
+              </Suspense>
               <span className="text-muted-foreground text-xs">ETH balance</span>
             </div>
             <ChevronRight
@@ -114,7 +133,7 @@ function DetailRow({
   mono = true,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   mono?: boolean;
 }) {
   return (

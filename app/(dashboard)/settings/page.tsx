@@ -1,16 +1,15 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { createPublicClient } from "viem";
-import { Building2, ExternalLink, LogOut, User, Wallet } from "lucide-react";
+import { Building2, ExternalLink, User, Wallet } from "lucide-react";
 
-import { signOutAction } from "@/app/actions/auth";
-import { formatEthValue } from "@/lib/utils";
-import { baseSepolia, createChainTransport } from "@/lib/blockchain/chains";
 import { createClient } from "@/lib/supabase/server";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
-import { logger } from "@/lib/logger";
+import { getInitials } from "@/lib/utils";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,8 +19,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CopyButton } from "@/components/shared/copy-button";
+import { DisplayNameEditor } from "@/components/shared/display-name-editor";
+import { SignOutButton } from "@/components/shared/sign-out-button";
+import { WalletBalance } from "@/components/shared/wallet-balance";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
+import { NotificationPreferencesPanel } from "@/components/shared/notification-preferences";
+import {
+  normalizePreferences,
+} from "@/lib/users/notification-preferences";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md §6); cegah percobaan prerender saat env build minim.
@@ -34,6 +42,9 @@ export const metadata = {
 /**
  * Halaman Settings (DESIGN §30) — target klik ProfileWalletCard.
  * Read-only profile & wallet & warehouse info; tidak ada aksi destruktif.
+ *
+ * Saldo wallet di-stream via <Suspense> + <WalletBalance> (server async)
+ * supaya halaman tidak memblock menunggu RPC Base Sepolia (audit #4).
  */
 export default async function SettingsPage({
   searchParams,
@@ -49,7 +60,7 @@ export default async function SettingsPage({
   const [profileRes, walletRes, warehouses] = await Promise.all([
     supabase
       .from("users")
-      .select("display_name, email")
+      .select("display_name, email, notification_preferences")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -66,209 +77,215 @@ export default async function SettingsPage({
     (profileRes.data?.display_name as string | undefined)?.trim() || "Member";
   const email =
     (profileRes.data?.email as string | undefined) ?? user.email ?? "";
+  const prefs = normalizePreferences(
+    profileRes.data?.notification_preferences
+  );
   const walletAddress = (walletRes.data?.address as string | undefined) ?? null;
   const sp = await searchParams;
   const active = pickActiveWarehouse(warehouses, sp.warehouse);
-  const balanceWei = await fetchWalletBalance(walletAddress);
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
+
+  // Inisial konsisten dengan sidebar/header (audit C1).
+  const initial = getInitials(
+    profileRes.data?.display_name as string | undefined,
+    email,
+    "M"
+  );
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Width tier: halaman info ringan — NarrowContent (DESIGN §84.9) */}
-      <div className="mx-auto w-full max-w-[960px]">
-        <PageHeader
-          title="Settings"
-          description="Your profile, wallet, and active warehouse details."
-        />
+    <div className="mx-auto w-full max-w-[960px] flex flex-col gap-6">
+      <PageHeader
+        title={t("settings.title")}
+        description={t("settings.description")}
+      />
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User
-                  aria-hidden="true"
-                  className="text-muted-foreground size-4"
-                />
-                Profile
-              </CardTitle>
-              <CardDescription>
-                Account identity in this workspace.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <span className="bg-primary text-primary-foreground font-display flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold">
-                  {name.charAt(0).toUpperCase()}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-foreground truncate text-sm font-semibold">
-                    {name}
-                  </p>
-                  <p className="text-muted-foreground truncate text-xs">
-                    {email}
-                  </p>
-                </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User
+                aria-hidden="true"
+                className="text-muted-foreground size-4"
+              />
+              {t("settings.profile")}
+            </CardTitle>
+            <CardDescription>
+              {t("settings.profile_desc")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <span className="bg-primary text-primary-foreground font-display flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold">
+                {initial}
+              </span>
+            <div className="min-w-0">
+              <DisplayNameEditor currentName={name} />
+              <p className="text-muted-foreground truncate text-xs">
+                {email}
+              </p>
+            </div>
+            </div>
+            {active ? (
+              <div className="flex items-center gap-2">
+                 <span className="text-muted-foreground text-xs">{t("settings.role")}</span>
+                <Badge variant="secondary">
+                  {{
+                    OWNER: "Owner",
+                    MANAGER: "Manager",
+                    STAFF: "Staff",
+                    AUDITOR: "Auditor",
+                    VIEWER: "Viewer",
+                  }[active.role] ?? active.role}
+                </Badge>
               </div>
-              {active ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-xs">Role</span>
-                  <Badge variant="secondary" className="uppercase">
-                    {active.role}
-                  </Badge>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
+            ) : null}
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wallet
-                  aria-hidden="true"
-                  className="text-muted-foreground size-4"
-                />
-                Wallet
-              </CardTitle>
-              <CardDescription>Primary wallet on Base Sepolia.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              {walletAddress ? (
-                <>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wallet
+                aria-hidden="true"
+                className="text-muted-foreground size-4"
+              />
+              {t("settings.wallet")}
+            </CardTitle>
+            <CardDescription>{t("settings.wallet_desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {walletAddress ? (
+              <>
+                <div className="flex items-start gap-2">
                   <p className="text-foreground font-mono text-xs break-all">
                     {walletAddress}
                   </p>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="text-muted-foreground text-xs">Balance</p>
-                      <p className="text-foreground text-sm font-semibold tabular-nums">
-                        {balanceWei != null
-                          ? `${formatEthValue(balanceWei)} ETH`
-                          : "Unavailable"}
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      render={
-                        <a
-                          href={`https://sepolia.basescan.org/address/${walletAddress}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        />
-                      }
+                  <CopyButton
+                    text={walletAddress}
+                    label="Copy wallet address"
+                    className="mt-0.5"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                     <p className="text-muted-foreground text-xs">{t("settings.balance")}</p>
+                    <Suspense
+                      fallback={<Skeleton className="h-4 w-20" />}
                     >
-                      BaseScan <ExternalLink aria-hidden="true" />
-                    </Button>
+                      <WalletBalance
+                        address={walletAddress}
+                        className="text-foreground text-sm font-semibold tabular-nums"
+                      />
+                    </Suspense>
                   </div>
-                </>
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  No primary wallet connected yet.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {active ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2
-                  aria-hidden="true"
-                  className="text-muted-foreground size-4"
-                />
-                Warehouse
-              </CardTitle>
-              <CardDescription>
-                Active warehouse and on-chain contract.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-              <div className="min-w-0">
-                <p className="text-foreground truncate text-sm font-semibold">
-                  {active.name}
-                </p>
-                {active.contractAddress ? (
-                  <p className="text-muted-foreground mt-1 font-mono text-xs break-all">
-                    {active.contractAddress}
-                  </p>
-                ) : (
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    No contract deployed yet.
-                  </p>
-                )}
-              </div>
-              {active.contractAddress ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  render={
-                    <a
-                      href={`https://sepolia.basescan.org/address/${active.contractAddress}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    />
-                  }
-                >
-                  View contract <ExternalLink aria-hidden="true" />
-                </Button>
-              ) : null}
-            </CardContent>
-          </Card>
-        ) : (
-          <EmptyState
-            icon={Building2}
-            title="No warehouse yet"
-            description="Create or join a warehouse to see its details here."
-            primaryAction={{
-              label: "Create Warehouse",
-              href: "/onboarding/create",
-            }}
-            secondaryAction={{
-              label: "Join Warehouse",
-              href: "/onboarding/join",
-            }}
-          />
-        )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    render={
+                      <a
+                        href={`https://sepolia.basescan.org/address/${walletAddress}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      />
+                    }
+                  >
+                    BaseScan <ExternalLink aria-hidden="true" />
+                  </Button>
+                </div>
+              </>
+            ) : (
+               <p className="text-muted-foreground text-sm">
+                 {t("settings.no_wallet")}
+               </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Account / sesi (audit #1) — logout diakses dari Settings juga */}
+      {active ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2
+                aria-hidden="true"
+                className="text-muted-foreground size-4"
+              />
+              {t("settings.warehouse")}
+            </CardTitle>
+            <CardDescription>
+              {t("settings.warehouse_desc")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+            <div className="min-w-0">
+              <p className="text-foreground truncate text-sm font-semibold">
+                {active.name}
+              </p>
+              {active.contractAddress ? (
+                <div className="mt-1 flex items-start gap-2">
+                  <p className="text-muted-foreground font-mono text-xs break-all">
+                    {active.contractAddress}
+                  </p>
+                  <CopyButton
+                    text={active.contractAddress}
+                    label="Copy contract address"
+                    className="mt-0.5"
+                  />
+                </div>
+              ) : (
+                   <p className="text-muted-foreground mt-1 text-xs">
+                     {t("settings.no_contract")}
+                   </p>
+              )}
+            </div>
+            {active.contractAddress ? (
+              <Button
+                variant="outline"
+                size="sm"
+                render={
+                  <a
+                    href={`https://sepolia.basescan.org/address/${active.contractAddress}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                }
+              >
+                View contract <ExternalLink aria-hidden="true" />
+              </Button>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : (
+         <EmptyState
+           icon={Building2}
+           title={t("settings.no_warehouse")}
+           description={t("settings.no_warehouse_desc")}
+           primaryAction={{
+             label: t("dashboard.create_warehouse"),
+             href: "/onboarding/create",
+           }}
+           secondaryAction={{
+             label: t("dashboard.join_warehouse"),
+             href: "/onboarding/join",
+           }}
+         />
+      )}
+
+      <NotificationPreferencesPanel initial={prefs} />
+
+      {/* Account / sesi — logout juga bisa diakses dari Settings */}
       <Card>
         <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 flex-col gap-0.5">
-            <p className="text-foreground text-sm font-semibold">Account</p>
+            <p className="text-foreground text-sm font-semibold">{t("settings.account")}</p>
             <p className="text-muted-foreground truncate text-xs">
-              Signed in as {email || user.email}
+              {t("settings.signed_in").replace("{email}", email || user.email || "")}
             </p>
           </div>
-          <form action={signOutAction}>
-            <Button variant="outline" size="sm" type="submit">
-              <LogOut aria-hidden="true" />
-              Sign out
-            </Button>
-          </form>
+          <SignOutButton />
         </CardContent>
       </Card>
     </div>
   );
-}
-
-/** Sama dengan dashboard: gagal jaringan -> null (bukan error fatal). */
-async function fetchWalletBalance(
-  address: string | null
-): Promise<bigint | null> {
-  if (!address) return null;
-  try {
-    const client = createPublicClient({
-      chain: baseSepolia,
-      transport: createChainTransport(),
-    });
-    return await client.getBalance({ address: address as `0x${string}` });
-  } catch (err) {
-    logger.warn(
-      { err: err instanceof Error ? err.message : "balance probe failed" },
-      "settings wallet balance probe failed"
-    );
-    return null;
-  }
 }

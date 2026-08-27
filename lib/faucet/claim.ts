@@ -16,6 +16,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { FAUCET_AMOUNT_ETH, FAUCET_COOLDOWN_MS } from "@/lib/constants";
 import { logger } from "@/lib/logger";
+import { parseEther } from "viem";
 import {
   checkFaucetRateLimit,
   resetFaucetRateLimit,
@@ -52,12 +53,18 @@ export async function claimFaucet(
       { userId, error: rateLimit.error },
       "faucet claim blocked by rate limit"
     );
+    // resetMs 0 = fail-closed (tidak tahu kapan buka). Jangan kirim
+    // cooldown negatif (audit): pakai FAUCET_COOLDOWN_MS sbg estimasi.
+    const cooldownMs =
+      rateLimit.resetMs > 0
+        ? Math.max(0, rateLimit.resetMs - Date.now())
+        : FAUCET_COOLDOWN_MS;
     return {
       ok: false,
       error:
         rateLimit.error ??
         "Rate limit active. You can claim once every 12 hours.",
-      cooldownMs: rateLimit.resetMs - Date.now(),
+      cooldownMs,
     };
   }
 
@@ -65,7 +72,7 @@ export async function claimFaucet(
   // claim_faucet/confirm_faucet_claim hanya di-GRANT ke service_role
   // (0022). Memakai client sesi user = "permission denied for function".
   const supabase = createServiceClient();
-  const amountWei = String(BigInt(parseFloat(FAUCET_AMOUNT_ETH) * 1e18));
+  const amountWei = parseEther(FAUCET_AMOUNT_ETH);
 
   const { data: rpcData, error: rpcError } = await supabase.rpc(
     "claim_faucet",

@@ -4,13 +4,18 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeftRight,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
   Eye,
+  MoreHorizontal,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -28,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Pagination } from "@/components/shared/pagination";
 import {
   MOVEMENT_STATUS_META,
   MOVEMENT_TYPE_META,
@@ -178,6 +184,7 @@ export function TransactionsPage({
         />
       ) : (
         <PanelCard padding="none">
+          <div className="hidden md:block overflow-x-auto">
           <Table className="md:min-w-[720px]">
             <TableHeader>
               <TableRow>
@@ -250,7 +257,7 @@ export function TransactionsPage({
                           href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary hover:text-primary/80 inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-xs"
+                          className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-xs"
                           aria-label="View transaction on BaseScan"
                         >
                           <ExternalLink
@@ -271,56 +278,129 @@ export function TransactionsPage({
                     <TableCell className="text-muted-foreground hidden font-mono text-xs lg:table-cell">
                       {shortWallet(m.actorWallet)}
                     </TableCell>
-                    <TableCell className="text-muted-foreground hidden text-xs lg:table-cell">
+                    <TableCell className="text-muted-foreground hidden text-xs tabular-nums lg:table-cell">
                       {formatDateTime(m.created_at)}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setDetailTarget(m)}
-                        aria-label={`View ${typeMeta.label} details`}
-                      >
-                        <Eye aria-hidden="true" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Actions for ${typeMeta.label}`}
+                            />
+                          }
+                        >
+                          <MoreHorizontal aria-hidden="true" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setDetailTarget(m)}>
+                            <Eye aria-hidden="true" />
+                            View details
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
+          </div>
+          {/* Mobile: card list (audit N) */}
+          <ul className="divide-y md:hidden">
+            {items.map((m) => {
+              const typeMeta = MOVEMENT_TYPE_META[m.movementType];
+              const statusMeta = MOVEMENT_STATUS_META[m.status];
+              const negative =
+                m.movementType === "stock_out" || m.movementType === "reversal";
+              const proofMeta = m.proofStatus
+                ? PROOF_STATUS_META[m.proofStatus]
+                : null;
+              return (
+                <li
+                  key={m.id}
+                  className="flex items-start justify-between gap-3 p-4"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-foreground truncate font-medium">
+                        {m.productName}
+                      </span>
+                      <StatusBadge
+                        tone={statusMeta.tone}
+                        label={statusMeta.label}
+                      />
+                    </div>
+                    <p className="text-muted-foreground mt-0.5 font-mono text-xs">
+                      {m.productSku} · {m.id.slice(0, 8)}
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      {typeMeta.label} ·{" "}
+                      <span
+                        className={
+                          negative
+                            ? "text-destructive font-mono"
+                            : "text-foreground font-mono"
+                        }
+                      >
+                        {negative ? "−" : "+"}
+                        {m.quantity} {m.unit}
+                      </span>
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-xs tabular-nums">
+                      {shortWallet(m.actorWallet)} · {formatDateTime(m.created_at)}
+                    </p>
+                    {m.proofTxHash && m.proofStatus === "confirmed" ? (
+                      <a
+                        href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded mt-1 inline-flex min-h-7 items-center gap-1 text-xs"
+                        aria-label="View transaction on BaseScan"
+                      >
+                        <ExternalLink aria-hidden="true" className="size-3.5" />
+                        Verified
+                      </a>
+                    ) : proofMeta ? (
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {proofMeta.label}
+                      </p>
+                    ) : null}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Actions for ${typeMeta.label}`}
+                        />
+                      }
+                    >
+                      <MoreHorizontal aria-hidden="true" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setDetailTarget(m)}>
+                        <Eye aria-hidden="true" />
+                        View details
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </li>
+              );
+            })}
+          </ul>
         </PanelCard>
       )}
 
       {totalPages > 1 ? (
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground text-xs">
-            Page <span className="font-mono tabular-nums">{page}</span> of{" "}
-            <span className="font-mono tabular-nums">{totalPages}</span>
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => goTo({ page: String(page - 1) })}
-              aria-label="Previous page"
-            >
-              <ChevronLeft aria-hidden="true" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages}
-              onClick={() => goTo({ page: String(page + 1) })}
-              aria-label="Next page"
-            >
-              Next
-              <ChevronRight aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPage={(p) => goTo({ page: String(p) })}
+        />
       ) : null}
 
       {detailTarget ? (

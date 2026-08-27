@@ -92,7 +92,13 @@ export function ProductForm({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="product-name">Product Name</Label>
@@ -103,9 +109,12 @@ export function ProductForm({
             onChange={(e) => set("name")(e.target.value)}
             placeholder="e.g. Steel Rod 12mm"
             aria-invalid={Boolean(errors.name)}
+            aria-describedby={errors.name ? "err-product-name" : undefined}
           />
           {errors.name ? (
-            <p className="text-destructive text-xs">{errors.name}</p>
+            <p id="err-product-name" role="alert" className="text-destructive text-sm">
+              {errors.name}
+            </p>
           ) : null}
         </div>
         <div className="flex flex-col gap-1.5">
@@ -116,9 +125,12 @@ export function ProductForm({
             onChange={(e) => set("sku")(e.target.value)}
             placeholder="e.g. SR-12-001"
             aria-invalid={Boolean(errors.sku)}
+            aria-describedby={errors.sku ? "err-product-sku" : undefined}
           />
           {errors.sku ? (
-            <p className="text-destructive text-xs">{errors.sku}</p>
+            <p id="err-product-sku" role="alert" className="text-destructive text-sm">
+              {errors.sku}
+            </p>
           ) : null}
         </div>
       </div>
@@ -142,6 +154,7 @@ export function ProductForm({
             placeholder="e.g. pcs, kg, m"
             disabled={unitLocked}
             aria-invalid={Boolean(errors.unit)}
+            aria-describedby={errors.unit ? "err-product-unit" : undefined}
           />
           {unitLocked ? (
             <p className="text-muted-foreground flex items-center gap-1 text-xs">
@@ -150,7 +163,9 @@ export function ProductForm({
               records consistent.
             </p>
           ) : errors.unit ? (
-            <p className="text-destructive text-xs">{errors.unit}</p>
+            <p id="err-product-unit" role="alert" className="text-destructive text-sm">
+              {errors.unit}
+            </p>
           ) : null}
         </div>
       </div>
@@ -176,9 +191,12 @@ export function ProductForm({
             onChange={(e) => set("lowStockThreshold")(e.target.value)}
             placeholder="0"
             aria-invalid={Boolean(errors.lowStockThreshold)}
+            aria-describedby={
+              errors.lowStockThreshold ? "err-product-threshold" : undefined
+            }
           />
           {errors.lowStockThreshold ? (
-            <p className="text-destructive text-xs">
+            <p id="err-product-threshold" role="alert" className="text-destructive text-sm">
               {errors.lowStockThreshold}
             </p>
           ) : null}
@@ -193,9 +211,12 @@ export function ProductForm({
               onChange={(e) => set("initialQuantity")(e.target.value)}
               placeholder="0"
               aria-invalid={Boolean(errors.initialQuantity)}
+              aria-describedby={
+                errors.initialQuantity ? "err-product-initial" : undefined
+              }
             />
             {errors.initialQuantity ? (
-              <p className="text-destructive text-xs">
+              <p id="err-product-initial" role="alert" className="text-destructive text-sm">
                 {errors.initialQuantity}
               </p>
             ) : (
@@ -214,17 +235,17 @@ export function ProductForm({
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         {onCancel ? (
-          <Button variant="outline" onClick={onCancel} disabled={busy}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
             Cancel
           </Button>
         ) : null}
-        <Button onClick={submit} disabled={busy}>
+        <Button type="submit" disabled={busy}>
           {busy ? (
             <Loader2Icon aria-hidden="true" className="animate-spin" />
           ) : null}
           {submitLabel}
         </Button>
       </div>
-    </div>
+    </form>
   );
 }

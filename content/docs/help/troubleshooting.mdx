@@ -1,0 +1,66 @@
+---
+title: Troubleshooting
+description: Resolve setup, connection, and operational issues in Chainventory.
+---
+
+## Overview
+
+This page covers operational and setup problems beyond the FAQ. For end-user questions, see [Troubleshooting & FAQ](/docs/help/faq).
+
+## Wallet / Signup Issues
+
+**Embedded wallet not created**
+- Signup via Privy should auto-provision an embedded wallet. If not, sign out and sign back in.
+- Check the Developer Console → Dependencies for auth provider health.
+
+**Cannot connect external wallet**
+- Ensure the wallet supports Base Sepolia, or simply use the embedded wallet — it requires no setup.
+
+## Blockchain Submission Issues
+
+**Proof stuck in Pending**
+- The pipeline may be busy or the RPC is down. Wait a few minutes; proofs process automatically.
+- Check Developer Console → Dependencies for pipeline and RPC status.
+
+**Proof Failed (gas)**
+- The treasury is out of test ETH. Claim from the faucet (Owner/Manager) in Developer Console → Treasury.
+- Then manually retry the failed proof from the console.
+
+**Proof Failed (contract error)**
+- The warehouse contract may be paused or the signer removed from the allowlist. Verify the allowlist in Developer Console.
+
+<Callout type="warning">
+  Never remove the active treasury signer from the allowlist without adding a
+  replacement first — this blocks all future proof submissions.
+</Callout>
+
+## Movement Errors
+
+**Insufficient Stock on Stock Out**
+- Reduce the quantity to the available balance, or perform a Stock In first.
+
+**Stale Stock on Stock Out**
+- The balance changed since the form opened. Refresh and re-enter the quantity.
+
+**Adjustment / Reversal blocked**
+- These require Owner or Manager approval. Ask an approver to review the pending request.
+
+## Connectivity
+
+**Real-time updates not working**
+- Refresh to re-establish the Supabase Realtime connection.
+- Check your network; background tabs may be throttled by the browser.
+
+**Page won't load / 500 errors**
+- Check Developer Console → Dependencies for downstream outages (database, RPC, QStash).
+- If the warehouse was suspended for inactivity, perform any stock movement to reactivate.
+
+## Data Verification
+
+**Can't find a proof's transaction**
+- Open the movement → proof → copy the `txHash` → search on [sepolia.basescan.org](https://sepolia.basescan.org).
+- Confirmed proofs always have a txHash; Pending/Failed ones do not yet.
+
+## Getting Further Help
+
+If the steps above don't resolve the issue, capture the relevant proof ID or movement ID and share it with your warehouse Owner, who can inspect the Developer Console for details.

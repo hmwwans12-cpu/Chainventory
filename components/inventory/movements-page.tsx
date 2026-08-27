@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowDownToLine,
+  ArrowLeftRight,
   ArrowUpFromLine,
   Check,
   ExternalLink,
@@ -50,6 +51,8 @@ import {
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ErrorState } from "@/components/shared/error-state";
+import { LoadMore } from "@/components/shared/load-more";
 import { hasPermission, PERMISSIONS, type Role } from "@/lib/auth/permissions";
 import {
   embedOne,
@@ -79,12 +82,14 @@ import { cn, formatDateTime } from "@/lib/utils";
 
 const PAGE_SIZE = 25;
 
+type FetchResult = { items: MovementListItem[]; error: boolean };
+
 async function fetchPage(
   supabase: ReturnType<typeof createSupabaseClient>,
   warehouseId: string,
   from: number,
   to: number
-): Promise<MovementListItem[]> {
+): Promise<FetchResult> {
   const { data, error } = await supabase
     .from("stock_movements")
     .select(
@@ -93,24 +98,29 @@ async function fetchPage(
     .eq("warehouse_id", warehouseId)
     .order("created_at", { ascending: false })
     .range(from, to);
-  if (error || !data) return [];
-  return data.map((row) => ({
-    id: row.id,
-    movementType: row.movement_type,
-    quantity: String(row.quantity),
-    status: row.status,
-    reason: row.reason,
-    reference: row.reference,
-    actorWallet: row.actor_wallet,
-    expectedBalanceVersion: row.expected_balance_version,
-    created_at: row.created_at,
-    productName: embedOne(row.products)?.name ?? "Unknown product",
-    productSku: embedOne(row.products)?.sku ?? "",
-    unit: embedOne(row.products)?.unit ?? "",
-    proofStatus: row.proofs?.[0]?.status ?? null,
-    proofTxHash: row.proofs?.[0]?.tx_hash ?? null,
-    proofError: row.proofs?.[0]?.error ?? null,
-  }));
+  // Jangan kembalikan [] sunyi pada error — panggil harus tahu gagal
+  // (audit: tabel kosong terlihat seperti "tidak ada data").
+  if (error || !data) return { items: [], error: true };
+  return {
+    error: false,
+    items: data.map((row) => ({
+      id: row.id,
+      movementType: row.movement_type,
+      quantity: String(row.quantity),
+      status: row.status,
+      reason: row.reason,
+      reference: row.reference,
+      actorWallet: row.actor_wallet,
+      expectedBalanceVersion: row.expected_balance_version,
+      created_at: row.created_at,
+      productName: embedOne(row.products)?.name ?? "Unknown product",
+      productSku: embedOne(row.products)?.sku ?? "",
+      unit: embedOne(row.products)?.unit ?? "",
+      proofStatus: row.proofs?.[0]?.status ?? null,
+      proofTxHash: row.proofs?.[0]?.tx_hash ?? null,
+      proofError: row.proofs?.[0]?.error ?? null,
+    })),
+  };
 }
 
 function shortWallet(wallet: string | null): string {
@@ -141,6 +151,7 @@ export function MovementsPage({
     initialMovements.length === PAGE_SIZE
   );
   const [loadingMore, setLoadingMore] = React.useState(false);
+  const [loadError, setLoadError] = React.useState(false);
   const [liveStatus, setLiveStatus] = React.useState<"live" | "reconnecting">(
     "reconnecting"
   );
@@ -167,17 +178,28 @@ export function MovementsPage({
     warehouses.find((w) => w.id === warehouseId)?.status === "suspended";
 
   const [supabase] = React.useState(() => createSupabaseClient());
+  const [realtimeError, setRealtimeError] = React.useState<string | null>(null);
 
   // Realtime (DESIGN §41) — Live/Reconnecting indicator + auto refresh.
-  // P2-05: event beruntun di-debounce 400ms — N realtime event → 1 fetch.
-  React.useEffect(() => {
-    const refreshNow = async () => {
-      const items = await fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1);
+  // On failure we KEEP the last known data and surface a notice instead of
+  // wiping the list to an empty state (UI/UX audit #8).
+  const refreshMovements = React.useCallback(async () => {
+    try {
+      const { items } = await fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1);
       setMovements(items);
       setHasMore(items.length === PAGE_SIZE);
-    };
+      setRealtimeError(null);
+    } catch {
+      setRealtimeError(
+        "Live update failed — showing the last known movements."
+      );
+    }
+  }, [supabase, warehouseId]);
+
+  // P2-05: event beruntun di-debounce 400ms — N realtime event → 1 fetch.
+  React.useEffect(() => {
     const refreshFirst = debounce(() => {
-      void refreshNow();
+      void refreshMovements();
     }, 400);
     const channel = supabase
       .channel(`movements-${warehouseId}`)
@@ -213,12 +235,18 @@ export function MovementsPage({
   const loadMore = async () => {
     if (loadingMore) return;
     setLoadingMore(true);
-    const items = await fetchPage(
+    setLoadError(false);
+    const { items, error } = await fetchPage(
       supabase,
       warehouseId,
       movements.length,
       movements.length + PAGE_SIZE - 1
     );
+    if (error) {
+      setLoadingMore(false);
+      setLoadError(true);
+      return;
+    }
     if (items.length > 0) {
       setMovements((prev) => [...prev, ...items]);
     }
@@ -347,13 +375,15 @@ export function MovementsPage({
       </div>
 
       {suspended ? (
-        <p
+        <PanelCard
+          variant="tinted"
+          padding="none"
           role="status"
-          className="border-warning/40 bg-warning/15 text-warning flex items-center gap-2 rounded-xl border px-4 py-3 text-sm"
+          className="border-warning/40 bg-warning/15 text-warning flex items-center gap-2 px-4 py-3 text-sm"
         >
           <TriangleAlert aria-hidden="true" className="size-4 shrink-0" />
           Warehouse suspended — inventory mutations are temporarily unavailable.
-        </p>
+        </PanelCard>
       ) : null}
 
       {movements.length === 0 ? (
@@ -372,6 +402,20 @@ export function MovementsPage({
         />
       ) : (
         <PanelCard padding="none">
+          {realtimeError ? (
+            movements.length === 0 ? (
+              <ErrorState
+                title="Couldn't load movements"
+                description={realtimeError}
+                onRetry={refreshMovements}
+              />
+            ) : (
+              <p className="text-muted-foreground border-border bg-muted/40 border-b px-4 py-2 text-sm">
+                {realtimeError}
+              </p>
+            )
+          ) : null}
+          <div className="hidden md:block overflow-x-auto">
           <Table className="md:min-w-[820px]">
             <TableHeader>
               <TableRow>
@@ -431,34 +475,7 @@ export function MovementsPage({
                       </span>
                     </TableCell>
                     <TableCell>
-                      {m.status === "pending_approval" &&
-                      canApprove &&
-                      !suspended ? (
-                        <div className="flex items-center gap-1.5">
-                          <Button
-                            size="sm"
-                            onClick={() => setApproveTarget(m)}
-                            aria-label={`Approve ${typeMeta.label}`}
-                          >
-                            <Check aria-hidden="true" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setRejectTarget(m)}
-                            aria-label={`Reject ${typeMeta.label}`}
-                          >
-                            <X aria-hidden="true" />
-                            Reject
-                          </Button>
-                        </div>
-                      ) : (
-                        <StatusBadge
-                          tone={statusMeta.tone}
-                          label={statusMeta.label}
-                        />
-                      )}
+                      <StatusBadge tone={statusMeta.tone} label={statusMeta.label} />
                     </TableCell>
                     <TableCell className="text-muted-foreground hidden font-mono text-xs lg:table-cell">
                       {shortWallet(m.actorWallet)}
@@ -469,7 +486,7 @@ export function MovementsPage({
                           href={`https://sepolia.basescan.org/tx/${m.proofTxHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary hover:text-primary/80 inline-flex items-center gap-1 text-xs"
+                          className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded relative min-h-7 inline-flex before:absolute before:-inset-[9px] items-center gap-1 text-xs"
                           aria-label="View transaction on BaseScan"
                         >
                           <ExternalLink
@@ -487,34 +504,168 @@ export function MovementsPage({
                         <span className="text-muted-foreground text-xs">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-muted-foreground hidden text-xs lg:table-cell">
+                    <TableCell className="text-muted-foreground hidden text-xs tabular-nums lg:table-cell">
                       {formatDateTime(m.created_at)}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setDetailTarget(m)}
-                        aria-label={`View ${typeMeta.label} details`}
-                      >
-                        <Eye aria-hidden="true" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Actions for ${typeMeta.label}`}
+                            />
+                          }
+                        >
+                          <MoreHorizontal aria-hidden="true" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setDetailTarget(m)}>
+                            <Eye aria-hidden="true" />
+                            View details
+                          </DropdownMenuItem>
+                          {m.status === "pending_approval" &&
+                          canApprove &&
+                          !suspended ? (
+                            <>
+                              <DropdownMenuItem onClick={() => setApproveTarget(m)}>
+                                <Check aria-hidden="true" />
+                                Approve
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => setRejectTarget(m)}
+                              >
+                                <X aria-hidden="true" />
+                                Reject
+                              </DropdownMenuItem>
+                            </>
+                          ) : null}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
+          </div>
+          {/* Mobile: card list (audit N) */}
+          <ul className="divide-y md:hidden">
+            {movements.map((m) => {
+              const typeMeta = MOVEMENT_TYPE_META[m.movementType];
+              const statusMeta = MOVEMENT_STATUS_META[m.status];
+              const negative =
+                m.movementType === "stock_out" ||
+                m.movementType === "reversal";
+              const proofMeta = m.proofStatus
+                ? PROOF_STATUS_META[m.proofStatus]
+                : null;
+              return (
+                <li
+                  key={m.id}
+                  className="flex items-start justify-between gap-3 p-4"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-foreground truncate font-medium">
+                        {m.productName}
+                      </span>
+                      <StatusBadge
+                        tone={statusMeta.tone}
+                        label={statusMeta.label}
+                      />
+                    </div>
+                    <p className="text-muted-foreground mt-0.5 font-mono text-xs">
+                      {m.productSku}
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      {typeMeta.label} ·{" "}
+                      <span
+                        className={
+                          negative
+                            ? "text-destructive font-mono"
+                            : "text-foreground font-mono"
+                        }
+                      >
+                        {negative ? "−" : "+"}
+                        {m.quantity} {m.unit}
+                      </span>
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-xs tabular-nums">
+                      {shortWallet(m.actorWallet)} · {formatDateTime(m.created_at)}
+                    </p>
+                    {m.proofTxHash && m.proofStatus === "confirmed" ? (
+                      <a
+                        href={`https://sepolia.basescan.org/tx/${m.proofTxHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                          className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none rounded relative mt-1 inline-flex min-h-7 before:absolute before:-inset-[9px] items-center gap-1 text-xs"
+                        aria-label="View transaction on BaseScan"
+                      >
+                        <ExternalLink aria-hidden="true" className="size-3.5" />
+                        Verified
+                      </a>
+                    ) : proofMeta ? (
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {proofMeta.label}
+                      </p>
+                    ) : null}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Actions for ${typeMeta.label}`}
+                        />
+                      }
+                    >
+                      <MoreHorizontal aria-hidden="true" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setDetailTarget(m)}>
+                        <Eye aria-hidden="true" />
+                        View details
+                      </DropdownMenuItem>
+                      {m.status === "pending_approval" &&
+                      canApprove &&
+                      !suspended ? (
+                        <>
+                          <DropdownMenuItem onClick={() => setApproveTarget(m)}>
+                            <Check aria-hidden="true" />
+                            Approve
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setRejectTarget(m)}
+                          >
+                            <X aria-hidden="true" />
+                            Reject
+                          </DropdownMenuItem>
+                        </>
+                      ) : null}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </li>
+              );
+            })}
+          </ul>
         </PanelCard>
       )}
 
-      {hasMore ? (
-        <div className="flex justify-center">
-          <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? "Loading…" : "Load more"}
-          </Button>
-        </div>
-      ) : null}
+      {loadError ? (
+        <ErrorState
+          icon={ArrowLeftRight}
+          title="Couldn't load more movements"
+          description="The request failed. Retry to fetch the next page."
+          onRetry={loadMore}
+        />
+      ) : (
+        <LoadMore onClick={loadMore} loading={loadingMore} hasMore={hasMore} />
+      )}
 
       {movementDialog ? (
         <StockMovementDialog
@@ -527,7 +678,7 @@ export function MovementsPage({
           }}
           onSuccess={() => {
             router.refresh();
-            fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1).then((items) => {
+            fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1).then(({ items }) => {
               setMovements(items);
               setHasMore(items.length === PAGE_SIZE);
             });
@@ -550,7 +701,7 @@ export function MovementsPage({
           onOpenChange={(open) => setApproveTarget(open ? approveTarget : null)}
           onDone={() => {
             setApproveTarget(null);
-            fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1).then((items) => {
+            fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1).then(({ items }) => {
               setMovements(items);
               setHasMore(items.length === PAGE_SIZE);
             });
@@ -564,7 +715,7 @@ export function MovementsPage({
           onOpenChange={(open) => setRejectTarget(open ? rejectTarget : null)}
           onDone={() => {
             setRejectTarget(null);
-            fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1).then((items) => {
+            fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1).then(({ items }) => {
               setMovements(items);
               setHasMore(items.length === PAGE_SIZE);
             });

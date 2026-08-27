@@ -1,0 +1,61 @@
+---
+title: Analytics & Reports
+description: Track inventory metrics, compare periods, and export reports.
+---
+
+## Overview
+
+The Analytics section summarizes your warehouse activity so you can spot trends, identify fast movers, and catch stock risks before they become problems.
+
+## Available Metrics
+
+- **Total Products** — count of active products.
+- **Current Stock Value (units)** — sum of balances across products.
+- **Stock In / Stock Out volume** — quantities moved in and out over a period.
+- **Net Change** — Stock In minus Stock Out.
+- **Low-Stock Count** — number of products at or below their threshold.
+- **Movements Over Time** — a daily or hourly timeline of all movement types.
+
+## Period Ranges
+
+Pick a window to scope every chart and table:
+
+- **Today**
+- **Last 7 days**
+- **Last 30 days**
+- **Last 90 days**
+- **Custom range** — choose a start and end date (UTC).
+
+Changing the range updates all widgets instantly. Comparisons ("vs previous period") are shown as a percentage delta where applicable.
+
+## Filtering by Category
+
+Most reports can be filtered by product category, letting you analyze a single line of business without exporting raw data.
+
+## Low-Stock Report
+
+The low-stock widget lists every product at or below its configured threshold, sorted by urgency (most negative margin first). Use it as a replenishment checklist.
+
+## Export
+
+Owners and Managers can export analytics as CSV:
+
+1. Open the report you want.
+2. Click **Export CSV**.
+3. The file downloads with the current filters and date range applied.
+
+<Callout type="info">
+  Exports respect your selected period and category filters. Sensitive payload
+  data is never included — only aggregated metrics and product identifiers.
+</Callout>
+
+## Realtime vs Snapshot
+
+Analytics charts reflect real-time balances, but historical timelines are built from the immutable movement log. Because movements are blockchain-anchored, your historical reports are tamper-evident: a reconciled number today will match a reconciled number a year from now.
+
+## Permissions
+
+| Action            | Who can do it         |
+| ----------------- | --------------------- |
+| View analytics    | All roles             |
+| Export CSV        | Owner, Manager        |

@@ -1,3 +1,6 @@
+"use client";
+
+import { useLocale } from "@/components/providers/locale-provider";
 import { Reveal } from "@/components/marketing/reveal";
 
 /**
@@ -8,41 +11,37 @@ import { Reveal } from "@/components/marketing/reveal";
 const STEPS = [
   {
     step: "01",
-    title: "Create your warehouse",
-    description:
-      "Give it a name and company. You automatically become the owner with a secure warehouse code.",
+    titleKey: "landing.how.s1_title",
+    descKey: "landing.how.s1_desc",
   },
   {
     step: "02",
-    title: "Invite your team",
-    description:
-      "Share the code or a link. New members request access and get assigned an appropriate role.",
+    titleKey: "landing.how.s2_title",
+    descKey: "landing.how.s2_desc",
   },
   {
     step: "03",
-    title: "Manage stock in real time",
-    description:
-      "Add products, record stock in and out, and watch updates reach the whole team instantly.",
+    titleKey: "landing.how.s3_title",
+    descKey: "landing.how.s3_desc",
   },
   {
     step: "04",
-    title: "Verify when you need to",
-    description:
-      "Every movement gets a proof record. Open the history to see exactly who did what- anytime.",
+    titleKey: "landing.how.s4_title",
+    descKey: "landing.how.s4_desc",
   },
 ];
 
 export function HowItWorks() {
+  const { t } = useLocale();
   return (
     <section className="py-20 md:py-28">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-6">
         <Reveal className="flex max-w-2xl flex-col gap-4">
           <h2 className="font-display text-foreground text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-            From empty warehouse to running team in minutes
+            {t("landing.how.title")}
           </h2>
           <p className="text-muted-foreground max-w-xl text-base leading-relaxed text-pretty">
-            Four steps. No crypto setup, no contract addresses, no technical
-            configuration.
+            {t("landing.how.subtitle")}
           </p>
         </Reveal>
 
@@ -61,10 +60,10 @@ export function HowItWorks() {
                   {step.step}
                 </span>
                 <h3 className="font-display text-foreground text-base font-semibold">
-                  {step.title}
+                  {t(step.titleKey)}
                 </h3>
                 <p className="text-muted-foreground max-w-[26ch] text-sm leading-relaxed text-pretty">
-                  {step.description}
+                  {t(step.descKey)}
                 </p>
               </li>
             ))}

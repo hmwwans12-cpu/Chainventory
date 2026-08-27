@@ -26,6 +26,7 @@ export default async function ProductsPageRoute({
   searchParams: Promise<{
     q?: string | string[];
     status?: string | string[];
+    page?: string | string[];
     warehouse?: string | string[];
   }>;
 }) {
@@ -70,7 +71,23 @@ export default async function ProductsPageRoute({
     );
   }
 
-  const query = supabase
+  const pageNum = Math.max(
+    1,
+    typeof params.page === "string" && /^\d+$/.test(params.page)
+      ? Number(params.page)
+      : 1
+  );
+  const PER_PAGE = 12;
+
+  // Tab status sekarang benar-benar memfilter (audit: products pagination).
+  const statusEq =
+    statusFilter === "active"
+      ? "active"
+      : statusFilter === "archived"
+        ? "archived"
+        : undefined;
+
+  const listQuery = supabase
     .from("products")
     .select(
       "id, sku, name, category, unit, status, low_stock_threshold, description, created_at, updated_at, inventory_balances(quantity, version), stock_movements(count)"
@@ -78,15 +95,19 @@ export default async function ProductsPageRoute({
     .eq("warehouse_id", active.id)
     .order("updated_at", { ascending: false });
 
+  if (statusEq) listQuery.eq("status", statusEq);
   if (q) {
     // Pencarian server-side (PostgREST ilike) — bukan filter frontend.
     const escaped = q.replace(/[%,()]/g, " ");
-    query.or(
+    listQuery.or(
       `name.ilike.%${escaped}%,sku.ilike.%${escaped}%,category.ilike.%${escaped}%`
     );
   }
 
-  const { data, error } = await query;
+  const { data, error } = await listQuery.range(
+    (pageNum - 1) * PER_PAGE,
+    pageNum * PER_PAGE - 1
+  );
 
   if (error) {
     return (
@@ -104,6 +125,20 @@ export default async function ProductsPageRoute({
     );
   }
 
+  // Total (filter sama dengan list) untuk pagination.
+  const countQuery = supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("warehouse_id", active.id);
+  if (statusEq) countQuery.eq("status", statusEq);
+  if (q) {
+    const escaped = q.replace(/[%,()]/g, " ");
+    countQuery.or(
+      `name.ilike.%${escaped}%,sku.ilike.%${escaped}%,category.ilike.%${escaped}%`
+    );
+  }
+  const { count: totalCount } = await countQuery;
+
   const products: ProductRow[] = (data ?? []).map((row) => ({
     id: row.id,
     sku: row.sku,
@@ -113,7 +148,7 @@ export default async function ProductsPageRoute({
     status: row.status,
     lowStockThreshold: String(row.low_stock_threshold),
     description: row.description,
-    createdAt: row.created_at,
+    createdAt: row.updated_at,
     updatedAt: row.updated_at,
     quantity:
       row.inventory_balances?.[0]?.quantity != null
@@ -136,6 +171,9 @@ export default async function ProductsPageRoute({
         role={active.role}
         products={products}
         query={q}
+        page={pageNum}
+        perPage={PER_PAGE}
+        total={totalCount ?? 0}
       />
     </div>
   );

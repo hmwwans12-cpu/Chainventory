@@ -7,6 +7,7 @@ import {
   Bell,
   FileSearch,
   Settings,
+  SquareTerminal,
   type LucideIcon,
 } from "lucide-react";
 
@@ -18,11 +19,13 @@ export type NavItem = {
   href: string;
   icon: LucideIcon;
   permission?: Permission;
-  children?: { title: string; href: string }[];
+  i18nKey?: string;
+  children?: { title: string; href: string; i18nKey?: string }[];
 };
 
 export type NavSection = {
   label: string;
+  i18nKey?: string;
   items: NavItem[];
 };
 
@@ -41,16 +44,18 @@ export type NavSection = {
 export const NAV_SECTIONS: NavSection[] = [
   {
     label: "Operations",
+    i18nKey: "group.operations",
     items: [
-      { title: "Overview", href: "/dashboard", icon: LayoutDashboard },
+      { title: "Overview", href: "/dashboard", icon: LayoutDashboard, i18nKey: "nav./dashboard" },
       {
         title: "Inventory",
         href: "/inventory/products",
         icon: Package,
         permission: PERMISSIONS.INVENTORY_READ,
+        i18nKey: "nav./inventory/products",
         children: [
-          { title: "Products", href: "/inventory/products" },
-          { title: "Stock Movement", href: "/inventory/movements" },
+          { title: "Products", href: "/inventory/products", i18nKey: "sub.products" },
+          { title: "Stock Movement", href: "/inventory/movements", i18nKey: "sub.stock_movement" },
         ],
       },
       {
@@ -58,40 +63,47 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/transactions",
         icon: ArrowLeftRight,
         permission: PERMISSIONS.MOVEMENT_READ,
+        i18nKey: "nav./transactions",
       },
       {
         title: "Analytics",
         href: "/analytics",
         icon: ChartNoAxesCombined,
         permission: PERMISSIONS.INVENTORY_READ,
+        i18nKey: "nav./analytics",
       },
     ],
   },
   {
     label: "Governance",
+    i18nKey: "group.governance",
     items: [
       {
         title: "Members",
         href: "/members",
         icon: Users,
         permission: PERMISSIONS.MEMBER_READ,
+        i18nKey: "nav./members",
       },
       {
         title: "Audit Explorer",
         href: "/blockchain",
         icon: FileSearch,
         permission: PERMISSIONS.BLOCKCHAIN_READ,
+        i18nKey: "nav./blockchain",
       },
       {
         title: "Notifications",
         href: "/notifications",
         icon: Bell,
+        i18nKey: "nav./notifications",
       },
     ],
   },
   {
     label: "System",
-    items: [{ title: "Settings", href: "/settings", icon: Settings }],
+    i18nKey: "group.system",
+    items: [{ title: "Settings", href: "/settings", icon: Settings, i18nKey: "nav./settings" }],
   },
 ];
 
@@ -102,5 +114,6 @@ export const NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap((s) => s.items);
 export const DEV_NAV_ITEM: NavItem = {
   title: "Developer Console",
   href: "/console",
-  icon: Settings,
+  icon: SquareTerminal,
+  i18nKey: "nav./console",
 };

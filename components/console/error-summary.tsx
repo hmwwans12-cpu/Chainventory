@@ -15,6 +15,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import type { ErrorEntry } from "@/lib/console/types";
@@ -93,12 +98,16 @@ export function ErrorSummary({ errors }: { errors: ErrorEntry[] }) {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span
-                        className="text-muted-foreground block max-w-56 truncate text-xs"
-                        title={entry.error ?? ""}
-                      >
-                        {entry.error ?? "—"}
-                      </span>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <span className="text-muted-foreground block max-w-56 truncate text-xs" />
+                          }
+                        >
+                          {entry.error ?? "—"}
+                        </TooltipTrigger>
+                        <TooltipContent>{entry.error}</TooltipContent>
+                      </Tooltip>
                     </TableCell>
                     <TableCell className="text-right">
                       <span className="text-muted-foreground font-mono text-xs tabular-nums">

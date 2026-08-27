@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import * as React from "react";
 import { motion, useReducedMotion } from "motion/react";
 import {
   ArrowRight,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/components/providers/locale-provider";
 import { SpotlightCard } from "@/components/marketing/spotlight-card";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -25,10 +27,10 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
 };
 
-const STATS = [
-  { value: "Real-time", label: "stock updates" },
-  { value: "5 roles", label: "fine-grained access" },
-  { value: "Proof", label: "on every movement" },
+const STATS: { valueKey: string; labelKey: string }[] = [
+  { valueKey: "landing.hero.stat_real_time", labelKey: "landing.hero.stat_stock_updates" },
+  { valueKey: "landing.hero.stat_5_roles", labelKey: "landing.hero.stat_fine_access" },
+  { valueKey: "landing.hero.stat_proof", labelKey: "landing.hero.stat_every_movement" },
 ];
 
 const CHART = [35, 48, 30, 58, 45, 70, 62];
@@ -41,6 +43,9 @@ const CHART = [35, 48, 30, 58, 45, 70, 62];
  */
 export function Hero() {
   const reduce = useReducedMotion();
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+  const { t } = useLocale();
 
   return (
     <section className="relative overflow-hidden pt-10 pb-20 md:pt-16 md:pb-28">
@@ -59,8 +64,8 @@ export function Hero() {
 
       <motion.div
         variants={container}
-        initial={reduce ? false : "hidden"}
-        animate={reduce ? undefined : "show"}
+        initial={mounted && !reduce ? "hidden" : false}
+        animate={mounted && !reduce ? "show" : undefined}
         className="mx-auto grid w-full max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr]"
       >
         <div className="flex flex-col gap-6">
@@ -69,23 +74,22 @@ export function Hero() {
             className="text-muted-foreground border-primary/15 bg-card inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium"
           >
             <ShieldCheck aria-hidden="true" className="text-primary size-3.5" />
-            Blockchain verification on Base Sepolia
+            {t("landing.hero.badge")}
           </motion.span>
 
           <motion.h1
             variants={item}
             className="font-display text-foreground text-[2.75rem] leading-[1.05] font-semibold tracking-tight text-balance sm:text-6xl"
           >
-            Inventory management with{" "}
-            <span className="text-primary">blockchain verification</span>
+            {t("landing.hero.title_main")}{" "}
+            <span className="text-primary">{t("landing.hero.title_accent")}</span>
           </motion.h1>
 
           <motion.p
             variants={item}
             className="text-muted-foreground max-w-lg text-base leading-relaxed text-pretty md:text-lg"
           >
-            Real-time stock for your whole team, with a verifiable proof on
-            every important record — no crypto knowledge needed.
+            {t("landing.hero.subtitle")}
           </motion.p>
 
           <motion.div
@@ -97,7 +101,7 @@ export function Hero() {
               className="group h-12 px-7 text-base transition-transform duration-150 ease-out hover:scale-[1.02] [@media(hover:hover)_and_(pointer:fine)]:active:scale-[0.98]"
               render={<Link href="/signup" />}
             >
-              Create Warehouse
+              {t("landing.hero.cta_primary")}
               <ArrowRight
                 aria-hidden="true"
                 className="transition-transform duration-150 ease-out group-hover:translate-x-0.5"
@@ -109,7 +113,7 @@ export function Hero() {
               className="h-12 px-7 text-base"
               render={<Link href="/login" />}
             >
-              Login
+              {t("landing.hero.cta_secondary")}
             </Button>
           </motion.div>
 
@@ -119,15 +123,15 @@ export function Hero() {
           >
             {STATS.map((stat) => (
               <div
-                key={stat.label}
+                key={stat.labelKey}
                 className="flex min-w-0 flex-1 flex-col px-4 first:pl-0"
               >
-                <dt className="sr-only">{stat.label}</dt>
+                <dt className="sr-only">{t(stat.labelKey)}</dt>
                 <dd className="font-display text-foreground text-xl font-semibold">
-                  {stat.value}
+                  {t(stat.valueKey)}
                 </dd>
                 <dd className="text-muted-foreground mt-0.5 text-xs">
-                  {stat.label}
+                  {t(stat.labelKey)}
                 </dd>
               </div>
             ))}
@@ -151,7 +155,7 @@ export function Hero() {
                   </span>
                   <div className="flex flex-col">
                     <span className="text-foreground text-sm font-semibold">
-                      Warehouse- Jakarta
+                      {t("landing.hero.preview_name")}
                     </span>
                     <span className="text-muted-foreground text-xs">
                       WH-7K29-XP4
@@ -160,19 +164,19 @@ export function Hero() {
                 </div>
                 <span className="text-primary bg-tradewind/15 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium">
                   <span className="bg-primary size-1.5 rounded-full" />
-                  Live
+                  {t("landing.hero.live")}
                 </span>
               </div>
 
               <div className="grid grid-cols-3 gap-3 pt-5">
                 {[
-                  { label: "Total products", value: "1,284" },
-                  { label: "Stock in (30d)", value: "+4,320" },
-                  { label: "Stock out (30d)", value: "−3,108" },
+                  { labelKey: "landing.hero.total_products", value: "1,284" },
+                  { labelKey: "landing.hero.stock_in_30", value: "+4,320" },
+                  { labelKey: "landing.hero.stock_out_30", value: "−3,108" },
                 ].map((row) => (
-                  <div key={row.label} className="flex flex-col gap-1">
+                  <div key={row.labelKey} className="flex flex-col gap-1">
                     <span className="text-muted-foreground text-xs">
-                      {row.label}
+                      {t(row.labelKey)}
                     </span>
                     <span className="font-display text-foreground text-base font-semibold tabular-nums">
                       {row.value}
@@ -183,15 +187,15 @@ export function Hero() {
 
               <div className="mt-5">
                 <span className="text-muted-foreground text-xs">
-                  Stock in- last 7 days
+                  {t("landing.hero.chart_label")}
                 </span>
                 <svg
                   viewBox="0 0 100 40"
                   className="mt-2 h-16 w-full"
                   role="img"
-                  aria-label="Bar chart of stock in over the last 7 days"
+                  aria-label={t("landing.hero.chart_label")}
                 >
-                  <title>Stock in over the last 7 days</title>
+                  <title>{t("landing.hero.chart_label")}</title>
                   {CHART.map((height, i) => (
                     <rect
                       key={i}
@@ -210,10 +214,10 @@ export function Hero() {
               <div className="border-border flex items-center justify-between border-t pt-4">
                 <span className="text-primary inline-flex items-center gap-1.5 text-xs font-medium">
                   <BadgeCheck aria-hidden="true" className="size-4" />
-                  Blockchain verified
+                  {t("landing.hero.blockchain_verified")}
                 </span>
                 <span className="text-muted-foreground text-xs">
-                  Base Sepolia
+                  {t("landing.hero.base_sepolia")}
                 </span>
               </div>
             </div>
@@ -226,10 +230,10 @@ export function Hero() {
             <BadgeCheck aria-hidden="true" className="text-primary size-4" />
             <div className="flex flex-col">
               <span className="text-foreground text-xs font-semibold">
-                Proof verified
+                {t("landing.hero.proof_verified")}
               </span>
               <span className="text-muted-foreground text-[11px]">
-                tamper-evident record
+                {t("landing.hero.tamper_evident")}
               </span>
             </div>
           </motion.div>
@@ -241,10 +245,10 @@ export function Hero() {
             <Wifi aria-hidden="true" className="text-primary size-4" />
             <div className="flex flex-col">
               <span className="text-foreground text-xs font-semibold">
-                Live sync
+                {t("landing.hero.live_sync")}
               </span>
               <span className="text-muted-foreground text-[11px]">
-                updates reach the team
+                {t("landing.hero.updates_reach")}
               </span>
             </div>
           </motion.div>

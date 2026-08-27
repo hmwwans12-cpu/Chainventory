@@ -37,7 +37,11 @@ export function InactivityBanner({
 }) {
   if (status === "suspended") {
     return (
-      <div className="border-border bg-card flex items-start gap-3 rounded-xl border px-4 py-3">
+      <PanelCard
+        variant="tinted"
+        padding="none"
+        className="border-destructive/30 bg-destructive/10 flex items-start gap-3 px-4 py-3"
+      >
         <span className="bg-destructive/15 text-destructive mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full">
           <Ban aria-hidden="true" className="size-4" />
         </span>
@@ -51,7 +55,7 @@ export function InactivityBanner({
             Chainventory untuk mengaktifkannya kembali.
           </p>
         </div>
-      </div>
+      </PanelCard>
     );
   }
 

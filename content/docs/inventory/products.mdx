@@ -1,0 +1,84 @@
+---
+title: Managing Products
+description: Create and organize products, set SKUs, units, categories, and low-stock thresholds.
+---
+
+## Overview
+
+Products are the core entities you track in Chainventory. Each product represents a physical or digital item held in your warehouse. Products are shared across all members of a warehouse and are referenced by every stock movement.
+
+## Creating a Product
+
+1. Navigate to **Inventory > Products**.
+2. Click **Add Product**.
+3. Fill in the required fields:
+
+   - **Name** — a human-readable label (e.g. `Wireless Mouse`).
+   - **SKU** — a unique stock-keeping unit. This must be unique within the warehouse.
+   - **Unit** — the unit of measure (`pcs`, `kg`, `box`, etc.).
+   - **Category** — an optional grouping used for filtering and reports.
+
+4. Click **Save**.
+
+<Callout type="info">
+  SKUs are enforced for uniqueness at the warehouse level. If you reuse a SKU,
+  the save will fail and you'll be prompted to choose another.
+</Callout>
+
+## Editing a Product
+
+Open a product from the list and click **Edit**. You can change the name, unit, category, and stock settings. Note that changing the unit after movements exist does **not** retroactively convert historical quantities — it only affects future movements.
+
+## Stock Levels & Thresholds
+
+Each product tracks:
+
+- **Current Balance** — the live quantity computed from all stock movements.
+- **Low-Stock Threshold** — a number that, when the balance drops at or below it, triggers a low-stock notification.
+
+Set a threshold under the product's **Stock Settings** tab. For example, a threshold of `10` on an item that sells fast ensures you get warned before you run out.
+
+## Categories
+
+Categories are free-form labels that help you group products. They are used for:
+
+- Filtering the product list
+- Grouping analytics reports
+- Exporting subsets of inventory
+
+You can create a category inline while editing a product — there is no separate category management screen.
+
+## Archiving
+
+When a product is discontinued, archive it instead of deleting it. Archived products:
+
+- Are hidden from the default product list (toggle **Show archived** to view)
+- Keep their full movement history
+- Cannot receive new stock movements
+
+Archiving preserves the audit trail while keeping the active list clean.
+
+## Example Product Object
+
+A product is represented internally roughly as:
+
+```json
+{
+  "id": "prod_8f2c...",
+  "sku": "WM-001",
+  "name": "Wireless Mouse",
+  "unit": "pcs",
+  "category": "Peripherals",
+  "lowStockThreshold": 10,
+  "archived": false,
+  "balance": 142
+}
+```
+
+## Permissions
+
+| Action                | Who can do it            |
+| --------------------- | ------------------------ |
+| View products         | All roles                |
+| Create/edit products  | Owner, Manager, Staff    |
+| Archive products      | Owner, Manager           |

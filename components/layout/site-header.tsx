@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Search, Settings } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Breadcrumb,
@@ -28,6 +28,10 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { RealtimeIndicator } from "@/components/realtime/realtime-indicator";
 import { useSignOut } from "@/hooks/use-sign-out";
 import { NAV_ITEMS } from "@/lib/navigation";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { LocaleToggle } from "@/components/shared/locale-toggle";
+import { getInitials } from "@/lib/utils";
+import { useLocale } from "@/components/providers/locale-provider";
 
 /**
  * SiteHeader (DESIGN §14) di atas SidebarInset — pola sidebar-07:
@@ -67,6 +71,7 @@ export function SiteHeader({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const signOut = useSignOut();
+  const { t } = useLocale();
 
   const warehouseParam =
     typeof searchParams.get("warehouse") === "string"
@@ -111,6 +116,27 @@ export function SiteHeader({
       </Breadcrumb>
 
       <div className="ml-auto flex items-center gap-1">
+        <LocaleToggle />
+        <ThemeToggle />
+        <button
+          type="button"
+          onClick={() =>
+            window.dispatchEvent(
+              new KeyboardEvent("keydown", {
+                key: "k",
+                metaKey: true,
+                ctrlKey: true,
+                bubbles: true,
+              })
+            )
+          }
+          aria-label={t("common.open_command")}
+          className="text-muted-foreground hover:text-foreground hover:bg-muted/60 focus-visible:ring-ring flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors outline-none focus-visible:ring-2"
+        >
+          <Search aria-hidden="true" className="size-3.5" />
+          <span className="hidden lg:inline">Search</span>
+          <kbd className="hidden font-mono text-[10px] lg:inline">⌘K</kbd>
+        </button>
         <RealtimeIndicator warehouseId={active?.id ?? null} />
         <NotificationBell />
         {user ? (
@@ -119,14 +145,14 @@ export function SiteHeader({
               render={
                 <button
                   type="button"
-                  aria-label="Account menu"
+                  aria-label={t("common.account_menu")}
                   className="hover:bg-muted/60 focus-visible:ring-ring flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors outline-none focus-visible:ring-2"
                 />
               }
             >
               <Avatar size="sm">
                 <AvatarFallback>
-                  {(user.name ?? user.email ?? "U").charAt(0).toUpperCase()}
+                  {getInitials(user.name, user.email, "U")}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden flex-col leading-tight md:flex">
@@ -151,23 +177,23 @@ export function SiteHeader({
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                render={
-                  <Link
-                    href={
-                      active ? `/settings?warehouse=${active.id}` : "/settings"
-                    }
-                  />
-                }
-              >
-                <Settings aria-hidden="true" />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => void signOut()}>
-                <LogOut aria-hidden="true" />
-                Sign out
-              </DropdownMenuItem>
+                <DropdownMenuItem
+                  render={
+                    <Link
+                      href={
+                        active ? `/settings?warehouse=${active.id}` : "/settings"
+                      }
+                    />
+                  }
+                >
+                  <Settings aria-hidden="true" />
+                  {t("common.settings")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => void signOut()}>
+                  <LogOut aria-hidden="true" />
+                  {t("common.sign_out")}
+                </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (

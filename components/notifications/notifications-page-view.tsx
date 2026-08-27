@@ -8,7 +8,6 @@ import {
   CheckCheck,
   ChevronRight,
   Inbox,
-  RefreshCcw,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -30,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PanelCard } from "@/components/shared/panel-card";
 import { cn } from "@/lib/utils";
+import { LoadMore } from "@/components/shared/load-more";
 
 /**
  * Notifications halaman penuh (DESIGN §15). Mirip logika panel bell namun
@@ -244,7 +244,7 @@ export function NotificationsPageView({
                     type="button"
                     onClick={() => void handleRowClick(n)}
                     className={cn(
-                      "group hover:bg-muted/60 focus-visible:bg-muted/70 flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors focus-visible:outline-none",
+                      "group hover:bg-muted/60 focus-visible:bg-muted/70 focus-visible:ring-ring focus-visible:ring-2 flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors focus-visible:outline-none",
                       unread && "bg-primary/5",
                       flashId === n.id &&
                         "motion-safe:animate-[notif-flash_1.6s_ease-out]"
@@ -313,22 +313,9 @@ export function NotificationsPageView({
             })}
           </ul>
 
-          {hasMore ? (
-            <div className="border-border flex justify-center border-t px-4 py-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-              >
-                <RefreshCcw
-                  aria-hidden="true"
-                  className={cn(loadingMore && "animate-spin")}
-                />
-                {loadingMore ? "Loading…" : "Load more"}
-              </Button>
-            </div>
-          ) : null}
+          <div className="border-border border-t px-4 py-3">
+            <LoadMore onClick={handleLoadMore} loading={loadingMore} hasMore={hasMore} />
+          </div>
         </PanelCard>
       )}
     </div>

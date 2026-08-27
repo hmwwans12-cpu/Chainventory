@@ -33,8 +33,10 @@
   --accent-foreground: #186049;
   --destructive: #b3402f;
   --destructive-foreground: #ffffff;
-  --warning: #b7791f;
-  --warning-foreground: #3f2a05;
+  /* P0#11: #b7791f hanya ~2.5:1 di --card (gagal WCAG AA 4.5:1).
+     #8A5A0B ~5.1:1 di --card; --warning-foreground disesuaikan. */
+  --warning: #8a5a0b;
+  --warning-foreground: #4a2f04;
   --border: #d4c2b2;
   --input: #d4c2b2;
   --ring: #186049;

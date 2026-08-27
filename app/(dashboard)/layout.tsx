@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getMyWarehouses } from "@/lib/warehouses/current-warehouse";
 import { isDeveloperAllowed } from "@/lib/console/guard";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { CommandMenu } from "@/components/shared/command-menu";
+import { LocaleProvider } from "@/components/providers/locale-provider";
 
 export default async function DashboardLayout({
   children,
@@ -48,7 +50,8 @@ export default async function DashboardLayout({
   } | null;
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
+    <LocaleProvider>
+      <SidebarProvider defaultOpen={defaultOpen}>
       <a
         href="#main-content"
         className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
@@ -95,6 +98,8 @@ export default async function DashboardLayout({
           </div>
         </main>
       </SidebarInset>
-    </SidebarProvider>
+      <CommandMenu />
+      </SidebarProvider>
+    </LocaleProvider>
   );
 }
