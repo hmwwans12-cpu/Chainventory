@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Source_Sans_3, Archivo } from "next/font/google";
+import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 
 import "./globals.css";
 
@@ -7,20 +7,21 @@ import { PrivyProvider } from "@/components/providers/privy-provider";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const sourceSans = Source_Sans_3({
+const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
-// DESIGN.md §6 mandates PP Grotesk as the display font. It is a licensed
-// font (Pangram Pangram) not distributable here. Archivo is a comparable
-// grotesque stand-in wired to the same `--font-display` token so the real
-// files can be dropped in via next/font/local without touching the system.
-const displayFallback = Archivo({
+// DESIGN.md §6: Geist Variable + Cabinet Grotesk upgrade.
+// Space_Grotesk is a Google Fonts alternative with distinctive technical character.
+// Variable font for weight animation support.
+const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
   subsets: ["latin"],
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -74,7 +75,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body
-        className={`${sourceSans.variable} ${displayFallback.variable} flex min-h-full flex-col antialiased`}
+        className={`${plusJakartaSans.variable} ${spaceGrotesk.variable} flex min-h-full flex-col antialiased`}
       >
         <script
           dangerouslySetInnerHTML={{
@@ -83,7 +84,17 @@ export default function RootLayout({
           }}
         />
         <TooltipProvider delay={150}>
-          <PrivyProvider>{children}</PrivyProvider>
+          <PrivyProvider>
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 bg-background text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring"
+            >
+              Skip to main content
+            </a>
+            <main id="main-content" className="flex-1">
+              {children}
+            </main>
+          </PrivyProvider>
           <Toaster />
         </TooltipProvider>
       </body>

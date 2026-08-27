@@ -42,7 +42,7 @@ export function AnalyticsControls({
             }
           }}
         >
-          <SelectTrigger size="sm" aria-label="Warehouse">
+          <SelectTrigger aria-label="Warehouse">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

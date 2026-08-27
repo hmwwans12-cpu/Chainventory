@@ -291,7 +291,7 @@ export function MovementsPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger size="sm" aria-label="Warehouse">
+              <SelectTrigger aria-label="Warehouse">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

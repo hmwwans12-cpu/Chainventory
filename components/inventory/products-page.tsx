@@ -322,7 +322,7 @@ export function ProductsPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger size="sm" aria-label="Warehouse">
+              <SelectTrigger aria-label="Warehouse">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -556,7 +556,7 @@ export function ProductsPage({
                     checked={selected.has(product.id)}
                     onChange={() => toggleSelect(product.id)}
                     aria-label={`Select ${product.name}`}
-                    className="border-border focus-visible:ring-ring mt-1 size-4 shrink-0 cursor-pointer rounded accent-[var(--primary)] focus-visible:outline-none focus-visible:ring-3"
+                    className="border-border focus-visible:ring-ring mt-1 relative size-5 shrink-0 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-2 focus-visible:outline-none focus-visible:ring-3"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

@@ -54,7 +54,7 @@ export function Security() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Reveal className="bg-primary/5 ring-primary/10 flex flex-col gap-4 rounded-lg p-6 ring-1 sm:col-span-2 md:flex-row md:items-start md:gap-5 md:p-7">
-            <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-xl">
+            <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-lg">
               <featured.icon aria-hidden="true" className="size-5" />
             </span>
             <div className="flex flex-col gap-1.5">
@@ -76,7 +76,7 @@ export function Security() {
                 className="h-full"
               >
                 <SpotlightCard
-                  className="ring-foreground/10 bg-card flex h-full flex-col gap-3 rounded-xl p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
+                  className="ring-foreground/10 bg-card flex h-full flex-col gap-3 rounded-lg p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
                   spotlightClassName="bg-primary/10"
                 >
                   <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">

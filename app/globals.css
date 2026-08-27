@@ -164,9 +164,46 @@
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
 
-  --shadow-card: 0 1px 2px rgb(28 59 48 / 0.05);
+--shadow-card: 0 1px 2px rgb(28 59 48 / 0.05);
   --shadow-elevated: 0 2px 8px rgb(28 59 48 / 0.08);
   --shadow-modal: 0 12px 32px rgb(28 59 48 / 0.18);
+
+  --z-dropdown: var(--z-dropdown);
+  --z-select: var(--z-select);
+  --z-toast: var(--z-toast);
+  --z-modal: var(--z-modal);
+  --z-overlay: var(--z-overlay);
+
+  /* Motion tokens (Emil Design Eng §3) — custom easing curves for premium feel */
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
+  --ease-drawer: var(--ease-drawer);
+  --dur-fast: var(--dur-fast);
+  --dur-base: var(--dur-base);
+  --dur-slow: var(--dur-slow);
+
+  /* Density dial (UI-UX-Pro-Max §7) — compact/normal/comfortable spacing */
+  --density: var(--density);
+  --space-unit: var(--space-unit);
+
+  /* Z-index scale (audit UI #16) — systemic layering, no arbitrary z-* */
+  --z-dropdown: 60;
+  --z-select: 61;
+  --z-toast: 1000;
+  --z-modal: 50;
+  --z-overlay: 40;
+
+  /* Motion tokens (Emil Design Eng §3) — custom easing curves for premium feel */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 350ms;
+
+  /* Density dial (UI-UX-Pro-Max §7) — compact/normal/comfortable spacing */
+  --density: normal; /* normal | compact | comfortable */
+  --space-unit: 4px;
 }
 
 @layer base {
@@ -259,4 +296,30 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Density dial utilities (UI-UX-Pro-Max §7) — responsive spacing scale */
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-density="compact"] {
+    --space-unit: 2px;
+  }
+  :root[data-density="comfortable"] {
+    --space-unit: 6px;
+  }
+}
+
+/* Icon stroke width standardization (Design-taste-frontend §3.C) */
+:root {
+  --icon-stroke: 1.5;
+}
+[stroke-width] {
+  stroke-width: var(--icon-stroke);
+}
+
+/* Single Accent Color Lock (Design-taste-frontend §4.2) — enforce one accent per view */
+[data-accent-lock] [class*="bg-primary"],
+[data-accent-lock] [class*="text-primary"],
+[data-accent-lock] [class*="border-primary"],
+[data-accent-lock] [class*="ring-primary"] {
+  /* Primary accent enforced — secondary/tertiary accents stripped */
 }

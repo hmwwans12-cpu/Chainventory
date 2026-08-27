@@ -225,7 +225,7 @@ export function Hero() {
 
           <motion.div
             variants={item}
-            className="bg-popover text-popover-foreground shadow-elevated absolute top-5 right-4 flex rotate-2 items-center gap-2 rounded-xl border px-3 py-2"
+            className="bg-popover text-popover-foreground shadow-elevated absolute top-5 right-4 flex rotate-2 items-center gap-2 rounded-lg border px-3 py-2"
           >
             <BadgeCheck aria-hidden="true" className="text-primary size-4" />
             <div className="flex flex-col">
@@ -240,7 +240,7 @@ export function Hero() {
 
           <motion.div
             variants={item}
-            className="bg-popover text-popover-foreground shadow-elevated absolute bottom-5 left-6 flex rotate-2 items-center gap-2 rounded-xl border px-3 py-2"
+            className="bg-popover text-popover-foreground shadow-elevated absolute bottom-5 left-6 flex rotate-2 items-center gap-2 rounded-lg border px-3 py-2"
           >
             <Wifi aria-hidden="true" className="text-primary size-4" />
             <div className="flex flex-col">

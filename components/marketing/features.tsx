@@ -74,7 +74,7 @@ export function Features() {
         <div className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-3">
           <Reveal className="bg-primary/5 ring-primary/10 flex flex-col justify-between gap-6 rounded-lg p-6 ring-1 md:col-span-2 md:row-span-2 md:p-8">
             <div className="flex flex-col gap-3">
-              <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-xl">
+              <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-lg">
                 <featured.icon aria-hidden="true" className="size-5" />
               </span>
               <h3 className="font-display text-foreground text-xl font-semibold">
@@ -110,7 +110,7 @@ export function Features() {
                 className="h-full"
               >
                 <SpotlightCard
-                  className="ring-foreground/10 bg-card flex h-full flex-col gap-3 rounded-xl p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
+                  className="ring-foreground/10 bg-card flex h-full flex-col gap-3 rounded-lg p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
                   spotlightClassName="bg-primary/10"
                 >
                   <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">

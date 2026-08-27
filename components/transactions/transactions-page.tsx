@@ -112,7 +112,7 @@ export function TransactionsPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger size="sm" aria-label="Warehouse">
+              <SelectTrigger aria-label="Warehouse">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -132,7 +132,7 @@ export function TransactionsPage({
               }
             }}
           >
-            <SelectTrigger size="sm" aria-label="Filter by type">
+            <SelectTrigger aria-label="Filter by type">
               <SelectValue placeholder="All types" />
             </SelectTrigger>
             <SelectContent>
@@ -156,7 +156,7 @@ export function TransactionsPage({
               }
             }}
           >
-            <SelectTrigger size="sm" aria-label="Filter by blockchain status">
+            <SelectTrigger aria-label="Filter by blockchain status">
               <SelectValue placeholder="All proof status" />
             </SelectTrigger>
             <SelectContent>

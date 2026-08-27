@@ -68,8 +68,8 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        // Density freeze (DESIGN §84.8): header 40px, gutter 16px.
-        "text-muted-foreground h-10 px-4 text-left align-middle text-xs font-medium whitespace-nowrap",
+        // Density freeze (DESIGN §84.8): header 44px (touch target), gutter 16px.
+        "text-muted-foreground h-11 px-4 text-left align-middle text-xs font-medium whitespace-nowrap",
         className
       )}
       {...props}

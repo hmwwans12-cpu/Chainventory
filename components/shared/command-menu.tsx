@@ -164,7 +164,7 @@ export function CommandMenu() {
                       onClick={() => go(cmd)}
                       onMouseMove={() => setActive(i)}
                       className={cn(
-                        "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring",
+                        "relative flex w-full items-center gap-2.5 rounded-lg px-3 h-10 text-left text-sm outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring before:absolute before:content-[''] before:-inset-[9px]",
                         i === active
                           ? "bg-muted text-foreground"
                           : "text-foreground hover:bg-muted/60"

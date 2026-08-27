@@ -64,7 +64,7 @@ export function SpotlightCard({
       <motion.div
         aria-hidden="true"
         className={cn(
-          "bg-primary/10 pointer-events-none absolute top-0 left-0 rounded-full opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100",
+          "bg-primary/10 data-[theme=dark]:bg-primary/20 pointer-events-none absolute top-0 left-0 rounded-full opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100",
           spotlightClassName
         )}
         style={{

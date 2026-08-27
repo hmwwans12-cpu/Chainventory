@@ -411,7 +411,7 @@ export function NotificationBell() {
                             {unread ? (
                               <span
                                 aria-hidden="true"
-                                className="bg-primary mt-1.5 size-1.5 shrink-0 rounded-full"
+                                className="bg-primary mt-1.5 size-2.5 shrink-0 rounded-full"
                               />
                             ) : null}
                           </button>

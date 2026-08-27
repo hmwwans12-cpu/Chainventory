@@ -273,7 +273,7 @@ export function MembersPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger size="sm" aria-label="Warehouse">
+              <SelectTrigger aria-label="Warehouse">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -481,7 +481,6 @@ export function MembersPage({
                         }}
                       >
                         <SelectTrigger
-                          size="sm"
                           className="w-36"
                           aria-label={`Role for ${request.displayName ?? request.email}`}
                           disabled={busy}
@@ -589,7 +588,6 @@ export function MembersPage({
                         }}
                       >
                         <SelectTrigger
-                          size="sm"
                           className="w-32"
                           disabled={changing.has(member.membershipId)}
                         >
@@ -726,7 +724,6 @@ export function MembersPage({
                         }}
                       >
                         <SelectTrigger
-                          size="sm"
                           className="w-32"
                           disabled={changing.has(member.membershipId)}
                         >
@@ -1176,7 +1173,7 @@ function TransferOwnershipDialog({
                 if (value !== null) setTargetId(value);
               }}
             >
-              <SelectTrigger size="default" className="w-full">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a member" />
               </SelectTrigger>
               <SelectContent>

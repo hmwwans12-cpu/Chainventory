@@ -32,6 +32,7 @@ import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LocaleToggle } from "@/components/shared/locale-toggle";
 import { getInitials } from "@/lib/utils";
 import { useLocale } from "@/components/providers/locale-provider";
+import { Button } from "@/components/ui/button";
 
 /**
  * SiteHeader (DESIGN §14) di atas SidebarInset — pola sidebar-07:
@@ -118,8 +119,9 @@ export function SiteHeader({
       <div className="ml-auto flex items-center gap-1">
         <LocaleToggle />
         <ThemeToggle />
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() =>
             window.dispatchEvent(
               new KeyboardEvent("keydown", {
@@ -131,12 +133,12 @@ export function SiteHeader({
             )
           }
           aria-label={t("common.open_command")}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted/60 focus-visible:ring-ring flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors outline-none focus-visible:ring-3"
+          className="gap-1.5"
         >
           <Search aria-hidden="true" className="size-3.5" />
           <span className="hidden lg:inline">Search</span>
           <kbd className="hidden font-mono text-xs lg:inline">⌘K</kbd>
-        </button>
+        </Button>
         <RealtimeIndicator warehouseId={active?.id ?? null} />
         <NotificationBell />
         {user ? (
@@ -150,7 +152,7 @@ export function SiteHeader({
                 />
               }
             >
-              <Avatar size="sm">
+              <Avatar size="icon-xs">
                 <AvatarFallback>
                   {getInitials(user.name, user.email, "U")}
                 </AvatarFallback>

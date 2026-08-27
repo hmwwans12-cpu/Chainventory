@@ -717,7 +717,7 @@ export function StockMovementDialog({
                         if (value !== null) setReversalTarget(value);
                       }}
                     >
-                      <SelectTrigger size="default" className="w-full">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a movement" />
                       </SelectTrigger>
                       <SelectContent className="z-[60]">

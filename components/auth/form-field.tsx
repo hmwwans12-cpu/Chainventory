@@ -44,11 +44,11 @@ export function FormField({
           )
         : children}
       {error ? (
-        <p id={`${id}-error`} role="alert" className="text-destructive text-xs">
+        <p id={`${id}-error`} role="alert" className="text-destructive text-sm">
           {error}
         </p>
       ) : hint ? (
-        <p className="text-muted-foreground text-xs">{hint}</p>
+        <p className="text-muted-foreground text-sm">{hint}</p>
       ) : null}
     </div>
   );
