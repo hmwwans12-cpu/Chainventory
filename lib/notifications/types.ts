@@ -11,6 +11,7 @@ import {
   XCircle,
   type LucideIcon,
 } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 /**
  * Notification domain types + metadata (PRD §21 / DESIGN §15).
@@ -148,5 +149,5 @@ export function formatTimeAgo(iso: string, now: number = Date.now()): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString();
+  return formatDate(iso);
 }

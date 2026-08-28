@@ -26,37 +26,57 @@ export function NotificationPreferencesPanel({
   const [prefs, setPrefs] = React.useState<NotificationPreferences>(initial);
   const [saving, setSaving] = React.useState(false);
 
-  const toggle = (channel: NotificationChannel, category: NotificationCategory) => {
-    const next: NotificationPreferences = {
-      ...prefs,
-      [channel]: { ...prefs[channel], [category]: !prefs[channel][category] },
-    };
-    setPrefs(next);
-    void persist(next);
-  };
+  // Serialize persistence (single-flight) so rapid toggles can't land out of
+  // order. pendingRef holds the latest desired state; busyRef guards concurrency.
+  const pendingRef = React.useRef<NotificationPreferences>(initial);
+  const busyRef = React.useRef(false);
+  const lastKnownGoodRef = React.useRef<NotificationPreferences>(initial);
 
-  const persist = async (value: NotificationPreferences) => {
+  const flush = React.useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setSaving(true);
+    const toPersist = pendingRef.current;
     try {
       const res = await fetch("/api/users/notification-preferences", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ prefs: value }),
+        body: JSON.stringify({ prefs: toPersist }),
       });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
         throw new Error(json?.error ?? "Failed to save preferences.");
       }
+      lastKnownGoodRef.current = toPersist;
     } catch (err) {
       toast.add({
         type: "error",
         title: "Could not save preferences",
         description: err instanceof Error ? err.message : "Try again.",
       });
-      setPrefs(initial);
+      // Revert to the last server-confirmed snapshot (not the render start).
+      pendingRef.current = lastKnownGoodRef.current;
+      setPrefs(lastKnownGoodRef.current);
     } finally {
-      setSaving(false);
+      busyRef.current = false;
+      // If the user toggled again while we were saving, persist the latest.
+      if (pendingRef.current !== toPersist) {
+        void flush();
+      } else {
+        setSaving(false);
+      }
     }
+  }, []);
+
+  const toggle = (channel: NotificationChannel, category: NotificationCategory) => {
+    const base = pendingRef.current ?? prefs;
+    const next: NotificationPreferences = {
+      ...base,
+      [channel]: { ...base[channel], [category]: !base[channel][category] },
+    };
+    pendingRef.current = next;
+    setPrefs(next);
+    void flush();
   };
 
   return (

@@ -90,17 +90,18 @@ export function SiteHeader({
         className="mr-1 data-[orientation=vertical]:h-4"
       />
 
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
+      <Breadcrumb className="min-w-0 flex-1">
+        <BreadcrumbList className="min-w-0 text-nowrap">
+          <BreadcrumbItem className="min-w-0">
             {active ? (
               <BreadcrumbLink
                 render={<Link href={`/dashboard?warehouse=${active.id}`} />}
+                className="truncate"
               >
                 {active.name}
               </BreadcrumbLink>
             ) : (
-              <BreadcrumbLink render={<Link href="/dashboard" />}>
+              <BreadcrumbLink render={<Link href="/dashboard" />} className="truncate">
                 Chainventory
               </BreadcrumbLink>
             )}

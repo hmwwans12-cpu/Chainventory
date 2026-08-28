@@ -19,17 +19,22 @@ export const MOVEMENT_TYPES = [
 ] as const;
 export type MovementType = (typeof MOVEMENT_TYPES)[number];
 
+/** Batas atas nilai numerik — hindari Infinity/overflow pada Number() & DB numeric. */
+const MAX_QUANTITY = 1_000_000_000_000; // 1e12
+
 const decimal3 = z
   .string()
   .regex(
     /^\d+(\.\d{1,3})?$/,
     "Enter a valid non-negative number (max 3 decimals)."
-  );
+  )
+  .refine((v) => Number(v) <= MAX_QUANTITY, "Value is too large.");
 
 const positiveDecimal3 = z
   .string()
   .regex(/^\d+(\.\d{1,3})?$/, "Enter a valid number (max 3 decimals).")
-  .refine((v) => Number(v) > 0, "Must be greater than 0.");
+  .refine((v) => Number(v) > 0, "Must be greater than 0.")
+  .refine((v) => Number(v) <= MAX_QUANTITY, "Value is too large.");
 
 export const createProductSchema = z.object({
   warehouseId: z.string().uuid("Invalid warehouse id."),
@@ -146,9 +151,8 @@ export const rejectAdjustmentSchema = z.object({
   reason: z
     .string()
     .trim()
-    .max(500, "Reason is too long.")
-    .optional()
-    .default(""),
+    .min(1, "Reason is required to reject.")
+    .max(500, "Reason is too long."),
 });
 
 export type CreateProductValues = z.infer<typeof createProductSchema>;

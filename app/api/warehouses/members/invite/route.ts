@@ -57,7 +57,13 @@ export async function POST(request: Request) {
     p_email: email,
     p_role: role,
   });
-  if (error) return invalid(error.message);
+  if (error) {
+    // Jangan bocorkan detail PostgREST mentah (relasi/constraint) ke client.
+    logger.warn({ err: error, email, warehouseId }, "invite rpc error");
+    return invalid(
+      "This email is already invited or is already a member, or the invitation could not be created."
+    );
+  }
 
   const token = (data as { token: string } | null)?.token;
   if (!token) return invalid("Invitation could not be created.");

@@ -537,8 +537,14 @@ export function StockMovementDialog({
       qty = selectedTarget.quantity;
     } else {
       const candidate = quantity.trim();
-      if (!/^\d+(\.\d{1,3})?$/.test(candidate) || Number(candidate) <= 0) {
-        setError("Enter a valid quantity greater than 0 (max 3 decimals).");
+      if (
+        !/^\d+(\.\d{1,3})?$/.test(candidate) ||
+        Number(candidate) <= 0 ||
+        Number(candidate) > 1_000_000_000_000
+      ) {
+        setError(
+          "Enter a valid quantity greater than 0 (max 3 decimals, within a reasonable range)."
+        );
         return;
       }
       qty = candidate;
@@ -625,9 +631,9 @@ export function StockMovementDialog({
   return (
     <Dialog
       open={open}
-      // P0#5: izinkan tutup saat menunggu konfirmasi (DESIGN §73) — hanya
-      // blokir saat masih di fase signing agar signature tidak kebuang.
-      onOpenChange={(next) => (busy && !phase ? null : onOpenChange(next))}
+      // P0#5: izinkan tutup saat menunggu konfirmasi (DESIGN §73) — blokir
+      // selama proses async (busy) berjalan agar signature tak terbuang.
+      onOpenChange={(next) => (busy ? null : onOpenChange(next))}
     >
       <DialogContent>
         <DialogHeader>

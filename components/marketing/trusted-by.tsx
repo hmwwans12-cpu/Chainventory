@@ -26,7 +26,7 @@ export function TrustedBy() {
           {BRANDS.map((b) => (
             <span
               key={b}
-              className="text-muted-foreground/70 font-display text-lg font-semibold tracking-tight"
+              className="text-muted-foreground font-display text-lg font-semibold tracking-tight"
             >
               {b}
             </span>

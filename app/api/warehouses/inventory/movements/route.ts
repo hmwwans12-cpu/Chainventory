@@ -114,6 +114,16 @@ export async function POST(request: Request) {
       const parsed = applyMovementSchema.safeParse(raw.body);
       if (!parsed.success) return invalid(parsed.error.issues[0]?.message);
 
+      // Audit: adjustment/reversal bersifat struktur-ledger yang kritis —
+      // reason wajib di UI, pastikan API menegakkan hal yang sama.
+      const effectiveType = parsed.data.movementType;
+      if (
+        (effectiveType === "adjustment" || effectiveType === "reversal") &&
+        !parsed.data.reason.trim()
+      ) {
+        return invalid("Reason is required for this movement type.");
+      }
+
       const role = await getMemberRole(
         supabase,
         parsed.data.warehouseId,

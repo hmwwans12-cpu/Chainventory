@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn, formatEthDecimal } from "@/lib/utils";
 import type { TreasuryData } from "@/lib/console/types";
 
 function shortAddress(address: string): string {
@@ -148,7 +148,7 @@ export function TreasuryCard({
           <>
             <div className="flex flex-col gap-1">
               <span className="text-foreground text-2xl font-semibold tabular-nums">
-                {Number(treasury.balanceEther).toFixed(4)} ETH
+                {formatEthDecimal(treasury.balanceEther)} ETH
               </span>
               <span className="text-muted-foreground font-mono text-xs">
                 {treasury.address ? shortAddress(treasury.address) : "\u2014"}

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search } from "lucide-react";
+import { Check, Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -183,7 +183,7 @@ export function SearchableProductSelect({
                   role="option"
                   aria-selected={isSelected}
                   className={cn(
-                    "flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm outline-none select-none",
+                    "flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm outline-none select-none focus-visible:ring-2 focus-visible:ring-ring",
                     isActive && "bg-muted",
                     !isActive && isSelected && "bg-muted/60",
                     !isActive && !isSelected && "hover:bg-muted"
@@ -195,6 +195,12 @@ export function SearchableProductSelect({
                   <span className="text-muted-foreground font-mono text-xs">
                     {p.sku}
                   </span>
+                  {isSelected ? (
+                    <Check
+                      aria-hidden="true"
+                      className="text-primary size-4 shrink-0"
+                    />
+                  ) : null}
                 </li>
               );
             })}

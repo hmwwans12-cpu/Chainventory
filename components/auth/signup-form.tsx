@@ -72,8 +72,6 @@ export function SignupForm() {
             <SelectContent>
               <SelectItem value="MALE">Male</SelectItem>
               <SelectItem value="FEMALE">Female</SelectItem>
-              <SelectItem value="OTHER">Other</SelectItem>
-              <SelectItem value="UNDISCLOSED">Prefer not to say</SelectItem>
             </SelectContent>
           </Select>
         </FormField>

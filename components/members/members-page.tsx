@@ -77,7 +77,7 @@ const ROLE_META: Record<Role, { label: string; tone: StatusTone }> = {
   OWNER: { label: "Owner", tone: "success" },
   MANAGER: { label: "Manager", tone: "pending" },
   STAFF: { label: "Staff", tone: "inactive" },
-  AUDITOR: { label: "Auditor", tone: "warning" },
+  AUDITOR: { label: "Auditor", tone: "inactive" },
   VIEWER: { label: "Viewer", tone: "inactive" },
 };
 
@@ -615,7 +615,7 @@ export function MembersPage({
                           ? "success"
                           : member.status === "PENDING"
                             ? "pending"
-                            : "failed"
+                            : "suspended"
                       }
                       label={
                         member.status === "ACTIVE"

@@ -41,6 +41,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Pagination } from "@/components/shared/pagination";
@@ -132,6 +140,7 @@ export function ProductsPage({
   // Bulk selection (audit: bulk actions)
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = React.useState(false);
+  const [confirmBulkArchive, setConfirmBulkArchive] = React.useState(false);
   const toggleSelect = (id: string) =>
     setSelected((prev) => {
       const next = new Set(prev);
@@ -424,7 +433,7 @@ export function ProductsPage({
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={archiveSelected}
+                  onClick={() => setConfirmBulkArchive(true)}
                   disabled={bulkBusy}
                 >
                   {bulkBusy ? (
@@ -664,6 +673,41 @@ export function ProductsPage({
           }}
         />
       ) : null}
+
+      <Dialog open={confirmBulkArchive} onOpenChange={setConfirmBulkArchive}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Archive {selected.size} product(s)?</DialogTitle>
+            <DialogDescription>
+              Archiving moves these products out of active inventory. This
+              action cannot be undone. Products are hidden from stock; their
+              movements and audits remain.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmBulkArchive(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={bulkBusy}
+              onClick={() => {
+                setConfirmBulkArchive(false);
+                void archiveSelected();
+              }}
+            >
+              {bulkBusy ? (
+                <Loader2 aria-hidden="true" className="animate-spin" />
+              ) : (
+                "Archive products"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

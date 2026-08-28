@@ -200,7 +200,13 @@ export function CreateWarehouseForm() {
     setFieldErrors(errors);
     const firstError = Object.keys(errors)[0];
     if (firstError) {
-      document.getElementById(firstError)?.focus();
+      // Map error key -> input id (id DOM "company"/"type" beda dari key).
+      const idMap: Record<string, string> = {
+        name: "name",
+        companyName: "company",
+        warehouseType: "type",
+      };
+      document.getElementById(idMap[firstError] ?? firstError)?.focus();
     }
     return Object.keys(errors).length === 0;
   }

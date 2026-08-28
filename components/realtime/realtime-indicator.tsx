@@ -52,7 +52,9 @@ export function RealtimeIndicator({
         )}
         aria-hidden="true"
       />
-      {LABELS[effective]}
+      <span className="hidden md:inline" aria-hidden="true">
+        {LABELS[effective]}
+      </span>
     </span>
   );
 }

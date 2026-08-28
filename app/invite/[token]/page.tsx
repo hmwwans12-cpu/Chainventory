@@ -42,6 +42,11 @@ export default async function InvitePage({
     ? error.message
     : "You have joined the warehouse. Open it from your dashboard.";
 
+  let next = "/dashboard";
+  if (sp.next && sp.next.startsWith("/") && !sp.next.startsWith("//")) {
+    next = sp.next;
+  }
+
   return (
     <div className="mx-auto w-full max-w-[560px] flex flex-col gap-6 py-10">
       <PageHeader title="Accept invitation" />
@@ -66,8 +71,8 @@ export default async function InvitePage({
           ) : null}
           <div className="flex flex-wrap gap-2">
             <Button render={<Link href="/dashboard" />}>Go to dashboard</Button>
-            {sp.next ? (
-              <Button variant="outline" render={<Link href={sp.next} />}>
+            {sp.next && next !== "/dashboard" ? (
+              <Button variant="outline" render={<Link href={next} />}>
                 Continue
               </Button>
             ) : null}

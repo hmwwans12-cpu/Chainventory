@@ -236,7 +236,7 @@ export function TransactionsPage({
                     <TableCell
                       className={cn(
                         "font-mono text-sm tabular-nums",
-                        negative ? "text-warning" : ""
+                        negative ? "text-destructive" : ""
                       )}
                     >
                       {negative ? "\u2212" : "+"}

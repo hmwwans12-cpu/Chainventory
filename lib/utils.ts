@@ -41,6 +41,16 @@ export function formatEthValue(wei: bigint): string {
 }
 
 /**
+ * Format nilai ETH dalam satuan decimal (string/angka) dengan pemisah ribuan
+ * dan maksimal 4 angka desimal — konsisten dengan formatEthValue.
+ */
+export function formatEthDecimal(value: string | number): string {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "\u2014";
+  return n.toLocaleString("en-US", { maximumFractionDigits: 4 });
+}
+
+/**
  * Inisial untuk avatar — satu sumber (audit C1). Menangani null, undefined,
  * DAN string kosong (""). `fallback` dipakai bila tak ada nama/email.
  */

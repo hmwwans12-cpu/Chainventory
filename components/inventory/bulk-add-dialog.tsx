@@ -119,7 +119,6 @@ export function BulkAddDialog({
         parsed.rows.map((r, idx) => ({
           ...r,
           id: `parsed-${idx}-${Date.now()}`,
-          initialQty: null,
         }))
       );
       setInvalid(

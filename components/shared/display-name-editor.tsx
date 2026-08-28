@@ -33,15 +33,32 @@ function SubmitButton() {
  */
 export function DisplayNameEditor({ currentName }: { currentName: string }) {
   const [editing, setEditing] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
   const [state, formAction] = React.useActionState<UpdateProfileState, FormData>(
     updateDisplayNameAction,
     { error: null }
   );
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  // On a successful save, drop back to the read-only view (remount clears the
-  // success banner on the next edit).
-  if (state.success) {
+  const startEdit = () => {
+    setEditing(true);
+    setSaved(false);
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+    setSaved(false);
+  };
+
+  // Reflect a successful save into transient read-only state.
+  React.useEffect(() => {
+    if (state.success) {
+      setEditing(false);
+      setSaved(true);
+    }
+  }, [state.success]);
+
+  if (!editing) {
     return (
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
@@ -53,31 +70,14 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
             variant="ghost"
             size="icon-sm"
             aria-label="Edit display name"
-            onClick={() => setEditing(true)}
+            onClick={startEdit}
           >
             <Pencil aria-hidden="true" />
           </Button>
         </div>
-        <p className="text-primary text-sm">Name updated.</p>
-      </div>
-    );
-  }
-
-  if (!editing) {
-    return (
-      <div className="flex items-center gap-2">
-        <p className="text-foreground truncate text-sm font-semibold">
-          {currentName}
-        </p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Edit display name"
-          onClick={() => setEditing(true)}
-        >
-          <Pencil aria-hidden="true" />
-        </Button>
+        {saved ? (
+          <p className="text-primary text-sm">Name updated.</p>
+        ) : null}
       </div>
     );
   }
@@ -106,7 +106,7 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setEditing(false)}
+            onClick={cancelEdit}
           >
             Cancel
           </Button>

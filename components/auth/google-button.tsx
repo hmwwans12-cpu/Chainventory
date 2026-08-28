@@ -1,5 +1,8 @@
 "use client";
 
+import { useFormStatus } from "react-dom";
+import { Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/auth/google-icon";
 import { signInWithGoogleAction } from "@/app/actions/auth";
@@ -15,10 +18,18 @@ export function GoogleButton({
 }) {
   return (
     <form action={signInWithGoogleAction}>
-      <Button type="submit" variant="outline" className="w-full">
-        <GoogleIcon /> {label}
-      </Button>
+      <GoogleSubmit label={label} />
     </form>
+  );
+}
+
+function GoogleSubmit({ label }: { label: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" variant="outline" className="w-full" disabled={pending}>
+      {pending ? <Loader2 aria-hidden="true" className="animate-spin" /> : <GoogleIcon />}
+      {pending ? "Signing in…" : label}
+    </Button>
   );
 }
 

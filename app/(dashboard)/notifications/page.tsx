@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { NotificationRow } from "@/lib/notifications/types";
 import { PageHeader } from "@/components/shared/page-header";
+import { ErrorState } from "@/components/shared/error-state";
 import { NotificationsPageView } from "@/components/notifications/notifications-page-view";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
@@ -37,6 +38,21 @@ export default async function NotificationsPage() {
       .is("read_at", null),
     supabase.from("warehouse_summaries").select("id, name"),
   ]);
+
+  if (notifRes.error) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader
+          title="Notifications"
+          description="Activity across your warehouses — requests, adjustments, and blockchain events."
+        />
+        <ErrorState
+          title="Could not load notifications"
+          description="We could not load your notifications right now. Please refresh the page to try again."
+        />
+      </div>
+    );
+  }
 
   const notifications = (notifRes.data ?? []) as NotificationRow[];
   const warehouseNames = Object.fromEntries(

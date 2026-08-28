@@ -15,6 +15,7 @@ import {
 import { fetchAnalytics, parseRange } from "@/lib/analytics/aggregate";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ErrorState } from "@/components/shared/error-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalyticsControls } from "@/components/analytics/analytics-controls";
 import { RangeTabs } from "@/components/analytics/range-tabs";
@@ -87,10 +88,9 @@ export default async function AnalyticsPage({
           title="Analytics"
           description={`${active.name} · overview.`}
         />
-        <EmptyState
-          icon={BarChart3}
+        <ErrorState
           title="Analytics unavailable"
-          description="We could not load analytics for this warehouse. Please try again."
+          description="We could not load analytics for this warehouse. Please refresh the page to try again."
         />
       </div>
     );
