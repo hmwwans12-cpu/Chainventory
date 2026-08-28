@@ -10,6 +10,7 @@ import { isDeveloperAllowed } from "@/lib/console/guard";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CommandMenu } from "@/components/shared/command-menu";
 import { LocaleProvider } from "@/components/providers/locale-provider";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function DashboardLayout({
   children,
@@ -25,6 +26,8 @@ export default async function DashboardLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const initialLocale = await getLocale();
 
   // Link Developer Console hanya untuk allowlist email (nav = discoverability
   // saja; guard server-side tetap autoritatif di /console & /api/console/*).
@@ -50,7 +53,7 @@ export default async function DashboardLayout({
   } | null;
 
   return (
-    <LocaleProvider>
+    <LocaleProvider initialLocale={initialLocale}>
       <SidebarProvider defaultOpen={defaultOpen}>
       <a
         href="#main-content"

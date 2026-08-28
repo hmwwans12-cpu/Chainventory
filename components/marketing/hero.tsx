@@ -13,7 +13,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/components/providers/locale-provider";
-import { SpotlightCard } from "@/components/marketing/spotlight-card";
+import { DoubleBezelCard, DoubleBezelCardContent } from "@/components/ui/double-bezel-card";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -143,11 +143,9 @@ export function Hero() {
           className="relative mx-auto w-full max-w-md lg:max-w-none"
           aria-label="Chainventory dashboard preview"
         >
-          <SpotlightCard
-            className="bg-primary/5 ring-primary/10 rounded-lg p-2 ring-1"
-            spotlightClassName="bg-primary/15"
-          >
-            <div className="shadow-elevated bg-card rounded-lg p-6">
+          <DoubleBezelCard className="bg-primary/5 ring-primary/10 rounded-lg p-2 ring-1">
+            <DoubleBezelCardContent>
+              <div className="shadow-elevated bg-card rounded-lg p-6">
               <div className="border-border flex items-center justify-between border-b pb-4">
                 <div className="flex items-center gap-3">
                   <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
@@ -221,7 +219,8 @@ export function Hero() {
                 </span>
               </div>
             </div>
-          </SpotlightCard>
+            </DoubleBezelCardContent>
+          </DoubleBezelCard>
 
           <motion.div
             variants={item}

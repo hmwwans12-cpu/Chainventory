@@ -306,7 +306,7 @@ export function JoinWarehouseForm() {
 
           <div
             role="alert"
-            className="border-destructive/30 bg-destructive/5 flex flex-col gap-1.5 rounded-xl border p-4"
+            className="border-destructive/30 bg-destructive/5 flex flex-col gap-1.5 rounded-lg border p-4"
           >
             <p className="text-destructive font-medium">{error.title}</p>
             <p className="text-foreground text-sm leading-relaxed">

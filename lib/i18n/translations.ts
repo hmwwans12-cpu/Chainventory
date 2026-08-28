@@ -40,6 +40,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cmd.create_warehouse": "Create Warehouse",
     "cmd.join_warehouse": "Join Warehouse",
     "cmd.developer_console": "Developer Console",
+    "cmd.no_results": "No results for “{query}”.",
     // Common
     "common.account_menu": "Account menu",
     "common.switch_warehouse": "Switch active warehouse",
@@ -52,6 +53,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.search": "Search",
     "common.language": "Language",
     "common.open_command": "Open command palette",
+    "common.close": "Close",
     // Landing - Hero
     "landing.hero.badge": "Blockchain verification on Base Sepolia",
     "landing.hero.title_main": "Inventory management with",
@@ -229,6 +231,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cmd.create_warehouse": "Buat Gudang",
     "cmd.join_warehouse": "Gabung Gudang",
     "cmd.developer_console": "Konsol Developer",
+    "cmd.no_results": "Tidak ada hasil untuk “{query}”.",
     "common.account_menu": "Menu akun",
     "common.switch_warehouse": "Ganti gudang aktif",
     "common.active_warehouse": "Gudang aktif",
@@ -240,6 +243,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.search": "Cari",
     "common.language": "Bahasa",
     "common.open_command": "Buka palette perintah",
+    "common.close": "Tutup",
     // Landing - Hero
     "landing.hero.badge": "Verifikasi blockchain di Base Sepolia",
     "landing.hero.title_main": "Manajemen inventaris dengan",
@@ -391,7 +395,14 @@ export const translations: Record<Locale, Record<string, string>> = {
 
 export function translate(
   locale: Locale,
-  key: string
+  key: string,
+  params?: Record<string, string>
 ): string {
-  return translations[locale][key] ?? translations.en[key] ?? key;
+  let result = translations[locale][key] ?? translations.en[key] ?? key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      result = result.replace(new RegExp(`\\{${k}\\}`, "g"), v);
+    }
+  }
+  return result;
 }

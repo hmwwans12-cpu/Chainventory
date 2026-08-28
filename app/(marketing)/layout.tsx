@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { LocaleProvider } from "@/components/providers/locale-provider";
+import { getLocale } from "@/lib/i18n/server";
 
 export default async function MarketingLayout({
   children,
@@ -13,9 +14,10 @@ export default async function MarketingLayout({
     data: { user },
   } = await supabase.auth.getUser();
   const authenticated = Boolean(user);
+  const initialLocale = await getLocale();
 
   return (
-    <LocaleProvider>
+    <LocaleProvider initialLocale={initialLocale}>
       <div className="flex min-h-dvh flex-col">
         <a
           href="#main"

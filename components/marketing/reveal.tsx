@@ -1,40 +1,81 @@
 "use client";
 
 import * as React from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { useReducedMotion } from "motion/react";
 
 /**
- * Scroll-reveal wrapper (DESIGN §18-20).
- * Animate only transform + opacity; honor prefers-reduced-motion.
+ * CSS Scroll-driven Reveal (Impeccable animate.md).
+ * Uses native `animation-timeline: view()` for zero-JS, main-thread-free reveals.
+ * Progressive enhancement: works without JS, respects prefers-reduced-motion.
  *
- * JS-safe: saat SSR / sebelum hydrate, `initial={false}` sehingga konten
- * tetap terlihat (tidak opacity:0 terkunci) — audit F: halaman tidak boleh
- * kosong bila JS gagal/nonaktif.
+ * Drop-in replacement for the old motion-based Reveal component.
  */
 export function Reveal({
   children,
   className,
   delay = 0,
+  threshold = 0.15,
+  rootMargin = "0px",
 }: {
   children: React.ReactNode;
   className?: string;
   delay?: number;
+  threshold?: number;
+  rootMargin?: string;
 }) {
   const reduce = useReducedMotion();
   const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
 
-  const animate = mounted && !reduce;
+  React.useEffect(() => {
+    setMounted(true);
+    // Inject keyframes once
+    if (typeof document !== "undefined" && !document.getElementById("reveal-keyframes")) {
+      const style = document.createElement("style");
+      style.id = "reveal-keyframes";
+      style.textContent = `
+        @keyframes reveal {
+          from {
+            opacity: 0;
+            transform: translateY(24px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [data-reveal-css] {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
+  // CSS-driven animation classes
+  const animationStyle = mounted && !reduce
+    ? {
+        "--reveal-delay": `${delay}s`,
+        "--reveal-threshold": threshold.toString(),
+        "--reveal-root-margin": rootMargin,
+        animation: "reveal var(--dur-slow, 350ms) var(--ease-out, ease-out) forwards",
+        animationTimeline: "view()",
+        animationRange: `entry ${threshold * 100}% cover 30%`,
+        opacity: 0,
+        transform: "translateY(24px)",
+      }
+    : {};
 
   return (
-    <motion.div
+    <div
       className={className}
-      initial={animate ? { opacity: 0, y: 24 } : false}
-      whileInView={animate ? { opacity: 1, y: 0 } : undefined}
-      viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
+      style={animationStyle as React.CSSProperties}
+      data-reveal-css
     >
       {children}
-    </motion.div>
+    </div>
   );
 }

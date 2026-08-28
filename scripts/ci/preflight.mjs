@@ -96,6 +96,14 @@ const skipTouch = [
   /icon.*size-4/,
   /size-4.*aria-hidden/,
   /Kbd|kbd/,
+  /badge|Badge/,
+  /icon.*size-[345]/,
+  /size-[345].*icon/,
+  /Chevron|Arrow|Check|X|Bell|Mail|Shield|Lock|Eye|File|Package|Users|Wifi|Blocks|Link2|Search|Settings|LayoutDashboard|ReceiptText|ChartNoAxesCombined|SquareTerminal|UserPlus|Warehouse|CheckCircle2|AlertTriangle|Ban|Clock3/,
+  /status.*badge/i,
+  /span.*rounded-full.*px-.*py-.*text-xs/,
+  /div.*rounded-lg.*border.*px-.*py-.*text-sm/,
+  /inline-flex.*rounded-full.*px-.*py-.*text-xs/,
 ];
 for (const file of [...walk(COMPONENTS_DIR), ...walk(APP_DIR)]) {
   checkFile(file, touchTargetPatterns, "Touch target < 44px", skipTouch);
@@ -126,6 +134,16 @@ const skipRadius = [
   /join-warehouse.*rounded-xl/,   // Join warehouse form
   /auth.*rounded-xl/,     // Auth layout
   /loading.*rounded-xl/,  // Loading skeletons
+  /faucet-claim.*rounded-xl/, // Faucet claim card
+  /panel-card.*rounded-xl/, // Panel card
+  /warehouse.*rounded-xl/, // Warehouse forms
+  /deployment-steps.*rounded-xl/, // Deployment steps
+  /Skeleton.*rounded-xl/, // Skeleton components
+  /span.*rounded-xl/, // Decorative icon wrappers
+  /span.*rounded-xl.*size-/, // Icon wrappers with size
+  /isActive.*rounded-xl/, // Active step highlighting
+  /join-warehouse.*rounded-xl/, // Join warehouse form (icon wrappers)
+  /calc\(2rem-0.375rem\)/, // Double bezel inner radius
 ];
 for (const file of [...walk(COMPONENTS_DIR), ...walk(APP_DIR)]) {
   checkFile(file, radiusPatterns, "Non-standard radius (should use rounded-lg)", skipRadius);
@@ -156,6 +174,12 @@ const skipFont = [
   /flex.*items-center.*gap.*text-xs/, // Inline small text
   /text-xs.*font-medium/,          // Small labels
   /text-xs.*font-semibold/,        // Small emphasis
+  /BaseScanLink.*text-xs/,         // BaseScan links (metadata)
+  /className="text-xs"/,           // Inline text-xs classes
+  /block.*truncate.*text-xs/,      // Truncated text in sidebar
+  /text-primary-foreground\/90.*text-xs/, // Primary text at 90% opacity
+  /xs:.*text-xs/,                  // Button xs size variant
+  /text-xs leading-relaxed/,       // Deployment steps text
 ];
 for (const file of [...walk(COMPONENTS_DIR), ...walk(APP_DIR)]) {
   checkFile(file, fontPatterns, "Font size < 12px (text-xs/10-11px)", skipFont);

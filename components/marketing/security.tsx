@@ -4,12 +4,13 @@ import { Eye, FileCheck2, Lock, ShieldCheck } from "lucide-react";
 
 import { useLocale } from "@/components/providers/locale-provider";
 import { Reveal } from "@/components/marketing/reveal";
-import { SpotlightCard } from "@/components/marketing/spotlight-card";
+import { DoubleBezelCard, DoubleBezelCardContent } from "@/components/ui/double-bezel-card";
 
 /**
  * Security section (DESIGN §22).
  * Asymmetric: heading column left, points right. One point ("Defense in
  * depth") is highlighted so the grid is not flat (Miller's law).
+ * Upgraded to DoubleBezelCard for premium nested architecture (high-end-visual-design §4.A).
  */
 const SECURITY_POINTS = [
   {
@@ -53,18 +54,22 @@ export function Security() {
         </Reveal>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Reveal className="bg-primary/5 ring-primary/10 flex flex-col gap-4 rounded-lg p-6 ring-1 sm:col-span-2 md:flex-row md:items-start md:gap-5 md:p-7">
-            <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-lg">
-              <featured.icon aria-hidden="true" className="size-5" />
-            </span>
-            <div className="flex flex-col gap-1.5">
-              <h3 className="font-display text-foreground text-lg font-semibold">
-                {t(featured.titleKey)}
-              </h3>
-              <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed text-pretty md:text-base">
-                {t(featured.descKey)}
-              </p>
-            </div>
+          <Reveal className="sm:col-span-2 md:flex-row md:items-start md:gap-5">
+            <DoubleBezelCard className="md:flex-row md:items-start md:gap-5 md:p-7">
+              <DoubleBezelCardContent className="flex flex-col gap-1.5 shrink-0 md:flex-1">
+                <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-xl">
+                  <featured.icon aria-hidden="true" className="size-5" />
+                </span>
+                <div className="flex flex-col gap-1.5">
+                  <h3 className="font-display text-foreground text-lg font-semibold">
+                    {t(featured.titleKey)}
+                  </h3>
+                  <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed text-pretty md:text-base">
+                    {t(featured.descKey)}
+                  </p>
+                </div>
+              </DoubleBezelCardContent>
+            </DoubleBezelCard>
           </Reveal>
 
           {rest.map((point, index) => {
@@ -75,20 +80,19 @@ export function Security() {
                 delay={index * 0.04}
                 className="h-full"
               >
-                <SpotlightCard
-                  className="ring-foreground/10 bg-card flex h-full flex-col gap-3 rounded-lg p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
-                  spotlightClassName="bg-primary/10"
-                >
-                  <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
-                    <Icon aria-hidden="true" className="size-5" />
-                  </span>
-                  <h3 className="font-display text-foreground text-base font-semibold">
-                    {t(point.titleKey)}
-                  </h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-                    {t(point.descKey)}
-                  </p>
-                </SpotlightCard>
+                <DoubleBezelCard className="bg-card">
+                  <DoubleBezelCardContent className="flex flex-col gap-3 p-6">
+                    <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+                      <Icon aria-hidden="true" className="size-5" />
+                    </span>
+                    <h3 className="font-display text-foreground text-base font-semibold">
+                      {t(point.titleKey)}
+                    </h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                      {t(point.descKey)}
+                    </p>
+                  </DoubleBezelCardContent>
+                </DoubleBezelCard>
               </Reveal>
             );
           })}

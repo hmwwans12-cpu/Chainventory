@@ -48,7 +48,7 @@ export function PanelCard({
       data-slot="panel-card"
       data-variant={variant}
       className={cn(
-        "rounded-xl",
+        "rounded-lg",
         VARIANT_EDGE[variant],
         PADDING[padding],
         className

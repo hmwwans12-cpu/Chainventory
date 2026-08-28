@@ -16,6 +16,7 @@ import {
   UserPlus,
   Users,
   Warehouse,
+  X,
 } from "lucide-react";
 
 import {
@@ -23,6 +24,7 @@ import {
 } from "@base-ui/react/dialog";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/components/providers/locale-provider";
+import { Button } from "@/components/ui/button";
 
 type Command = {
   id: string;
@@ -65,8 +67,8 @@ export function CommandMenu() {
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return COMMANDS;
-    return COMMANDS.filter((c) => c.label.toLowerCase().includes(q));
-  }, [query]);
+    return COMMANDS.filter((c) => t(c.i18nKey ?? c.label).toLowerCase().includes(q));
+  }, [query, t]);
 
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -134,6 +136,16 @@ export function CommandMenu() {
               autoFocus
               className="text-foreground placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:ring-3 h-11 w-full bg-transparent text-sm outline-none"
             />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setOpen(false)}
+              aria-label={t("common.close")}
+              className="shrink-0"
+            >
+              <X aria-hidden="true" className="size-4" />
+            </Button>
             <kbd className="text-muted-foreground hidden rounded border px-1.5 py-0.5 font-mono text-xs sm:inline">
               ESC
             </kbd>
@@ -146,8 +158,8 @@ export function CommandMenu() {
             className="flex flex-col gap-0.5 overflow-y-auto p-2"
           >
             {results.length === 0 ? (
-              <li className="text-muted-foreground px-3 py-6 text-center text-sm">
-                No results for “{query}”.
+              <li className="text-muted-foreground px-3 py-6 text-center text-sm" aria-live="polite">
+                {t("cmd.no_results", { query })}
               </li>
             ) : (
               results.map((cmd, i) => {

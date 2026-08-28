@@ -12,12 +12,13 @@ import {
 
 import { useLocale } from "@/components/providers/locale-provider";
 import { Reveal } from "@/components/marketing/reveal";
-import { SpotlightCard } from "@/components/marketing/spotlight-card";
+import { DoubleBezelCard, DoubleBezelCardContent } from "@/components/ui/double-bezel-card";
 
 /**
  * Features section (DESIGN §22).
  * Asymmetric bento- one tall featured tile (Verifiable records) breaks the
  * flat 6-card grid and gives the differentiator extra weight (Miller's law).
+ * Upgraded to DoubleBezelCard for premium nested architecture (high-end-visual-design §4.A).
  */
 const FEATURES = [
   {
@@ -72,33 +73,37 @@ export function Features() {
         </Reveal>
 
         <div className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-3">
-          <Reveal className="bg-primary/5 ring-primary/10 flex flex-col justify-between gap-6 rounded-lg p-6 ring-1 md:col-span-2 md:row-span-2 md:p-8">
-            <div className="flex flex-col gap-3">
-              <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-lg">
-                <featured.icon aria-hidden="true" className="size-5" />
-              </span>
-              <h3 className="font-display text-foreground text-xl font-semibold">
-                {t(featured.titleKey)}
-              </h3>
-              <p className="text-muted-foreground max-w-md text-sm leading-relaxed text-pretty md:text-base">
-                {t(featured.descKey)}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {featured.proof!.map((hash) => (
-                <span
-                  key={hash}
-                  className="text-muted-foreground bg-card flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-xs"
-                >
-                  <Link2 aria-hidden="true" className="text-primary size-3" />
-                  {hash}
-                </span>
-              ))}
-              <span className="bg-primary text-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
-                <ShieldCheck aria-hidden="true" className="size-3" />
-                {t("landing.features.verified")}
-              </span>
-            </div>
+          <Reveal className="md:col-span-2 md:row-span-2">
+            <DoubleBezelCard className="md:p-8">
+              <DoubleBezelCardContent className="flex flex-col justify-between gap-6">
+                <div className="flex flex-col gap-3">
+                  <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-xl">
+                    <featured.icon aria-hidden="true" className="size-5" />
+                  </span>
+                  <h3 className="font-display text-foreground text-xl font-semibold">
+                    {t(featured.titleKey)}
+                  </h3>
+                  <p className="text-muted-foreground max-w-md text-sm leading-relaxed text-pretty md:text-base">
+                    {t(featured.descKey)}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {featured.proof!.map((hash) => (
+                    <span
+                      key={hash}
+                      className="text-muted-foreground bg-card flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-xs"
+                    >
+                      <Link2 aria-hidden="true" className="text-primary size-3" />
+                      {hash}
+                    </span>
+                  ))}
+                  <span className="bg-primary text-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
+                    <ShieldCheck aria-hidden="true" className="size-3" />
+                    {t("landing.features.verified")}
+                  </span>
+                </div>
+              </DoubleBezelCardContent>
+            </DoubleBezelCard>
           </Reveal>
 
           {rest.map((feature, index) => {
@@ -109,20 +114,19 @@ export function Features() {
                 delay={index * 0.04}
                 className="h-full"
               >
-                <SpotlightCard
-                  className="ring-foreground/10 bg-card flex h-full flex-col gap-3 rounded-lg p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
-                  spotlightClassName="bg-primary/10"
-                >
-                  <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
-                    <Icon aria-hidden="true" className="size-5" />
-                  </span>
-                  <h3 className="font-display text-foreground text-base font-semibold">
-                    {t(feature.titleKey)}
-                  </h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-                    {t(feature.descKey)}
-                  </p>
-                </SpotlightCard>
+                <DoubleBezelCard className="bg-card">
+                  <DoubleBezelCardContent className="flex flex-col gap-3 p-6">
+                    <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+                      <Icon aria-hidden="true" className="size-5" />
+                    </span>
+                    <h3 className="font-display text-foreground text-base font-semibold">
+                      {t(feature.titleKey)}
+                    </h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                      {t(feature.descKey)}
+                    </p>
+                  </DoubleBezelCardContent>
+                </DoubleBezelCard>
               </Reveal>
             );
           })}

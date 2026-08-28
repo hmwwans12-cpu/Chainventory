@@ -37,15 +37,16 @@ export function DoubleBezelCard({
         "relative",
         "bg-black/5 dark:bg-white/5",
         "ring-1 ring-black/5 dark:ring-white/10",
-        "rounded-[2rem]",
+        `rounded-[${radius}]`,
         "p-1.5", // bezel width
-        outerClassName
+        outerClassName,
+        className
       )}
       {...props}
     >
       <div
         className={cn(
-          "rounded-[calc(2rem-0.375rem)]",
+          `rounded-[${innerRadius}]`,
           "bg-card",
           "shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]",
           "p-6",

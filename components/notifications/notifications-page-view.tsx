@@ -122,6 +122,32 @@ export function NotificationsPageView({
             void refreshFromRealtime();
           }
         )
+        // M-07: UPDATE (mark-as-read di tab lain) ikut disinkronkan.
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          async () => {
+            const [newCount, newRows, names] = await Promise.all([
+              fetchUnreadCount(supabase),
+              fetchRecentNotifications(supabase, pageSize),
+              supabase.from("warehouse_summaries").select("id, name"),
+            ]);
+            if (cancelled) return;
+            setUnreadCount(newCount);
+            setNotifications(newRows);
+            setWarehouseNames(
+              Object.fromEntries(
+                (names.data ?? []).map((w) => [w.id, w.name as string])
+              )
+            );
+            setHasMore(newRows.length >= pageSize);
+          }
+        )
         .subscribe();
     }
 
@@ -176,13 +202,13 @@ export function NotificationsPageView({
         "id, warehouse_id, type, title, body, payload, dedup_key, times, created_at, last_event_at, read_at"
       )
       .order("last_event_at", { ascending: false })
-      .range(notifications.length, notifications.length + pageSize - 1);
+      .range(notificationsRef.current.length, notificationsRef.current.length + pageSize - 1);
     if (!error && data) {
       setNotifications((rows) => [...rows, ...(data as NotificationRow[])]);
       setHasMore(data.length >= pageSize);
     }
     setLoadingMore(false);
-  }, [loadingMore, notifications.length, pageSize]);
+  }, [loadingMore, pageSize]);
 
   const grouped = useMemo(() => {
     const manyWarehouses = Object.keys(warehouseNames).length > 1;

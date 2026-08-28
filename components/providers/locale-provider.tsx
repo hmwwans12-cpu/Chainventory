@@ -8,7 +8,7 @@ import { translate, type Locale } from "@/lib/i18n/translations";
 type LocaleContextValue = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string>) => string;
 };
 
 const LocaleContext = React.createContext<LocaleContextValue | null>(null);
@@ -27,9 +27,15 @@ function readCookie(): Locale {
  * agar server & client sama, dan men-set `<html lang>`. Komponen client
  * (sidebar, command palette, header) membaca via `useLocale().t(key)`.
  */
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
+export function LocaleProvider({
+  children,
+  initialLocale = "en",
+}: {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+}) {
   const router = useRouter();
-  const [locale, setLocaleState] = React.useState<Locale>("en");
+  const [locale, setLocaleState] = React.useState<Locale>(initialLocale);
 
   React.useEffect(() => {
     const initial = readCookie();
@@ -52,7 +58,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   );
 
   const t = React.useCallback(
-    (key: string) => translate(locale, key),
+    (key: string, params?: Record<string, string>) => translate(locale, key, params),
     [locale]
   );
 

@@ -720,7 +720,7 @@ export function StockMovementDialog({
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a movement" />
                       </SelectTrigger>
-                      <SelectContent className="z-[60]">
+                      <SelectContent className="z-[var(--z-select)]">
                         {reversalTargets.map((t) => (
                           <SelectItem key={t.id} value={t.id}>
                             {MOVEMENT_TYPE_META[t.movementType].label} ·{" "}
