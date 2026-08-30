@@ -1,5 +1,3 @@
-import type { StatusTone } from "@/components/shared/status-badge";
-
 /**
  * Tipe bersama untuk halaman Blockchain (server page + client component).
  */
@@ -27,13 +25,4 @@ export type ProofRow = {
   created_at: string;
 };
 
-export const DEPLOYMENT_STATUS_META: Record<
-  string,
-  { label: string; tone: StatusTone }
-> = {
-  pending: { label: "Deployment pending", tone: "pending" },
-  submitting: { label: "Submitting", tone: "pending" },
-  submitted: { label: "Submitted", tone: "pending" },
-  confirmed: { label: "Deployed", tone: "success" },
-  failed: { label: "Deployment failed", tone: "failed" },
-};
+export { DEPLOYMENT_STATUS_META } from "@/lib/blockchain/proof-meta";

@@ -4,13 +4,9 @@ import * as React from "react";
 import { useWallets } from "@privy-io/react-auth";
 import {
   AlertTriangle,
-  ArrowDownToLine,
-  ArrowUpFromLine,
   Ban,
   History,
   Loader2,
-  Scale,
-  Undo2,
 } from "lucide-react";
 
 import { toast } from "@/components/ui/toast";
@@ -63,25 +59,14 @@ import { newIdempotencyKey } from "@/lib/api-client";
 import type { ProductRow, StockMovementRow } from "@/lib/inventory/types";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { formatDate } from "@/lib/utils";
+import {
+  MOVEMENT_STATUS_META as SHARED_MOVEMENT_STATUS_META,
+  MOVEMENT_TYPE_META as SHARED_MOVEMENT_TYPE_META,
+} from "@/lib/inventory/status-meta";
 
-export const MOVEMENT_TYPE_META: Record<
-  MovementType,
-  { label: string; tone: StatusTone; icon: typeof ArrowDownToLine }
-> = {
-  stock_in: { label: "Stock In", tone: "success", icon: ArrowDownToLine },
-  stock_out: { label: "Stock Out", tone: "warning", icon: ArrowUpFromLine },
-  adjustment: { label: "Adjustment", tone: "pending", icon: Scale },
-  reversal: { label: "Reversal", tone: "inactive", icon: Undo2 },
-};
-
-export const MOVEMENT_STATUS_META: Record<
-  "pending_approval" | "committed" | "rejected",
-  { label: string; tone: StatusTone }
-> = {
-  pending_approval: { label: "Pending approval", tone: "pending" },
-  committed: { label: "Committed", tone: "success" },
-  rejected: { label: "Rejected", tone: "failed" },
-};
+// Re-export from canonical source (audit A — single source of truth)
+export const MOVEMENT_TYPE_META = SHARED_MOVEMENT_TYPE_META;
+export const MOVEMENT_STATUS_META = SHARED_MOVEMENT_STATUS_META;
 
 function ErrorBanner({ message }: { message: string }) {
   return (

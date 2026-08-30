@@ -53,6 +53,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { LoadMore } from "@/components/shared/load-more";
+import { toast } from "@/components/ui/toast";
 import { hasPermission, PERMISSIONS, type Role } from "@/lib/auth/permissions";
 import {
   embedOne,
@@ -747,6 +748,11 @@ function ApproveDialog({
     const result = await approveAdjustment(movement.id);
     setBusy(false);
     if (result.ok) {
+      toast.add({
+        type: "success",
+        title: "Movement approved",
+        description: `${meta.label} · ${movement.quantity} ${movement.unit} for ${movement.productName}.`,
+      });
       onOpenChange(false);
       onDone();
     } else {
@@ -823,6 +829,11 @@ function RejectDialog({
     const result = await rejectAdjustment(movement.id, reason.trim());
     setBusy(false);
     if (result.ok) {
+      toast.add({
+        type: "success",
+        title: "Movement rejected",
+        description: `${meta.label} for ${movement.productName} was rejected.`,
+      });
       onOpenChange(false);
       onDone();
     } else {

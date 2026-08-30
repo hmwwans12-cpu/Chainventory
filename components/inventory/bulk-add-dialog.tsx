@@ -115,15 +115,28 @@ export function BulkAddDialog({
       setInvalid(bad);
     } else {
       const parsed = parseProductsCsv(pasteText);
+      const parsedInvalid = parsed.errors.map((e) => ({
+        index: e.index,
+        reason: e.message,
+      }));
+      if (parsed.overflow) {
+        parsedInvalid.unshift({
+          index: 0,
+          reason: `Only first ${parsed.rows.length} rows imported — file exceeds 1,000 row limit. Remainder was truncated.`,
+        });
+        toast.add({
+          type: "warning",
+          title: "CSV truncated",
+          description: `Only first 1,000 rows were imported. Your file has more than 1,000 rows.`,
+        });
+      }
       setRows(
         parsed.rows.map((r, idx) => ({
           ...r,
           id: `parsed-${idx}-${Date.now()}`,
         }))
       );
-      setInvalid(
-        parsed.errors.map((e) => ({ index: e.index, reason: e.message }))
-      );
+      setInvalid(parsedInvalid);
     }
     setStep("preview");
   };
@@ -406,7 +419,7 @@ export function BulkAddDialog({
                 onClick={() => setStep("input")}
                 disabled={busy}
               >
-                Review errors
+                {invalid.length ? "Review errors" : "Back to edit"}
               </Button>
               <Button onClick={importRows} disabled={busy || rows.length === 0}>
                 {busy ? (

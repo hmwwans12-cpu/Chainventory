@@ -42,24 +42,35 @@ import { Button } from "@/components/ui/button";
 
 export type HeaderWarehouse = { id: string; name: string };
 
-function pageTitle(pathname: string): string | null {
-  let best: { href: string; title: string } | null = null;
+function pageTitle(
+  pathname: string,
+  t?: (key: string) => string
+): string | null {
+  let best: { href: string; title: string; i18nKey?: string } | null = null;
   for (const item of NAV_ITEMS) {
     const candidates = [
-      ...(item.children ?? []).map((c) => ({ href: c.href, title: c.title })),
-      { href: item.href, title: item.title },
+      ...(item.children ?? []).map((c) => ({
+        href: c.href,
+        title: c.title,
+        i18nKey: c.i18nKey,
+      })),
+      { href: item.href, title: item.title, i18nKey: item.i18nKey },
     ];
     for (const c of candidates) {
-      if (
-        pathname === c.href ||
-        pathname.startsWith(`${c.href}/`) ||
-        pathname.startsWith(c.href)
-      ) {
+      const isExact = pathname === c.href;
+      const isNested = c.href !== "/" && pathname.startsWith(`${c.href}/`);
+      if (isExact || isNested) {
         if (!best || c.href.length > best.href.length) best = c;
       }
     }
   }
-  return best?.title ?? null;
+  if (!best) return null;
+  if (t && best.i18nKey) {
+    const translated = t(best.i18nKey);
+    // Fallback to English title if translation missing (key returned as-is)
+    if (translated !== best.i18nKey) return translated;
+  }
+  return best.title;
 }
 
 export function SiteHeader({
@@ -80,7 +91,7 @@ export function SiteHeader({
       : undefined;
   const active =
     warehouses.find((w) => w.id === warehouseParam) ?? warehouses[0];
-  const title = pageTitle(pathname);
+  const title = pageTitle(pathname, t);
 
   return (
     <header className="bg-background/80 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur-sm transition-[height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -149,7 +160,7 @@ export function SiteHeader({
                 <button
                   type="button"
                   aria-label={t("common.account_menu")}
-                  className="hover:bg-muted/60 focus-visible:ring-ring flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors outline-none focus-visible:ring-3"
+                  className="hover:bg-muted/60 focus-visible:ring-ring relative flex min-h-11 items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors outline-none before:absolute before:-inset-2 before:content-[''] focus-visible:ring-3"
                 />
               }
             >

@@ -35,6 +35,7 @@ export function SignupForm() {
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         {error ? (
           <div
+            id="signup-error"
             role="alert"
             className="border-destructive/30 bg-destructive/15 text-destructive rounded-lg border px-3 py-2 text-sm"
           >
@@ -50,6 +51,8 @@ export function SignupForm() {
             autoComplete="name"
             placeholder="e.g. A. Wijaya"
             required
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "signup-error" : undefined}
           />
         </FormField>
 
@@ -61,6 +64,8 @@ export function SignupForm() {
             autoComplete="email"
             placeholder="you@company.com"
             required
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "signup-error" : undefined}
           />
         </FormField>
 
@@ -84,6 +89,8 @@ export function SignupForm() {
             autoComplete="new-password"
             required
             minLength={8}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "signup-error" : undefined}
           />
         </FormField>
 

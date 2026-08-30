@@ -185,6 +185,15 @@ export function CreateWarehouseForm() {
   );
   const [result, setResult] = React.useState<SubmitResult | null>(null);
   const [refreshed, setRefreshed] = React.useState(false);
+  const completeTimerRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (completeTimerRef.current !== null) {
+        window.clearTimeout(completeTimerRef.current);
+      }
+    };
+  }, []);
 
   const meta: CreateWarehouseMeta = { name, companyName, warehouseType };
   const busy = phase !== "form" && phase !== "error" && phase !== "success";
@@ -231,7 +240,10 @@ export function CreateWarehouseForm() {
       setPhase("success");
       return;
     }
-    window.setTimeout(() => {
+    if (completeTimerRef.current !== null) {
+      window.clearTimeout(completeTimerRef.current);
+    }
+    completeTimerRef.current = window.setTimeout(() => {
       setResult(data);
       setPhase("success");
     }, 700);

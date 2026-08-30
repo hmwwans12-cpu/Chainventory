@@ -9,17 +9,15 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { formatChartDay } from "@/lib/utils";
 
 const chartConfig = {
   stockIn: { label: "Stock In", color: "var(--chart-1)" },
-  stockOut: { label: "Stock Out", color: "var(--chart-2)" },
+  // Amber for Stock Out to distinguish from green In for deuteranopia (P3#14)
+  stockOut: { label: "Stock Out", color: "var(--warning)" },
 } satisfies ChartConfig;
 
-const tickLabel = (isoDay: string): string =>
-  new Date(`${isoDay}T00:00:00`).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+const tickLabel = (isoDay: string): string => formatChartDay(isoDay);
 
 /**
  * Chart Stock In/Out (DESIGN §32) — bahasa visual resmi dashboard-01:
@@ -83,15 +81,7 @@ export function StockMovementChart({
             cursor={false}
             content={
               <ChartTooltipContent
-                labelFormatter={(value) =>
-                  new Date(`${String(value)}T00:00:00`).toLocaleDateString(
-                    "en-US",
-                    {
-                      month: "short",
-                      day: "numeric",
-                    }
-                  )
-                }
+                labelFormatter={(value) => formatChartDay(String(value))}
                 indicator="dot"
               />
             }

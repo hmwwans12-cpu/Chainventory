@@ -75,7 +75,8 @@ export default async function DashboardPage({
 }) {
   const supabase = await createClient();
   const locale = await getLocale();
-  const t = (key: string) => translate(locale, key);
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -261,7 +262,7 @@ export default async function DashboardPage({
 
   const inactiveDays = daysSince(active.lastActivityAt);
 
-  const rangeHint = t("dashboard.vs_previous").replace("{n}", String(range));
+  const rangeHint = t("dashboard.vs_previous", { n: String(range) });
   const whQuery = `warehouse=${active.id}`;
 
   return (

@@ -49,8 +49,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StatusBadge, type StatusTone } from "@/components/shared/status-badge";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { toast } from "@/components/ui/toast";
+import { ROLE_META } from "@/lib/inventory/status-meta";
 import {
   canAssignRole,
   canManageRole,
@@ -72,14 +73,6 @@ import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import { PanelCard } from "@/components/shared/panel-card";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { formatDate } from "@/lib/utils";
-
-const ROLE_META: Record<Role, { label: string; tone: StatusTone }> = {
-  OWNER: { label: "Owner", tone: "success" },
-  MANAGER: { label: "Manager", tone: "pending" },
-  STAFF: { label: "Staff", tone: "inactive" },
-  AUDITOR: { label: "Auditor", tone: "inactive" },
-  VIEWER: { label: "Viewer", tone: "inactive" },
-};
 
 export function MembersPage({
   warehouseId,
@@ -688,7 +681,7 @@ export function MembersPage({
                 ? "success"
                 : member.status === "PENDING"
                   ? "pending"
-                  : "failed";
+                  : "suspended";
             const statusLabel =
               member.status === "ACTIVE"
                 ? "Active"

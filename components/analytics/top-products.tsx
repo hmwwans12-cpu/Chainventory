@@ -69,7 +69,7 @@ export function TopProducts({ products }: { products: TopProduct[] }) {
               {outQty > 0 ? (
                 <div
                   className="h-full rounded-full"
-                  style={{ width: `${outPct}%`, background: "var(--chart-2)" }}
+                  style={{ width: `${outPct}%`, background: "var(--warning)" }}
                 />
               ) : null}
             </div>

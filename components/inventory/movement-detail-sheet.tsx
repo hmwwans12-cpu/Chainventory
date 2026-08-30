@@ -17,28 +17,18 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { StatusBadge, type StatusTone } from "@/components/shared/status-badge";
+import { StatusBadge } from "@/components/shared/status-badge";
 import {
   MOVEMENT_STATUS_META,
   MOVEMENT_TYPE_META,
-} from "@/components/inventory/product-dialogs";
+} from "@/lib/inventory/status-meta";
+import { PROOF_STATUS_META as SHARED_PROOF_STATUS_META } from "@/lib/blockchain/proof-meta";
 import type { MovementListItem } from "@/lib/inventory/types";
 import { cn, formatDateTime } from "@/lib/utils";
 
 export const BASESCAN_URL = "https://sepolia.basescan.org";
 
-export const PROOF_STATUS_META: Record<
-  string,
-  { label: string; tone: StatusTone }
-> = {
-  pending: { label: "Proof pending", tone: "pending" },
-  submitted: { label: "Proof submitted", tone: "pending" },
-  confirming: { label: "Confirming", tone: "pending" },
-  confirmed: { label: "Verified on-chain", tone: "success" },
-  retrying: { label: "Retrying", tone: "warning" },
-  manual_review: { label: "Manual review", tone: "warning" },
-  failed: { label: "Blockchain failed", tone: "failed" },
-};
+export const PROOF_STATUS_META = SHARED_PROOF_STATUS_META;
 
 function shortWallet(wallet: string | null): string {
   if (!wallet) return "Member";

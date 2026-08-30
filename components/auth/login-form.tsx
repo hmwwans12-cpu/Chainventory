@@ -35,6 +35,7 @@ export function LoginForm({
         {next ? <input type="hidden" name="next" value={next} /> : null}
         {error ? (
           <div
+            id="login-error"
             role="alert"
             className="border-destructive/30 bg-destructive/15 text-destructive rounded-lg border px-3 py-2 text-sm"
           >
@@ -50,6 +51,7 @@ export function LoginForm({
             autoComplete="email"
             required
             aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "login-error" : undefined}
           />
         </FormField>
 
@@ -61,6 +63,7 @@ export function LoginForm({
             autoComplete="current-password"
             required
             aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "login-error" : undefined}
           />
         </FormField>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,15 @@ export function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const redirectTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current !== null) {
+        window.clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,7 +49,10 @@ export function ResetPasswordForm() {
         setError(error.message);
       } else {
         setSuccess(true);
-        setTimeout(() => router.push("/dashboard"), 2000);
+        redirectTimerRef.current = window.setTimeout(
+          () => router.push("/dashboard"),
+          2000
+        );
       }
     });
   }
@@ -59,6 +71,7 @@ export function ResetPasswordForm() {
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       {error ? (
         <div
+          id="reset-error"
           role="alert"
           className="border-destructive/30 bg-destructive/15 text-destructive rounded-lg border px-3 py-2 text-sm"
         >
@@ -74,6 +87,8 @@ export function ResetPasswordForm() {
           autoComplete="new-password"
           placeholder="••••••••"
           required
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "reset-error" : undefined}
         />
       </FormField>
 
@@ -85,6 +100,8 @@ export function ResetPasswordForm() {
           autoComplete="new-password"
           placeholder="••••••••"
           required
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "reset-error" : undefined}
         />
       </FormField>
 

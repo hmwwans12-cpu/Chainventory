@@ -30,6 +30,13 @@ export function formatDateTime(iso: string): string {
   });
 }
 
+export function formatChartDay(isoDay: string): string {
+  return new Date(`${isoDay}T00:00:00`).toLocaleDateString(FIXED_LOCALE, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
 /**
  * Wei -> string ETH dengan locale terkunci & presisi 4 desimal
  * (audit DRY #5: sebelumnya duplikat di settings & dashboard).

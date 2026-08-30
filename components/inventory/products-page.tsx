@@ -96,7 +96,7 @@ export function ProductsPage({
 
   // P2-04: satu tempat membangun URL query produk (q + warehouse + status)
   // — sebelumnya logika ini ditulis ulang di tiga titik dan rawan inkonsisten.
-  // P0#2: pertahankan `page` agar search/filter tidak me-reset paginasi ke 1.
+  // Hapus `page` agar filter/search baru mulai dari halaman 1.
   const [isPending, startTransition] = React.useTransition();
   const applyFilters = React.useCallback(
     (nextQuery: string, nextStatus: "active" | "archived" | "all") => {
@@ -165,26 +165,38 @@ export function ProductsPage({
   const archiveSelected = async () => {
     if (!canArchive || selected.size === 0) return;
     setBulkBusy(true);
-    try {
-      await Promise.all(
-        [...selected].map((id) => archiveProduct(warehouseId, id))
-      );
+    const ids = [...selected];
+    const results = await Promise.allSettled(
+      ids.map((id) => archiveProduct(warehouseId, id))
+    );
+    const succeeded = results.filter(
+      (r) => r.status === "fulfilled" && r.value.ok
+    ).length;
+    const failed = results.length - succeeded;
+    if (failed === 0) {
       toast.add({
         type: "success",
         title: "Products archived",
-        description: `${selected.size} product(s) archived.`,
+        description: `${succeeded} product(s) archived.`,
       });
       clearSelection();
       refresh();
-    } catch {
+    } else if (succeeded > 0) {
+      toast.add({
+        type: "warning",
+        title: "Partial archive",
+        description: `${succeeded} archived, ${failed} failed. ${failed === 1 ? "One product" : `${failed} products`} could not be archived.`,
+      });
+      // Keep selection for retry, but refresh to reflect partial success
+      refresh();
+    } else {
       toast.add({
         type: "error",
-        title: "Could not archive all products",
-        description: "Some products may not have been archived.",
+        title: "Could not archive products",
+        description: "No products were archived. Try again.",
       });
-    } finally {
-      setBulkBusy(false);
     }
+    setBulkBusy(false);
   };
 
   const exportSelected = () => {
@@ -464,7 +476,7 @@ export function ProductsPage({
                     checked={allVisibleSelected}
                     onChange={toggleSelectAll}
                     aria-label="Select all products on this page"
-                    className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-2 focus-visible:outline-none focus-visible:ring-3"
+                    className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-[12px] focus-visible:outline-none focus-visible:ring-3"
                   />
                 </TableHead>
                 <TableHead>Product</TableHead>
@@ -497,7 +509,7 @@ export function ProductsPage({
                         checked={selected.has(product.id)}
                         onChange={() => toggleSelect(product.id)}
                         aria-label={`Select ${product.name}`}
-                        className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-2 focus-visible:outline-none focus-visible:ring-3"
+                        className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-[12px] focus-visible:outline-none focus-visible:ring-3"
                       />
                     </TableCell>
                     <TableCell>
@@ -565,7 +577,7 @@ export function ProductsPage({
                     checked={selected.has(product.id)}
                     onChange={() => toggleSelect(product.id)}
                     aria-label={`Select ${product.name}`}
-                    className="border-border focus-visible:ring-ring mt-1 relative size-5 shrink-0 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-2 focus-visible:outline-none focus-visible:ring-3"
+                    className="border-border focus-visible:ring-ring mt-1 relative size-5 shrink-0 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-[12px] focus-visible:outline-none focus-visible:ring-3"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

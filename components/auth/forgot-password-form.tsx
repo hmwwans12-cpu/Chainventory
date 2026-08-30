@@ -37,6 +37,7 @@ export function ForgotPasswordForm() {
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       {error ? (
         <div
+          id="forgot-error"
           role="alert"
           className="border-destructive/30 bg-destructive/15 text-destructive rounded-lg border px-3 py-2 text-sm"
         >
@@ -52,6 +53,8 @@ export function ForgotPasswordForm() {
           autoComplete="email"
           placeholder="you@company.com"
           required
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "forgot-error" : undefined}
         />
       </FormField>
 

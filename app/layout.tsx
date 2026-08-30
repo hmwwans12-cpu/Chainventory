@@ -62,9 +62,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // Harus match background halaman (DESIGN §4 Main Background Dawn Pink),
-  // bukan primary — browser mewarnai chrome/scrollbar dengan nilai ini.
-  themeColor: "#E4D5C7",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#E4D5C7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E231B" },
+  ],
 };
 
 export default function RootLayout({

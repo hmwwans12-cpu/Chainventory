@@ -382,7 +382,7 @@ export function NotificationBell() {
                             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                               <span
                                 className={cn(
-                                  "text-foreground text-[13px] leading-snug",
+                                  "text-foreground text-sm leading-snug",
                                   unread
                                     ? "font-semibold"
                                     : "text-muted-foreground font-medium"

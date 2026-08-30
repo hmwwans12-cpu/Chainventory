@@ -41,12 +41,12 @@ const STATUS_META: Record<
   inactive: {
     label: "Inactive",
     icon: Ban,
-    className: "bg-muted text-foreground",
+    className: "bg-muted text-muted-foreground border border-border",
   },
   suspended: {
     label: "Suspended",
     icon: PauseCircle,
-    className: "bg-foreground/10 text-foreground",
+    className: "bg-warning/10 text-warning border border-warning/20",
   },
 };
 

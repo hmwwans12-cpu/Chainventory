@@ -1,11 +1,5 @@
 import Link from "next/link";
-import {
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  Scale,
-  Undo2,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowDownToLine } from "lucide-react";
 
 import {
   Card,
@@ -28,6 +22,10 @@ import {
 } from "@/components/ui/table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn, formatDateTime } from "@/lib/utils";
+import {
+  MOVEMENT_STATUS_META,
+  MOVEMENT_TYPE_META,
+} from "@/lib/inventory/status-meta";
 
 /**
  * Recent Stock Movement (DESIGN §29) — bahasa visual DataTable resmi
@@ -45,39 +43,17 @@ export type RecentMovementItem = {
   createdAt: string;
 };
 
-const TYPE_META: Record<
-  RecentMovementItem["movementType"],
-  { label: string; icon: LucideIcon; className: string }
-> = {
-  stock_in: {
-    label: "Stock In",
-    icon: ArrowDownToLine,
-    className: "bg-primary/10 text-primary",
-  },
-  stock_out: {
-    label: "Stock Out",
-    icon: ArrowUpFromLine,
-    className: "bg-warning/15 text-warning",
-  },
-  adjustment: {
-    label: "Adjustment",
-    icon: Scale,
-    className: "bg-secondary/20 text-secondary-foreground",
-  },
-  reversal: {
-    label: "Reversal",
-    icon: Undo2,
-    className: "bg-muted text-muted-foreground",
-  },
-};
+const TYPE_META = MOVEMENT_TYPE_META;
+const STATUS_TONE_LABEL = MOVEMENT_STATUS_META;
 
-const STATUS_TONE_LABEL: Record<
-  string,
-  { tone: "success" | "pending" | "failed"; label: string }
-> = {
-  committed: { tone: "success", label: "Committed" },
-  pending_approval: { tone: "pending", label: "Pending approval" },
-  rejected: { tone: "failed", label: "Rejected" },
+// Tone → class mapping for type badges (keeps visual parity with StatusBadge)
+const TONE_CLASS: Record<string, string> = {
+  success: "bg-primary/10 text-primary",
+  pending: "bg-secondary/20 text-secondary-foreground",
+  warning: "bg-warning/15 text-warning",
+  failed: "bg-destructive/15 text-destructive",
+  inactive: "bg-muted text-muted-foreground",
+  suspended: "bg-warning/10 text-warning",
 };
 
 export function RecentMovements({
@@ -127,9 +103,12 @@ export function RecentMovements({
               </TableHeader>
               <TableBody>
                 {items.map((item) => {
-                  const meta = TYPE_META[item.movementType];
+                  const meta = TYPE_META[item.movementType as keyof typeof TYPE_META];
                   const Icon = meta.icon;
-                  const status = STATUS_TONE_LABEL[item.status] ?? null;
+                  const status =
+                    (STATUS_TONE_LABEL as Record<string, { tone: string; label: string }>)[
+                      item.status
+                    ] ?? null;
                   return (
                     <TableRow key={item.id}>
                       <TableCell>
@@ -143,7 +122,7 @@ export function RecentMovements({
                         <Badge
                           variant="secondary"
                           data-icon="inline-start"
-                          className={cn(meta.className)}
+                          className={cn(TONE_CLASS[meta.tone] ?? "bg-muted text-foreground")}
                         >
                           <Icon aria-hidden="true" />
                           {meta.label}
