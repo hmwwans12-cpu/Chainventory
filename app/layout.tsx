@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 
 import "./globals.css";
 
@@ -7,21 +7,30 @@ import { PrivyProvider } from "@/components/providers/privy-provider";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+// Self-hosted via next/font/local for offline build robustness (audit §3).
+// Previously next/font/google which fetches at build-time and fails offline.
+const plusJakartaSans = localFont({
   variable: "--font-sans",
-  subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  src: [
+    { path: "./fonts/PlusJakartaSans-400.ttf", weight: "400", style: "normal" },
+    { path: "./fonts/PlusJakartaSans-500.ttf", weight: "500", style: "normal" },
+    { path: "./fonts/PlusJakartaSans-600.ttf", weight: "600", style: "normal" },
+    { path: "./fonts/PlusJakartaSans-700.ttf", weight: "700", style: "normal" },
+  ],
 });
 
 // DESIGN.md §6: Geist Variable + Cabinet Grotesk upgrade.
-// Space_Grotesk is a Google Fonts alternative with distinctive technical character.
-// Variable font for weight animation support.
-const spaceGrotesk = Space_Grotesk({
+// Space Grotesk self-hosted — distinctive technical character.
+const spaceGrotesk = localFont({
   variable: "--font-display",
-  subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  src: [
+    { path: "./fonts/SpaceGrotesk-400.ttf", weight: "400", style: "normal" },
+    { path: "./fonts/SpaceGrotesk-500.ttf", weight: "500", style: "normal" },
+    { path: "./fonts/SpaceGrotesk-600.ttf", weight: "600", style: "normal" },
+    { path: "./fonts/SpaceGrotesk-700.ttf", weight: "700", style: "normal" },
+  ],
 });
 
 export const metadata: Metadata = {

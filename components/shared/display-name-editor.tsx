@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useFormStatus } from "react-dom";
 import { Check, Loader2, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,8 +11,7 @@ import {
   type UpdateProfileState,
 } from "@/app/actions/update-profile";
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+function SubmitButton({ pending }: { pending: boolean }) {
   return (
     <Button type="submit" disabled={pending} aria-busy={pending}>
       {pending ? (
@@ -34,10 +32,8 @@ function SubmitButton() {
 export function DisplayNameEditor({ currentName }: { currentName: string }) {
   const [editing, setEditing] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
-  const [state, formAction] = React.useActionState<UpdateProfileState, FormData>(
-    updateDisplayNameAction,
-    { error: null }
-  );
+  const [state, setState] = React.useState<UpdateProfileState>({ error: null });
+  const [pending, startTransition] = React.useTransition();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const startEdit = () => {
@@ -50,13 +46,18 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
     setSaved(false);
   };
 
-  // Reflect a successful save into transient read-only state.
-  React.useEffect(() => {
-    if (state.success) {
-      setEditing(false);
-      setSaved(true);
-    }
-  }, [state.success]);
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(async () => {
+      const result = await updateDisplayNameAction({ error: null }, formData);
+      setState(result);
+      if (result.success) {
+        setEditing(false);
+        setSaved(true);
+      }
+    });
+  };
 
   if (!editing) {
     return (
@@ -83,11 +84,7 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
   }
 
   return (
-    <form
-      key={state.success ? "saved" : "editing"}
-      action={formAction}
-      className="flex flex-col gap-2"
-    >
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2" noValidate>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="display-name-input">Display name</Label>
         <div className="flex flex-wrap items-center gap-2">
@@ -101,12 +98,13 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
             aria-describedby={state.error ? "display-name-error" : undefined}
             className="max-w-xs"
           />
-          <SubmitButton />
+          <SubmitButton pending={pending} />
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={cancelEdit}
+            disabled={pending}
           >
             Cancel
           </Button>

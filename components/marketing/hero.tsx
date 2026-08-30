@@ -43,8 +43,11 @@ const CHART = [35, 48, 30, 58, 45, 70, 62];
  */
 export function Hero() {
   const reduce = useReducedMotion();
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const { t } = useLocale();
 
   return (

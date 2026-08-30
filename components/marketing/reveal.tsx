@@ -24,11 +24,14 @@ export function Reveal({
   rootMargin?: string;
 }) {
   const reduce = useReducedMotion();
-  const [mounted, setMounted] = React.useState(false);
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   React.useEffect(() => {
-    setMounted(true);
-    // Inject keyframes once
+    // Inject keyframes once (no state — safe for lint)
     if (typeof document !== "undefined" && !document.getElementById("reveal-keyframes")) {
       const style = document.createElement("style");
       style.id = "reveal-keyframes";
