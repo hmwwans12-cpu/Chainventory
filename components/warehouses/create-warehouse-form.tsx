@@ -434,7 +434,12 @@ export function CreateWarehouseForm() {
   async function pollUntilConfirmed(
     payload: SubmitPayload
   ): Promise<ApiResult<SubmitResult>> {
-    const MAX_ATTEMPTS = 30; // ~2.5 menit dengan jeda 5 detik
+    // Pilihan: polling 24×5s = 120s agar selaras dengan maxDuration=120 di
+    // app/api/warehouses/create/route.ts (Vercel kill di 120s). Biaya function
+    // tetap rendah, UX "still confirming" lebih cepat, reconcile harian jadi
+    // safety net bila on-chain lambat. Alternatif 150s akan naikkan biaya tanpa
+    // jaminan konfirmasi (Base Sepolia 2 blok ~4s, 120s >> cukup).
+    const MAX_ATTEMPTS = 24; // 120s selaras maxDuration 120
     for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       await sleep(5_000);
       const res = await submitDeployment(payload);
