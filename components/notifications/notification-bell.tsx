@@ -291,7 +291,10 @@ export function NotificationBell() {
             >
               <div className="border-b-border/60 flex items-center justify-between gap-2 border-b px-3 py-2.5">
                 <div className="flex items-center gap-2">
-                   <h2 id="notif-heading" className="font-display text-foreground text-sm font-semibold">
+                  <h2
+                    id="notif-heading"
+                    className="font-display text-foreground text-sm font-semibold"
+                  >
                     Notifications
                   </h2>
                   {unreadCount > 0 ? (
@@ -353,7 +356,7 @@ export function NotificationBell() {
                             type="button"
                             onClick={() => void handleRowClick(n)}
                             className={cn(
-                              "group focus-visible:bg-muted/70 focus-visible:ring-ring focus-visible:ring-3 flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors focus-visible:outline-none",
+                              "group focus-visible:bg-muted/70 focus-visible:ring-ring flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors focus-visible:ring-3 focus-visible:outline-none",
                               unread && "bg-primary/5",
                               flashId === n.id &&
                                 "motion-safe:animate-[notif-flash_1.6s_ease-out]"

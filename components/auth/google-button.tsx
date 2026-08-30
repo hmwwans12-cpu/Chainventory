@@ -26,8 +26,17 @@ export function GoogleButton({
 function GoogleSubmit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="outline" className="w-full" disabled={pending}>
-      {pending ? <Loader2 aria-hidden="true" className="animate-spin" /> : <GoogleIcon />}
+    <Button
+      type="submit"
+      variant="outline"
+      className="w-full"
+      disabled={pending}
+    >
+      {pending ? (
+        <Loader2 aria-hidden="true" className="animate-spin" />
+      ) : (
+        <GoogleIcon />
+      )}
       {pending ? "Signing in…" : label}
     </Button>
   );

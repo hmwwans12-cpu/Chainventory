@@ -25,10 +25,10 @@ export function Cta() {
         }}
       />
       <Reveal className="relative mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 text-center sm:px-6">
-        <h2 className="font-display text-4xl font-semibold tracking-tight text-balance text-primary-foreground md:text-5xl">
+        <h2 className="font-display text-primary-foreground text-4xl font-semibold tracking-tight text-balance md:text-5xl">
           {t("landing.cta.title")}
         </h2>
-        <p className="max-w-xl text-base leading-relaxed text-pretty text-primary-foreground/90 md:text-lg">
+        <p className="text-primary-foreground/90 max-w-xl text-base leading-relaxed text-pretty md:text-lg">
           {t("landing.cta.subtitle")}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -44,13 +44,13 @@ export function Cta() {
           <Button
             size="lg"
             variant="outline"
-            className="h-12 border-primary-foreground/30 bg-transparent px-7 text-base text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground h-12 bg-transparent px-7 text-base"
             render={<Link href="/login" />}
           >
             {t("landing.cta.secondary")}
           </Button>
         </div>
-        <p className="text-xs text-primary-foreground/90">
+        <p className="text-primary-foreground/90 text-xs">
           {t("landing.cta.footnote")}
         </p>
       </Reveal>

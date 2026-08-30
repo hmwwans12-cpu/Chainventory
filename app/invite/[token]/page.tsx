@@ -48,7 +48,7 @@ export default async function InvitePage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[560px] flex flex-col gap-6 py-10">
+    <div className="mx-auto flex w-full max-w-[560px] flex-col gap-6 py-10">
       <PageHeader title="Accept invitation" />
       <Card>
         <CardHeader>
@@ -56,7 +56,10 @@ export default async function InvitePage({
             {error ? (
               <XCircle aria-hidden="true" className="text-destructive size-5" />
             ) : (
-              <CheckCircle2 aria-hidden="true" className="text-primary size-5" />
+              <CheckCircle2
+                aria-hidden="true"
+                className="text-primary size-5"
+              />
             )}
             {title}
           </CardTitle>

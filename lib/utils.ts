@@ -70,4 +70,3 @@ export function getInitials(
   if (!source) return fallback;
   return source.charAt(0).toUpperCase();
 }
-

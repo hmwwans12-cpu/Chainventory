@@ -18,7 +18,9 @@ const APP_DIR = join(ROOT, "app");
 let hasErrors = false;
 
 function error(msg, file, line) {
-  console.error(`❌ ${msg}${file ? ` (${file}${line ? `:${line}` : ""})` : ""}`);
+  console.error(
+    `❌ ${msg}${file ? ` (${file}${line ? `:${line}` : ""})` : ""}`
+  );
   hasErrors = true;
 }
 
@@ -32,7 +34,11 @@ function ok(msg) {
 
 function run(cmd) {
   try {
-    return execSync(cmd, { cwd: ROOT, encoding: "utf-8", stdio: "pipe" }).trim();
+    return execSync(cmd, {
+      cwd: ROOT,
+      encoding: "utf-8",
+      stdio: "pipe",
+    }).trim();
   } catch (e) {
     return "";
   }
@@ -69,7 +75,10 @@ function checkFile(file, patterns, description, skipPatterns = []) {
 // 1. Contrast check (existing script)
 console.log("\n🔍 1/7 Contrast check...");
 try {
-  execSync("node scripts/ci/check-contrast.mjs", { cwd: ROOT, stdio: "inherit" });
+  execSync("node scripts/ci/check-contrast.mjs", {
+    cwd: ROOT,
+    stdio: "inherit",
+  });
   ok("Contrast check passed");
 } catch {
   error("Contrast check failed");
@@ -120,20 +129,25 @@ ok("Focus ring audit complete");
 
 // 4. Radius audit (rounded-lg consistency)
 console.log("\n🔍 4/7 Radius audit (rounded-lg consistency)...");
-const radiusPatterns = [/rounded-xl\b/, /rounded-2xl\b/, /rounded-\[2rem\]\b/, /rounded-\[calc\(2rem/];
+const radiusPatterns = [
+  /rounded-xl\b/,
+  /rounded-2xl\b/,
+  /rounded-\[2rem\]\b/,
+  /rounded-\[calc\(2rem/,
+];
 const skipRadius = [
   /rounded-full/,
   /rounded-\[min\(var\(--radius/,
-  /bg-card.*rounded-xl/,  // Card components intentionally use rounded-xl
-  /rounded-xl.*shadow/,   // Elevated surfaces
-  /toast.*rounded-xl/,    // Toast component
+  /bg-card.*rounded-xl/, // Card components intentionally use rounded-xl
+  /rounded-xl.*shadow/, // Elevated surfaces
+  /toast.*rounded-xl/, // Toast component
   /command-menu.*rounded-xl/, // Command menu
   /double-bezel.*rounded-/, // Double bezel inner
-  /sidebar.*rounded-xl/,  // Sidebar inset variant
+  /sidebar.*rounded-xl/, // Sidebar inset variant
   /create-warehouse.*rounded-xl/, // Create warehouse form
-  /join-warehouse.*rounded-xl/,   // Join warehouse form
-  /auth.*rounded-xl/,     // Auth layout
-  /loading.*rounded-xl/,  // Loading skeletons
+  /join-warehouse.*rounded-xl/, // Join warehouse form
+  /auth.*rounded-xl/, // Auth layout
+  /loading.*rounded-xl/, // Loading skeletons
   /faucet-claim.*rounded-xl/, // Faucet claim card
   /panel-card.*rounded-xl/, // Panel card
   /warehouse.*rounded-xl/, // Warehouse forms
@@ -146,7 +160,12 @@ const skipRadius = [
   /calc\(2rem-0.375rem\)/, // Double bezel inner radius
 ];
 for (const file of [...walk(COMPONENTS_DIR), ...walk(APP_DIR)]) {
-  checkFile(file, radiusPatterns, "Non-standard radius (should use rounded-lg)", skipRadius);
+  checkFile(
+    file,
+    radiusPatterns,
+    "Non-standard radius (should use rounded-lg)",
+    skipRadius
+  );
 }
 ok("Radius audit complete");
 
@@ -159,27 +178,27 @@ const skipFont = [
   /sr-only/,
   /aria-hidden/,
   /text-muted-foreground.*text-xs/, // Helper text
-  /text-primary.*text-xs/,         // Status badges
-  /text-destructive.*text-xs/,     // Error text
-  /text-warning.*text-xs/,         // Warning text
-  /Badge|badge.*text-xs/,          // Badge component
-  /SelectLabel|select.*text-xs/,   // Select label
+  /text-primary.*text-xs/, // Status badges
+  /text-destructive.*text-xs/, // Error text
+  /text-warning.*text-xs/, // Warning text
+  /Badge|badge.*text-xs/, // Badge component
+  /SelectLabel|select.*text-xs/, // Select label
   /DropdownMenuLabel|dropdown.*text-xs/, // Dropdown label
-  /SidebarGroupLabel|sidebar.*text-xs/,  // Sidebar label
-  /Tooltip|tooltip.*text-xs/,      // Tooltip
-  /Kbd|kbd.*text-xs/,              // Keyboard hint
-  /loading.*text-xs/,              // Loading text
-  /mt-1.*text-xs/,                 // Small helper text
-  /mt-0\.5.*text-xs/,              // Tiny helper
+  /SidebarGroupLabel|sidebar.*text-xs/, // Sidebar label
+  /Tooltip|tooltip.*text-xs/, // Tooltip
+  /Kbd|kbd.*text-xs/, // Keyboard hint
+  /loading.*text-xs/, // Loading text
+  /mt-1.*text-xs/, // Small helper text
+  /mt-0\.5.*text-xs/, // Tiny helper
   /flex.*items-center.*gap.*text-xs/, // Inline small text
-  /text-xs.*font-medium/,          // Small labels
-  /text-xs.*font-semibold/,        // Small emphasis
-  /BaseScanLink.*text-xs/,         // BaseScan links (metadata)
-  /className="text-xs"/,           // Inline text-xs classes
-  /block.*truncate.*text-xs/,      // Truncated text in sidebar
+  /text-xs.*font-medium/, // Small labels
+  /text-xs.*font-semibold/, // Small emphasis
+  /BaseScanLink.*text-xs/, // BaseScan links (metadata)
+  /className="text-xs"/, // Inline text-xs classes
+  /block.*truncate.*text-xs/, // Truncated text in sidebar
   /text-primary-foreground\/90.*text-xs/, // Primary text at 90% opacity
-  /xs:.*text-xs/,                  // Button xs size variant
-  /text-xs leading-relaxed/,       // Deployment steps text
+  /xs:.*text-xs/, // Button xs size variant
+  /text-xs leading-relaxed/, // Deployment steps text
 ];
 for (const file of [...walk(COMPONENTS_DIR), ...walk(APP_DIR)]) {
   checkFile(file, fontPatterns, "Font size < 12px (text-xs/10-11px)", skipFont);
@@ -204,13 +223,22 @@ console.log("\n🔍 7/7 Double-bezel audit (high-end visual design)...");
 let doubleBezelCount = 0;
 for (const file of walk(COMPONENTS_DIR)) {
   const content = readFileSync(file, "utf-8");
-  if (content.includes("rounded-lg") && content.includes("bg-card") && !content.includes("ring-1")) {
+  if (
+    content.includes("rounded-lg") &&
+    content.includes("bg-card") &&
+    !content.includes("ring-1")
+  ) {
     doubleBezelCount++;
-    warn("Potential flat card (bg-card + rounded-lg without ring/border)", file);
+    warn(
+      "Potential flat card (bg-card + rounded-lg without ring/border)",
+      file
+    );
   }
 }
 if (doubleBezelCount > 0) {
-  warn(`${doubleBezelCount} components may benefit from double-bezel (outer shell + inner core)`);
+  warn(
+    `${doubleBezelCount} components may benefit from double-bezel (outer shell + inner core)`
+  );
 } else {
   ok("No flat cards detected");
 }

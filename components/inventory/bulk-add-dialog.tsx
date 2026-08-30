@@ -257,7 +257,10 @@ export function BulkAddDialog({
                   </span>
                 </div>
                 {manualRows.map((row, i) => (
-                  <div key={row.id} className="grid grid-cols-6 items-center gap-2 sm:grid-cols-12">
+                  <div
+                    key={row.id}
+                    className="grid grid-cols-6 items-center gap-2 sm:grid-cols-12"
+                  >
                     <Input
                       className="col-span-6 sm:col-span-5"
                       value={row.name}
@@ -312,9 +315,12 @@ export function BulkAddDialog({
                   size="sm"
                   onClick={() =>
                     setManualRows((prev) => [
-          ...prev,
-          { ...MANUAL_EMPTY, id: `manual-${prev.length + 1}-${Date.now()}` },
-        ])
+                      ...prev,
+                      {
+                        ...MANUAL_EMPTY,
+                        id: `manual-${prev.length + 1}-${Date.now()}`,
+                      },
+                    ])
                   }
                 >
                   <Plus aria-hidden="true" />
@@ -435,7 +441,7 @@ export function BulkAddDialog({
 
         {step === "result" && results ? (
           <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between rounded-lg ring-foreground/10 ring-1 px-4 py-3">
+            <div className="ring-foreground/10 flex items-center justify-between rounded-lg px-4 py-3 ring-1">
               <span className="text-foreground text-sm font-medium">
                 Import finished
               </span>

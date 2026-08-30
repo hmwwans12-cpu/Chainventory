@@ -3,12 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import {
-  Bell,
-  CheckCheck,
-  ChevronRight,
-  Inbox,
-} from "lucide-react";
+import { Bell, CheckCheck, ChevronRight, Inbox } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -202,7 +197,10 @@ export function NotificationsPageView({
         "id, warehouse_id, type, title, body, payload, dedup_key, times, created_at, last_event_at, read_at"
       )
       .order("last_event_at", { ascending: false })
-      .range(notificationsRef.current.length, notificationsRef.current.length + pageSize - 1);
+      .range(
+        notificationsRef.current.length,
+        notificationsRef.current.length + pageSize - 1
+      );
     if (!error && data) {
       setNotifications((rows) => [...rows, ...(data as NotificationRow[])]);
       setHasMore(data.length >= pageSize);
@@ -270,7 +268,7 @@ export function NotificationsPageView({
                     type="button"
                     onClick={() => void handleRowClick(n)}
                     className={cn(
-                      "group hover:bg-muted/60 focus-visible:bg-muted/70 focus-visible:ring-ring focus-visible:ring-3 flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors focus-visible:outline-none",
+                      "group hover:bg-muted/60 focus-visible:bg-muted/70 focus-visible:ring-ring flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors focus-visible:ring-3 focus-visible:outline-none",
                       unread && "bg-primary/5",
                       flashId === n.id &&
                         "motion-safe:animate-[notif-flash_1.6s_ease-out]"
@@ -340,7 +338,11 @@ export function NotificationsPageView({
           </ul>
 
           <div className="border-border border-t px-4 py-3">
-            <LoadMore onClick={handleLoadMore} loading={loadingMore} hasMore={hasMore} />
+            <LoadMore
+              onClick={handleLoadMore}
+              loading={loadingMore}
+              hasMore={hasMore}
+            />
           </div>
         </PanelCard>
       )}

@@ -112,7 +112,10 @@ export function SiteHeader({
                 {active.name}
               </BreadcrumbLink>
             ) : (
-              <BreadcrumbLink render={<Link href="/dashboard" />} className="truncate">
+              <BreadcrumbLink
+                render={<Link href="/dashboard" />}
+                className="truncate"
+              >
                 Chainventory
               </BreadcrumbLink>
             )}
@@ -191,23 +194,23 @@ export function SiteHeader({
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  render={
-                    <Link
-                      href={
-                        active ? `/settings?warehouse=${active.id}` : "/settings"
-                      }
-                    />
-                  }
-                >
-                  <Settings aria-hidden="true" />
-                  {t("common.settings")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => void signOut()}>
-                  <LogOut aria-hidden="true" />
-                  {t("common.sign_out")}
-                </DropdownMenuItem>
+              <DropdownMenuItem
+                render={
+                  <Link
+                    href={
+                      active ? `/settings?warehouse=${active.id}` : "/settings"
+                    }
+                  />
+                }
+              >
+                <Settings aria-hidden="true" />
+                {t("common.settings")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => void signOut()}>
+                <LogOut aria-hidden="true" />
+                {t("common.sign_out")}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (

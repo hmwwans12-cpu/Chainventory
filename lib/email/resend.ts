@@ -20,7 +20,9 @@ export interface SendEmailResult {
  * (domain belum terverifikasi, quota, dst) TIDAK boleh membatalkan pembuatan
  * undangan — hanya dilaporkan.
  */
-export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
+export async function sendEmail(
+  input: SendEmailInput
+): Promise<SendEmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { ok: false, error: "RESEND_API_KEY not configured" };
 
@@ -42,7 +44,10 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
 
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
-      return { ok: false, error: `Resend ${res.status}: ${detail.slice(0, 300)}` };
+      return {
+        ok: false,
+        error: `Resend ${res.status}: ${detail.slice(0, 300)}`,
+      };
     }
     return { ok: true };
   } catch (err) {

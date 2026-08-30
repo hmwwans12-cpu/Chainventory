@@ -39,7 +39,7 @@ export function CopyButton({
       }}
       title={label}
       className={cn(
-        "text-muted-foreground hover:text-foreground hover:bg-muted relative inline-flex shrink-0 items-center justify-center rounded-md outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring before:absolute before:content-[''] before:-inset-[9px]",
+        "text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring relative inline-flex shrink-0 items-center justify-center rounded-md transition-colors outline-none before:absolute before:-inset-[9px] before:content-[''] focus-visible:ring-3",
         size === "icon-xs" ? "size-7" : "size-8",
         className
       )}

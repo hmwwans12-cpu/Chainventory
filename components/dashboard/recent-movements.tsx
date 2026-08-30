@@ -103,12 +103,16 @@ export function RecentMovements({
               </TableHeader>
               <TableBody>
                 {items.map((item) => {
-                  const meta = TYPE_META[item.movementType as keyof typeof TYPE_META];
+                  const meta =
+                    TYPE_META[item.movementType as keyof typeof TYPE_META];
                   const Icon = meta.icon;
                   const status =
-                    (STATUS_TONE_LABEL as Record<string, { tone: string; label: string }>)[
-                      item.status
-                    ] ?? null;
+                    (
+                      STATUS_TONE_LABEL as Record<
+                        string,
+                        { tone: string; label: string }
+                      >
+                    )[item.status] ?? null;
                   return (
                     <TableRow key={item.id}>
                       <TableCell>
@@ -122,7 +126,9 @@ export function RecentMovements({
                         <Badge
                           variant="secondary"
                           data-icon="inline-start"
-                          className={cn(TONE_CLASS[meta.tone] ?? "bg-muted text-foreground")}
+                          className={cn(
+                            TONE_CLASS[meta.tone] ?? "bg-muted text-foreground"
+                          )}
                         >
                           <Icon aria-hidden="true" />
                           {meta.label}

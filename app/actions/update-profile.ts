@@ -21,8 +21,7 @@ export async function updateDisplayNameAction(
   formData: FormData
 ): Promise<UpdateProfileState> {
   const raw = formData.get("displayName");
-  const value =
-    typeof raw === "string" ? raw.trim().replace(/\s+/g, " ") : "";
+  const value = typeof raw === "string" ? raw.trim().replace(/\s+/g, " ") : "";
 
   if (!value) {
     return { error: "Display name cannot be empty." };

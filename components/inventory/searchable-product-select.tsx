@@ -183,7 +183,7 @@ export function SearchableProductSelect({
                   role="option"
                   aria-selected={isSelected}
                   className={cn(
-                    "flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm outline-none select-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "focus-visible:ring-ring flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm outline-none select-none focus-visible:ring-2",
                     isActive && "bg-muted",
                     !isActive && isSelected && "bg-muted/60",
                     !isActive && !isSelected && "hover:bg-muted"

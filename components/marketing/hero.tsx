@@ -13,7 +13,10 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/components/providers/locale-provider";
-import { DoubleBezelCard, DoubleBezelCardContent } from "@/components/ui/double-bezel-card";
+import {
+  DoubleBezelCard,
+  DoubleBezelCardContent,
+} from "@/components/ui/double-bezel-card";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -28,9 +31,18 @@ const item = {
 };
 
 const STATS: { valueKey: string; labelKey: string }[] = [
-  { valueKey: "landing.hero.stat_real_time", labelKey: "landing.hero.stat_stock_updates" },
-  { valueKey: "landing.hero.stat_5_roles", labelKey: "landing.hero.stat_fine_access" },
-  { valueKey: "landing.hero.stat_proof", labelKey: "landing.hero.stat_every_movement" },
+  {
+    valueKey: "landing.hero.stat_real_time",
+    labelKey: "landing.hero.stat_stock_updates",
+  },
+  {
+    valueKey: "landing.hero.stat_5_roles",
+    labelKey: "landing.hero.stat_fine_access",
+  },
+  {
+    valueKey: "landing.hero.stat_proof",
+    labelKey: "landing.hero.stat_every_movement",
+  },
 ];
 
 const CHART = [35, 48, 30, 58, 45, 70, 62];
@@ -85,7 +97,9 @@ export function Hero() {
             className="font-display text-foreground text-[2.75rem] leading-[1.05] font-semibold tracking-tight text-balance sm:text-6xl"
           >
             {t("landing.hero.title_main")}{" "}
-            <span className="text-primary">{t("landing.hero.title_accent")}</span>
+            <span className="text-primary">
+              {t("landing.hero.title_accent")}
+            </span>
           </motion.h1>
 
           <motion.p
@@ -149,79 +163,79 @@ export function Hero() {
           <DoubleBezelCard className="bg-primary/5 ring-primary/10 rounded-lg p-2 ring-1">
             <DoubleBezelCardContent>
               <div className="shadow-elevated bg-card rounded-lg p-6">
-              <div className="border-border flex items-center justify-between border-b pb-4">
-                <div className="flex items-center gap-3">
-                  <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
-                    <Package aria-hidden="true" className="size-4" />
+                <div className="border-border flex items-center justify-between border-b pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
+                      <Package aria-hidden="true" className="size-4" />
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-foreground text-sm font-semibold">
+                        {t("landing.hero.preview_name")}
+                      </span>
+                      <span className="text-muted-foreground text-xs">
+                        WH-7K29-XP4
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-primary bg-tradewind/15 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
+                    <span className="bg-primary size-1.5 rounded-full" />
+                    {t("landing.hero.live")}
                   </span>
-                  <div className="flex flex-col">
-                    <span className="text-foreground text-sm font-semibold">
-                      {t("landing.hero.preview_name")}
-                    </span>
-                    <span className="text-muted-foreground text-xs">
-                      WH-7K29-XP4
-                    </span>
-                  </div>
                 </div>
-                <span className="text-primary bg-tradewind/15 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
-                  <span className="bg-primary size-1.5 rounded-full" />
-                  {t("landing.hero.live")}
-                </span>
-              </div>
 
-              <div className="grid grid-cols-3 gap-3 pt-5">
-                {[
-                  { labelKey: "landing.hero.total_products", value: "1,284" },
-                  { labelKey: "landing.hero.stock_in_30", value: "+4,320" },
-                  { labelKey: "landing.hero.stock_out_30", value: "−3,108" },
-                ].map((row) => (
-                  <div key={row.labelKey} className="flex flex-col gap-1">
-                    <span className="text-muted-foreground text-xs">
-                      {t(row.labelKey)}
-                    </span>
-                    <span className="font-display text-foreground text-base font-semibold tabular-nums">
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5">
-                <span className="text-muted-foreground text-xs">
-                  {t("landing.hero.chart_label")}
-                </span>
-                <svg
-                  viewBox="0 0 100 40"
-                  className="mt-2 h-16 w-full"
-                  role="img"
-                  aria-label={t("landing.hero.chart_label")}
-                >
-                  <title>{t("landing.hero.chart_label")}</title>
-                  {CHART.map((height, i) => (
-                    <rect
-                      key={i}
-                      x={i * 13 + 3}
-                      y={40 - height}
-                      width={8}
-                      height={height}
-                      rx={2}
-                      fill={i === 5 ? "var(--primary)" : "var(--secondary)"}
-                      opacity={i === 5 ? 1 : 0.45}
-                    />
+                <div className="grid grid-cols-3 gap-3 pt-5">
+                  {[
+                    { labelKey: "landing.hero.total_products", value: "1,284" },
+                    { labelKey: "landing.hero.stock_in_30", value: "+4,320" },
+                    { labelKey: "landing.hero.stock_out_30", value: "−3,108" },
+                  ].map((row) => (
+                    <div key={row.labelKey} className="flex flex-col gap-1">
+                      <span className="text-muted-foreground text-xs">
+                        {t(row.labelKey)}
+                      </span>
+                      <span className="font-display text-foreground text-base font-semibold tabular-nums">
+                        {row.value}
+                      </span>
+                    </div>
                   ))}
-                </svg>
-              </div>
+                </div>
 
-              <div className="border-border flex items-center justify-between border-t pt-4">
-                <span className="text-primary inline-flex items-center gap-1.5 text-xs font-medium">
-                  <BadgeCheck aria-hidden="true" className="size-4" />
-                  {t("landing.hero.blockchain_verified")}
-                </span>
-                <span className="text-muted-foreground text-xs">
-                  {t("landing.hero.base_sepolia")}
-                </span>
+                <div className="mt-5">
+                  <span className="text-muted-foreground text-xs">
+                    {t("landing.hero.chart_label")}
+                  </span>
+                  <svg
+                    viewBox="0 0 100 40"
+                    className="mt-2 h-16 w-full"
+                    role="img"
+                    aria-label={t("landing.hero.chart_label")}
+                  >
+                    <title>{t("landing.hero.chart_label")}</title>
+                    {CHART.map((height, i) => (
+                      <rect
+                        key={i}
+                        x={i * 13 + 3}
+                        y={40 - height}
+                        width={8}
+                        height={height}
+                        rx={2}
+                        fill={i === 5 ? "var(--primary)" : "var(--secondary)"}
+                        opacity={i === 5 ? 1 : 0.45}
+                      />
+                    ))}
+                  </svg>
+                </div>
+
+                <div className="border-border flex items-center justify-between border-t pt-4">
+                  <span className="text-primary inline-flex items-center gap-1.5 text-xs font-medium">
+                    <BadgeCheck aria-hidden="true" className="size-4" />
+                    {t("landing.hero.blockchain_verified")}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    {t("landing.hero.base_sepolia")}
+                  </span>
+                </div>
               </div>
-            </div>
             </DoubleBezelCardContent>
           </DoubleBezelCard>
 

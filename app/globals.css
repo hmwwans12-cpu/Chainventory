@@ -164,7 +164,7 @@
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
 
---shadow-card: 0 1px 2px rgb(28 59 48 / 0.05);
+  --shadow-card: 0 1px 2px rgb(28 59 48 / 0.05);
   --shadow-elevated: 0 2px 8px rgb(28 59 48 / 0.08);
   --shadow-modal: 0 12px 32px rgb(28 59 48 / 0.18);
 

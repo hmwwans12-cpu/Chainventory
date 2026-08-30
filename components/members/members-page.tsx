@@ -288,7 +288,7 @@ export function MembersPage({
         {canInvite ? (
           <div className="border-border flex min-w-0 flex-wrap items-center gap-2 rounded-lg border px-3 py-1.5">
             <span className="text-muted-foreground text-xs">Invite code</span>
-            <span className="font-mono truncate text-sm tracking-wide">
+            <span className="truncate font-mono text-sm tracking-wide">
               {inviteCode}
             </span>
             <Button
@@ -522,20 +522,151 @@ export function MembersPage({
         />
       ) : (
         <PanelCard padding="none">
-        <div className="hidden md:block overflow-x-auto">
-        <Table className="md:min-w-[700px]">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Member</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="hidden lg:table-cell">Joined</TableHead>
-              <TableHead className="w-12">
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+          <div className="hidden overflow-x-auto md:block">
+            <Table className="md:min-w-[700px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Member</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden lg:table-cell">Joined</TableHead>
+                  <TableHead className="w-12">
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {members.map((member) => {
+                  const isSelf = member.userId === myUserId;
+                  const manageable =
+                    !isSelf &&
+                    member.role !== "OWNER" &&
+                    canAssignRole(role, member.role);
+                  const assignable = ROLES.filter(
+                    (r) =>
+                      r !== "OWNER" &&
+                      canAssignRole(role, r) &&
+                      r !== member.role
+                  );
+                  const roleMeta = ROLE_META[member.role];
+                  return (
+                    <TableRow
+                      key={member.membershipId}
+                      data-state={
+                        member.status !== "ACTIVE" ? "selected" : undefined
+                      }
+                    >
+                      <TableCell>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-foreground font-medium">
+                            {member.displayName ?? "Unnamed member"}
+                            {isSelf ? (
+                              <span className="text-muted-foreground font-normal">
+                                {" "}
+                                (you)
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="text-muted-foreground text-xs">
+                            {member.email}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {manageable && assignable.length > 0 ? (
+                          <Select
+                            value={member.role}
+                            onValueChange={(value) => {
+                              if (value !== null && value !== member.role) {
+                                handleRoleChange(member, value);
+                              }
+                            }}
+                          >
+                            <SelectTrigger
+                              className="w-32"
+                              disabled={changing.has(member.membershipId)}
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {assignable.map((r) => (
+                                <SelectItem key={r} value={r}>
+                                  {ROLE_META[r].label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <StatusBadge
+                            tone={roleMeta.tone}
+                            label={roleMeta.label}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge
+                          tone={
+                            member.status === "ACTIVE"
+                              ? "success"
+                              : member.status === "PENDING"
+                                ? "pending"
+                                : "suspended"
+                          }
+                          label={
+                            member.status === "ACTIVE"
+                              ? "Active"
+                              : member.status === "PENDING"
+                                ? "Pending"
+                                : "Suspended"
+                          }
+                        />
+                      </TableCell>
+                      <TableCell className="text-muted-foreground hidden text-xs tabular-nums lg:table-cell">
+                        {member.joinedAt ? formatDate(member.joinedAt) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={`Actions for ${member.displayName ?? member.email}`}
+                              />
+                            }
+                          >
+                            <MoreHorizontal aria-hidden="true" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {isSelf ? (
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => setLeaveTarget(member)}
+                              >
+                                <LogOut aria-hidden="true" />
+                                Leave warehouse
+                              </DropdownMenuItem>
+                            ) : null}
+                            {manageable ? (
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => setRemoveTarget(member)}
+                              >
+                                <UserMinus aria-hidden="true" />
+                                Remove member
+                              </DropdownMenuItem>
+                            ) : null}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          {/* Mobile: card list (audit N) */}
+          <ul className="divide-y md:hidden">
             {members.map((member) => {
               const isSelf = member.userId === myUserId;
               const manageable =
@@ -547,242 +678,113 @@ export function MembersPage({
                   r !== "OWNER" && canAssignRole(role, r) && r !== member.role
               );
               const roleMeta = ROLE_META[member.role];
+              const statusTone =
+                member.status === "ACTIVE"
+                  ? "success"
+                  : member.status === "PENDING"
+                    ? "pending"
+                    : "suspended";
+              const statusLabel =
+                member.status === "ACTIVE"
+                  ? "Active"
+                  : member.status === "PENDING"
+                    ? "Pending"
+                    : "Suspended";
               return (
-                <TableRow
+                <li
                   key={member.membershipId}
-                  data-state={
-                    member.status !== "ACTIVE" ? "selected" : undefined
-                  }
+                  className="flex items-start justify-between gap-3 p-4"
                 >
-                  <TableCell>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-foreground font-medium">
-                        {member.displayName ?? "Unnamed member"}
-                        {isSelf ? (
-                          <span className="text-muted-foreground font-normal">
-                            {" "}
-                            (you)
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="text-muted-foreground text-xs">
-                        {member.email}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {manageable && assignable.length > 0 ? (
-                      <Select
-                        value={member.role}
-                        onValueChange={(value) => {
-                          if (value !== null && value !== member.role) {
-                            handleRoleChange(member, value);
-                          }
-                        }}
-                      >
-                        <SelectTrigger
-                          className="w-32"
-                          disabled={changing.has(member.membershipId)}
+                  <div className="min-w-0 flex-1">
+                    <span className="text-foreground truncate font-medium">
+                      {member.displayName ?? "Unnamed member"}
+                      {isSelf ? (
+                        <span className="text-muted-foreground font-normal">
+                          {" "}
+                          (you)
+                        </span>
+                      ) : null}
+                    </span>
+                    <p className="text-muted-foreground mt-0.5 text-xs">
+                      {member.email}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      {manageable && assignable.length > 0 ? (
+                        <Select
+                          value={member.role}
+                          onValueChange={(value) => {
+                            if (value !== null && value !== member.role) {
+                              handleRoleChange(member, value);
+                            }
+                          }}
                         >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {assignable.map((r) => (
-                            <SelectItem key={r} value={r}>
-                              {ROLE_META[r].label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <StatusBadge
-                        tone={roleMeta.tone}
-                        label={roleMeta.label}
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge
-                      tone={
-                        member.status === "ACTIVE"
-                          ? "success"
-                          : member.status === "PENDING"
-                            ? "pending"
-                            : "suspended"
-                      }
-                      label={
-                        member.status === "ACTIVE"
-                          ? "Active"
-                          : member.status === "PENDING"
-                            ? "Pending"
-                            : "Suspended"
-                      }
-                    />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground hidden text-xs tabular-nums lg:table-cell">
-                    {member.joinedAt ? formatDate(member.joinedAt) : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={`Actions for ${member.displayName ?? member.email}`}
-                          />
-                        }
-                      >
-                        <MoreHorizontal aria-hidden="true" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {isSelf ? (
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => setLeaveTarget(member)}
+                          <SelectTrigger
+                            className="w-32"
+                            disabled={changing.has(member.membershipId)}
                           >
-                            <LogOut aria-hidden="true" />
-                            Leave warehouse
-                          </DropdownMenuItem>
-                        ) : null}
-                        {manageable ? (
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => setRemoveTarget(member)}
-                          >
-                            <UserMinus aria-hidden="true" />
-                            Remove member
-                          </DropdownMenuItem>
-                        ) : null}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {assignable.map((r) => (
+                              <SelectItem key={r} value={r}>
+                                {ROLE_META[r].label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <StatusBadge
+                          tone={roleMeta.tone}
+                          label={roleMeta.label}
+                        />
+                      )}
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <StatusBadge tone={statusTone} label={statusLabel} />
+                      {member.joinedAt ? (
+                        <span className="text-muted-foreground text-xs">
+                          {formatDate(member.joinedAt)}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Actions for ${member.displayName ?? member.email}`}
+                        />
+                      }
+                    >
+                      <MoreHorizontal aria-hidden="true" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {isSelf ? (
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setLeaveTarget(member)}
+                        >
+                          <LogOut aria-hidden="true" />
+                          Leave warehouse
+                        </DropdownMenuItem>
+                      ) : null}
+                      {manageable ? (
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setRemoveTarget(member)}
+                        >
+                          <UserMinus aria-hidden="true" />
+                          Remove member
+                        </DropdownMenuItem>
+                      ) : null}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </li>
               );
             })}
-            </TableBody>
-        </Table>
-        </div>
-        {/* Mobile: card list (audit N) */}
-        <ul className="divide-y md:hidden">
-          {members.map((member) => {
-            const isSelf = member.userId === myUserId;
-            const manageable =
-              !isSelf &&
-              member.role !== "OWNER" &&
-              canAssignRole(role, member.role);
-            const assignable = ROLES.filter(
-              (r) =>
-                r !== "OWNER" && canAssignRole(role, r) && r !== member.role
-            );
-            const roleMeta = ROLE_META[member.role];
-            const statusTone =
-              member.status === "ACTIVE"
-                ? "success"
-                : member.status === "PENDING"
-                  ? "pending"
-                  : "suspended";
-            const statusLabel =
-              member.status === "ACTIVE"
-                ? "Active"
-                : member.status === "PENDING"
-                  ? "Pending"
-                  : "Suspended";
-            return (
-              <li
-                key={member.membershipId}
-                className="flex items-start justify-between gap-3 p-4"
-              >
-                <div className="min-w-0 flex-1">
-                  <span className="text-foreground truncate font-medium">
-                    {member.displayName ?? "Unnamed member"}
-                    {isSelf ? (
-                      <span className="text-muted-foreground font-normal">
-                        {" "}
-                        (you)
-                      </span>
-                    ) : null}
-                  </span>
-                  <p className="text-muted-foreground mt-0.5 text-xs">
-                    {member.email}
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    {manageable && assignable.length > 0 ? (
-                      <Select
-                        value={member.role}
-                        onValueChange={(value) => {
-                          if (value !== null && value !== member.role) {
-                            handleRoleChange(member, value);
-                          }
-                        }}
-                      >
-                        <SelectTrigger
-                          className="w-32"
-                          disabled={changing.has(member.membershipId)}
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {assignable.map((r) => (
-                            <SelectItem key={r} value={r}>
-                              {ROLE_META[r].label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <StatusBadge
-                        tone={roleMeta.tone}
-                        label={roleMeta.label}
-                      />
-                    )}
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <StatusBadge tone={statusTone} label={statusLabel} />
-                    {member.joinedAt ? (
-                      <span className="text-muted-foreground text-xs">
-                        {formatDate(member.joinedAt)}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Actions for ${member.displayName ?? member.email}`}
-                      />
-                    }
-                  >
-                    <MoreHorizontal aria-hidden="true" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {isSelf ? (
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => setLeaveTarget(member)}
-                      >
-                        <LogOut aria-hidden="true" />
-                        Leave warehouse
-                      </DropdownMenuItem>
-                    ) : null}
-                    {manageable ? (
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => setRemoveTarget(member)}
-                      >
-                        <UserMinus aria-hidden="true" />
-                        Remove member
-                      </DropdownMenuItem>
-                    ) : null}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </li>
-            );
-          })}
-        </ul>
+          </ul>
         </PanelCard>
       )}
 

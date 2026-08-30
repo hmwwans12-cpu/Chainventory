@@ -4,7 +4,10 @@ import { Eye, FileCheck2, Lock, ShieldCheck } from "lucide-react";
 
 import { useLocale } from "@/components/providers/locale-provider";
 import { Reveal } from "@/components/marketing/reveal";
-import { DoubleBezelCard, DoubleBezelCardContent } from "@/components/ui/double-bezel-card";
+import {
+  DoubleBezelCard,
+  DoubleBezelCardContent,
+} from "@/components/ui/double-bezel-card";
 
 /**
  * Security section (DESIGN §22).
@@ -56,7 +59,7 @@ export function Security() {
         <div className="grid gap-4 sm:grid-cols-2">
           <Reveal className="sm:col-span-2 md:flex-row md:items-start md:gap-5">
             <DoubleBezelCard className="md:flex-row md:items-start md:gap-5 md:p-7">
-              <DoubleBezelCardContent className="flex flex-col gap-1.5 shrink-0 md:flex-1">
+              <DoubleBezelCardContent className="flex shrink-0 flex-col gap-1.5 md:flex-1">
                 <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-xl">
                   <featured.icon aria-hidden="true" className="size-5" />
                 </span>
