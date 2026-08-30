@@ -1,6 +1,12 @@
 import { hasPermission, PERMISSIONS, type Role } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-import { forbidden, getMemberRole, requireUser } from "@/lib/api-handler";
+import {
+  forbidden,
+  getMemberRole,
+  invalid,
+  requireRateLimit,
+  requireUser,
+} from "@/lib/api-handler";
 import { toCsv } from "@/lib/inventory/csv";
 import { logger } from "@/lib/logger";
 
@@ -29,6 +35,9 @@ export async function GET(request: Request) {
   const auth = await requireUser(supabase);
   if (auth.res) return auth.res;
 
+  const rateLimited = await requireRateLimit("export", auth.user.id, request);
+  if (rateLimited) return rateLimited;
+
   const role = await getMemberRole(supabase, warehouseId, auth.user.id);
   if (!role) return forbidden("Not a member of this warehouse.");
 
@@ -50,6 +59,7 @@ export async function GET(request: Request) {
         .split(",")
         .map((x) => x.trim())
         .filter((x) => /^[0-9a-f-]{36}$/i.test(x));
+      if (ids.length > 200) return invalid("Too many ids (max 200).");
       if (ids.length) productsQuery = productsQuery.in("id", ids);
     }
 

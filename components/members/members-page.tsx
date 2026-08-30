@@ -286,9 +286,9 @@ export function MembersPage({
           ) : null}
         </div>
         {canInvite ? (
-          <div className="border-border flex items-center gap-2 rounded-lg border px-3 py-1.5">
+          <div className="border-border flex min-w-0 flex-wrap items-center gap-2 rounded-lg border px-3 py-1.5">
             <span className="text-muted-foreground text-xs">Invite code</span>
-            <span className="font-mono text-sm tracking-wide">
+            <span className="font-mono truncate text-sm tracking-wide">
               {inviteCode}
             </span>
             <Button

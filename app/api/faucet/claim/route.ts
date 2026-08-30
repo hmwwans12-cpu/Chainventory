@@ -48,6 +48,17 @@ export async function POST(request: Request) {
       { userId: user.id, error: result.error },
       "faucet claim failed"
     );
+    // Cooldown is rate-limit, not validation — return 429 with Retry-After
+    if (result.cooldownMs && result.cooldownMs > 0) {
+      const retryAfter = Math.max(Math.ceil(result.cooldownMs / 1000), 1);
+      const res = error(
+        result.error ?? "Rate limit active.",
+        "RATE_LIMITED",
+        429
+      );
+      res.headers.set("Retry-After", String(retryAfter));
+      return res;
+    }
     return error(result.error ?? "Claim failed.", "INVALID_INPUT", 400);
   }
 

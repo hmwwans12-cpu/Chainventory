@@ -56,10 +56,10 @@ export default async function DashboardLayout({
     <LocaleProvider initialLocale={initialLocale}>
       <SidebarProvider defaultOpen={defaultOpen}>
       <a
-        href="#main-content"
+        href="#dashboard-main"
         className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
       >
-        Skip to content
+        Skip to dashboard content
       </a>
       <Suspense fallback={null}>
         <AppSidebar
@@ -75,7 +75,7 @@ export default async function DashboardLayout({
           isDeveloper={isDeveloper}
         />
       </Suspense>
-      <SidebarInset id="main-content">
+      <SidebarInset id="dashboard-main">
         <Suspense fallback={<div className="h-14 shrink-0 border-b" />}>
           <SiteHeader
             warehouses={(warehouses ?? []).map((w) => ({

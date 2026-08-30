@@ -67,6 +67,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
       data-slot="table-head"
+      scope="col"
       className={cn(
         // Density freeze (DESIGN §84.8): header 44px (touch target), gutter 16px.
         "text-muted-foreground h-11 px-4 text-left align-middle text-xs font-medium whitespace-nowrap",

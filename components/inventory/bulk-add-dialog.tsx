@@ -242,24 +242,24 @@ export function BulkAddDialog({
 
             {mode === "manual" ? (
               <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-12 gap-2 px-1">
-                  <span className="text-muted-foreground col-span-5 text-xs font-medium">
+                <div className="grid grid-cols-6 gap-2 px-1 sm:grid-cols-12">
+                  <span className="text-muted-foreground col-span-6 text-xs font-medium sm:col-span-5">
                     Name
                   </span>
-                  <span className="text-muted-foreground col-span-3 text-xs font-medium">
+                  <span className="text-muted-foreground col-span-3 text-xs font-medium sm:col-span-3">
                     SKU
                   </span>
-                  <span className="text-muted-foreground col-span-2 text-xs font-medium">
+                  <span className="text-muted-foreground col-span-3 text-xs font-medium sm:col-span-2">
                     Unit
                   </span>
-                  <span className="text-muted-foreground col-span-2 text-xs font-medium">
+                  <span className="text-muted-foreground hidden text-xs font-medium sm:col-span-2 sm:block">
                     Category
                   </span>
                 </div>
                 {manualRows.map((row, i) => (
-                  <div key={row.id} className="grid grid-cols-12 items-center gap-2">
+                  <div key={row.id} className="grid grid-cols-6 items-center gap-2 sm:grid-cols-12">
                     <Input
-                      className="col-span-5"
+                      className="col-span-6 sm:col-span-5"
                       value={row.name}
                       onChange={(e) =>
                         updateManualRow(i, "name", e.target.value)
@@ -267,7 +267,7 @@ export function BulkAddDialog({
                       placeholder="Product name"
                     />
                     <Input
-                      className="col-span-3"
+                      className="col-span-3 sm:col-span-3"
                       value={row.sku}
                       onChange={(e) =>
                         updateManualRow(i, "sku", e.target.value)
@@ -275,14 +275,14 @@ export function BulkAddDialog({
                       placeholder="SKU"
                     />
                     <Input
-                      className="col-span-2"
+                      className="col-span-3 sm:col-span-2"
                       value={row.unit}
                       onChange={(e) =>
                         updateManualRow(i, "unit", e.target.value)
                       }
                       placeholder="pcs"
                     />
-                    <div className="col-span-2 flex items-center gap-1">
+                    <div className="col-span-6 flex items-center gap-1 sm:col-span-2">
                       <Input
                         value={row.category}
                         onChange={(e) =>

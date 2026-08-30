@@ -42,6 +42,8 @@ export const MUTATION_RATE_LIMITS = {
   membership: { user: 20, ip: 60 },
   /** sinkronisasi wallet Privy. */
   "wallet-sync": { user: 10, ip: 30 },
+  /** export CSV (products/movements). */
+  export: { user: 30, ip: 120 },
 } as const;
 
 export type MutationAction = keyof typeof MUTATION_RATE_LIMITS;

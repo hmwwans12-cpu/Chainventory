@@ -152,12 +152,14 @@ export function ProductsPage({
     products.length > 0 && products.every((p) => selected.has(p.id));
   const toggleSelectAll = () =>
     setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.size && products.every((p) => next.has(p.id))) {
+      const allVisible = products.every((p) => prev.has(p.id));
+      if (allVisible) {
+        const next = new Set(prev);
         products.forEach((p) => next.delete(p.id));
-      } else {
-        products.forEach((p) => next.add(p.id));
+        return next;
       }
+      const next = new Set(prev);
+      products.forEach((p) => next.add(p.id));
       return next;
     });
   const clearSelection = () => setSelected(new Set());
@@ -293,8 +295,7 @@ export function ProductsPage({
       applyFilters(searchInput, statusFilter ?? "active");
     }, 350);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchInput, warehouseId, statusFilter]);
+  }, [searchInput, statusFilter, applyFilters]);
 
   const refresh = () => router.refresh();
 

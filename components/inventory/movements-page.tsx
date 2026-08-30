@@ -234,7 +234,7 @@ export function MovementsPage({
   }, [warehouseId, supabase]);
 
   const loadMore = async () => {
-    if (loadingMore) return;
+    if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     setLoadError(false);
     const { items, error } = await fetchPage(

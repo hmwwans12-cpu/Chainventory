@@ -284,6 +284,16 @@ export async function POST(request: Request) {
         .maybeSingle();
       if (!movement.data) return notFound("Movement not found.");
 
+      // RBAC: approve requires STOCK_APPROVE_ADJUSTMENT (P1 blocker Q-01)
+      const role = await getMemberRole(
+        supabase,
+        movement.data.warehouse_id,
+        auth.user.id
+      );
+      if (!role || !hasPermission(role, PERMISSIONS.STOCK_APPROVE_ADJUSTMENT)) {
+        return forbidden("Insufficient permission.");
+      }
+
       // Audit C-02: tolak mutasi bila warehouse suspended/inactive.
       const inactive = await requireActiveWarehouse(
         supabase,
@@ -355,6 +365,16 @@ export async function POST(request: Request) {
         .eq("id", parsed.data.movementId)
         .maybeSingle();
       if (!movement.data) return notFound("Movement not found.");
+
+      // RBAC: reject requires STOCK_APPROVE_ADJUSTMENT (P1 blocker Q-01)
+      const role = await getMemberRole(
+        supabase,
+        movement.data.warehouse_id,
+        auth.user.id
+      );
+      if (!role || !hasPermission(role, PERMISSIONS.STOCK_APPROVE_ADJUSTMENT)) {
+        return forbidden("Insufficient permission.");
+      }
 
       // Audit C-02: tolak mutasi bila warehouse suspended/inactive.
       const inactive = await requireActiveWarehouse(
