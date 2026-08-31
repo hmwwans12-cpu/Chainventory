@@ -8,7 +8,7 @@ import {
 } from "@/lib/warehouses/current-warehouse";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
-import { EmptyState } from "@/components/shared/empty-state";
+import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { TransactionsPage } from "@/components/transactions/transactions-page";
 import type { MovementListItem, MovementStatus } from "@/lib/inventory/types";
 
@@ -85,19 +85,7 @@ export default async function TransactionsPageRoute({
           title="Transactions"
           description="Stock operations and their blockchain proof status."
         />
-        <EmptyState
-          icon={ArrowLeftRight}
-          title="No warehouse yet"
-          description="Create a warehouse to start recording transactions, or join one with a warehouse code."
-          primaryAction={{
-            label: "Create Warehouse",
-            href: "/onboarding/create",
-          }}
-          secondaryAction={{
-            label: "Join Warehouse",
-            href: "/onboarding/join",
-          }}
-        />
+        <NoWarehouse description="Create a warehouse to start recording transactions, or join one with a warehouse code." />
       </div>
     );
   }

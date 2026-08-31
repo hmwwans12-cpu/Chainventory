@@ -8,7 +8,7 @@ import {
 } from "@/lib/warehouses/current-warehouse";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
-import { EmptyState } from "@/components/shared/empty-state";
+import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { BlockchainPage } from "@/components/blockchain/blockchain-page";
 import type { DeploymentSummary, ProofRow } from "@/lib/blockchain/types";
 
@@ -47,19 +47,7 @@ export default async function BlockchainPageRoute({
           title="Audit Explorer"
           description="Verification proofs, transaction hashes, and Base Sepolia status."
         />
-        <EmptyState
-          icon={Link2}
-          title="No warehouse yet"
-          description="Create a warehouse to see its on-chain proof status, or join one with a warehouse code."
-          primaryAction={{
-            label: "Create Warehouse",
-            href: "/onboarding/create",
-          }}
-          secondaryAction={{
-            label: "Join Warehouse",
-            href: "/onboarding/join",
-          }}
-        />
+        <NoWarehouse description="Create a warehouse to see its on-chain proof status, or join one with a warehouse code." />
       </div>
     );
   }

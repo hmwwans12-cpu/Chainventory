@@ -57,7 +57,7 @@ export default async function DashboardLayout({
       <SidebarProvider defaultOpen={defaultOpen}>
         <a
           href="#dashboard-main"
-          className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
+          className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[calc(var(--z-sidebar,10)+1)] focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
         >
           Skip to dashboard content
         </a>

@@ -8,7 +8,7 @@ import {
 } from "@/lib/warehouses/current-warehouse";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
-import { EmptyState } from "@/components/shared/empty-state";
+import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { ProductsPage } from "@/components/inventory/products-page";
 import type { ProductRow } from "@/lib/inventory/types";
 
@@ -54,19 +54,7 @@ export default async function ProductsPageRoute({
           title="Products"
           description="Manage your warehouse inventory."
         />
-        <EmptyState
-          icon={Package}
-          title="No warehouse yet"
-          description="Create a warehouse to start managing inventory, or join one with a warehouse code."
-          primaryAction={{
-            label: "Create Warehouse",
-            href: "/onboarding/create",
-          }}
-          secondaryAction={{
-            label: "Join Warehouse",
-            href: "/onboarding/join",
-          }}
-        />
+        <NoWarehouse />
       </div>
     );
   }

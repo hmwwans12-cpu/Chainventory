@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  ArrowRight,
   Layers,
   Package,
   PackageMinus,
@@ -50,7 +48,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md Â§6); cegah percobaan prerender saat env build minim.
@@ -414,29 +411,6 @@ export default async function DashboardPage({
         status={active.status}
         inactiveDays={inactiveDays}
       />
-
-      {/* Quick actions â€” target sentuh Ã¢â€°Â¥44px (Fitts), di akhir aliran */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          render={<Link href={`/inventory/movements?${whQuery}`} />}
-        >
-          {t("dashboard.stock_movements")}
-          <ArrowRight aria-hidden="true" />
-        </Button>
-        <Button
-          variant="outline"
-          render={<Link href={`/inventory/products?${whQuery}`} />}
-        >
-          {t("dashboard.products")}
-        </Button>
-        <Button
-          variant="outline"
-          render={<Link href={`/analytics?${whQuery}&range=${range}`} />}
-        >
-          {t("dashboard.analytics")}
-        </Button>
-      </div>
     </div>
   );
 }

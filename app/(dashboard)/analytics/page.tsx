@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import {
-  BarChart3,
   Package,
   Layers,
   PackagePlus,
@@ -14,7 +13,7 @@ import {
 } from "@/lib/warehouses/current-warehouse";
 import { fetchAnalytics, parseRange } from "@/lib/analytics/aggregate";
 import { PageHeader } from "@/components/shared/page-header";
-import { EmptyState } from "@/components/shared/empty-state";
+import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { ErrorState } from "@/components/shared/error-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalyticsControls } from "@/components/analytics/analytics-controls";
@@ -62,19 +61,7 @@ export default async function AnalyticsPage({
           title="Analytics"
           description="Stock movement trends and inventory overview."
         />
-        <EmptyState
-          icon={BarChart3}
-          title="No warehouse yet"
-          description="Create a warehouse to see analytics, or join one with a warehouse code."
-          primaryAction={{
-            label: "Create Warehouse",
-            href: "/onboarding/create",
-          }}
-          secondaryAction={{
-            label: "Join Warehouse",
-            href: "/onboarding/join",
-          }}
-        />
+        <NoWarehouse description="Create a warehouse to see analytics, or join one with a warehouse code." />
       </div>
     );
   }

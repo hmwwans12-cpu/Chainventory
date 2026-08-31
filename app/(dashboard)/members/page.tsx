@@ -9,7 +9,7 @@ import {
 import { embedOne } from "@/lib/inventory/types";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
-import { EmptyState } from "@/components/shared/empty-state";
+import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { MembersPage } from "@/components/members/members-page";
 import type { MemberListItem, PendingJoinRequest } from "@/lib/members/types";
 
@@ -46,19 +46,7 @@ export default async function MembersPageRoute({
           title="Members"
           description="Warehouse team and role-based access."
         />
-        <EmptyState
-          icon={Users}
-          title="No warehouse yet"
-          description="Create a warehouse to build your team, or join one with a warehouse code."
-          primaryAction={{
-            label: "Create Warehouse",
-            href: "/onboarding/create",
-          }}
-          secondaryAction={{
-            label: "Join Warehouse",
-            href: "/onboarding/join",
-          }}
-        />
+        <NoWarehouse description="Create a warehouse to build your team, or join one with a warehouse code." />
       </div>
     );
   }

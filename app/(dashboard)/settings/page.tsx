@@ -22,7 +22,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { CopyButton } from "@/components/shared/copy-button";
 import { DisplayNameEditor } from "@/components/shared/display-name-editor";
-import { SignOutButton } from "@/components/shared/sign-out-button";
 import { WalletBalance } from "@/components/shared/wallet-balance";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
@@ -267,24 +266,6 @@ export default async function SettingsPage({
       )}
 
       <NotificationPreferencesPanel initial={prefs} />
-
-      {/* Account / sesi — logout juga bisa diakses dari Settings */}
-      <Card>
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <p className="text-foreground text-sm font-semibold">
-              {t("settings.account")}
-            </p>
-            <p className="text-muted-foreground truncate text-xs">
-              {t("settings.signed_in").replace(
-                "{email}",
-                email || user.email || ""
-              )}
-            </p>
-          </div>
-          <SignOutButton />
-        </CardContent>
-      </Card>
     </div>
   );
 }
