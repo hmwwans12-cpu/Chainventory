@@ -108,8 +108,8 @@ export const env = createEnv({
     NEXT_PUBLIC_PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
   },
 
-  // Foundation phase: many external credentials are not provisioned yet.
-  // Kept as optional so the app builds locally; will be tightened once
-  // Supabase/Privy/Upstash/QStash projects exist (fail-fast in prod).
-  skipValidation: process.env.NODE_ENV !== "production",
+  // CI/preview builds without live secrets should set SKIP_ENV_VALIDATION=1
+  // to avoid fail-fast. Production deploys (Vercel) run without it and will
+  // fail-fast if secrets are missing (TECHSTACK §4).
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });
