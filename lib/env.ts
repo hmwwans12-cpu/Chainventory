@@ -63,6 +63,9 @@ export const env = createEnv({
     QSTASH_APP_BASE_URL: z.string().url().optional(),
     VERCEL_URL: z.string().min(1).optional(),
 
+    // CI bypass for builds without live secrets
+    SKIP_ENV_VALIDATION: z.string().optional(),
+
     // Observability
     LOG_LEVEL: z
       .enum(["fatal", "error", "warn", "info", "debug", "trace"])
@@ -99,6 +102,7 @@ export const env = createEnv({
     QSTASH_APP_BASE_URL: process.env.QSTASH_APP_BASE_URL,
     VERCEL_URL: process.env.VERCEL_URL,
     DEVELOPER_ALLOWLIST: process.env.DEVELOPER_ALLOWLIST,
+    SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION,
     LOG_LEVEL: process.env.LOG_LEVEL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
