@@ -9,13 +9,20 @@ import { supabaseClientKey, supabaseUrl } from "@/lib/supabase/config";
  * NEVER use the secret/service-role key for normal user requests.
  */
 export async function createClient() {
-  const url = supabaseUrl();
-  const key = supabaseClientKey();
+  let url = supabaseUrl();
+  let key = supabaseClientKey();
 
   if (!url || !key) {
-    throw new Error(
-      "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY."
-    );
+    if (process.env.SKIP_ENV_VALIDATION) {
+      // CI/quality build without live secrets — use dummy so static pages can prerender.
+      // Any auth call will return no user, which is correct for unauthenticated marketing.
+      url = url ?? "https://example.supabase.co";
+      key = key ?? "dummy-publishable-key";
+    } else {
+      throw new Error(
+        "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY."
+      );
+    }
   }
 
   const cookieStore = await cookies();
