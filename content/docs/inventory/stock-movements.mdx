@@ -9,12 +9,12 @@ A **stock movement** is any change to a product's balance. Every movement is tim
 
 ## Movement Types
 
-| Type       | Effect on balance | Requires approval | Permission        |
-| ---------- | ----------------- | ----------------- | ----------------- |
-| Stock In   | Increases         | No                | `stock:in`        |
-| Stock Out  | Decreases         | No                | `stock:out`       |
-| Adjustment | Set to new value  | Owner/Manager     | `stock:adjustment`|
-| Reversal   | Undoes a movement | Owner/Manager     | `stock:reversal`  |
+| Type       | Effect on balance | Requires approval | Permission         |
+| ---------- | ----------------- | ----------------- | ------------------ |
+| Stock In   | Increases         | No                | `stock:in`         |
+| Stock Out  | Decreases         | No                | `stock:out`        |
+| Adjustment | Set to new value  | Owner/Manager     | `stock:adjustment` |
+| Reversal   | Undoes a movement | Owner/Manager     | `stock:reversal`   |
 
 See [Core Concepts](/docs/getting-started/concepts) for a detailed description of each type and its validation rules.
 
@@ -65,6 +65,6 @@ Combine filters to investigate a specific discrepancy quickly.
 Adjustments and reversals require an Owner or Manager to approve before they affect the balance. Pending approvals show a **Pending** badge and can be approved or rejected from the movement detail view.
 
 <Callout type="info">
-  Rejected adjustments leave the original balance untouched and are recorded as a
-  rejected action in the audit trail for transparency.
+  Rejected adjustments leave the original balance untouched and are recorded as
+  a rejected action in the audit trail for transparency.
 </Callout>

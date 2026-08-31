@@ -55,33 +55,15 @@ export default async function DashboardLayout({
   return (
     <LocaleProvider initialLocale={initialLocale}>
       <SidebarProvider defaultOpen={defaultOpen}>
-      <a
-        href="#dashboard-main"
-        className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
-      >
-        Skip to dashboard content
-      </a>
-      <Suspense fallback={null}>
-        <AppSidebar
-          warehouses={warehouses ?? []}
-          user={
-            user
-              ? {
-                  name: profile?.display_name ?? null,
-                  email: profile?.email ?? user.email ?? null,
-                }
-              : null
-          }
-          isDeveloper={isDeveloper}
-        />
-      </Suspense>
-      <SidebarInset id="dashboard-main">
-        <Suspense fallback={<div className="h-14 shrink-0 border-b" />}>
-          <SiteHeader
-            warehouses={(warehouses ?? []).map((w) => ({
-              id: w.id,
-              name: w.name,
-            }))}
+        <a
+          href="#dashboard-main"
+          className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
+        >
+          Skip to dashboard content
+        </a>
+        <Suspense fallback={null}>
+          <AppSidebar
+            warehouses={warehouses ?? []}
             user={
               user
                 ? {
@@ -90,18 +72,36 @@ export default async function DashboardLayout({
                   }
                 : null
             }
+            isDeveloper={isDeveloper}
           />
         </Suspense>
-        <main className="bg-muted/30 flex-1">
-          {/* Skeleton resmi dashboard-01: container query scope + ritme halaman.
+        <SidebarInset id="dashboard-main">
+          <Suspense fallback={<div className="h-14 shrink-0 border-b" />}>
+            <SiteHeader
+              warehouses={(warehouses ?? []).map((w) => ({
+                id: w.id,
+                name: w.name,
+              }))}
+              user={
+                user
+                  ? {
+                      name: profile?.display_name ?? null,
+                      email: profile?.email ?? user.email ?? null,
+                    }
+                  : null
+              }
+            />
+          </Suspense>
+          <main className="bg-muted/30 flex-1">
+            {/* Skeleton resmi dashboard-01: container query scope + ritme halaman.
               max-w 1600px: konten dashboard tidak meregang tak terbatas di
               ultrawide (konsistensi visual, temuan audit UI #9). */}
-          <div className="@container/main mx-auto w-full max-w-[1600px] px-4 py-4 md:px-6 md:py-6">
-            <PageTransition>{children}</PageTransition>
-          </div>
-        </main>
-      </SidebarInset>
-      <CommandMenu />
+            <div className="@container/main mx-auto w-full max-w-[1600px] px-4 py-4 md:px-6 md:py-6">
+              <PageTransition>{children}</PageTransition>
+            </div>
+          </main>
+        </SidebarInset>
+        <CommandMenu />
       </SidebarProvider>
     </LocaleProvider>
   );

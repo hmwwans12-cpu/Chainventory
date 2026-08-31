@@ -25,7 +25,7 @@ export function BaseScanLink({
       rel="noopener noreferrer"
       aria-label={ariaLabel}
       className={cn(
-        "text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-3 focus-visible:outline-none rounded relative inline-flex items-center gap-1.5 before:absolute before:-inset-[9px]",
+        "text-primary hover:text-primary/80 focus-visible:ring-ring relative inline-flex items-center gap-1.5 rounded before:absolute before:-inset-[9px] focus-visible:ring-3 focus-visible:outline-none",
         className
       )}
     >

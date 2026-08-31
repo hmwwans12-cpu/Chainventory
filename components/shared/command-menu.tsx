@@ -19,9 +19,7 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  Dialog as DialogPrimitive,
-} from "@base-ui/react/dialog";
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -36,18 +34,102 @@ type Command = {
 };
 
 const COMMANDS: Command[] = [
-  { id: "dashboard", label: "Dashboard", i18nKey: "nav./dashboard", href: "/dashboard", icon: LayoutDashboard, group: "Navigate" },
-  { id: "products", label: "Products", i18nKey: "cmd.products", href: "/inventory/products", icon: Package, group: "Navigate" },
-  { id: "movements", label: "Stock Movements", i18nKey: "cmd.movements", href: "/inventory/movements", icon: ArrowLeftRight, group: "Navigate" },
-  { id: "transactions", label: "Transactions", i18nKey: "cmd.transactions", href: "/transactions", icon: ReceiptText, group: "Navigate" },
-  { id: "members", label: "Members", i18nKey: "cmd.members", href: "/members", icon: Users, group: "Navigate" },
-  { id: "notifications", label: "Notifications", i18nKey: "cmd.notifications", href: "/notifications", icon: Bell, group: "Navigate" },
-  { id: "blockchain", label: "Audit Explorer", i18nKey: "cmd.audit_explorer", href: "/blockchain", icon: FileSearch, group: "Navigate" },
-  { id: "analytics", label: "Analytics", i18nKey: "cmd.analytics", href: "/analytics", icon: ChartNoAxesCombined, group: "Navigate" },
-  { id: "settings", label: "Settings", i18nKey: "cmd.settings", href: "/settings", icon: Settings, group: "Navigate" },
-  { id: "create", label: "Create Warehouse", i18nKey: "cmd.create_warehouse", href: "/onboarding/create", icon: Warehouse, group: "Quick action" },
-  { id: "join", label: "Join Warehouse", i18nKey: "cmd.join_warehouse", href: "/onboarding/join", icon: UserPlus, group: "Quick action" },
-  { id: "console", label: "Developer Console", i18nKey: "cmd.developer_console", href: "/console", icon: SquareTerminal, group: "Quick action" },
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    i18nKey: "nav./dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    group: "Navigate",
+  },
+  {
+    id: "products",
+    label: "Products",
+    i18nKey: "cmd.products",
+    href: "/inventory/products",
+    icon: Package,
+    group: "Navigate",
+  },
+  {
+    id: "movements",
+    label: "Stock Movements",
+    i18nKey: "cmd.movements",
+    href: "/inventory/movements",
+    icon: ArrowLeftRight,
+    group: "Navigate",
+  },
+  {
+    id: "transactions",
+    label: "Transactions",
+    i18nKey: "cmd.transactions",
+    href: "/transactions",
+    icon: ReceiptText,
+    group: "Navigate",
+  },
+  {
+    id: "members",
+    label: "Members",
+    i18nKey: "cmd.members",
+    href: "/members",
+    icon: Users,
+    group: "Navigate",
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    i18nKey: "cmd.notifications",
+    href: "/notifications",
+    icon: Bell,
+    group: "Navigate",
+  },
+  {
+    id: "blockchain",
+    label: "Audit Explorer",
+    i18nKey: "cmd.audit_explorer",
+    href: "/blockchain",
+    icon: FileSearch,
+    group: "Navigate",
+  },
+  {
+    id: "analytics",
+    label: "Analytics",
+    i18nKey: "cmd.analytics",
+    href: "/analytics",
+    icon: ChartNoAxesCombined,
+    group: "Navigate",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    i18nKey: "cmd.settings",
+    href: "/settings",
+    icon: Settings,
+    group: "Navigate",
+  },
+  {
+    id: "create",
+    label: "Create Warehouse",
+    i18nKey: "cmd.create_warehouse",
+    href: "/onboarding/create",
+    icon: Warehouse,
+    group: "Quick action",
+  },
+  {
+    id: "join",
+    label: "Join Warehouse",
+    i18nKey: "cmd.join_warehouse",
+    href: "/onboarding/join",
+    icon: UserPlus,
+    group: "Quick action",
+  },
+  {
+    id: "console",
+    label: "Developer Console",
+    i18nKey: "cmd.developer_console",
+    href: "/console",
+    icon: SquareTerminal,
+    group: "Quick action",
+  },
 ];
 
 /**
@@ -67,7 +149,11 @@ export function CommandMenu() {
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return COMMANDS;
-    return COMMANDS.filter((c) => t(c.i18nKey ?? c.label).toLowerCase().includes(q));
+    return COMMANDS.filter((c) =>
+      t(c.i18nKey ?? c.label)
+        .toLowerCase()
+        .includes(q)
+    );
   }, [query, t]);
 
   React.useEffect(() => {
@@ -87,7 +173,9 @@ export function CommandMenu() {
     setQuery("");
     // Pertahankan konteks warehouse aktif (audit: ⌘K membuang ?warehouse).
     const wh = searchParams.get("warehouse");
-    const href = wh ? `${cmd.href}?warehouse=${encodeURIComponent(wh)}` : cmd.href;
+    const href = wh
+      ? `${cmd.href}?warehouse=${encodeURIComponent(wh)}`
+      : cmd.href;
     router.push(href);
   }
 
@@ -109,14 +197,17 @@ export function CommandMenu() {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/50 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs" />
         <DialogPrimitive.Popup
-          className="bg-popover text-popover-foreground border-border fixed top-[15%] left-1/2 z-50 max-h-[min(80vh,32rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border bg-clip-padding shadow-lg outline-none transition duration-150 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0"
+          className="bg-popover text-popover-foreground border-border fixed top-[15%] left-1/2 z-50 max-h-[min(80vh,32rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border bg-clip-padding shadow-lg transition duration-150 ease-out outline-none data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0"
           aria-label="Command palette"
         >
           <DialogPrimitive.Title className="sr-only">
             Command palette
           </DialogPrimitive.Title>
           <div className="border-border flex items-center gap-2 border-b px-3">
-            <Search aria-hidden="true" className="text-muted-foreground size-4 shrink-0" />
+            <Search
+              aria-hidden="true"
+              className="text-muted-foreground size-4 shrink-0"
+            />
             <input
               ref={inputRef}
               value={query}
@@ -134,7 +225,7 @@ export function CommandMenu() {
                 results.length > 0 ? results[active]?.id : undefined
               }
               autoFocus
-              className="text-foreground placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:ring-3 h-11 w-full bg-transparent text-sm outline-none"
+              className="text-foreground placeholder:text-muted-foreground focus-visible:ring-ring h-11 w-full bg-transparent text-sm outline-none focus-visible:ring-3"
             />
             <Button
               type="button"
@@ -158,7 +249,10 @@ export function CommandMenu() {
             className="flex flex-col gap-0.5 overflow-y-auto p-2"
           >
             {results.length === 0 ? (
-              <li className="text-muted-foreground px-3 py-6 text-center text-sm" aria-live="polite">
+              <li
+                className="text-muted-foreground px-3 py-6 text-center text-sm"
+                aria-live="polite"
+              >
                 {t("cmd.no_results", { query })}
               </li>
             ) : (
@@ -176,15 +270,20 @@ export function CommandMenu() {
                       onClick={() => go(cmd)}
                       onMouseMove={() => setActive(i)}
                       className={cn(
-                        "relative flex w-full items-center gap-2.5 rounded-lg px-3 h-10 text-left text-sm outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring before:absolute before:content-[''] before:-inset-[9px]",
+                        "focus-visible:ring-ring relative flex h-10 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm transition-colors outline-none before:absolute before:-inset-[9px] before:content-[''] focus-visible:ring-3",
                         i === active
                           ? "bg-muted text-foreground"
                           : "text-foreground hover:bg-muted/60"
                       )}
                     >
-                      <Icon aria-hidden="true" className="text-muted-foreground size-4 shrink-0" />
-                      <span className="flex-1 truncate">{t(cmd.i18nKey ?? cmd.label)}</span>
-                      <span className="text-muted-foreground text-xs uppercase tracking-wide">
+                      <Icon
+                        aria-hidden="true"
+                        className="text-muted-foreground size-4 shrink-0"
+                      />
+                      <span className="flex-1 truncate">
+                        {t(cmd.i18nKey ?? cmd.label)}
+                      </span>
+                      <span className="text-muted-foreground text-xs tracking-wide uppercase">
                         {cmd.group === "Navigate"
                           ? t("cmd.group.navigate")
                           : t("cmd.group.action")}

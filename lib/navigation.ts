@@ -46,7 +46,12 @@ export const NAV_SECTIONS: NavSection[] = [
     label: "Operations",
     i18nKey: "group.operations",
     items: [
-      { title: "Overview", href: "/dashboard", icon: LayoutDashboard, i18nKey: "nav./dashboard" },
+      {
+        title: "Overview",
+        href: "/dashboard",
+        icon: LayoutDashboard,
+        i18nKey: "nav./dashboard",
+      },
       {
         title: "Inventory",
         href: "/inventory/products",
@@ -54,8 +59,16 @@ export const NAV_SECTIONS: NavSection[] = [
         permission: PERMISSIONS.INVENTORY_READ,
         i18nKey: "nav./inventory/products",
         children: [
-          { title: "Products", href: "/inventory/products", i18nKey: "sub.products" },
-          { title: "Stock Movement", href: "/inventory/movements", i18nKey: "sub.stock_movement" },
+          {
+            title: "Products",
+            href: "/inventory/products",
+            i18nKey: "sub.products",
+          },
+          {
+            title: "Stock Movement",
+            href: "/inventory/movements",
+            i18nKey: "sub.stock_movement",
+          },
         ],
       },
       {
@@ -103,7 +116,14 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     label: "System",
     i18nKey: "group.system",
-    items: [{ title: "Settings", href: "/settings", icon: Settings, i18nKey: "nav./settings" }],
+    items: [
+      {
+        title: "Settings",
+        href: "/settings",
+        icon: Settings,
+        i18nKey: "nav./settings",
+      },
+    ],
   },
 ];
 

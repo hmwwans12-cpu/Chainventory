@@ -114,9 +114,7 @@ export function BlockchainPage({
       setTotalProofsState(next.total);
       setRealtimeError(null);
     } catch {
-      setRealtimeError(
-        "Live update failed — showing the last known proofs."
-      );
+      setRealtimeError("Live update failed — showing the last known proofs.");
     }
   }, [supabase, warehouseId]);
 
@@ -273,14 +271,14 @@ export function BlockchainPage({
               </span>
             )}
             {deployment?.tx_hash ? (
-                <BaseScanLink
-                  href={`${BASESCAN_URL}/tx/${deployment.tx_hash}`}
-                  ariaLabel="View deployment transaction on BaseScan"
-                  className="text-xs"
-                >
-                  Deployment tx {shortHash(deployment.tx_hash)}
-                  <ExternalLink aria-hidden="true" className="size-3.5" />
-                </BaseScanLink>
+              <BaseScanLink
+                href={`${BASESCAN_URL}/tx/${deployment.tx_hash}`}
+                ariaLabel="View deployment transaction on BaseScan"
+                className="text-xs"
+              >
+                Deployment tx {shortHash(deployment.tx_hash)}
+                <ExternalLink aria-hidden="true" className="size-3.5" />
+              </BaseScanLink>
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-4">
@@ -345,7 +343,7 @@ export function BlockchainPage({
               return (
                 <div
                   key={proof.id}
-                  className="ring-foreground/10 ring-1 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2"
+                  className="ring-foreground/10 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 ring-1"
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
                     <StatusBadge
@@ -421,46 +419,46 @@ export function BlockchainPage({
               </p>
             )
           ) : null}
-          <div className="hidden md:block overflow-x-auto">
-          <Table className="min-w-[640px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Proof</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Blockchain</TableHead>
-                <TableHead className="text-right">Attempts</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {proofsState.map((proof) => {
-                const meta = PROOF_STATUS_META[proof.status];
-                const confirmed = proof.status === "confirmed";
-                return (
-                  <TableRow key={proof.id}>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-foreground font-mono text-sm">
-                          {shortHash(proof.payload_hash)}
-                        </span>
-                        {proof.movement_id ? (
-                          <span className="text-muted-foreground font-mono text-xs">
-                            movement {proof.movement_id.slice(0, 8)}
+          <div className="hidden overflow-x-auto md:block">
+            <Table className="min-w-[640px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Proof</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Blockchain</TableHead>
+                  <TableHead className="text-right">Attempts</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {proofsState.map((proof) => {
+                  const meta = PROOF_STATUS_META[proof.status];
+                  const confirmed = proof.status === "confirmed";
+                  return (
+                    <TableRow key={proof.id}>
+                      <TableCell>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-foreground font-mono text-sm">
+                            {shortHash(proof.payload_hash)}
                           </span>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {meta ? (
-                        <StatusBadge tone={meta.tone} label={meta.label} />
-                      ) : (
-                        <span className="text-muted-foreground text-xs">
-                          {proof.status}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {confirmed && proof.tx_hash ? (
+                          {proof.movement_id ? (
+                            <span className="text-muted-foreground font-mono text-xs">
+                              movement {proof.movement_id.slice(0, 8)}
+                            </span>
+                          ) : null}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {meta ? (
+                          <StatusBadge tone={meta.tone} label={meta.label} />
+                        ) : (
+                          <span className="text-muted-foreground text-xs">
+                            {proof.status}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {confirmed && proof.tx_hash ? (
                           <BaseScanLink
                             href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
                             ariaLabel="View transaction on BaseScan"
@@ -472,40 +470,42 @@ export function BlockchainPage({
                               className="size-3.5"
                             />
                           </BaseScanLink>
-                       ) : proof.error ? (
-                         <Tooltip>
-                           <TooltipTrigger
-                             render={
-                               <span className="text-destructive block max-w-56 truncate text-xs" />
-                             }
-                           >
-                             {shortHash(proof.error, 16, 8)}
-                           </TooltipTrigger>
-                           <TooltipContent>{proof.error}</TooltipContent>
-                         </Tooltip>
-                       ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className="text-muted-foreground font-mono text-xs tabular-nums">
-                        {proof.attempt_count}
-                        {proof.status === "confirmed" ? (
-                          <CheckCircle2
-                            aria-hidden="true"
-                            className="text-primary ml-1 inline size-3.5"
-                          />
-                        ) : null}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs tabular-nums">
-                      {formatDateTime(proof.created_at)}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                        ) : proof.error ? (
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <span className="text-destructive block max-w-56 truncate text-xs" />
+                              }
+                            >
+                              {shortHash(proof.error, 16, 8)}
+                            </TooltipTrigger>
+                            <TooltipContent>{proof.error}</TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                          {proof.attempt_count}
+                          {proof.status === "confirmed" ? (
+                            <CheckCircle2
+                              aria-hidden="true"
+                              className="text-primary ml-1 inline size-3.5"
+                            />
+                          ) : null}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs tabular-nums">
+                        {formatDateTime(proof.created_at)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
           {/* Mobile: card list (audit N) */}
           <ul className="divide-y md:hidden">
@@ -534,14 +534,14 @@ export function BlockchainPage({
                   <div className="flex items-center justify-between gap-2 text-xs">
                     <span className="text-muted-foreground">Blockchain</span>
                     {confirmed && proof.tx_hash ? (
-                        <BaseScanLink
-                          href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
-                          ariaLabel="View transaction on BaseScan"
-                          className="font-mono"
-                        >
-                          {shortHash(proof.tx_hash, 10, 6)}
-                          <ExternalLink aria-hidden="true" className="size-3.5" />
-                        </BaseScanLink>
+                      <BaseScanLink
+                        href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
+                        ariaLabel="View transaction on BaseScan"
+                        className="font-mono"
+                      >
+                        {shortHash(proof.tx_hash, 10, 6)}
+                        <ExternalLink aria-hidden="true" className="size-3.5" />
+                      </BaseScanLink>
                     ) : proof.error ? (
                       <span
                         className="text-destructive max-w-40 truncate font-mono"

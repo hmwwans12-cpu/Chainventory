@@ -4,7 +4,10 @@ import { Blocks, CheckCircle2 } from "lucide-react";
 
 import { useLocale } from "@/components/providers/locale-provider";
 import { Reveal } from "@/components/marketing/reveal";
-import { DoubleBezelCard, DoubleBezelCardContent } from "@/components/ui/double-bezel-card";
+import {
+  DoubleBezelCard,
+  DoubleBezelCardContent,
+} from "@/components/ui/double-bezel-card";
 
 /**
  * Blockchain Explanation (DESIGN §24).
@@ -24,7 +27,10 @@ const POINTS = [
 const RECORD_ROWS = [
   { labelKey: "landing.blockchain.col_product", value: "Corrugated Box 50cm" },
   { labelKey: "landing.blockchain.col_stock_out", value: "120 units" },
-  { labelKey: "landing.blockchain.col_performed_by", value: "A. Wijaya- STAFF" },
+  {
+    labelKey: "landing.blockchain.col_performed_by",
+    value: "A. Wijaya- STAFF",
+  },
 ];
 
 export function BlockchainExplanation() {
@@ -37,24 +43,24 @@ export function BlockchainExplanation() {
             <DoubleBezelCard className="bg-primary rounded-lg px-6 py-12 md:px-12 md:py-16">
               <DoubleBezelCardContent className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
                 <div className="flex flex-col gap-5">
-                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-primary-foreground">
+                  <span className="text-primary-foreground inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium">
                     <Blocks
                       aria-hidden="true"
                       className="text-primary-foreground size-3.5"
                     />
                     {t("landing.blockchain.badge")}
                   </span>
-                  <h2 className="font-display text-3xl font-semibold tracking-tight text-balance text-primary-foreground md:text-4xl">
+                  <h2 className="font-display text-primary-foreground text-3xl font-semibold tracking-tight text-balance md:text-4xl">
                     {t("landing.blockchain.title")}
                   </h2>
-                  <p className="max-w-lg text-base leading-relaxed text-pretty text-primary-foreground/90">
+                  <p className="text-primary-foreground/90 max-w-lg text-base leading-relaxed text-pretty">
                     {t("landing.blockchain.subtitle")}
                   </p>
                   <ul className="flex flex-col gap-3">
                     {POINTS.map((point) => (
                       <li
                         key={point}
-                        className="flex items-start gap-2.5 text-sm leading-relaxed text-pretty text-primary-foreground md:text-base"
+                        className="text-primary-foreground flex items-start gap-2.5 text-sm leading-relaxed text-pretty md:text-base"
                       >
                         <CheckCircle2
                           aria-hidden="true"
@@ -77,16 +83,16 @@ export function BlockchainExplanation() {
                           key={row.labelKey}
                           className="flex items-center justify-between gap-4 border-b border-white/10 py-3"
                         >
-                          <span className="text-sm text-primary-foreground/90">
+                          <span className="text-primary-foreground/90 text-sm">
                             {t(row.labelKey)}
                           </span>
-                          <span className="text-sm font-medium text-primary-foreground">
+                          <span className="text-primary-foreground text-sm font-medium">
                             {row.value}
                           </span>
                         </div>
                       ))}
                       <div className="flex items-center justify-between gap-4 pt-3">
-                        <span className="text-sm text-primary-foreground/90">
+                        <span className="text-primary-foreground/90 text-sm">
                           {t("landing.blockchain.proof")}
                         </span>
                         <span className="text-primary-foreground inline-flex items-center gap-1.5 text-sm font-medium">
@@ -96,10 +102,10 @@ export function BlockchainExplanation() {
                       </div>
                     </div>
                     <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
-                      <span className="text-xs text-primary-foreground/90">
+                      <span className="text-primary-foreground/90 text-xs">
                         {t("landing.blockchain.anchored_on")}
                       </span>
-                      <span className="text-xs font-medium text-primary-foreground">
+                      <span className="text-primary-foreground text-xs font-medium">
                         {t("landing.blockchain.block")}
                       </span>
                     </div>

@@ -68,7 +68,10 @@ export function NotificationPreferencesPanel({
     }
   }, []);
 
-  const toggle = (channel: NotificationChannel, category: NotificationCategory) => {
+  const toggle = (
+    channel: NotificationChannel,
+    category: NotificationCategory
+  ) => {
     const base = pendingRef.current ?? prefs;
     const next: NotificationPreferences = {
       ...base,
@@ -148,7 +151,7 @@ function ToggleCell({
         checked={checked}
         onChange={onChange}
         aria-label={label}
-        className="border-border focus-visible:ring-ring h-5 w-9 cursor-pointer appearance-none rounded-full bg-muted transition-colors checked:bg-primary checked:after:translate-x-4 relative before:absolute before:content-[''] before:-inset-[10px] after:absolute after:left-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-background after:transition-transform focus-visible:outline-none focus-visible:ring-3"
+        className="border-border focus-visible:ring-ring bg-muted checked:bg-primary after:bg-background relative h-5 w-9 cursor-pointer appearance-none rounded-full transition-colors before:absolute before:-inset-[10px] before:content-[''] after:absolute after:top-0.5 after:left-0.5 after:size-4 after:rounded-full after:transition-transform checked:after:translate-x-4 focus-visible:ring-3 focus-visible:outline-none"
       />
     </div>
   );

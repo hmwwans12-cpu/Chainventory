@@ -12,7 +12,10 @@ import {
 
 import { useLocale } from "@/components/providers/locale-provider";
 import { Reveal } from "@/components/marketing/reveal";
-import { DoubleBezelCard, DoubleBezelCardContent } from "@/components/ui/double-bezel-card";
+import {
+  DoubleBezelCard,
+  DoubleBezelCardContent,
+} from "@/components/ui/double-bezel-card";
 
 /**
  * Features section (DESIGN §22).
@@ -93,7 +96,10 @@ export function Features() {
                       key={hash}
                       className="text-muted-foreground bg-card flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-xs"
                     >
-                      <Link2 aria-hidden="true" className="text-primary size-3" />
+                      <Link2
+                        aria-hidden="true"
+                        className="text-primary size-3"
+                      />
                       {hash}
                     </span>
                   ))}

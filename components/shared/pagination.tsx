@@ -19,9 +19,7 @@ export function Pagination({
   if (totalPages <= 1) return null;
   return (
     <div
-      className={`flex items-center justify-between gap-3 ${
-        className ?? ""
-      }`}
+      className={`flex items-center justify-between gap-3 ${className ?? ""}`}
     >
       <p className="text-muted-foreground text-xs tabular-nums">
         Page {page} of {totalPages}

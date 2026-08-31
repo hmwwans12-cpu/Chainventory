@@ -6,7 +6,10 @@ import type { StatusTone } from "@/components/shared/status-badge";
  * as loosely-typed Record<string,…> without exhaustiveness.
  */
 
-export const PROOF_STATUS_META: Record<string, { label: string; tone: StatusTone }> = {
+export const PROOF_STATUS_META: Record<
+  string,
+  { label: string; tone: StatusTone }
+> = {
   pending: { label: "Proof pending", tone: "pending" },
   submitted: { label: "Proof submitted", tone: "pending" },
   confirming: { label: "Confirming", tone: "pending" },
@@ -16,7 +19,10 @@ export const PROOF_STATUS_META: Record<string, { label: string; tone: StatusTone
   failed: { label: "Blockchain failed", tone: "failed" },
 };
 
-export const DEPLOYMENT_STATUS_META: Record<string, { label: string; tone: StatusTone }> = {
+export const DEPLOYMENT_STATUS_META: Record<
+  string,
+  { label: string; tone: StatusTone }
+> = {
   pending: { label: "Deployment pending", tone: "pending" },
   submitting: { label: "Submitting", tone: "pending" },
   submitted: { label: "Submitted", tone: "pending" },

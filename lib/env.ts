@@ -63,6 +63,9 @@ export const env = createEnv({
     QSTASH_APP_BASE_URL: z.string().url().optional(),
     VERCEL_URL: z.string().min(1).optional(),
 
+    // CI bypass for builds without live secrets
+    SKIP_ENV_VALIDATION: z.string().optional(),
+
     // Observability
     LOG_LEVEL: z
       .enum(["fatal", "error", "warn", "info", "debug", "trace"])
@@ -99,6 +102,7 @@ export const env = createEnv({
     QSTASH_APP_BASE_URL: process.env.QSTASH_APP_BASE_URL,
     VERCEL_URL: process.env.VERCEL_URL,
     DEVELOPER_ALLOWLIST: process.env.DEVELOPER_ALLOWLIST,
+    SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION,
     LOG_LEVEL: process.env.LOG_LEVEL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -108,8 +112,8 @@ export const env = createEnv({
     NEXT_PUBLIC_PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
   },
 
-  // Foundation phase: many external credentials are not provisioned yet.
-  // Kept as optional so the app builds locally; will be tightened once
-  // Supabase/Privy/Upstash/QStash projects exist (fail-fast in prod).
-  skipValidation: process.env.NODE_ENV !== "production",
+  // CI/preview builds without live secrets should set SKIP_ENV_VALIDATION=1
+  // to avoid fail-fast. Production deploys (Vercel) run without it and will
+  // fail-fast if secrets are missing (TECHSTACK §4).
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });

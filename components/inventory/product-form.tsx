@@ -112,7 +112,11 @@ export function ProductForm({
             aria-describedby={errors.name ? "err-product-name" : undefined}
           />
           {errors.name ? (
-            <p id="err-product-name" role="alert" className="text-destructive text-sm">
+            <p
+              id="err-product-name"
+              role="alert"
+              className="text-destructive text-sm"
+            >
               {errors.name}
             </p>
           ) : null}
@@ -128,7 +132,11 @@ export function ProductForm({
             aria-describedby={errors.sku ? "err-product-sku" : undefined}
           />
           {errors.sku ? (
-            <p id="err-product-sku" role="alert" className="text-destructive text-sm">
+            <p
+              id="err-product-sku"
+              role="alert"
+              className="text-destructive text-sm"
+            >
               {errors.sku}
             </p>
           ) : null}
@@ -163,7 +171,11 @@ export function ProductForm({
               records consistent.
             </p>
           ) : errors.unit ? (
-            <p id="err-product-unit" role="alert" className="text-destructive text-sm">
+            <p
+              id="err-product-unit"
+              role="alert"
+              className="text-destructive text-sm"
+            >
               {errors.unit}
             </p>
           ) : null}
@@ -196,7 +208,11 @@ export function ProductForm({
             }
           />
           {errors.lowStockThreshold ? (
-            <p id="err-product-threshold" role="alert" className="text-destructive text-sm">
+            <p
+              id="err-product-threshold"
+              role="alert"
+              className="text-destructive text-sm"
+            >
               {errors.lowStockThreshold}
             </p>
           ) : null}
@@ -216,7 +232,11 @@ export function ProductForm({
               }
             />
             {errors.initialQuantity ? (
-              <p id="err-product-initial" role="alert" className="text-destructive text-sm">
+              <p
+                id="err-product-initial"
+                role="alert"
+                className="text-destructive text-sm"
+              >
                 {errors.initialQuantity}
               </p>
             ) : (
@@ -235,7 +255,12 @@ export function ProductForm({
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         {onCancel ? (
-          <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={busy}
+          >
             Cancel
           </Button>
         ) : null}

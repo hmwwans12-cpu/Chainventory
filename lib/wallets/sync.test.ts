@@ -13,7 +13,7 @@ const VALID_CLAIMS = {
   userId: "u-1",
   sessionId: "s-1",
   issuedAt: 1,
-  expiration: 2,
+  expiration: 9999999999,
 };
 
 const okVerifier: PrivyVerifier = async () => VALID_CLAIMS;

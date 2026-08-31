@@ -170,8 +170,10 @@ export function AppSidebar({
           return (
             <React.Fragment key={section.label}>
               {si > 0 ? <SidebarSeparator /> : null}
-                <SidebarGroup>
-                  <SidebarGroupLabel>{t(section.i18nKey ?? section.label)}</SidebarGroupLabel>
+              <SidebarGroup>
+                <SidebarGroupLabel>
+                  {t(section.i18nKey ?? section.label)}
+                </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {items.map((item) => (

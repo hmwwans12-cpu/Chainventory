@@ -76,9 +76,7 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
             <Pencil aria-hidden="true" />
           </Button>
         </div>
-        {saved ? (
-          <p className="text-primary text-sm">Name updated.</p>
-        ) : null}
+        {saved ? <p className="text-primary text-sm">Name updated.</p> : null}
       </div>
     );
   }
@@ -110,7 +108,11 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
           </Button>
         </div>
         {state.error ? (
-          <p id="display-name-error" role="alert" className="text-destructive text-sm">
+          <p
+            id="display-name-error"
+            role="alert"
+            className="text-destructive text-sm"
+          >
             {state.error}
           </p>
         ) : null}

@@ -27,9 +27,7 @@ import { WalletBalance } from "@/components/shared/wallet-balance";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NotificationPreferencesPanel } from "@/components/shared/notification-preferences";
-import {
-  normalizePreferences,
-} from "@/lib/users/notification-preferences";
+import { normalizePreferences } from "@/lib/users/notification-preferences";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md §6); cegah percobaan prerender saat env build minim.
@@ -77,9 +75,7 @@ export default async function SettingsPage({
     (profileRes.data?.display_name as string | undefined)?.trim() || "Member";
   const email =
     (profileRes.data?.email as string | undefined) ?? user.email ?? "";
-  const prefs = normalizePreferences(
-    profileRes.data?.notification_preferences
-  );
+  const prefs = normalizePreferences(profileRes.data?.notification_preferences);
   const walletAddress = (walletRes.data?.address as string | undefined) ?? null;
   const sp = await searchParams;
   const active = pickActiveWarehouse(warehouses, sp.warehouse);
@@ -94,7 +90,7 @@ export default async function SettingsPage({
   );
 
   return (
-    <div className="mx-auto w-full max-w-[960px] flex flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-[960px] flex-col gap-6">
       <PageHeader
         title={t("settings.title")}
         description={t("settings.description")}
@@ -110,25 +106,25 @@ export default async function SettingsPage({
               />
               {t("settings.profile")}
             </CardTitle>
-            <CardDescription>
-              {t("settings.profile_desc")}
-            </CardDescription>
+            <CardDescription>{t("settings.profile_desc")}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
               <span className="bg-primary text-primary-foreground font-display flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold">
                 {initial}
               </span>
-            <div className="min-w-0">
-              <DisplayNameEditor currentName={name} />
-              <p className="text-muted-foreground truncate text-xs">
-                {email}
-              </p>
-            </div>
+              <div className="min-w-0">
+                <DisplayNameEditor currentName={name} />
+                <p className="text-muted-foreground truncate text-xs">
+                  {email}
+                </p>
+              </div>
             </div>
             {active ? (
               <div className="flex items-center gap-2">
-                 <span className="text-muted-foreground text-xs">{t("settings.role")}</span>
+                <span className="text-muted-foreground text-xs">
+                  {t("settings.role")}
+                </span>
                 <Badge variant="secondary">
                   {{
                     OWNER: "Owner",
@@ -169,10 +165,10 @@ export default async function SettingsPage({
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                     <p className="text-muted-foreground text-xs">{t("settings.balance")}</p>
-                    <Suspense
-                      fallback={<Skeleton className="h-4 w-20" />}
-                    >
+                    <p className="text-muted-foreground text-xs">
+                      {t("settings.balance")}
+                    </p>
+                    <Suspense fallback={<Skeleton className="h-4 w-20" />}>
                       <WalletBalance
                         address={walletAddress}
                         className="text-foreground text-sm font-semibold tabular-nums"
@@ -195,9 +191,9 @@ export default async function SettingsPage({
                 </div>
               </>
             ) : (
-               <p className="text-muted-foreground text-sm">
-                 {t("settings.no_wallet")}
-               </p>
+              <p className="text-muted-foreground text-sm">
+                {t("settings.no_wallet")}
+              </p>
             )}
           </CardContent>
         </Card>
@@ -213,9 +209,7 @@ export default async function SettingsPage({
               />
               {t("settings.warehouse")}
             </CardTitle>
-            <CardDescription>
-              {t("settings.warehouse_desc")}
-            </CardDescription>
+            <CardDescription>{t("settings.warehouse_desc")}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
             <div className="min-w-0">
@@ -234,9 +228,9 @@ export default async function SettingsPage({
                   />
                 </div>
               ) : (
-                   <p className="text-muted-foreground mt-1 text-xs">
-                     {t("settings.no_contract")}
-                   </p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  {t("settings.no_contract")}
+                </p>
               )}
             </div>
             {active.contractAddress ? (
@@ -257,19 +251,19 @@ export default async function SettingsPage({
           </CardContent>
         </Card>
       ) : (
-         <EmptyState
-           icon={Building2}
-           title={t("settings.no_warehouse")}
-           description={t("settings.no_warehouse_desc")}
-           primaryAction={{
-             label: t("dashboard.create_warehouse"),
-             href: "/onboarding/create",
-           }}
-           secondaryAction={{
-             label: t("dashboard.join_warehouse"),
-             href: "/onboarding/join",
-           }}
-         />
+        <EmptyState
+          icon={Building2}
+          title={t("settings.no_warehouse")}
+          description={t("settings.no_warehouse_desc")}
+          primaryAction={{
+            label: t("dashboard.create_warehouse"),
+            href: "/onboarding/create",
+          }}
+          secondaryAction={{
+            label: t("dashboard.join_warehouse"),
+            href: "/onboarding/join",
+          }}
+        />
       )}
 
       <NotificationPreferencesPanel initial={prefs} />
@@ -278,9 +272,14 @@ export default async function SettingsPage({
       <Card>
         <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 flex-col gap-0.5">
-            <p className="text-foreground text-sm font-semibold">{t("settings.account")}</p>
+            <p className="text-foreground text-sm font-semibold">
+              {t("settings.account")}
+            </p>
             <p className="text-muted-foreground truncate text-xs">
-              {t("settings.signed_in").replace("{email}", email || user.email || "")}
+              {t("settings.signed_in").replace(
+                "{email}",
+                email || user.email || ""
+              )}
             </p>
           </div>
           <SignOutButton />

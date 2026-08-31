@@ -57,6 +57,9 @@ import {
 type Action = "prepare" | "submit";
 const ACTION_VALUES: Action[] = ["prepare", "submit"];
 
+// Selaras dengan client poll 24×5s=120s di create-warehouse-form.tsx
+// (Fase 1 pilih turunkan polling ke 120, bukan naikkan maxDuration ke 150,
+//  untuk jaga biaya Vercel function; reconcile harian jadi fallback).
 export const maxDuration = 120;
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;

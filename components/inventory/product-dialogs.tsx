@@ -2,12 +2,7 @@
 
 import * as React from "react";
 import { useWallets } from "@privy-io/react-auth";
-import {
-  AlertTriangle,
-  Ban,
-  History,
-  Loader2,
-} from "lucide-react";
+import { AlertTriangle, Ban, History, Loader2 } from "lucide-react";
 
 import { toast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -672,7 +667,7 @@ export function StockMovementDialog({
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="movement-product">Product</Label>
             {product ? (
-              <div className="ring-foreground/10 ring-1 flex h-8 items-center rounded-lg px-2.5 text-sm">
+              <div className="ring-foreground/10 flex h-8 items-center rounded-lg px-2.5 text-sm ring-1">
                 {product.name}
                 <span className="text-muted-foreground ml-auto font-mono text-xs">
                   {product.sku}
@@ -886,7 +881,7 @@ export function ProductDetailSheet({
         </SheetHeader>
 
         <div className="flex flex-col gap-4 p-4">
-          <div className="flex items-center justify-between rounded-lg ring-foreground/10 ring-1 p-3">
+          <div className="ring-foreground/10 flex items-center justify-between rounded-lg p-3 ring-1">
             <div className="flex flex-col gap-0.5">
               <span className="text-muted-foreground text-xs">
                 Current stock

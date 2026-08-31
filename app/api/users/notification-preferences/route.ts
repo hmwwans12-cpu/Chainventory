@@ -16,11 +16,7 @@ export async function PATCH(request: Request) {
   } | null;
   const prefs = body?.prefs;
 
-  if (
-    typeof prefs !== "object" ||
-    prefs === null ||
-    Array.isArray(prefs)
-  ) {
+  if (typeof prefs !== "object" || prefs === null || Array.isArray(prefs)) {
     return invalid("Invalid preferences payload.");
   }
 

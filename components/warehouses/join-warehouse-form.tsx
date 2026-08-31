@@ -79,7 +79,8 @@ export function JoinWarehouseForm() {
     if (!value) err = "Enter a warehouse code.";
     else if (value.length > 64) err = "Warehouse code is too long.";
     else if (!/^WH-[A-Z0-9-]+$/i.test(value))
-      err = "Enter the warehouse code in the format WH-XXXX (e.g. WH-7K29-XP4).";
+      err =
+        "Enter the warehouse code in the format WH-XXXX (e.g. WH-7K29-XP4).";
     setFieldError(err);
     if (err) {
       document.getElementById("code")?.focus();

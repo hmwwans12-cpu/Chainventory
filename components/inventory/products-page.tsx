@@ -331,7 +331,7 @@ export function ProductsPage({
                 type="button"
                 onClick={() => setSearchInput("")}
                 aria-label="Clear search"
-                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring focus-visible:ring-3 focus-visible:outline-none rounded absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center before:absolute before:-inset-2 before:content-['']"
+                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded before:absolute before:-inset-2 before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
               >
                 <X aria-hidden="true" className="size-3.5" />
               </button>
@@ -430,68 +430,142 @@ export function ProductsPage({
         />
       ) : (
         <>
-        {selected.size > 0 && (canArchive || canExport) ? (
-          <div className="bg-card sticky bottom-4 z-10 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 shadow-sm">
-            <span className="text-sm font-medium tabular-nums">
-              {selected.size} selected
-            </span>
-            <div className="ml-auto flex flex-wrap items-center gap-2">
-              {canExport ? (
-                <Button variant="outline" size="sm" onClick={exportSelected}>
-                  <Download aria-hidden="true" />
-                  Export
+          {selected.size > 0 && (canArchive || canExport) ? (
+            <div className="bg-card sticky bottom-4 z-10 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 shadow-sm">
+              <span className="text-sm font-medium tabular-nums">
+                {selected.size} selected
+              </span>
+              <div className="ml-auto flex flex-wrap items-center gap-2">
+                {canExport ? (
+                  <Button variant="outline" size="sm" onClick={exportSelected}>
+                    <Download aria-hidden="true" />
+                    Export
+                  </Button>
+                ) : null}
+                {canArchive ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setConfirmBulkArchive(true)}
+                    disabled={bulkBusy}
+                  >
+                    {bulkBusy ? (
+                      <Loader2 aria-hidden="true" className="animate-spin" />
+                    ) : (
+                      <Trash2 aria-hidden="true" />
+                    )}
+                    Archive
+                  </Button>
+                ) : null}
+                <Button variant="ghost" size="sm" onClick={clearSelection}>
+                  <X aria-hidden="true" />
+                  Clear
                 </Button>
-              ) : null}
-              {canArchive ? (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setConfirmBulkArchive(true)}
-                  disabled={bulkBusy}
-                >
-                  {bulkBusy ? (
-                    <Loader2 aria-hidden="true" className="animate-spin" />
-                  ) : (
-                    <Trash2 aria-hidden="true" />
-                  )}
-                  Archive
-                </Button>
-              ) : null}
-              <Button variant="ghost" size="sm" onClick={clearSelection}>
-                <X aria-hidden="true" />
-                Clear
-              </Button>
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
 
-        <PanelCard padding="none">
-          {/* Desktop: tabel (scroll horizontal terbatas) */}
-          <div className="hidden md:block overflow-x-auto">
-          <Table className="md:min-w-[760px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
-                  <input
-                    type="checkbox"
-                    checked={allVisibleSelected}
-                    onChange={toggleSelectAll}
-                    aria-label="Select all products on this page"
-                    className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-[12px] focus-visible:outline-none focus-visible:ring-3"
-                  />
-                </TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead className="hidden xl:table-cell">Category</TableHead>
-                <TableHead className="hidden lg:table-cell">Unit</TableHead>
-                <TableHead className="text-right">Current Stock</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden md:table-cell">Updated</TableHead>
-                <TableHead className="w-12">
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <PanelCard padding="none">
+            {/* Desktop: tabel (scroll horizontal terbatas) */}
+            <div className="hidden overflow-x-auto md:block">
+              <Table className="md:min-w-[760px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <input
+                        type="checkbox"
+                        checked={allVisibleSelected}
+                        onChange={toggleSelectAll}
+                        aria-label="Select all products on this page"
+                        className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:-inset-[12px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
+                      />
+                    </TableHead>
+                    <TableHead>Product</TableHead>
+                    <TableHead className="hidden xl:table-cell">
+                      Category
+                    </TableHead>
+                    <TableHead className="hidden lg:table-cell">Unit</TableHead>
+                    <TableHead className="text-right">Current Stock</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      Updated
+                    </TableHead>
+                    <TableHead className="w-12">
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => {
+                    const archived = product.status === "archived";
+                    const low =
+                      !archived &&
+                      product.quantity != null &&
+                      Number(product.lowStockThreshold) > 0 &&
+                      Number(product.quantity) <=
+                        Number(product.lowStockThreshold);
+                    return (
+                      <TableRow
+                        key={product.id}
+                        data-state={archived ? "selected" : undefined}
+                      >
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={selected.has(product.id)}
+                            onChange={() => toggleSelect(product.id)}
+                            aria-label={`Select ${product.name}`}
+                            className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:-inset-[12px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-foreground font-medium">
+                              {product.name}
+                            </span>
+                            <span className="text-muted-foreground font-mono text-xs">
+                              {product.sku}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground hidden xl:table-cell">
+                          {product.category ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground hidden lg:table-cell">
+                          {product.unit}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex flex-col items-end gap-0.5">
+                            <span
+                              className={`font-mono text-sm tabular-nums ${low ? "text-warning" : ""}`}
+                            >
+                              {product.quantity ?? "0"}
+                            </span>
+                            {low ? (
+                              <span className="text-warning text-xs">
+                                Low stock
+                              </span>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge
+                            tone={archived ? "inactive" : "success"}
+                            label={archived ? "Archived" : "Active"}
+                          />
+                        </TableCell>
+                        <TableCell className="text-muted-foreground hidden text-xs tabular-nums md:table-cell">
+                          {formatDate(product.updatedAt)}
+                        </TableCell>
+                        <TableCell>{renderActions(product)}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+            {/* Mobile: card list ergonomis (audit: mobile card-list) */}
+            <ul className="divide-y md:hidden">
               {products.map((product) => {
                 const archived = product.status === "archived";
                 const low =
@@ -500,129 +574,65 @@ export function ProductsPage({
                   Number(product.lowStockThreshold) > 0 &&
                   Number(product.quantity) <= Number(product.lowStockThreshold);
                 return (
-                  <TableRow
+                  <li
                     key={product.id}
-                    data-state={archived ? "selected" : undefined}
+                    className="flex items-start justify-between gap-3 p-4"
                   >
-                    <TableCell>
-                      <input
-                        type="checkbox"
-                        checked={selected.has(product.id)}
-                        onChange={() => toggleSelect(product.id)}
-                        aria-label={`Select ${product.name}`}
-                        className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-[12px] focus-visible:outline-none focus-visible:ring-3"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-foreground font-medium">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(product.id)}
+                      onChange={() => toggleSelect(product.id)}
+                      aria-label={`Select ${product.name}`}
+                      className="border-border focus-visible:ring-ring relative mt-1 size-5 shrink-0 cursor-pointer rounded accent-[var(--primary)] before:absolute before:-inset-[12px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-foreground truncate font-medium">
                           {product.name}
                         </span>
-                        <span className="text-muted-foreground font-mono text-xs">
-                          {product.sku}
-                        </span>
+                        <StatusBadge
+                          tone={archived ? "inactive" : "success"}
+                          label={archived ? "Archived" : "Active"}
+                        />
                       </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground hidden xl:table-cell">
-                      {product.category ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground hidden lg:table-cell">
-                      {product.unit}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex flex-col items-end gap-0.5">
+                      <p className="text-muted-foreground mt-0.5 font-mono text-xs">
+                        {product.sku}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {product.category ?? "—"} · {product.unit}
+                      </p>
+                      <p className="mt-1 text-sm tabular-nums">
                         <span
-                          className={`font-mono text-sm tabular-nums ${low ? "text-warning" : ""}`}
+                          className={
+                            low
+                              ? "text-warning font-mono"
+                              : "text-foreground font-mono"
+                          }
                         >
                           {product.quantity ?? "0"}
+                        </span>{" "}
+                        <span className="text-muted-foreground text-xs">
+                          in stock
                         </span>
                         {low ? (
                           <span className="text-warning text-xs">
-                            Low stock
+                            {" "}
+                            · Low stock
                           </span>
                         ) : null}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        tone={archived ? "inactive" : "success"}
-                        label={archived ? "Archived" : "Active"}
-                      />
-                    </TableCell>
-                    <TableCell className="text-muted-foreground hidden text-xs tabular-nums md:table-cell">
-                      {formatDate(product.updatedAt)}
-                    </TableCell>
-                    <TableCell>{renderActions(product)}</TableCell>
-                  </TableRow>
+                      </p>
+                    </div>
+                    {renderActions(product)}
+                  </li>
                 );
               })}
-            </TableBody>
-          </Table>
-          </div>
-          {/* Mobile: card list ergonomis (audit: mobile card-list) */}
-          <ul className="divide-y md:hidden">
-            {products.map((product) => {
-              const archived = product.status === "archived";
-              const low =
-                !archived &&
-                product.quantity != null &&
-                Number(product.lowStockThreshold) > 0 &&
-                Number(product.quantity) <= Number(product.lowStockThreshold);
-              return (
-                <li
-                  key={product.id}
-                  className="flex items-start justify-between gap-3 p-4"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.has(product.id)}
-                    onChange={() => toggleSelect(product.id)}
-                    aria-label={`Select ${product.name}`}
-                    className="border-border focus-visible:ring-ring mt-1 relative size-5 shrink-0 cursor-pointer rounded accent-[var(--primary)] before:absolute before:content-[''] before:-inset-[12px] focus-visible:outline-none focus-visible:ring-3"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-foreground truncate font-medium">
-                        {product.name}
-                      </span>
-                      <StatusBadge
-                        tone={archived ? "inactive" : "success"}
-                        label={archived ? "Archived" : "Active"}
-                      />
-                    </div>
-                    <p className="text-muted-foreground mt-0.5 font-mono text-xs">
-                      {product.sku}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {product.category ?? "—"} · {product.unit}
-                    </p>
-                    <p className="mt-1 text-sm tabular-nums">
-                      <span
-                        className={
-                          low ? "text-warning font-mono" : "text-foreground font-mono"
-                        }
-                      >
-                        {product.quantity ?? "0"}
-                      </span>{" "}
-                      <span className="text-muted-foreground text-xs">
-                        in stock
-                      </span>
-                      {low ? (
-                        <span className="text-warning text-xs"> · Low stock</span>
-                      ) : null}
-                    </p>
-                  </div>
-                  {renderActions(product)}
-                </li>
-              );
-            })}
-          </ul>
-        </PanelCard>
-        <Pagination
-          page={page}
-          totalPages={Math.max(1, Math.ceil(total / perPage))}
-          onPage={goToPage}
-        />
+            </ul>
+          </PanelCard>
+          <Pagination
+            page={page}
+            totalPages={Math.max(1, Math.ceil(total / perPage))}
+            onPage={goToPage}
+          />
         </>
       )}
 

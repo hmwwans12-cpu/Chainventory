@@ -32,7 +32,10 @@ export function Reveal({
 
   React.useEffect(() => {
     // Inject keyframes once (no state — safe for lint)
-    if (typeof document !== "undefined" && !document.getElementById("reveal-keyframes")) {
+    if (
+      typeof document !== "undefined" &&
+      !document.getElementById("reveal-keyframes")
+    ) {
       const style = document.createElement("style");
       style.id = "reveal-keyframes";
       style.textContent = `
@@ -59,18 +62,20 @@ export function Reveal({
   }, []);
 
   // CSS-driven animation classes
-  const animationStyle = mounted && !reduce
-    ? {
-        "--reveal-delay": `${delay}s`,
-        "--reveal-threshold": threshold.toString(),
-        "--reveal-root-margin": rootMargin,
-        animation: "reveal var(--dur-slow, 350ms) var(--ease-out, ease-out) forwards",
-        animationTimeline: "view()",
-        animationRange: `entry ${threshold * 100}% cover 30%`,
-        opacity: 0,
-        transform: "translateY(24px)",
-      }
-    : {};
+  const animationStyle =
+    mounted && !reduce
+      ? {
+          "--reveal-delay": `${delay}s`,
+          "--reveal-threshold": threshold.toString(),
+          "--reveal-root-margin": rootMargin,
+          animation:
+            "reveal var(--dur-slow, 350ms) var(--ease-out, ease-out) forwards",
+          animationTimeline: "view()",
+          animationRange: `entry ${threshold * 100}% cover 30%`,
+          opacity: 0,
+          transform: "translateY(24px)",
+        }
+      : {};
 
   return (
     <div

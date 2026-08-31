@@ -26,7 +26,12 @@ export function LoadMore({
   if (!hasMore) return null;
   return (
     <div className={`flex justify-center ${className ?? ""}`}>
-      <Button variant="outline" onClick={onClick} disabled={loading} aria-busy={loading}>
+      <Button
+        variant="outline"
+        onClick={onClick}
+        disabled={loading}
+        aria-busy={loading}
+      >
         {loading ? (
           <>
             <Loader2 aria-hidden="true" className="size-4 animate-spin" />

@@ -58,7 +58,8 @@ export function LocaleProvider({
   );
 
   const t = React.useCallback(
-    (key: string, params?: Record<string, string>) => translate(locale, key, params),
+    (key: string, params?: Record<string, string>) =>
+      translate(locale, key, params),
     [locale]
   );
 

@@ -20,14 +20,36 @@ export type MovementType = "stock_in" | "stock_out" | "adjustment" | "reversal";
 export type MovementStatus = "pending_approval" | "committed" | "rejected";
 
 export const MOVEMENT_TYPE_META = {
-  stock_in: { label: "Stock In", tone: "success" as StatusTone, icon: ArrowDownToLine as LucideIcon },
-  stock_out: { label: "Stock Out", tone: "warning" as StatusTone, icon: ArrowUpFromLine as LucideIcon },
-  adjustment: { label: "Adjustment", tone: "pending" as StatusTone, icon: Scale as LucideIcon },
-  reversal: { label: "Reversal", tone: "inactive" as StatusTone, icon: Undo2 as LucideIcon },
-} satisfies Record<MovementType, { label: string; tone: StatusTone; icon: LucideIcon }>;
+  stock_in: {
+    label: "Stock In",
+    tone: "success" as StatusTone,
+    icon: ArrowDownToLine as LucideIcon,
+  },
+  stock_out: {
+    label: "Stock Out",
+    tone: "warning" as StatusTone,
+    icon: ArrowUpFromLine as LucideIcon,
+  },
+  adjustment: {
+    label: "Adjustment",
+    tone: "pending" as StatusTone,
+    icon: Scale as LucideIcon,
+  },
+  reversal: {
+    label: "Reversal",
+    tone: "inactive" as StatusTone,
+    icon: Undo2 as LucideIcon,
+  },
+} satisfies Record<
+  MovementType,
+  { label: string; tone: StatusTone; icon: LucideIcon }
+>;
 
 export const MOVEMENT_STATUS_META = {
-  pending_approval: { label: "Pending approval", tone: "pending" as StatusTone },
+  pending_approval: {
+    label: "Pending approval",
+    tone: "pending" as StatusTone,
+  },
   committed: { label: "Committed", tone: "success" as StatusTone },
   rejected: { label: "Rejected", tone: "failed" as StatusTone },
 } satisfies Record<MovementStatus, { label: string; tone: StatusTone }>;
@@ -35,7 +57,8 @@ export const MOVEMENT_STATUS_META = {
 /**
  * Role metadata — shared for members pages + dashboard.
  */
-export type WarehouseRole = "OWNER" | "MANAGER" | "STAFF" | "AUDITOR" | "VIEWER";
+export type WarehouseRole =
+  "OWNER" | "MANAGER" | "STAFF" | "AUDITOR" | "VIEWER";
 
 export const ROLE_META = {
   OWNER: { label: "Owner", tone: "success" as StatusTone },

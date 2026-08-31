@@ -134,44 +134,38 @@ export default async function DashboardPage({
 
   // Tahap 2: seluruh data dashboard (paralel, semuanya member-scoped RLS).
   const walletAddress = (walletRes.data?.address as string | undefined) ?? null;
-  const [
-    analytics,
-    movementsRes,
-    txRes,
-    notifRes,
-    lowStockRes,
-    pendingRes,
-  ] = await Promise.all([
-    fetchAnalytics(supabase, active.id, range),
-    supabase
-      .from("stock_movements")
-      .select(MOVEMENT_COLS)
-      .eq("warehouse_id", active.id)
-      .order("created_at", { ascending: false })
-      .limit(8),
-    supabase.rpc("list_transactions", {
-      p_warehouse_id: active.id,
-      p_movement_type: null,
-      p_proof_bucket: null,
-      p_page: 1,
-      p_per_page: 5,
-    }),
-    supabase
-      .from("notifications")
-      .select("id, title, body, times, read_at, last_event_at")
-      .order("last_event_at", { ascending: false })
-      .limit(5),
-    supabase
-      .from("products")
-      .select("low_stock_threshold, inventory_balances(quantity)")
-      .eq("warehouse_id", active.id)
-      .eq("status", "active"),
-    supabase
-      .from("join_requests")
-      .select("id", { count: "exact", head: true })
-      .eq("warehouse_id", active.id)
-      .eq("status", "pending"),
-  ]);
+  const [analytics, movementsRes, txRes, notifRes, lowStockRes, pendingRes] =
+    await Promise.all([
+      fetchAnalytics(supabase, active.id, range),
+      supabase
+        .from("stock_movements")
+        .select(MOVEMENT_COLS)
+        .eq("warehouse_id", active.id)
+        .order("created_at", { ascending: false })
+        .limit(8),
+      supabase.rpc("list_transactions", {
+        p_warehouse_id: active.id,
+        p_movement_type: null,
+        p_proof_bucket: null,
+        p_page: 1,
+        p_per_page: 5,
+      }),
+      supabase
+        .from("notifications")
+        .select("id, title, body, times, read_at, last_event_at")
+        .order("last_event_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("products")
+        .select("low_stock_threshold, inventory_balances(quantity)")
+        .eq("warehouse_id", active.id)
+        .eq("status", "active"),
+      supabase
+        .from("join_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("warehouse_id", active.id)
+        .eq("status", "pending"),
+    ]);
 
   // Low stock: aturan sama persis dengan halaman Products.
   let lowStockCount = 0;

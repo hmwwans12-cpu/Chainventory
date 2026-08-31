@@ -23,7 +23,11 @@ const GLOBALS = join(process.cwd(), "app", "globals.css");
 
 function hexToRgb(hex) {
   let h = hex.trim().replace(/^#/, "");
-  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (h.length === 3)
+    h = h
+      .split("")
+      .map((c) => c + c)
+      .join("");
   const n = parseInt(h, 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
@@ -45,10 +49,7 @@ function ratio(rgb1, rgb2) {
 }
 
 function parseVars(css, scope) {
-  const re = new RegExp(
-    `${scope}\\s*\\{([^}]*)\\}`,
-    "i"
-  );
+  const re = new RegExp(`${scope}\\s*\\{([^}]*)\\}`, "i");
   const block = css.match(re)?.[1] ?? "";
   const vars = {};
   for (const line of block.split(";")) {
@@ -82,7 +83,12 @@ const PAIRS = [
   ["--foreground", "--card", 7, "foreground on card"],
   ["--primary", "--background", 4.5, "primary on background"],
   ["--primary-foreground", "--primary", 4.5, "primary-foreground on primary"],
-  ["--secondary-foreground", "--secondary", 4.5, "secondary-foreground on secondary"],
+  [
+    "--secondary-foreground",
+    "--secondary",
+    4.5,
+    "secondary-foreground on secondary",
+  ],
 ];
 
 let failures = 0;

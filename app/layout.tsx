@@ -97,7 +97,7 @@ export default function RootLayout({
           <PrivyProvider>
             <a
               href="#main-content"
-              className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 bg-background text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring"
+              className="bg-background text-foreground focus-visible:ring-ring sr-only outline-none focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus-visible:ring-3"
             >
               Skip to main content
             </a>

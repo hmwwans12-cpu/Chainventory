@@ -123,7 +123,7 @@ export function MovementDetailSheet({
         </SheetHeader>
 
         <div className="flex flex-col gap-5 overflow-y-auto p-4">
-          <div className="flex items-center justify-between rounded-lg ring-foreground/10 ring-1 p-3">
+          <div className="ring-foreground/10 flex items-center justify-between rounded-lg p-3 ring-1">
             <div className="flex flex-col gap-0.5">
               <span className="text-muted-foreground text-xs">Quantity</span>
               <span className="text-foreground text-2xl font-semibold tabular-nums">
@@ -194,7 +194,7 @@ export function MovementDetailSheet({
                         href={`${BASESCAN_URL}/tx/${movement.proofTxHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80 focus-visible:ring-ring focus-visible:ring-3 focus-visible:outline-none mt-1 inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-xs"
+                        className="text-primary hover:text-primary/80 focus-visible:ring-ring mt-1 inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-xs focus-visible:ring-3 focus-visible:outline-none"
                       >
                         <ExternalLink aria-hidden="true" className="size-3.5" />
                         View transaction on BaseScan
@@ -207,7 +207,7 @@ export function MovementDetailSheet({
           </div>
 
           {movement.proofStatus && movement.proofTxHash ? (
-            <div className="flex flex-col gap-1.5 rounded-lg ring-foreground/10 ring-1 p-3">
+            <div className="ring-foreground/10 flex flex-col gap-1.5 rounded-lg p-3 ring-1">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-muted-foreground text-xs">
                   Proof status

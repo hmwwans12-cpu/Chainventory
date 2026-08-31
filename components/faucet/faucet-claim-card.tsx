@@ -8,7 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 
 const LOW_BALANCE_ETH = 0.003;
 
-export function FaucetClaimCard({ walletAddress }: { walletAddress: string | null }) {
+export function FaucetClaimCard({
+  walletAddress,
+}: {
+  walletAddress: string | null;
+}) {
   const [busy, setBusy] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
   const [txHash, setTxHash] = React.useState<string | null>(null);
@@ -36,7 +40,9 @@ export function FaucetClaimCard({ walletAddress }: { walletAddress: string | nul
   // Probe saldo GAGAL (null/NaN) bukan berarti saldo rendah — jangan
   // tampilkan nudging "Low balance" berdasarkan ketidaktahuan.
   const confirmedLow =
-    balanceNum !== null && !Number.isNaN(balanceNum) && balanceNum < LOW_BALANCE_ETH;
+    balanceNum !== null &&
+    !Number.isNaN(balanceNum) &&
+    balanceNum < LOW_BALANCE_ETH;
   if (!walletAddress || !confirmedLow) return null;
 
   async function claim() {

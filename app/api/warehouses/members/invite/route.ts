@@ -1,8 +1,4 @@
-import {
-  hasPermission,
-  PERMISSIONS,
-  type Role,
-} from "@/lib/auth/permissions";
+import { hasPermission, PERMISSIONS, type Role } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import {
   forbidden,
@@ -70,7 +66,9 @@ export async function POST(request: Request) {
 
   const acceptUrl = `/invite/${token}`;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  const fullLink = appUrl ? `${appUrl.replace(/\/$/, "")}${acceptUrl}` : acceptUrl;
+  const fullLink = appUrl
+    ? `${appUrl.replace(/\/$/, "")}${acceptUrl}`
+    : acceptUrl;
 
   // Best-effort email delivery (audit: email invites). Kegagalan TIDAK
   // membatalkan undangan — UI tetap menampilkan link untuk disalin.

@@ -122,7 +122,11 @@ export async function syncWallet(
 
   if (error || !data) {
     logger.error(
-      { err: error?.message ?? "empty result", address, privyUserId: verified.userId },
+      {
+        err: error?.message ?? "empty result",
+        address,
+        privyUserId: verified.userId,
+      },
       "register_wallet RPC failed"
     );
     return {
