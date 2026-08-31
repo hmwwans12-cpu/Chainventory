@@ -69,7 +69,7 @@ export function SignupForm() {
           />
         </FormField>
 
-        <FormField id="gender" label="Gender">
+        <FormField id="gender" label="Gender" hint="Optional.">
           <Select name="gender">
             <SelectTrigger className="h-11 w-full" aria-label="Gender">
               <SelectValue placeholder="Select gender" />

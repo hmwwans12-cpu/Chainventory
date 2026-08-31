@@ -10,7 +10,7 @@ export const loginSchema = z.object({
 export const signupSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters."),
   email: z.string().trim().email("Enter a valid email address."),
-  gender: z.enum(genderEnum, { message: "Select your gender." }),
+  gender: z.enum(genderEnum, { message: "Select your gender." }).optional(),
   password: z.string().min(8, "Password must be at least 8 characters."),
 });
 

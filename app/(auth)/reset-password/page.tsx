@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 
@@ -21,6 +22,18 @@ export default function ResetPasswordPage() {
       </div>
 
       <ResetPasswordForm />
+
+      <div className="border-border border-t pt-4 text-center text-sm">
+        <p className="text-muted-foreground">
+          Remember your password?{" "}
+          <Link
+            href="/login"
+            className="text-primary hover:text-primary/80 font-medium underline underline-offset-2"
+          >
+            Log in
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

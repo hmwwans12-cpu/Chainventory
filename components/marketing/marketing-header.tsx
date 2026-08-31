@@ -88,13 +88,13 @@ export function MarketingHeader({
             <>
               <Button
                 variant="ghost"
-                size="sm"
+                size="default"
                 className="hidden md:inline-flex"
                 render={<Link href="/login" />}
               >
                 Login
               </Button>
-              <Button size="lg" render={<Link href="/signup" />}>
+              <Button variant="default" size="default" render={<Link href="/signup" />}>
                 Sign up
               </Button>
             </>

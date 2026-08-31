@@ -18,7 +18,9 @@ export default function AuthLayout({
   return (
     <div className="bg-muted flex min-h-dvh flex-col items-center justify-center px-4 py-12">
       <div className="mb-8">
-        <Logo />
+        <Link href="/" aria-label="Go to homepage">
+          <Logo />
+        </Link>
       </div>
       <div className="bg-card w-full max-w-sm rounded-xl border p-6 shadow-sm sm:p-8">
         {children}
