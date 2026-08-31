@@ -404,7 +404,7 @@ export function BulkAddDialog({
                   {invalid.map((item) => (
                     <li
                       key={item.index}
-                      className="text-destructive flex items-center gap-1.5 text-xs"
+                      className="text-destructive flex items-center gap-1.5 text-sm"
                     >
                       <AlertTriangle
                         aria-hidden="true"

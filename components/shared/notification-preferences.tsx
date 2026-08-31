@@ -95,7 +95,7 @@ export function NotificationPreferencesPanel({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-1">
-        <div className="text-muted-foreground hidden grid-cols-[1fr_auto_auto] items-center gap-4 px-1 pb-1 text-xs font-medium sm:grid">
+        <div className="text-muted-foreground hidden grid-cols-[1fr_auto_auto] items-center gap-4 px-1 pb-1 text-sm font-medium sm:grid">
           <span>Event</span>
           <span className="w-20 text-center">In-app</span>
           <span className="flex w-20 items-center justify-center gap-1">

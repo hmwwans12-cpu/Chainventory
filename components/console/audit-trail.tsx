@@ -59,27 +59,27 @@ export function AuditTrail({ entries }: { entries: AuditEntry[] }) {
                 {entries.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell>
-                      <span className="text-foreground font-mono text-xs">
+                      <span className="text-foreground font-mono text-sm">
                         {entry.action}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-muted-foreground max-w-44 truncate text-xs">
+                      <span className="text-muted-foreground max-w-44 truncate text-sm">
                         {entry.actorEmail ?? shortId(entry.actorUserId)}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-muted-foreground font-mono text-xs">
+                      <span className="text-muted-foreground font-mono text-sm">
                         {entry.entity} {shortId(entry.entityId)}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-muted-foreground text-sm">
                         {entry.status ?? "—"}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-muted-foreground text-sm">
                         {formatDateTime(entry.createdAt)}
                       </span>
                     </TableCell>

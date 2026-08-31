@@ -40,6 +40,7 @@
   --border: #d4c2b2;
   --input: #d4c2b2;
   --ring: #186049;
+  --placeholder: color-mix(in oklab, var(--foreground) 50%, transparent);
 
   /* Tradewind-light accent for text on deep-green surfaces.
      #6ab29b fails 3:1 on #186049; #a4dcc7 passes AA (4.86:1). */
@@ -134,6 +135,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-placeholder: var(--placeholder);
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
