@@ -13,7 +13,7 @@ import {
 
 function SubmitButton({ pending }: { pending: boolean }) {
   return (
-    <Button type="submit" disabled={pending} aria-busy={pending}>
+    <Button type="submit" size="sm" disabled={pending} aria-busy={pending}>
       {pending ? (
         <Loader2 aria-hidden="true" className="animate-spin" />
       ) : (

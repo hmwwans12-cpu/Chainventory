@@ -199,6 +199,7 @@ export function BlockchainPage({
                 : "bg-warning/15 text-warning"
             )}
             role="status"
+            aria-live="polite"
           >
             <span
               aria-hidden="true"

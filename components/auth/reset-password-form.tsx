@@ -60,7 +60,11 @@ export function ResetPasswordForm() {
   if (success) {
     return (
       <div className="flex flex-col gap-4">
-        <div className="border-primary/30 bg-primary/15 text-primary rounded-lg border px-3 py-2 text-sm">
+        <div
+          role="status"
+          aria-live="polite"
+          className="border-primary/30 bg-primary/15 text-primary rounded-lg border px-3 py-2 text-sm"
+        >
           Password updated! Redirecting to dashboard…
         </div>
       </div>

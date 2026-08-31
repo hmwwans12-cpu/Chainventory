@@ -278,6 +278,7 @@ export function MovementsPage({
                 : "bg-warning/15 text-warning"
             )}
             role="status"
+            aria-live="polite"
           >
             <span
               aria-hidden="true"
@@ -385,6 +386,7 @@ export function MovementsPage({
           variant="tinted"
           padding="none"
           role="status"
+          aria-live="polite"
           className="border-warning/40 bg-warning/15 text-warning flex items-center gap-2 px-4 py-3 text-sm"
         >
           <TriangleAlert aria-hidden="true" className="size-4 shrink-0" />

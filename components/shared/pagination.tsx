@@ -21,7 +21,7 @@ export function Pagination({
     <div
       className={`flex items-center justify-between gap-3 ${className ?? ""}`}
     >
-      <p className="text-muted-foreground text-xs tabular-nums">
+      <p className="text-muted-foreground text-xs tabular-nums" aria-live="polite">
         Page {page} of {totalPages}
       </p>
       <div className="flex items-center gap-2">

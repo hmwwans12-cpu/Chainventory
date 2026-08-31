@@ -27,7 +27,11 @@ export function ForgotPasswordForm() {
 
   if (success) {
     return (
-      <div className="border-primary/30 bg-primary/15 text-primary rounded-lg border px-3 py-2 text-sm">
+      <div
+        role="status"
+        aria-live="polite"
+        className="border-primary/30 bg-primary/15 text-primary rounded-lg border px-3 py-2 text-sm"
+      >
         Check your email for a password reset link.
       </div>
     );

@@ -44,6 +44,9 @@ export function CopyButton({
         className
       )}
     >
+      <span aria-live="polite" className="sr-only">
+        {copied ? "Copied!" : ""}
+      </span>
       {copied ? (
         <Check aria-hidden="true" className="text-primary size-3.5" />
       ) : (
