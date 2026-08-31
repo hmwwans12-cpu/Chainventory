@@ -51,7 +51,10 @@ export function LeaveWarehouseDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(next) => (busy ? null : onOpenChange(next))}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => (busy ? null : onOpenChange(next))}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Leave warehouse?</DialogTitle>
@@ -62,12 +65,19 @@ export function LeaveWarehouseDialog({
           </DialogDescription>
         </DialogHeader>
         {error ? (
-          <p role="alert" className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-xs">
+          <p
+            role="alert"
+            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-xs"
+          >
             {error}
           </p>
         ) : null}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={busy}
+          >
             {isOwner ? "Close" : "Cancel"}
           </Button>
           {isOwner ? (
@@ -77,7 +87,11 @@ export function LeaveWarehouseDialog({
             </Button>
           ) : (
             <Button variant="destructive" onClick={leave} disabled={busy}>
-              {busy ? <Loader2 aria-hidden="true" className="animate-spin" /> : <LogOut aria-hidden="true" />}
+              {busy ? (
+                <Loader2 aria-hidden="true" className="animate-spin" />
+              ) : (
+                <LogOut aria-hidden="true" />
+              )}
               Leave warehouse
             </Button>
           )}

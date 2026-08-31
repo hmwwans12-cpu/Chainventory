@@ -54,16 +54,25 @@ export function RejectJoinDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(next) => (busy ? null : onOpenChange(next))}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => (busy ? null : onOpenChange(next))}
+    >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Reject {request.displayName ?? "this join request"}?</DialogTitle>
+          <DialogTitle>
+            Reject {request.displayName ?? "this join request"}?
+          </DialogTitle>
           <DialogDescription>
-            They can submit a new request later. You can optionally include a reason.
+            They can submit a new request later. You can optionally include a
+            reason.
           </DialogDescription>
         </DialogHeader>
         {error ? (
-          <p role="alert" className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-xs">
+          <p
+            role="alert"
+            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-xs"
+          >
             {error}
           </p>
         ) : null}
@@ -78,11 +87,19 @@ export function RejectJoinDialog({
           />
         </div>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={busy}
+          >
             Cancel
           </Button>
           <Button variant="destructive" onClick={reject} disabled={busy}>
-            {busy ? <Loader2 aria-hidden="true" className="animate-spin" /> : <X />}
+            {busy ? (
+              <Loader2 aria-hidden="true" className="animate-spin" />
+            ) : (
+              <X />
+            )}
             Reject request
           </Button>
         </div>

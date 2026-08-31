@@ -65,23 +65,32 @@ export function TransferOwnershipDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(next) => (busy ? null : onOpenChange(next))}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => (busy ? null : onOpenChange(next))}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Transfer ownership</DialogTitle>
           <DialogDescription>
-            You will become a Manager. Only the new owner can manage ownership from now on.
+            You will become a Manager. Only the new owner can manage ownership
+            from now on.
           </DialogDescription>
         </DialogHeader>
         {error ? (
-          <p role="alert" className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-xs">
+          <p
+            role="alert"
+            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-xs"
+          >
             {error}
           </p>
         ) : null}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="transfer-target">New owner</Label>
           {members.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No active members to transfer to.</p>
+            <p className="text-muted-foreground text-sm">
+              No active members to transfer to.
+            </p>
           ) : (
             <Select
               value={targetId}
@@ -103,7 +112,11 @@ export function TransferOwnershipDialog({
           )}
         </div>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={busy}
+          >
             Cancel
           </Button>
           <Button onClick={transfer} disabled={busy || members.length === 0}>
