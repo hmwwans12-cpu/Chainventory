@@ -74,6 +74,23 @@ describe("syncWallet", () => {
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
+  it("rejects expired Privy session", async () => {
+    const expiredVerifier: PrivyVerifier = async () => ({
+      ...VALID_CLAIMS,
+      expiration: 1,
+    });
+    const supabase = mockSupabase(() => ({ data: null, error: null }));
+    const result = await syncWallet(
+      supabase,
+      { address: VALID_ADDR, walletType: "embedded", chainId: 84532 },
+      "valid-token",
+      expiredVerifier
+    );
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("PRIVY_VERIFICATION_FAILED");
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
   it("registers wallet via RPC when the verifier approves", async () => {
     const wallet = {
       id: "w-1",
