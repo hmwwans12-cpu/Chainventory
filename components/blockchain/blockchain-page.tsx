@@ -344,7 +344,12 @@ export function BlockchainPage({
               return (
                 <div
                   key={proof.id}
-                  className="ring-foreground/10 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 ring-1"
+                  className={cn(
+                    "flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 ring-1",
+                    terminal
+                      ? "ring-warning/40 bg-warning/5"
+                      : "ring-foreground/10"
+                  )}
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
                     <StatusBadge
