@@ -1,4 +1,8 @@
+import { BarChart3 } from "lucide-react";
+
 import type { TopProduct } from "@/lib/analytics/aggregate";
+import { EmptyState } from "@/components/shared/empty-state";
+import { EntityName } from "@/components/shared/entity-name";
 
 /**
  * Top products (DESIGN §33) — 5-7 item, urut aktivitas (in+out) terbanyak.
@@ -13,9 +17,11 @@ export function TopProducts({ products }: { products: TopProduct[] }) {
 
   if (products.length === 0) {
     return (
-      <p className="text-muted-foreground py-8 text-center text-sm">
-        No stock activity in this period.
-      </p>
+      <EmptyState
+        icon={BarChart3}
+        title="No stock activity yet"
+        description="Record stock in or out to see which products move the most in this period."
+      />
     );
   }
 
@@ -34,9 +40,7 @@ export function TopProducts({ products }: { products: TopProduct[] }) {
                 <span className="text-muted-foreground font-mono text-xs tabular-nums">
                   {index + 1}
                 </span>
-                <span className="text-foreground truncate text-sm font-medium">
-                  {p.name}
-                </span>
+                <EntityName>{p.name}</EntityName>
                 <span className="text-muted-foreground hidden font-mono text-xs sm:inline">
                   {p.sku}
                 </span>
