@@ -82,11 +82,11 @@ export function RecentMovements({
           </Button>
         </CardAction>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent>
         {items.length === 0 ? (
           <EmptyState
             icon={ArrowDownToLine}
-            title="No stock movement yet."
+            title="No stock movements yet"
             description="Record the first stock in to start the ledger."
           />
         ) : (
