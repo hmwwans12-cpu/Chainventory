@@ -7,7 +7,6 @@ import {
   ArrowLeftRight,
   ArrowUpFromLine,
   Check,
-  ExternalLink,
   Eye,
   Loader2,
   MoreHorizontal,
@@ -74,11 +73,13 @@ import {
 import {
   MovementDetailSheet,
   PROOF_STATUS_META,
+  BASESCAN_URL,
 } from "@/components/inventory/movement-detail-sheet";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import { debounce } from "@/lib/realtime/debounce";
 import { PanelCard } from "@/components/shared/panel-card";
+import { BaseScanLink } from "@/components/shared/basescan-link";
 import { cn, formatDateTime } from "@/lib/utils";
 
 const PAGE_SIZE = 25;
@@ -495,19 +496,13 @@ export function MovementsPage({
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         {m.proofTxHash && m.proofStatus === "confirmed" ? (
-                          <a
-                            href={`https://sepolia.basescan.org/tx/${m.proofTxHash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:text-primary/80 focus-visible:ring-ring relative inline-flex min-h-11 items-center gap-1 rounded text-xs before:absolute before:-inset-[9px] focus-visible:ring-3 focus-visible:outline-none"
-                            aria-label="View transaction on BaseScan"
+                          <BaseScanLink
+                            href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
+                            ariaLabel="View transaction on BaseScan"
+                            className="before:-inset-[9px]"
                           >
-                            <ExternalLink
-                              aria-hidden="true"
-                              className="size-3.5"
-                            />
                             Verified
-                          </a>
+                          </BaseScanLink>
                         ) : proofMeta ? (
                           <StatusBadge
                             tone={proofMeta.tone}
@@ -616,16 +611,13 @@ export function MovementsPage({
                       {formatDateTime(m.created_at)}
                     </p>
                     {m.proofTxHash && m.proofStatus === "confirmed" ? (
-                      <a
-                        href={`https://sepolia.basescan.org/tx/${m.proofTxHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80 focus-visible:ring-ring relative mt-1 inline-flex min-h-11 items-center gap-1 rounded text-xs before:absolute before:-inset-[9px] focus-visible:ring-3 focus-visible:outline-none"
-                        aria-label="View transaction on BaseScan"
+                      <BaseScanLink
+                        href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
+                        ariaLabel="View transaction on BaseScan"
+                        className="mt-1 before:-inset-[9px]"
                       >
-                        <ExternalLink aria-hidden="true" className="size-3.5" />
                         Verified
-                      </a>
+                      </BaseScanLink>
                     ) : proofMeta ? (
                       <p className="text-muted-foreground mt-1 text-xs">
                         {proofMeta.label}

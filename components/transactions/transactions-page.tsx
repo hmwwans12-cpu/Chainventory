@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { BaseScanLink } from "@/components/shared/basescan-link";
 import { Pagination } from "@/components/shared/pagination";
 import {
   MOVEMENT_STATUS_META,
@@ -369,16 +370,13 @@ export function TransactionsPage({
                       {formatDateTime(m.created_at)}
                     </p>
                     {m.proofTxHash && m.proofStatus === "confirmed" ? (
-                      <a
+                      <BaseScanLink
                         href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80 focus-visible:ring-ring mt-1 inline-flex min-h-11 items-center gap-1 rounded text-xs focus-visible:ring-3 focus-visible:outline-none"
-                        aria-label="View transaction on BaseScan"
+                        ariaLabel="View transaction on BaseScan"
+                        className="mt-1"
                       >
-                        <ExternalLink aria-hidden="true" className="size-3.5" />
                         Verified
-                      </a>
+                      </BaseScanLink>
                     ) : proofMeta ? (
                       <p className="text-muted-foreground mt-1 text-xs">
                         {proofMeta.label}

@@ -1,10 +1,11 @@
 import * as React from "react";
+import { ExternalLink } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 /**
- * Tautan eksternal BaseScan (tx / address) — affordance, hit-area 44px, dan
- * `rel` aman terpusat (audit UI #4). Hindari duplikasi `<a target="_blank">`
+ * Tautan eksternal BaseScan (tx / address) — affordance, hit-area 44px,
+ * dan `rel` aman terpusat (audit UI #4). Hindari duplikasi `<a target="_blank">`
  * inline agar konsisten di seluruh halaman blockchain.
  */
 export function BaseScanLink({
@@ -12,11 +13,15 @@ export function BaseScanLink({
   ariaLabel,
   className,
   children,
+  withIcon = true,
+  tone = "primary",
 }: {
   href: string;
   ariaLabel: string;
   className?: string;
   children: React.ReactNode;
+  withIcon?: boolean;
+  tone?: "primary" | "muted";
 }) {
   return (
     <a
@@ -25,10 +30,16 @@ export function BaseScanLink({
       rel="noopener noreferrer"
       aria-label={ariaLabel}
       className={cn(
-        "text-primary hover:text-primary/80 focus-visible:ring-ring relative inline-flex items-center gap-1.5 rounded before:absolute before:-inset-[9px] focus-visible:ring-3 focus-visible:outline-none",
+        "focus-visible:ring-ring relative inline-flex min-h-11 items-center gap-1 rounded text-xs before:absolute before:-inset-[7px] focus-visible:ring-3 focus-visible:outline-none",
+        tone === "primary"
+          ? "text-primary hover:text-primary/80"
+          : "text-muted-foreground hover:text-foreground",
         className
       )}
     >
+      {withIcon ? (
+        <ExternalLink aria-hidden="true" className="size-3.5" />
+      ) : null}
       {children}
     </a>
   );

@@ -258,6 +258,7 @@ export function BlockchainPage({
               <BaseScanLink
                 href={`${BASESCAN_URL}/address/${deploymentAddress}`}
                 ariaLabel="View warehouse contract on BaseScan"
+                withIcon={false}
                 className="font-mono text-sm"
               >
                 <Link2 aria-hidden="true" className="size-4 shrink-0" />
