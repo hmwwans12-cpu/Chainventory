@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/auth/form-field";
 import { GoogleButton, OAuthDivider } from "@/components/auth/google-button";
 import { loginAction } from "@/app/actions/auth";
+import { Loader2 } from "lucide-react";
 
 export function LoginForm({
   initialError,
@@ -68,6 +69,9 @@ export function LoginForm({
         </FormField>
 
         <Button type="submit" className="mt-2 w-full" disabled={pending}>
+          {pending ? (
+            <Loader2 aria-hidden="true" className="animate-spin" />
+          ) : null}
           {pending ? "Signing in…" : "Sign in"}
         </Button>
       </form>

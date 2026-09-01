@@ -51,7 +51,7 @@ export function EmptyState({
   return (
     <PanelCard
       variant="dashed"
-      className="bg-card/50 flex flex-col items-center justify-center gap-2 px-6 py-12 text-center"
+      className="bg-card flex flex-col items-center justify-center gap-2 px-6 py-12 text-center"
     >
       <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
         <Icon aria-hidden="true" className="size-5" />

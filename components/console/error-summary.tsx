@@ -101,7 +101,10 @@ export function ErrorSummary({ errors }: { errors: ErrorEntry[] }) {
                       <Tooltip>
                         <TooltipTrigger
                           render={
-                            <span className="text-muted-foreground block max-w-56 truncate text-xs" />
+                            <span
+                              tabIndex={0}
+                              className="text-muted-foreground block max-w-56 truncate text-xs"
+                            />
                           }
                         >
                           {entry.error ?? "—"}

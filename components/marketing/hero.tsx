@@ -115,7 +115,7 @@ export function Hero() {
           >
             <Button
               size="lg"
-              className="group h-12 px-7 text-base transition-transform duration-150 ease-out hover:scale-[1.02] [@media(hover:hover)_and_(pointer:fine)]:active:scale-[0.98]"
+              className="group px-7 text-base transition-transform duration-150 ease-out hover:scale-[1.02] [@media(hover:hover)_and_(pointer:fine)]:active:scale-[0.98]"
               render={<Link href="/signup" />}
             >
               {t("landing.hero.cta_primary")}
@@ -127,7 +127,7 @@ export function Hero() {
             <Button
               size="lg"
               variant="outline"
-              className="h-12 px-7 text-base"
+              className="px-7 text-base"
               render={<Link href="/login" />}
             >
               {t("landing.hero.cta_secondary")}

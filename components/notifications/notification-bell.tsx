@@ -272,7 +272,7 @@ export function NotificationBell() {
               {unreadCount > 0 ? (
                 <Badge
                   className={cn(
-                    "absolute -top-0.5 -right-0.5 size-6 items-center justify-center rounded-full p-0 text-xs tabular-nums",
+                    "absolute -top-0.5 -right-0.5 size-6 items-center justify-center p-0 text-xs tabular-nums",
                     badgePop && "motion-safe:animate-[bell-pop_200ms_ease-out]"
                   )}
                   aria-hidden="true"

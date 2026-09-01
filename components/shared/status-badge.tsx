@@ -31,7 +31,7 @@ const STATUS_META: Record<
   warning: {
     label: "Warning",
     icon: AlertTriangle,
-    className: "bg-warning/15 text-warning font-medium",
+    className: "bg-warning/15 text-warning border border-warning/20 font-medium",
   },
   failed: {
     label: "Failed",

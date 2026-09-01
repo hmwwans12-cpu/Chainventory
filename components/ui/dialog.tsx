@@ -51,21 +51,21 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "bg-popover text-popover-foreground border-border max-h-[min(85vh,44rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-lg border bg-clip-padding p-4 shadow-lg transition duration-150 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0",
+          "bg-popover text-popover-foreground border-border max-h-[min(85vh,44rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-lg border bg-clip-padding p-4 shadow-(--shadow-modal) transition duration-150 ease-out data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0",
           "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
           className
         )}
         {...props}
       >
         {children}
-        {showCloseButton && (
+          {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
             render={
               <Button
                 variant="ghost"
                 className="absolute top-3 right-3"
-                size="icon-sm"
+                size="icon"
               />
             }
           >
@@ -106,7 +106,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        "text-foreground font-display pr-10 text-base font-medium",
+        "text-foreground font-display pr-12 text-base font-semibold",
         className
       )}
       {...props}

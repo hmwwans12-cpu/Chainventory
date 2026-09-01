@@ -11,6 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type Delta = { pct: number; kind: "up" | "down" | "new" };
@@ -93,8 +98,17 @@ export function StatCard({
           {value}
         </CardTitle>
         {d ? (
-          <CardAction title="Compared to the previous period">
-            <DeltaBadge delta={d} />
+          <CardAction>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span className="flex cursor-help items-center" />
+                }
+              >
+                <DeltaBadge delta={d} />
+              </TooltipTrigger>
+              <TooltipContent>Compared to the previous period</TooltipContent>
+            </Tooltip>
           </CardAction>
         ) : null}
       </CardHeader>

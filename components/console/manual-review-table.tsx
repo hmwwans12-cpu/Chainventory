@@ -52,7 +52,7 @@ export function ManualReviewTable({
   onRequestRetry: (proof: ManualReviewProof) => void;
 }) {
   return (
-    <Card className="ring-warning/40">
+    <Card className="border-warning/30 bg-warning/5">
       <CardHeader>
         <div className="flex items-start gap-2.5">
           <span className="bg-warning/15 text-warning flex size-9 shrink-0 items-center justify-center rounded-lg">
@@ -121,7 +121,10 @@ export function ManualReviewTable({
                       <Tooltip>
                         <TooltipTrigger
                           render={
-                            <span className="text-muted-foreground block max-w-64 truncate text-xs" />
+                            <span
+                              tabIndex={0}
+                              className="text-muted-foreground block max-w-64 truncate text-xs"
+                            />
                           }
                         >
                           {proof.error ?? proof.outbox?.error ?? "—"}

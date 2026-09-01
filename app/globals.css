@@ -25,7 +25,7 @@
   --primary-foreground: #ffffff;
   --secondary: #6ab29b;
   --secondary-foreground: #0e231b;
-  --muted: #f3ece5;
+  --muted: #ebe0d3;
   /* DESIGN.md §4 muted-foreground: #247158 is 4.09:1 on the dawn-pink
      background — fails WCAG AA. Darkened to #1E5B46 (5.55:1). */
   --muted-foreground: #1e5b46;

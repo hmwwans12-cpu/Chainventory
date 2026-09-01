@@ -78,7 +78,7 @@ export function FaucetClaimCard({
   return (
     <Card className="border-primary/20 bg-primary/[0.04]">
       <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
-        <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
+        <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
           <Droplets aria-hidden="true" className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
@@ -89,9 +89,16 @@ export function FaucetClaimCard({
             Claim 0.001 test ETH to pay for your next stock transaction.
           </p>
           {message ? (
-            <p role="status" className="text-muted-foreground mt-1 text-xs">
-              {message}
-            </p>
+            txHash ? (
+              <p className="text-muted-foreground mt-1 text-xs">{message}</p>
+            ) : (
+              <p
+                role="alert"
+                className="bg-destructive/15 text-destructive mt-1 rounded-md px-2 py-1 text-xs"
+              >
+                {message}
+              </p>
+            )
           ) : null}
         </div>
         <div className="flex items-center gap-2">
@@ -110,7 +117,7 @@ export function FaucetClaimCard({
               View transfer <ExternalLink aria-hidden="true" />
             </Button>
           ) : null}
-          <Button size="sm" onClick={claim} disabled={busy}>
+          <Button size="default" onClick={claim} disabled={busy}>
             {busy ? (
               <Loader2 aria-hidden="true" className="animate-spin" />
             ) : (

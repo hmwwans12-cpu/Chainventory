@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/auth/form-field";
 import { resetPasswordAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/toast";
+import { Loader2 } from "lucide-react";
 
 export function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +75,9 @@ export function ForgotPasswordForm() {
       </FormField>
 
       <Button type="submit" className="mt-2 w-full" disabled={pending}>
+        {pending ? (
+          <Loader2 aria-hidden="true" className="animate-spin" />
+        ) : null}
         {pending ? "Sending reset link…" : "Send reset link"}
       </Button>
     </form>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/auth/form-field";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/ui/toast";
+import { Loader2 } from "lucide-react";
 
 export function ResetPasswordForm() {
   const [error, setError] = useState<string | null>(null);
@@ -121,6 +122,9 @@ export function ResetPasswordForm() {
       </FormField>
 
       <Button type="submit" className="mt-2 w-full" disabled={pending}>
+        {pending ? (
+          <Loader2 aria-hidden="true" className="animate-spin" />
+        ) : null}
         {pending ? "Updating…" : "Update password"}
       </Button>
     </form>

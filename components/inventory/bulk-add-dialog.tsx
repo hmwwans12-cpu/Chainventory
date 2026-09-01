@@ -36,6 +36,7 @@ import {
   type BulkProductRow,
 } from "@/lib/inventory/products-client";
 import { MAX_CSV_BYTES, parseProductsCsv } from "@/lib/inventory/csv";
+import { cn } from "@/lib/utils";
 
 /**
  * Bulk Add Products (DESIGN §36).
@@ -223,19 +224,31 @@ export function BulkAddDialog({
 
         {step === "input" ? (
           <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap gap-1">
+            <div
+              role="tablist"
+              aria-label="Bulk add mode"
+              className="bg-muted flex w-fit items-center gap-0.5 rounded-md p-1"
+            >
               {modes.map((m) => {
                 const Icon = m.icon;
+                const active = mode === m.id;
                 return (
-                  <Button
+                  <button
                     key={m.id}
-                    variant={mode === m.id ? "default" : "outline"}
-                    size="sm"
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
                     onClick={() => setMode(m.id)}
+                    className={cn(
+                      "focus-visible:ring-ring flex min-h-11 items-center gap-1.5 rounded-[calc(var(--radius-md)-2px)] px-3 py-2.5 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none",
+                      active
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
                   >
-                    <Icon aria-hidden="true" />
+                    <Icon aria-hidden="true" className="size-3.5" />
                     {m.label}
-                  </Button>
+                  </button>
                 );
               })}
             </div>

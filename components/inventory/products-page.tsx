@@ -331,7 +331,7 @@ export function ProductsPage({
                 type="button"
                 onClick={() => setSearchInput("")}
                 aria-label="Clear search"
-                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded before:absolute before:-inset-2 before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
+                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded before:absolute before:-inset-[10px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
               >
                 <X aria-hidden="true" className="size-3.5" />
               </button>

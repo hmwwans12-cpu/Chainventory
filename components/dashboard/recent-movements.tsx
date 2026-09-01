@@ -76,6 +76,7 @@ export function RecentMovements({
           <Button
             variant="outline"
             size="sm"
+            className="min-h-11"
             render={<Link href={viewAllHref} />}
           >
             View all

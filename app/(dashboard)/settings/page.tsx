@@ -124,7 +124,7 @@ export default async function SettingsPage({
                 <span className="text-muted-foreground text-xs">
                   {t("settings.role")}
                 </span>
-                <Badge variant="secondary">
+                <Badge variant="outline">
                   {{
                     OWNER: "Owner",
                     MANAGER: "Manager",
