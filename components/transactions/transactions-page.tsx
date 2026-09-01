@@ -82,11 +82,14 @@ export function TransactionsPage({
 
   // H-04: merge dengan filter aktif (type/proof) agar pagination tidak
   // menghapusnya — sebelumnya hanya page yang dikirim ulang.
-  const goTo = (params: Record<string, string | undefined>) => {
+  // `null` (vs `undefined`) untuk "hapus key ini"; `undefined` = "biarkan".
+  const goTo = (params: Record<string, string | null | undefined>) => {
     const url = new URLSearchParams();
     if (warehouseId) url.set("warehouse", warehouseId);
-    const nextType = params.type ?? type;
-    const nextProof = params.proof ?? proof;
+    const nextType =
+      params.type === null ? undefined : (params.type ?? type);
+    const nextProof =
+      params.proof === null ? undefined : (params.proof ?? proof);
     const nextPage = params.page ?? String(page);
     if (nextType) url.set("type", nextType);
     if (nextProof) url.set("proof", nextProof);
@@ -180,6 +183,14 @@ export function TransactionsPage({
             type || proof
               ? "Try a different filter combination."
               : "Stock operations and their blockchain proofs will appear here."
+          }
+          primaryAction={
+            type || proof
+              ? {
+                  label: "Clear filters",
+                  onClick: () => goTo({ type: null, proof: null, page: "1" }),
+                }
+              : undefined
           }
         />
       ) : (
@@ -362,7 +373,7 @@ export function TransactionsPage({
                         href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80 focus-visible:ring-ring mt-1 inline-flex min-h-7 items-center gap-1 rounded text-xs focus-visible:ring-3 focus-visible:outline-none"
+                        className="text-primary hover:text-primary/80 focus-visible:ring-ring mt-1 inline-flex min-h-11 items-center gap-1 rounded text-xs focus-visible:ring-3 focus-visible:outline-none"
                         aria-label="View transaction on BaseScan"
                       >
                         <ExternalLink aria-hidden="true" className="size-3.5" />

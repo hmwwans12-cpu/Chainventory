@@ -56,7 +56,7 @@ export function ManualReviewTable({
       <CardHeader>
         <div className="flex items-start gap-2.5">
           <span className="bg-warning/15 text-warning flex size-9 shrink-0 items-center justify-center rounded-lg">
-            <AlertTriangle aria-hidden="true" className="size-4.5" />
+            <AlertTriangle aria-hidden="true" className="size-4" />
           </span>
           <div className="flex flex-col gap-1">
             <CardTitle>Manual review queue</CardTitle>

@@ -499,7 +499,7 @@ export function MovementsPage({
                             href={`https://sepolia.basescan.org/tx/${m.proofTxHash}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-primary hover:text-primary/80 focus-visible:ring-ring relative inline-flex min-h-7 items-center gap-1 rounded text-xs before:absolute before:-inset-[9px] focus-visible:ring-3 focus-visible:outline-none"
+                            className="text-primary hover:text-primary/80 focus-visible:ring-ring relative inline-flex min-h-11 items-center gap-1 rounded text-xs before:absolute before:-inset-[9px] focus-visible:ring-3 focus-visible:outline-none"
                             aria-label="View transaction on BaseScan"
                           >
                             <ExternalLink
@@ -620,7 +620,7 @@ export function MovementsPage({
                         href={`https://sepolia.basescan.org/tx/${m.proofTxHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80 focus-visible:ring-ring relative mt-1 inline-flex min-h-7 items-center gap-1 rounded text-xs before:absolute before:-inset-[9px] focus-visible:ring-3 focus-visible:outline-none"
+                        className="text-primary hover:text-primary/80 focus-visible:ring-ring relative mt-1 inline-flex min-h-11 items-center gap-1 rounded text-xs before:absolute before:-inset-[9px] focus-visible:ring-3 focus-visible:outline-none"
                         aria-label="View transaction on BaseScan"
                       >
                         <ExternalLink aria-hidden="true" className="size-3.5" />

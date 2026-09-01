@@ -37,7 +37,7 @@ function StatCard({
                   : "bg-primary/10 text-primary flex size-9 items-center justify-center rounded-lg"
             }
           >
-            <Icon aria-hidden="true" className="size-4.5" />
+            <Icon aria-hidden="true" className="size-4" />
           </span>
         </CardAction>
       </CardHeader>

@@ -11,7 +11,7 @@ export default function ConsoleLoading() {
       {/* Tabs */}
       <Skeleton className="h-11 w-full max-w-xl rounded-lg" />
       {/* Summary cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="min-h-[120px] rounded-xl" />
         ))}

@@ -289,9 +289,9 @@ export function NotificationsPageView({
                       aria-hidden="true"
                     >
                       {meta?.icon ? (
-                        <meta.icon className="size-4.5" />
+                        <meta.icon className="size-4" />
                       ) : (
-                        <Bell className="size-4.5" />
+                        <Bell className="size-4" />
                       )}
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col gap-1">

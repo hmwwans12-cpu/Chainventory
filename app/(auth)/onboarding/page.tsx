@@ -22,7 +22,7 @@ export default function OnboardingPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="font-display text-foreground text-2xl font-semibold">
+        <h1 className="font-display text-foreground text-2xl font-semibold text-balance">
           Welcome to Chainventory
         </h1>
         <p className="text-muted-foreground text-sm">
