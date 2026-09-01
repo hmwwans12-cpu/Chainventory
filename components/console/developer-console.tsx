@@ -139,6 +139,13 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
     if (pb.ok && Array.isArray(pb.data)) setManualReview(pb.data);
     if (eb.ok && Array.isArray(eb.data)) setErrors(eb.data);
     if (ab.ok && Array.isArray(ab.data)) setAudit(ab.data);
+    if (!(sb.ok || pb.ok || eb.ok || ab.ok)) {
+      toast.add({
+        type: "error",
+        title: "Live data unavailable",
+        description: "Console feeds did not respond. Showing last known state.",
+      });
+    }
   }, []);
 
   const confirmRetry = async () => {
