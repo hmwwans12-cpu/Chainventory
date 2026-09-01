@@ -81,15 +81,17 @@
   /* DESIGN.md §5 — Dark Mode (prepared, not MVP priority) */
   --background: #0e231b;
   --foreground: #e8f2ee;
-  --card: #153227;
+  /* Card raised vs background untuk hairline boundary yang terlihat */
+  --card: #1a3d2f;
   --card-foreground: #e8f2ee;
-  --popover: #153227;
+  --popover: #1a3d2f;
   --popover-foreground: #e8f2ee;
   --primary: #6ab29b;
   --primary-foreground: #0e231b;
   --secondary: #247158;
   --secondary-foreground: #e8f2ee;
-  --muted: #153227;
+  /* Muted dipisah dari card agar `bg-muted/30` overlay tidak menyatu dengan card */
+  --muted: #122b23;
   --muted-foreground: #6ab29b;
   --accent: #247158;
   --accent-foreground: #e4d5c7;
@@ -97,8 +99,9 @@
   --destructive-foreground: #0e231b;
   --warning: #f4b23e;
   --warning-foreground: #3a2404;
-  --border: #23493c;
-  --input: #23493c;
+  /* Border dinaikkan saturasi agar tidak redup di monitor low-contrast */
+  --border: #2d5447;
+  --input: #2d5447;
   --ring: #6ab29b;
   --mint-soft: #a4dcc7;
 
@@ -107,9 +110,9 @@
   --sidebar-foreground: #e8f2ee;
   --sidebar-primary: #6ab29b;
   --sidebar-primary-foreground: #0e231b;
-  --sidebar-accent: #153227;
+  --sidebar-accent: #1a3d2f;
   --sidebar-accent-foreground: #e8f2ee;
-  --sidebar-border: #23493c;
+  --sidebar-border: #2d5447;
   --sidebar-ring: #6ab29b;
 }
 
