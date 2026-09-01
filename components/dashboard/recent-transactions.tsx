@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EntityName } from "@/components/shared/entity-name";
 import { cn, formatDateTime } from "@/lib/utils";
 
 /**
@@ -88,9 +89,7 @@ export function RecentTransactions({
               return (
                 <li key={item.id} className="flex items-center gap-3 py-2.5">
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-foreground truncate text-sm font-medium">
-                      {item.productName}
-                    </span>
+                    <EntityName>{item.productName}</EntityName>
                     <span className="text-muted-foreground text-xs">
                       {TYPE_LABEL[item.movementType] ?? item.movementType} ·{" "}
                       {formatDateTime(item.createdAt)}

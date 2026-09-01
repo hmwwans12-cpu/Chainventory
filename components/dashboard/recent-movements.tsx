@@ -6,7 +6,6 @@ import {
   CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -21,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EmptyState } from "@/components/shared/empty-state";
+import { EntityName } from "@/components/shared/entity-name";
 import { cn, formatDateTime } from "@/lib/utils";
 import {
   MOVEMENT_STATUS_META,
@@ -70,7 +70,7 @@ export function RecentMovements({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Stock Movement</CardTitle>
+        <CardTitle>Recent Stock Movements</CardTitle>
         <CardDescription>Last 8 movements in this warehouse.</CardDescription>
         <CardAction>
           <Button
@@ -117,9 +117,9 @@ export function RecentMovements({
                     <TableRow key={item.id}>
                       <TableCell>
                         <div className="flex min-w-0 flex-col gap-0.5">
-                          <span className="text-foreground max-w-52 truncate text-sm font-medium">
+                          <EntityName className="max-w-52">
                             {item.productName}
-                          </span>
+                          </EntityName>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -159,19 +159,6 @@ export function RecentMovements({
           </div>
         )}
       </CardContent>
-      {items.length > 0 ? (
-        <CardFooter className="justify-between py-2.5">
-          <span className="text-muted-foreground text-xs">
-            Showing latest {items.length} movements
-          </span>
-          <Link
-            href={viewAllHref}
-            className="text-primary text-xs underline-offset-4 hover:underline"
-          >
-            Open ledger →
-          </Link>
-        </CardFooter>
-      ) : null}
     </Card>
   );
 }
