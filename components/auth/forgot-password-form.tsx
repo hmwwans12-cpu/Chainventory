@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/auth/form-field";
 import { resetPasswordAction } from "@/app/actions/auth";
+import { toast } from "@/components/ui/toast";
 
 export function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +25,16 @@ export function ForgotPasswordForm() {
       if (result?.success) setSuccess(true);
     });
   }
+
+  useEffect(() => {
+    if (success) {
+      toast.add({
+        type: "success",
+        title: "Reset link sent",
+        description: "Check your inbox for the password reset link.",
+      });
+    }
+  }, [success]);
 
   if (success) {
     return (

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/auth/form-field";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/components/ui/toast";
 
 export function ResetPasswordForm() {
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +23,16 @@ export function ResetPasswordForm() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (success) {
+      toast.add({
+        type: "success",
+        title: "Password updated",
+        description: "Redirecting to your dashboard…",
+      });
+    }
+  }, [success]);
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
