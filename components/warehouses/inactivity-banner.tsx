@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Ban, Clock3 } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, Clock3, Mail } from "lucide-react";
 
 import {
   INACTIVITY_CRITICAL_DAYS,
@@ -9,6 +9,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { PanelCard } from "@/components/shared/panel-card";
 import { cn } from "@/lib/utils";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
+
+const SUPPORT_EMAIL = "support@chainventory.app";
 
 /**
  * Banner inactivity warehouse (PRD §20, DESIGN §54).
@@ -19,12 +23,12 @@ import { cn } from "@/lib/utils";
  *  - critical (≥ 27 hari): merah + ikon lebih waspada — 3 hari lagi
  *    disuspend; urgensi visual harus beda dari warning.
  *  - status `suspended` → status yang bermakna: apa yang terjadi, kenapa,
- *    dan ke mana harus bertanya. Tanpa tautan mati (belum ada halaman dukungan).
+ *    dan ke mana harus bertanya (mailto support).
  *
- * Server component, tidak ada interaktivitas klien. Navigasi internal pakai
+ * Server component, i18n via getLocale(). Navigasi internal pakai
  * `Link` (bukan `<a href>`) agar tidak full page reload.
  */
-export function InactivityBanner({
+export async function InactivityBanner({
   warehouseId,
   warehouseName,
   status,
@@ -35,6 +39,10 @@ export function InactivityBanner({
   status: "active" | "suspended";
   inactiveDays: number;
 }) {
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
+
   if (status === "suspended") {
     return (
       <PanelCard
@@ -45,15 +53,31 @@ export function InactivityBanner({
         <span className="bg-destructive/15 text-destructive mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full">
           <Ban aria-hidden="true" className="size-4" />
         </span>
-        <div className="flex flex-col gap-0.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <p className="font-display text-foreground text-sm font-semibold">
-            {warehouseName} disuspend karena tidak aktif
+            {t("inactivity.suspended_title", { name: warehouseName })}
           </p>
           <p className="text-muted-foreground text-sm">
-            Warehouse ini disuspend setelah {SUSPEND_ARCHIVE_DAYS} hari tanpa
-            aktivitas. Mutasi stok dan keanggotaan dijeda. Hubungi dukungan
-            Chainventory untuk mengaktifkannya kembali.
+            {t("inactivity.suspended_desc", {
+              days: String(SUSPEND_ARCHIVE_DAYS),
+            })}
           </p>
+          <Button
+            render={
+              <a
+                href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+                  `Reactivate warehouse: ${warehouseName}`
+                )}`}
+              />
+            }
+            variant="outline"
+            size="sm"
+            className="mt-1 w-fit"
+            data-icon="inline-start"
+          >
+            <Mail aria-hidden="true" />
+            {t("inactivity.support_cta")}
+          </Button>
         </div>
       </PanelCard>
     );
@@ -72,7 +96,7 @@ export function InactivityBanner({
         "flex flex-col items-start gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
         critical
           ? "border-destructive/30 bg-destructive/10"
-          : "border-border bg-warning/10"
+          : "border-warning/30 bg-warning/10"
       )}
     >
       <div className="flex items-start gap-3">
@@ -93,13 +117,17 @@ export function InactivityBanner({
         <div className="flex flex-col gap-0.5">
           <p className="font-display text-foreground text-sm font-semibold">
             {critical
-              ? `${warehouseName} akan disuspend dalam ${daysLeft} hari`
-              : `${warehouseName} akan disuspend`}
+              ? t("inactivity.warning_title_critical", {
+                  name: warehouseName,
+                  days: String(daysLeft),
+                })
+              : t("inactivity.warning_title", { name: warehouseName })}
           </p>
           <p className="text-muted-foreground text-sm">
-            Warehouse ini belum ada aktivitas selama {inactiveDays} hari.
-            Lakukan stock movement apa pun dalam {daysLeft} hari ke depan untuk
-            menjaganya tetap aktif.
+            {t("inactivity.warning_desc", {
+              inactive: String(inactiveDays),
+              days: String(daysLeft),
+            })}
           </p>
         </div>
       </div>
@@ -108,7 +136,7 @@ export function InactivityBanner({
         className="shrink-0"
         data-icon="inline-end"
       >
-        Buat Stock Movement
+        {t("inactivity.cta")}
         <ArrowRight aria-hidden="true" />
       </Button>
     </PanelCard>

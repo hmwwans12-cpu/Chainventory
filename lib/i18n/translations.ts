@@ -238,6 +238,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.no_warehouse": "No warehouse yet",
     "settings.no_warehouse_desc":
       "Create or join a warehouse to see its details here.",
+    // Inactivity banner
+    "inactivity.suspended_title": "{name} suspended due to inactivity",
+    "inactivity.suspended_desc":
+      "This warehouse was suspended after {days} days without activity. Stock movements and membership are paused. Contact Chainventory support to reactivate it.",
+    "inactivity.support_cta": "Email support",
+    "inactivity.warning_title_critical":
+      "{name} will be suspended in {days} day(s)",
+    "inactivity.warning_title": "{name} will be suspended",
+    "inactivity.warning_desc":
+      "This warehouse has had no activity for {inactive} days. Record any stock movement within the next {days} day(s) to keep it active.",
+    "inactivity.cta": "Record stock movement",
   },
   id: {
     "group.operations": "Operasional",
@@ -464,6 +475,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.no_warehouse": "Belum ada gudang",
     "settings.no_warehouse_desc":
       "Buat atau gabung gudang untuk melihat detailnya di sini.",
+    // Inactivity banner
+    "inactivity.suspended_title": "{name} disuspend karena tidak aktif",
+    "inactivity.suspended_desc":
+      "Gudang ini disuspend setelah {days} hari tanpa aktivitas. Mutasi stok dan keanggotaan dijeda. Hubungi dukungan Chainventory untuk mengaktifkannya kembali.",
+    "inactivity.support_cta": "Email dukungan",
+    "inactivity.warning_title_critical":
+      "{name} akan disuspend dalam {days} hari",
+    "inactivity.warning_title": "{name} akan disuspend",
+    "inactivity.warning_desc":
+      "Gudang ini belum ada aktivitas selama {inactive} hari. Lakukan stock movement dalam {days} hari ke depan untuk menjaganya tetap aktif.",
+    "inactivity.cta": "Buat Stock Movement",
   },
 };
 

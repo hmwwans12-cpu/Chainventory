@@ -796,7 +796,7 @@ export function CreateWarehouseForm() {
                 type="submit"
                 size="lg"
                 className="h-12 w-full text-base"
-                disabled={walletSync.syncing}
+                disabled={busy || walletSync.syncing || !ready || !authenticated}
               >
                 {walletSync.syncing ? (
                   <Loader2 aria-hidden="true" className="animate-spin" />
