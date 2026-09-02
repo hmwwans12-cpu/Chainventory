@@ -36,8 +36,21 @@ export function TransferOwnershipDialog({
   onDone: () => void;
 }) {
   const [targetId, setTargetId] = React.useState("");
+  const [confirming, setConfirming] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  const handleSelect = (value: string | null) => {
+    if (value !== null && value !== "") {
+      setTargetId(value);
+      setConfirming(true);
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirming(false);
+    setTargetId("");
+  };
 
   const transfer = async () => {
     if (!targetId) {
@@ -64,10 +77,20 @@ export function TransferOwnershipDialog({
     }
   };
 
+  const selectedMember = members.find((m) => m.userId === targetId);
+
   return (
     <Dialog
       open={open}
-      onOpenChange={(next) => (busy ? null : onOpenChange(next))}
+      onOpenChange={(next) => {
+        if (busy) return;
+        if (!next) {
+          setConfirming(false);
+          setTargetId("");
+          setError(null);
+        }
+        onOpenChange(next);
+      }}
     >
       <DialogContent>
         <DialogHeader>
@@ -91,13 +114,28 @@ export function TransferOwnershipDialog({
             <p className="text-muted-foreground text-sm">
               No active members to transfer to.
             </p>
-          ) : (
-            <Select
-              value={targetId}
-              onValueChange={(value) => {
-                if (value !== null) setTargetId(value);
-              }}
+          ) : confirming && selectedMember ? (
+            // Audit v0.3.5 §9.25: re-confirm destructive action. 2-step:
+            // pilih member -> konfirmasi "Transfer ownership" dengan
+            // nama target ditampilkan eksplisit.
+            <div
+              role="alert"
+              className="border-warning/30 bg-warning/5 flex flex-col gap-2 rounded-lg border p-3"
             >
+              <p className="text-foreground text-sm">
+                Transfer ownership to{" "}
+                <span className="font-semibold">
+                  {selectedMember.displayName ?? selectedMember.email}
+                </span>
+                ?
+              </p>
+              <p className="text-muted-foreground text-xs">
+                You will become a Manager. Only the new owner can manage
+                ownership from now on. This action cannot be undone by you.
+              </p>
+            </div>
+          ) : (
+            <Select value={targetId} onValueChange={handleSelect}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a member" />
               </SelectTrigger>
@@ -112,14 +150,27 @@ export function TransferOwnershipDialog({
           )}
         </div>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          {confirming ? (
+            <Button
+              variant="outline"
+              onClick={handleCancelConfirm}
+              disabled={busy}
+            >
+              Back
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={busy}
+            >
+              Cancel
+            </Button>
+          )}
           <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={busy}
+            onClick={transfer}
+            disabled={busy || !targetId || members.length === 0}
           >
-            Cancel
-          </Button>
-          <Button onClick={transfer} disabled={busy || members.length === 0}>
             {busy ? "Transferring…" : "Transfer ownership"}
           </Button>
         </div>

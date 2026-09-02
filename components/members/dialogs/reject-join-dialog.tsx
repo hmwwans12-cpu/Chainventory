@@ -98,7 +98,7 @@ export function RejectJoinDialog({
             {busy ? (
               <Loader2 aria-hidden="true" className="animate-spin" />
             ) : (
-              <X />
+              <X aria-hidden="true" />
             )}
             Reject request
           </Button>

@@ -6,6 +6,7 @@ import { FAUCET_AMOUNT_ETH, FAUCET_COOLDOWN_MS } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { createProofServiceClient } from "@/lib/proof/supabase";
+import { sanitizeConsoleError } from "@/lib/utils/sanitize-console-error";
 import type {
   AuditEntry,
   ConsoleSummary,
@@ -301,6 +302,11 @@ export async function getTreasuryData(): Promise<TreasuryData> {
     const message =
       err instanceof Error ? err.message : "treasury probe failed";
     logger.warn({ err: message }, "console treasury probe failed");
-    return { ok: false, error: message };
+    return {
+      ok: false,
+      // Audit v0.3.5 §9.22: sanitize viem error untuk UI — triim
+      // kalimat pertama, batasi panjang. Full error sudah di log.
+      error: sanitizeConsoleError(message, "Treasury probe failed"),
+    };
   }
 }

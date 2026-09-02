@@ -438,7 +438,7 @@ export function BulkAddDialog({
                 onClick={() => setStep("input")}
                 disabled={busy}
               >
-                {invalid.length ? "Review errors" : "Back to edit"}
+                Back to edit
               </Button>
               <Button onClick={importRows} disabled={busy || rows.length === 0}>
                 {busy ? (

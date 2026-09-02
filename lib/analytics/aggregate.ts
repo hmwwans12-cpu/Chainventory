@@ -88,12 +88,25 @@ function fillDailyGaps(
   rangeDays: number
 ): DailyMovement[] {
   const byDay = new Map(payload.daily.map((d) => [d.day, d]));
+  // Audit v0.3.0 §2.2: pakai UTC end + UTC subtraction agar konsisten
+  // dengan toISODate (yang sekarang UTC juga). Loop pakai Date.UTC
+  // arithmetic supaya day boundaries tidak drift saat DSE/DST berubah.
   const end = new Date();
-  const start = new Date(end);
-  start.setDate(start.getDate() - (rangeDays - 1));
+  const startMs = Date.UTC(
+    end.getUTCFullYear(),
+    end.getUTCMonth(),
+    end.getUTCDate()
+  );
+  const endMs = Date.UTC(
+    end.getUTCFullYear(),
+    end.getUTCMonth(),
+    end.getUTCDate()
+  );
+  const start = new Date(startMs);
+  start.setUTCDate(start.getUTCDate() - (rangeDays - 1));
 
   const result: DailyMovement[] = [];
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+  for (let d = new Date(start); d.getTime() <= endMs; d.setUTCDate(d.getUTCDate() + 1)) {
     const iso = toISODate(d);
     const row = byDay.get(iso);
     result.push({

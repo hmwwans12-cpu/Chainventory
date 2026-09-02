@@ -6,6 +6,7 @@ import { baseSepolia, createChainTransport } from "@/lib/blockchain/chains";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { createProofServiceClient } from "@/lib/proof/supabase";
+import { sanitizeConsoleError } from "@/lib/utils/sanitize-console-error";
 import type { DependencyStatus } from "@/lib/console/types";
 
 /**
@@ -151,7 +152,13 @@ async function probeRpc(
   } catch (err) {
     const message = err instanceof Error ? err.message : "probe failed";
     logger.warn({ err: message, key }, "console probe rpc failed");
-    return { key, label, ok: false, configured: true, error: message };
+    return {
+      key,
+      label,
+      ok: false,
+      configured: true,
+      error: sanitizeConsoleError(message, "RPC probe failed"),
+    };
   }
 }
 
@@ -187,7 +194,7 @@ async function probeBaseSepolia(): Promise<DependencyStatus> {
       label: "Base Sepolia",
       ok: false,
       configured: true,
-      error: message,
+      error: sanitizeConsoleError(message, "Base Sepolia probe failed"),
     };
   }
 }
@@ -209,7 +216,10 @@ export async function probeDependencies(): Promise<DependencyStatus[]> {
           label: "Unknown",
           ok: false,
           configured: true,
-          error: String(r.reason),
+          error: sanitizeConsoleError(
+            r.reason instanceof Error ? r.reason.message : String(r.reason),
+            "Probe failed"
+          ),
         }
   );
 }
