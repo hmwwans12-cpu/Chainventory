@@ -71,11 +71,11 @@ export function MovementDetailSheet({
   } else {
     steps.push({
       label:
-        movement.status === "committed" ? "Recorded on database" : "Rejected",
+        movement.status === "committed" ? "Inventory updated" : "Rejected",
       detail:
         movement.status === "rejected"
           ? movement.reason || "Rejected by approver."
-          : "Stock balance updated atomically with optimistic lock.",
+          : "Stock balance updated securely.",
       tone: movement.status === "committed" ? "done" : "failed",
     });
   }
@@ -113,7 +113,7 @@ export function MovementDetailSheet({
           <SheetTitle className="flex items-center gap-2">
             <typeMeta.icon aria-hidden="true" className="size-4" />
             {typeMeta.label}
-            <span className="text-muted-foreground font-mono text-xs font-normal">
+            <span className="text-muted-foreground font-mono text-sm font-normal">
               {movement.id.slice(0, 8)}
             </span>
           </SheetTitle>
@@ -125,7 +125,7 @@ export function MovementDetailSheet({
         <div className="flex flex-col gap-5 overflow-y-auto p-4">
           <div className="ring-foreground/10 flex items-center justify-between rounded-lg p-3 ring-1">
             <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground text-xs">Quantity</span>
+              <span className="text-muted-foreground text-sm">Quantity</span>
               <span className="text-foreground text-2xl font-semibold tabular-nums">
                 {movement.quantity}
                 <span className="text-muted-foreground ml-1 text-sm font-normal">
@@ -138,13 +138,13 @@ export function MovementDetailSheet({
 
           {movement.reason ? (
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs">Reason</span>
+              <span className="text-muted-foreground text-sm">Reason</span>
               <p className="text-sm text-balance">{movement.reason}</p>
             </div>
           ) : null}
           {movement.reference ? (
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs">Reference</span>
+              <span className="text-muted-foreground text-sm">Reference</span>
               <p className="text-muted-foreground font-mono text-sm">
                 {movement.reference}
               </p>
@@ -152,7 +152,7 @@ export function MovementDetailSheet({
           ) : null}
 
           <div className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-xs">Timeline</span>
+            <span className="text-muted-foreground text-sm font-medium">Timeline</span>
             <ol className="mt-1 flex flex-col">
               {steps.map((step, i) => (
                 <li key={step.label} className="flex gap-3">
@@ -186,7 +186,7 @@ export function MovementDetailSheet({
                     >
                       {step.label}
                     </span>
-                    <span className="text-muted-foreground text-xs text-pretty">
+                    <span className="text-muted-foreground text-sm text-pretty">
                       {step.detail}
                     </span>
                     {step.tone === "done" && movement.proofTxHash ? (
@@ -194,10 +194,10 @@ export function MovementDetailSheet({
                         href={`${BASESCAN_URL}/tx/${movement.proofTxHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80 focus-visible:ring-ring mt-1 inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-xs focus-visible:ring-3 focus-visible:outline-none"
+                        className="text-muted-foreground hover:text-primary focus-visible:ring-ring mt-1 inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-sm focus-visible:ring-3 focus-visible:outline-none"
                       >
                         <ExternalLink aria-hidden="true" className="size-3.5" />
-                        View transaction on BaseScan
+                        View on BaseScan
                       </a>
                     ) : null}
                   </div>
@@ -207,36 +207,39 @@ export function MovementDetailSheet({
           </div>
 
           {movement.proofStatus && movement.proofTxHash ? (
-            <div className="ring-foreground/10 flex flex-col gap-1.5 rounded-lg p-3 ring-1">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground text-xs">
-                  Proof status
-                </span>
-                <StatusBadge
-                  tone={
-                    PROOF_STATUS_META[movement.proofStatus]?.tone ?? "pending"
-                  }
-                  label={
-                    PROOF_STATUS_META[movement.proofStatus]?.label ??
-                    movement.proofStatus
-                  }
-                />
+            <details className="ring-foreground/10 rounded-lg ring-1">
+              <summary className="text-muted-foreground flex cursor-pointer items-center justify-between px-3 py-2.5 text-sm">
+                Technical details
+                <span className="text-sm">▼</span>
+              </summary>
+              <div className="flex flex-col gap-2 border-t px-3 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground text-sm">Proof status</span>
+                  <StatusBadge
+                    tone={PROOF_STATUS_META[movement.proofStatus]?.tone ?? "pending"}
+                    label={PROOF_STATUS_META[movement.proofStatus]?.label ?? movement.proofStatus}
+                  />
+                </div>
+                <p className="text-muted-foreground truncate font-mono text-sm">{movement.proofTxHash}</p>
+                <a href={`${BASESCAN_URL}/tx/${movement.proofTxHash}`} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm" className="w-full">
+                    <ExternalLink aria-hidden="true" className="size-4" />
+                    View blockchain proof
+                  </Button>
+                </a>
               </div>
-              <a
-                href={`${BASESCAN_URL}/tx/${movement.proofTxHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button variant="outline" size="sm" className="mt-1 w-full">
-                  <ExternalLink aria-hidden="true" className="size-4" />
-                  Open in BaseScan
-                </Button>
-              </a>
-            </div>
+            </details>
+          ) : movement.proofStatus ? (
+            <details className="ring-foreground/10 rounded-lg ring-1">
+              <summary className="text-muted-foreground flex cursor-pointer items-center justify-between px-3 py-2.5 text-sm">Technical details <span className="text-sm">▼</span></summary>
+              <div className="flex flex-col gap-1 px-3 py-3 border-t">
+                <span className="text-muted-foreground text-sm">Proof status: {PROOF_STATUS_META[movement.proofStatus]?.label ?? movement.proofStatus}</span>
+              </div>
+            </details>
           ) : null}
 
           {movement.proofError ? (
-            <div className="bg-destructive/15 text-destructive flex items-start gap-2 rounded-lg p-3 text-xs">
+            <div className="bg-destructive/15 text-destructive flex items-start gap-2 rounded-lg p-3 text-sm">
               <FileText
                 aria-hidden="true"
                 className="mt-0.5 size-3.5 shrink-0"

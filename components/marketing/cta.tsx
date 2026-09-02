@@ -25,7 +25,7 @@ export function Cta() {
         }}
       />
       <Reveal className="relative mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 text-center sm:px-6">
-        <h2 className="font-display text-primary-foreground text-4xl font-semibold tracking-tight text-balance md:text-5xl">
+        <h2 className="text-primary-foreground text-4xl font-semibold tracking-tight text-balance md:text-5xl">
           {t("landing.cta.title")}
         </h2>
         <p className="text-primary-foreground/90 max-w-xl text-base leading-relaxed text-pretty md:text-lg">
@@ -50,7 +50,7 @@ export function Cta() {
             {t("landing.cta.secondary")}
           </Button>
         </div>
-        <p className="text-primary-foreground/90 text-xs">
+        <p className="text-primary-foreground/90 text-sm">
           {t("landing.cta.footnote")}
         </p>
       </Reveal>

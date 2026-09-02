@@ -65,14 +65,14 @@ export function Testimonials() {
                 &ldquo;{t(item.quoteKey)}&rdquo;
               </p>
               <div className="flex items-center gap-3">
-                <span className="bg-primary text-primary-foreground font-display flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                <span className="bg-primary text-primary-foreground font-display flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
                   {getInitials(item.name, null, "?")}
                 </span>
                 <div className="flex flex-col leading-tight">
                   <span className="text-foreground text-sm font-medium">
                     {item.name}
                   </span>
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-muted-foreground text-sm">
                     {t(item.roleKey)}
                   </span>
                 </div>

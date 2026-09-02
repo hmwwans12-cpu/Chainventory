@@ -37,15 +37,15 @@ export function TopProducts({ products }: { products: TopProduct[] }) {
           <li key={p.productId} className="flex flex-col gap-1.5">
             <div className="flex items-baseline justify-between gap-3">
               <div className="flex min-w-0 items-baseline gap-2">
-                <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                <span className="text-muted-foreground font-mono text-sm tabular-nums">
                   {index + 1}
                 </span>
                 <EntityName>{p.name}</EntityName>
-                <span className="text-muted-foreground hidden font-mono text-xs sm:inline">
+                <span className="text-muted-foreground hidden font-mono text-sm sm:inline">
                   {p.sku}
                 </span>
               </div>
-              <div className="text-muted-foreground flex shrink-0 items-baseline gap-3 text-xs tabular-nums">
+              <div className="text-muted-foreground flex shrink-0 items-baseline gap-3 text-sm tabular-nums">
                 <span>
                   In{" "}
                   <span className="text-foreground font-medium">

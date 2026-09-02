@@ -109,12 +109,12 @@ export default async function SettingsPage({
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <span className="bg-primary text-primary-foreground font-display flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold">
+              <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold">
                 {initial}
               </span>
               <div className="min-w-0">
                 <DisplayNameEditor currentName={name} />
-                <p className="text-muted-foreground truncate text-xs">
+                <p className="text-muted-foreground truncate text-sm">
                   {email}
                 </p>
               </div>
@@ -152,20 +152,22 @@ export default async function SettingsPage({
           <CardContent className="flex flex-col gap-3">
             {walletAddress ? (
               <>
-                <div className="flex items-start gap-2">
-                  <p className="text-foreground font-mono text-xs break-all">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-muted-foreground text-sm">Wallet address</p>
+                    <CopyButton
+                      text={walletAddress}
+                      label="Copy wallet address"
+                    />
+                  </div>
+                  <p className="bg-muted/50 text-foreground rounded-lg border px-3 py-2 font-mono text-sm break-all">
                     {walletAddress}
                   </p>
-                  <CopyButton
-                    text={walletAddress}
-                    label="Copy wallet address"
-                    className="mt-0.5"
-                  />
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
                   <div>
-                    <p className="text-muted-foreground text-xs">
-                      {t("settings.balance")}
+                    <p className="text-muted-foreground text-sm">
+                      {t("settings.balance")} · Base Sepolia
                     </p>
                     <Suspense fallback={<Skeleton className="h-4 w-20" />}>
                       <WalletBalance
@@ -210,28 +212,34 @@ export default async function SettingsPage({
             </CardTitle>
             <CardDescription>{t("settings.warehouse_desc")}</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-            <div className="min-w-0">
-              <p className="text-foreground truncate text-sm font-semibold">
-                {active.name}
-              </p>
-              {active.contractAddress ? (
-                <div className="mt-1 flex items-start gap-2">
-                  <p className="text-muted-foreground font-mono text-xs break-all">
-                    {active.contractAddress}
-                  </p>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-foreground text-sm font-semibold">
+                  {active.name}
+                </p>
+                <p className="text-muted-foreground text-sm">{active.code}</p>
+              </div>
+              <Badge variant={active.status === "active" ? "default" : "destructive"}>{active.status}</Badge>
+            </div>
+            {active.contractAddress ? (
+              <div className="flex flex-col gap-2 border-t pt-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-muted-foreground text-sm">Contract address</p>
                   <CopyButton
                     text={active.contractAddress}
                     label="Copy contract address"
-                    className="mt-0.5"
                   />
                 </div>
-              ) : (
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {t("settings.no_contract")}
+                <p className="bg-muted/50 text-foreground rounded-lg border px-3 py-2 font-mono text-sm break-all">
+                  {active.contractAddress}
                 </p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                {t("settings.no_contract")}
+              </p>
+            )}
             {active.contractAddress ? (
               <Button
                 variant="outline"
@@ -244,7 +252,7 @@ export default async function SettingsPage({
                   />
                 }
               >
-                View contract <ExternalLink aria-hidden="true" />
+                View on BaseScan <ExternalLink aria-hidden="true" />
               </Button>
             ) : null}
           </CardContent>

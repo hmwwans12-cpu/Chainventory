@@ -57,7 +57,7 @@ export default function FeaturesPage() {
         {FEATURE_GROUPS.map((group) => (
           <SpotlightCard
             key={group.title}
-            className="ring-foreground/10 bg-card flex flex-col gap-3 rounded-xl p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
+            className="ring-foreground/10 bg-card flex flex-col gap-3 rounded-lg p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
             spotlightClassName="bg-primary/10"
           >
             <h2 className="font-display text-foreground text-lg font-semibold">

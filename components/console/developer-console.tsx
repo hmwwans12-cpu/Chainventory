@@ -189,7 +189,7 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
         <span>
           Signed in as{" "}
           <span className="text-foreground font-medium">{signedInAs}</span>

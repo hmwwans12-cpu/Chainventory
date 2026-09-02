@@ -193,7 +193,7 @@ export function BlockchainPage({
         <div className="flex min-w-0 items-center gap-2">
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs",
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm",
               liveStatus === "live"
                 ? "bg-primary/10 text-primary"
                 : "bg-warning/15 text-warning"
@@ -233,7 +233,7 @@ export function BlockchainPage({
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          <span className="bg-muted text-muted-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs">
+          <span className="bg-muted text-muted-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-sm">
             Base Sepolia · 84532
           </span>
         </div>
@@ -276,7 +276,7 @@ export function BlockchainPage({
               <BaseScanLink
                 href={`${BASESCAN_URL}/tx/${deployment.tx_hash}`}
                 ariaLabel="View deployment transaction on BaseScan"
-                className="text-xs"
+                className="text-sm"
               >
                 Deployment tx {shortHash(deployment.tx_hash)}
                 <ExternalLink aria-hidden="true" className="size-3.5" />
@@ -288,7 +288,7 @@ export function BlockchainPage({
               <span className="text-foreground text-xl font-semibold tabular-nums">
                 {totalProofsState}
               </span>
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground text-sm">
                 total proofs
               </span>
             </div>
@@ -296,20 +296,20 @@ export function BlockchainPage({
               <span className="text-primary text-xl font-semibold tabular-nums">
                 {confirmedCount}
               </span>
-              <span className="text-muted-foreground text-xs">confirmed</span>
+              <span className="text-muted-foreground text-sm">confirmed</span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-warning text-xl font-semibold tabular-nums">
                 {pendingCount}
               </span>
-              <span className="text-muted-foreground text-xs">pending</span>
+              <span className="text-muted-foreground text-sm">pending</span>
             </div>
             {failedProofs.length > 0 ? (
               <div className="flex flex-col items-end">
                 <span className="text-destructive text-xl font-semibold tabular-nums">
                   {failedProofs.length}
                 </span>
-                <span className="text-muted-foreground text-xs">
+                <span className="text-muted-foreground text-sm">
                   need attention
                 </span>
               </div>
@@ -332,7 +332,7 @@ export function BlockchainPage({
               <h3 className="font-display text-foreground text-sm font-semibold">
                 Blockchain confirmation failed.
               </h3>
-              <p className="text-muted-foreground text-xs text-pretty">
+              <p className="text-muted-foreground text-sm text-pretty">
                 Your inventory data was not lost.{" "}
                 {failedProofs.length > 1 ? "These proofs are" : "This proof is"}{" "}
                 waiting to be re-queued.
@@ -359,7 +359,7 @@ export function BlockchainPage({
                         PROOF_STATUS_META[proof.status]?.label ?? proof.status
                       }
                     />
-                    <span className="text-muted-foreground font-mono text-xs">
+                    <span className="text-muted-foreground font-mono text-sm">
                       {shortHash(proof.payload_hash)}
                     </span>
                   </div>
@@ -368,7 +368,7 @@ export function BlockchainPage({
                       <Tooltip>
                         <TooltipTrigger
                           render={
-                            <span className="text-muted-foreground block max-w-56 truncate text-xs" />
+                            <span className="text-muted-foreground block max-w-56 truncate text-sm" />
                           }
                         >
                           {proof.error}
@@ -377,7 +377,7 @@ export function BlockchainPage({
                       </Tooltip>
                     ) : null}
                     {terminal ? (
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-muted-foreground text-sm">
                         Manual review required
                       </span>
                     ) : (
@@ -449,7 +449,7 @@ export function BlockchainPage({
                             {shortHash(proof.payload_hash)}
                           </span>
                           {proof.movement_id ? (
-                            <span className="text-muted-foreground font-mono text-xs">
+                            <span className="text-muted-foreground font-mono text-sm">
                               movement {proof.movement_id.slice(0, 8)}
                             </span>
                           ) : null}
@@ -459,7 +459,7 @@ export function BlockchainPage({
                         {meta ? (
                           <StatusBadge tone={meta.tone} label={meta.label} />
                         ) : (
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-muted-foreground text-sm">
                             {proof.status}
                           </span>
                         )}
@@ -469,7 +469,7 @@ export function BlockchainPage({
                           <BaseScanLink
                             href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
                             ariaLabel="View transaction on BaseScan"
-                            className="font-mono text-xs"
+                            className="font-mono text-sm"
                           >
                             {shortHash(proof.tx_hash, 10, 6)}
                             <ExternalLink
@@ -481,7 +481,7 @@ export function BlockchainPage({
                           <Tooltip>
                             <TooltipTrigger
                               render={
-                                <span className="text-destructive block max-w-56 truncate text-xs" />
+                                <span className="text-destructive block max-w-56 truncate text-sm" />
                               }
                             >
                               {shortHash(proof.error, 16, 8)}
@@ -489,13 +489,13 @@ export function BlockchainPage({
                             <TooltipContent>{proof.error}</TooltipContent>
                           </Tooltip>
                         ) : (
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-muted-foreground text-sm">
                             —
                           </span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                        <span className="text-muted-foreground font-mono text-sm tabular-nums">
                           {proof.attempt_count}
                           {proof.status === "confirmed" ? (
                             <CheckCircle2
@@ -505,7 +505,7 @@ export function BlockchainPage({
                           ) : null}
                         </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-xs tabular-nums">
+                      <TableCell className="text-muted-foreground text-sm tabular-nums">
                         {formatDateTime(proof.created_at)}
                       </TableCell>
                     </TableRow>
@@ -528,17 +528,17 @@ export function BlockchainPage({
                     {meta ? (
                       <StatusBadge tone={meta.tone} label={meta.label} />
                     ) : (
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-muted-foreground text-sm">
                         {proof.status}
                       </span>
                     )}
                   </div>
                   {proof.movement_id ? (
-                    <p className="text-muted-foreground font-mono text-xs">
+                    <p className="text-muted-foreground font-mono text-sm">
                       movement {proof.movement_id.slice(0, 8)}
                     </p>
                   ) : null}
-                  <div className="flex items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center justify-between gap-2 text-sm">
                     <span className="text-muted-foreground">Blockchain</span>
                     {confirmed && proof.tx_hash ? (
                       <BaseScanLink
@@ -560,13 +560,13 @@ export function BlockchainPage({
                       <span className="text-muted-foreground">—</span>
                     )}
                   </div>
-                  <div className="flex items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center justify-between gap-2 text-sm">
                     <span className="text-muted-foreground">Attempts</span>
                     <span className="text-muted-foreground font-mono tabular-nums">
                       {proof.attempt_count}
                     </span>
                   </div>
-                  <p className="text-muted-foreground text-xs tabular-nums">
+                  <p className="text-muted-foreground text-sm tabular-nums">
                     {formatDateTime(proof.created_at)}
                   </p>
                 </li>

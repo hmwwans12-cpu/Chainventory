@@ -284,7 +284,7 @@ export function MembersPage({
         </div>
         {canInvite ? (
           <div className="border-border flex min-w-0 flex-wrap items-center gap-2 rounded-lg border px-3 py-1.5">
-            <span className="text-muted-foreground text-xs">Invite code</span>
+            <span className="text-muted-foreground text-sm">Invite code</span>
             <span className="truncate font-mono text-sm tracking-wide">
               {inviteCode}
             </span>
@@ -337,7 +337,7 @@ export function MembersPage({
                   <div className="flex items-center gap-2">
                     <code
                       id="invite-link"
-                      className="bg-muted text-foreground flex-1 truncate rounded-md px-2 py-1.5 font-mono text-xs"
+                      className="bg-muted text-foreground flex-1 truncate rounded-md px-2 py-1.5 font-mono text-sm"
                     >
                       {`${typeof window !== "undefined" ? window.location.origin : ""}${inviteUrl}`}
                     </code>
@@ -346,7 +346,7 @@ export function MembersPage({
                       label="Copy invite link"
                     />
                   </div>
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-muted-foreground text-sm">
                     {inviteSent
                       ? "Invitation sent — they'll also get this link by email."
                       : "Email delivery is not configured in this environment — share the link directly."}
@@ -388,7 +388,7 @@ export function MembersPage({
                     </Select>
                   </div>
                   {inviteError ? (
-                    <p className="text-destructive text-xs">{inviteError}</p>
+                    <p className="text-destructive text-sm">{inviteError}</p>
                   ) : null}
                 </div>
               )}
@@ -451,7 +451,7 @@ export function MembersPage({
                       <p className="text-foreground truncate text-sm font-medium">
                         {request.displayName ?? "Unnamed user"}
                       </p>
-                      <p className="text-muted-foreground truncate text-xs">
+                      <p className="text-muted-foreground truncate text-sm">
                         {request.email}
                         {request.requestedAt
                           ? ` · requested ${formatDate(request.requestedAt)}`
@@ -564,7 +564,7 @@ export function MembersPage({
                               </span>
                             ) : null}
                           </span>
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-muted-foreground text-sm">
                             {member.email}
                           </span>
                         </div>
@@ -618,7 +618,7 @@ export function MembersPage({
                           }
                         />
                       </TableCell>
-                      <TableCell className="text-muted-foreground hidden text-xs tabular-nums lg:table-cell">
+                      <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
                         {member.joinedAt ? formatDate(member.joinedAt) : "—"}
                       </TableCell>
                       <TableCell>
@@ -702,7 +702,7 @@ export function MembersPage({
                         </span>
                       ) : null}
                     </span>
-                    <p className="text-muted-foreground mt-0.5 text-xs">
+                    <p className="text-muted-foreground mt-0.5 text-sm">
                       {member.email}
                     </p>
                     <div className="mt-2 flex items-center gap-2">
@@ -739,7 +739,7 @@ export function MembersPage({
                     <div className="mt-2 flex items-center gap-2">
                       <StatusBadge tone={statusTone} label={statusLabel} />
                       {member.joinedAt ? (
-                        <span className="text-muted-foreground text-xs">
+                        <span className="text-muted-foreground text-sm">
                           {formatDate(member.joinedAt)}
                         </span>
                       ) : null}

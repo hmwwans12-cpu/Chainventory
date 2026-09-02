@@ -13,10 +13,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/components/providers/locale-provider";
-import {
-  DoubleBezelCard,
-  DoubleBezelCardContent,
-} from "@/components/ui/double-bezel-card";
+
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -86,7 +83,7 @@ export function Hero() {
         <div className="flex flex-col gap-6">
           <motion.span
             variants={item}
-            className="text-muted-foreground border-primary/15 bg-card inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium"
+            className="text-muted-foreground border-primary/15 bg-card inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium"
           >
             <ShieldCheck aria-hidden="true" className="text-primary size-3.5" />
             {t("landing.hero.badge")}
@@ -115,7 +112,7 @@ export function Hero() {
           >
             <Button
               size="lg"
-              className="group px-7 text-base transition-transform duration-150 ease-out hover:scale-[1.02] [@media(hover:hover)_and_(pointer:fine)]:active:scale-[0.98]"
+              className="group px-7 text-base shadow-sm transition-all duration-150 hover:shadow-md hover:brightness-[1.02] active:brightness-[0.98]"
               render={<Link href="/signup" />}
             >
               {t("landing.hero.cta_primary")}
@@ -147,7 +144,7 @@ export function Hero() {
                 <dd className="font-display text-foreground text-xl font-semibold">
                   {t(stat.valueKey)}
                 </dd>
-                <dd className="text-muted-foreground mt-0.5 text-xs">
+                <dd className="text-muted-foreground mt-0.5 text-sm">
                   {t(stat.labelKey)}
                 </dd>
               </div>
@@ -160,9 +157,7 @@ export function Hero() {
           className="relative mx-auto w-full max-w-md lg:max-w-none"
           aria-label="Chainventory dashboard preview"
         >
-          <DoubleBezelCard className="bg-primary/5 ring-primary/10 rounded-lg p-2 ring-1">
-            <DoubleBezelCardContent>
-              <div className="shadow-elevated bg-card rounded-lg p-6">
+          <div className="bg-card shadow-elevated ring-foreground/10 rounded-lg p-6 ring-1">
                 <div className="border-border flex items-center justify-between border-b pb-4">
                   <div className="flex items-center gap-3">
                     <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
@@ -172,36 +167,30 @@ export function Hero() {
                       <span className="text-foreground text-sm font-semibold">
                         {t("landing.hero.preview_name")}
                       </span>
-                      <span className="text-muted-foreground text-xs">
-                        WH-7K29-XP4
+                      <span className="text-muted-foreground text-sm">
+                        WH-7K29-XP4 · Base Sepolia
                       </span>
                     </div>
                   </div>
-                  <span className="text-primary bg-tradewind/15 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
-                    <span className="bg-primary size-1.5 rounded-full" />
+                  <span className="text-primary bg-primary/10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium">
+                    <span className="bg-primary size-1.5 animate-pulse rounded-full" />
                     {t("landing.hero.live")}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 pt-5">
-                  {[
-                    { labelKey: "landing.hero.total_products", value: "1,284" },
-                    { labelKey: "landing.hero.stock_in_30", value: "+4,320" },
-                    { labelKey: "landing.hero.stock_out_30", value: "−3,108" },
-                  ].map((row) => (
-                    <div key={row.labelKey} className="flex flex-col gap-1">
-                      <span className="text-muted-foreground text-xs">
-                        {t(row.labelKey)}
-                      </span>
-                      <span className="font-display text-foreground text-base font-semibold tabular-nums">
-                        {row.value}
-                      </span>
-                    </div>
-                  ))}
+                <div className="pt-6">
+                  <span className="text-muted-foreground text-sm">Total stock</span>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-foreground text-3xl font-semibold tabular-nums">1,284</span>
+                    <span className="text-muted-foreground text-sm">units</span>
+                    <span className="bg-primary/10 text-primary ml-auto inline-flex items-center gap-1 rounded-full px-2 py-1 text-sm font-medium">
+                      <BadgeCheck aria-hidden="true" className="size-3.5" /> Verified
+                    </span>
+                  </div>
                 </div>
 
-                <div className="mt-5">
-                  <span className="text-muted-foreground text-xs">
+                <div className="mt-6">
+                  <span className="text-muted-foreground text-sm">
                     {t("landing.hero.chart_label")}
                   </span>
                   <svg
@@ -225,48 +214,14 @@ export function Hero() {
                     ))}
                   </svg>
                 </div>
-
-                <div className="border-border flex items-center justify-between border-t pt-4">
-                  <span className="text-primary inline-flex items-center gap-1.5 text-xs font-medium">
-                    <BadgeCheck aria-hidden="true" className="size-4" />
-                    {t("landing.hero.blockchain_verified")}
-                  </span>
-                  <span className="text-muted-foreground text-xs">
-                    {t("landing.hero.base_sepolia")}
-                  </span>
-                </div>
               </div>
-            </DoubleBezelCardContent>
-          </DoubleBezelCard>
 
           <motion.div
             variants={item}
-            className="bg-popover text-popover-foreground shadow-elevated absolute top-5 right-2 flex rotate-2 items-center gap-2 rounded-lg border px-3 py-2 sm:right-4"
-          >
-            <BadgeCheck aria-hidden="true" className="text-primary size-4" />
-            <div className="flex flex-col">
-              <span className="text-foreground text-xs font-semibold">
-                {t("landing.hero.proof_verified")}
-              </span>
-              <span className="text-muted-foreground text-xs">
-                {t("landing.hero.tamper_evident")}
-              </span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            variants={item}
-            className="bg-popover text-popover-foreground shadow-elevated absolute bottom-5 left-2 flex rotate-2 items-center gap-2 rounded-lg border px-3 py-2 sm:left-6"
+            className="bg-popover text-popover-foreground shadow-elevated absolute bottom-4 left-4 flex items-center gap-2 rounded-lg border px-3 py-2"
           >
             <Wifi aria-hidden="true" className="text-primary size-4" />
-            <div className="flex flex-col">
-              <span className="text-foreground text-xs font-semibold">
-                {t("landing.hero.live_sync")}
-              </span>
-              <span className="text-muted-foreground text-xs">
-                {t("landing.hero.updates_reach")}
-              </span>
-            </div>
+            <span className="text-foreground text-sm font-medium">{t("landing.hero.live_sync")}</span>
           </motion.div>
         </motion.div>
       </motion.div>

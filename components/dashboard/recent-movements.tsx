@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { EntityName } from "@/components/shared/entity-name";
-import { cn, formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   MOVEMENT_STATUS_META,
   MOVEMENT_TYPE_META,
@@ -139,7 +140,7 @@ export function RecentMovements({
                         {status ? (
                           <Badge variant="outline">{status.label}</Badge>
                         ) : (
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-muted-foreground text-sm">
                             {item.status}
                           </span>
                         )}
@@ -149,8 +150,13 @@ export function RecentMovements({
                           {item.quantity} {item.unit}
                         </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-right text-xs">
-                        {formatDateTime(item.createdAt)}
+                      <TableCell className="text-muted-foreground text-right text-sm tabular-nums">
+                        <Tooltip>
+                          <TooltipTrigger render={<time dateTime={item.createdAt} className="cursor-help" />}>
+                            {formatTimeAgo(item.createdAt)}
+                          </TooltipTrigger>
+                          <TooltipContent>{formatDateTime(item.createdAt)}</TooltipContent>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   );

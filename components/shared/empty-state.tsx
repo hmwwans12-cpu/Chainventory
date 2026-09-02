@@ -56,10 +56,10 @@ export function EmptyState({
       <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
         <Icon aria-hidden="true" className="size-5" />
       </span>
-      <h3 className="font-display text-foreground mt-2 text-base font-semibold">
+      <h3 className="text-foreground mt-2 text-base font-semibold">
         {title}
       </h3>
-      <p className="text-muted-foreground max-w-sm text-sm">{description}</p>
+      <p className="text-muted-foreground max-w-sm text-sm text-pretty">{description}</p>
       {(primaryAction || secondaryAction) && (
         <div className="mt-4 flex items-center gap-2">
           {primaryAction ? (

@@ -103,7 +103,7 @@ export function TransferOwnershipDialog({
         {error ? (
           <p
             role="alert"
-            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-xs"
+            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-sm"
           >
             {error}
           </p>
@@ -129,7 +129,7 @@ export function TransferOwnershipDialog({
                 </span>
                 ?
               </p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground text-sm">
                 You will become a Manager. Only the new owner can manage
                 ownership from now on. This action cannot be undone by you.
               </p>

@@ -80,18 +80,51 @@ export function StatCard({
 }) {
   const d = delta ? computeDelta(delta.current, delta.previous) : null;
 
-  // SATU baris sekunder: delta menang atas hint (informasi tidak duplikat).
+  // SATU baris sekunder: delta menang atas hint — versi ringkas ↑ 12.3% dengan tooltip full copy (Miller)
   const secondary = d
     ? d.kind === "new"
-      ? "New activity this period"
-      : `${d.kind === "up" ? "Up" : "Down"} ${Math.abs(d.pct).toFixed(1)}% this period`
+      ? "New this period"
+      : `${d.kind === "up" ? "↑" : "↓"} ${Math.abs(d.pct).toFixed(1)}%`
     : (hint ?? null);
+  const secondaryTooltip = d
+    ? d.kind === "new"
+      ? "New activity this period"
+      : `${Math.abs(d.pct).toFixed(1)}% ${d.kind === "up" ? "higher" : "lower"} than previous period`
+    : null;
 
-  const body = (
+  const chevron = href ? (
+    <span className="text-muted-foreground/60 inline-flex items-center gap-1 text-sm font-medium">
+      View details <span aria-hidden="true">→</span>
+    </span>
+  ) : null;
+
+  const cardFooterWithAffordance = (
+    <>
+      {secondary || chevron ? (
+        <CardFooter className="text-muted-foreground flex items-center justify-between text-sm">
+          <div className="line-clamp-1 flex items-center gap-2">
+            {secondaryTooltip ? (
+              <Tooltip>
+                <TooltipTrigger render={<span className="flex cursor-help items-center" />}>
+                  {secondary}
+                </TooltipTrigger>
+                <TooltipContent>{secondaryTooltip}</TooltipContent>
+              </Tooltip>
+            ) : (
+              secondary
+            )}
+          </div>
+          {chevron}
+        </CardFooter>
+      ) : null}
+    </>
+  );
+
+  const innerBody = (
     <>
       <CardHeader>
-        <CardDescription className="flex items-center gap-1.5">
-          {Icon ? <Icon aria-hidden="true" className="size-3.5" /> : null}
+        <CardDescription className="flex items-center gap-1.5 text-sm">
+          {Icon ? <Icon aria-hidden="true" className="size-4" /> : null}
           {label}
         </CardDescription>
         <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
@@ -112,29 +145,24 @@ export function StatCard({
           </CardAction>
         ) : null}
       </CardHeader>
-      {secondary ? (
-        <CardFooter className="text-muted-foreground text-sm">
-          <div className="line-clamp-1 flex items-center gap-2">
-            {secondary}
-          </div>
-        </CardFooter>
-      ) : null}
+      {cardFooterWithAffordance}
     </>
   );
 
   if (!href)
-    return <Card className="@container/card min-h-[148px] gap-4">{body}</Card>;
+    return <Card className="@container/card min-h-[148px] gap-4 rounded-lg">{innerBody}</Card>;
 
   return (
     <Link
       href={href}
+      aria-label={`${label}: ${value} — view details`}
       className={cn(
-        "focus-visible:ring-ring rounded-xl transition-shadow",
+        "focus-visible:ring-ring block rounded-lg transition-shadow",
         "hover:ring-ring/40 hover:ring-2",
         "focus-visible:ring-3 focus-visible:outline-none"
       )}
     >
-      <Card className="@container/card min-h-[148px] gap-4">{body}</Card>
+      <Card className="@container/card min-h-[148px] gap-4 rounded-lg">{innerBody}</Card>
     </Link>
   );
 }

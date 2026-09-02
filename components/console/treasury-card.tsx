@@ -158,7 +158,7 @@ export function TreasuryCard({
               <span className="text-foreground text-2xl font-semibold tabular-nums">
                 {formatEthDecimal(treasury.balanceEther)} ETH
               </span>
-              <span className="text-muted-foreground font-mono text-xs">
+              <span className="text-muted-foreground font-mono text-sm">
                 {treasury.address ? shortAddress(treasury.address) : "\u2014"}
               </span>
             </div>
@@ -172,7 +172,7 @@ export function TreasuryCard({
                       : "Below faucet minimum"
                   }
                 />
-                <span className="text-muted-foreground text-xs">
+                <span className="text-muted-foreground text-sm">
                   {treasury.faucet.affordableClaims > 0
                     ? `\u2248 ${treasury.faucet.affordableClaims} more claim${treasury.faucet.affordableClaims === 1 ? "" : "s"} at current balance`
                     : "no faucet claims available"}
@@ -186,7 +186,7 @@ export function TreasuryCard({
                 {cooldownRemaining !== null ? (
                   <div className="flex items-center gap-2">
                     <StatusBadge tone="warning" label="Cooldown active" />
-                    <span className="text-muted-foreground text-xs tabular-nums">
+                    <span className="text-muted-foreground text-sm tabular-nums">
                       Available in {formatCooldown(cooldownRemaining)}
                     </span>
                   </div>
@@ -205,7 +205,7 @@ export function TreasuryCard({
                 )}
 
                 {claimTxHash && (
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-muted-foreground text-sm">
                     Tx:{" "}
                     <a
                       href={`https://sepolia.basescan.org/tx/${claimTxHash}`}
@@ -219,7 +219,7 @@ export function TreasuryCard({
                 )}
 
                 {claimError && (
-                  <p className="text-destructive text-xs">{claimError}</p>
+                  <p className="text-destructive text-sm">{claimError}</p>
                 )}
               </div>
             ) : null}

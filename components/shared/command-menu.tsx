@@ -180,6 +180,11 @@ export function CommandMenu() {
   }
 
   function onInputKey(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setOpen(false);
+      return;
+    }
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setActive((i) => Math.min(i + 1, results.length - 1));
@@ -197,7 +202,7 @@ export function CommandMenu() {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/50 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs" />
         <DialogPrimitive.Popup
-          className="bg-popover text-popover-foreground border-border fixed top-[15%] left-1/2 z-50 max-h-[min(80vh,32rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border bg-clip-padding shadow-lg transition duration-150 ease-out outline-none data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0"
+          className="bg-popover text-popover-foreground border-border fixed top-[15%] left-1/2 z-50 max-h-[min(80vh,32rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-lg border bg-clip-padding shadow-lg transition duration-150 ease-out outline-none data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0"
           aria-label="Command palette"
         >
           <DialogPrimitive.Title className="sr-only">
@@ -283,7 +288,7 @@ export function CommandMenu() {
                       <span className="flex-1 truncate">
                         {t(cmd.i18nKey ?? cmd.label)}
                       </span>
-                      <span className="text-muted-foreground text-xs tracking-wide uppercase">
+                      <span className="text-muted-foreground text-sm tracking-wide uppercase">
                         {cmd.group === "Navigate"
                           ? t("cmd.group.navigate")
                           : t("cmd.group.action")}

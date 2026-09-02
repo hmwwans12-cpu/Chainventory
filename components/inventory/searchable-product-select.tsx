@@ -192,7 +192,7 @@ export function SearchableProductSelect({
                   onClick={() => select(p)}
                 >
                   <span className="min-w-0 flex-1 truncate">{p.name}</span>
-                  <span className="text-muted-foreground font-mono text-xs">
+                  <span className="text-muted-foreground font-mono text-sm">
                     {p.sku}
                   </span>
                   {isSelected ? (

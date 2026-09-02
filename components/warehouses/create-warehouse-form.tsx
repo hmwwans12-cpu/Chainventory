@@ -544,7 +544,7 @@ export function CreateWarehouseForm() {
 
           <PanelCard padding="none" className="bg-muted/40">
             <div className="flex flex-col gap-1 px-4 py-3.5">
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground text-sm">
                 Warehouse code
               </span>
               <div className="flex min-w-0 items-center gap-1.5">
@@ -562,13 +562,13 @@ export function CreateWarehouseForm() {
             </div>
             {result.contractAddress ? (
               <div className="border-border flex flex-col gap-1 border-t px-4 py-3.5">
-                <span className="text-muted-foreground text-xs">
+                <span className="text-muted-foreground text-sm">
                   Contract address
                 </span>
                 <div className="flex min-w-0 items-center gap-1.5">
                   <code
                     translate="no"
-                    className="text-primary truncate font-mono text-xs"
+                    className="text-primary truncate font-mono text-sm"
                   >
                     {shortenAddress(result.contractAddress)}
                   </code>
@@ -597,7 +597,7 @@ export function CreateWarehouseForm() {
           >
             Go to dashboard
           </Button>
-          <p className="text-muted-foreground text-center text-xs">
+          <p className="text-muted-foreground text-center text-sm">
             Invite your team with the warehouse code, or manage everything from
             your dashboard.
           </p>
@@ -655,7 +655,7 @@ export function CreateWarehouseForm() {
             </Button>
           )}
           {error.action === "connect-wallet" ? (
-            <p className="text-muted-foreground text-xs">
+            <p className="text-muted-foreground text-sm">
               Wallet sync:{" "}
               {walletSync.syncing
                 ? "syncing…"
@@ -705,7 +705,7 @@ export function CreateWarehouseForm() {
               padding="none"
               className="bg-muted/40 flex items-center justify-between gap-3 px-3.5 py-2.5"
             >
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground text-sm">
                 Warehouse code
               </span>
               <code
@@ -717,7 +717,7 @@ export function CreateWarehouseForm() {
             </PanelCard>
           ) : null}
           {refreshed ? (
-            <p className="text-muted-foreground text-xs">
+            <p className="text-muted-foreground text-sm">
               Your previous authorization expired — a fresh one was requested.
             </p>
           ) : null}
@@ -732,7 +732,7 @@ export function CreateWarehouseForm() {
     <PhaseFade phase="form">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-3">
-          <span className="bg-primary/10 text-primary flex size-11 items-center justify-center rounded-xl">
+          <span className="bg-primary/10 text-primary flex size-11 items-center justify-center rounded-lg">
             <Blocks aria-hidden="true" className="size-5" />
           </span>
           <div className="flex flex-col gap-1">
@@ -843,7 +843,7 @@ export function CreateWarehouseForm() {
                 )}
                 Create Warehouse
               </Button>
-              <p className="text-muted-foreground text-center text-xs">
+              <p className="text-muted-foreground text-center text-sm">
                 Warehouse code and contract address are generated automatically.
               </p>
             </div>
@@ -858,7 +858,7 @@ export function CreateWarehouseForm() {
             aria-hidden="true"
             className="text-primary mt-0.5 size-4 shrink-0"
           />
-          <p className="text-muted-foreground text-xs leading-relaxed">
+          <p className="text-muted-foreground text-sm leading-relaxed">
             Deploying is signed once with your wallet and submitted on your
             behalf. Transaction fees are covered by Chainventory.
           </p>

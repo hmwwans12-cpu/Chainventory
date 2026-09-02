@@ -36,6 +36,7 @@ import {
   MOVEMENT_STATUS_META as SHARED_MOVEMENT_STATUS_META,
   MOVEMENT_TYPE_META as SHARED_MOVEMENT_TYPE_META,
 } from "@/lib/inventory/status-meta";
+import { ErrorAlert } from "@/components/shared/error-alert";
 
 // Re-export from canonical source (audit A — single source of truth)
 export const MOVEMENT_TYPE_META = SHARED_MOVEMENT_TYPE_META;
@@ -44,13 +45,12 @@ export { StockMovementDialog } from "./stock-movement-dialog";
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <p
-      role="alert"
-      className="bg-destructive/15 text-destructive flex items-start gap-1.5 rounded-lg px-3 py-2 text-xs"
-    >
-      <AlertTriangle aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
-      {message}
-    </p>
+    <ErrorAlert>
+      <span className="flex items-start gap-1.5">
+        <AlertTriangle aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+        {message}
+      </span>
+    </ErrorAlert>
   );
 }
 
@@ -89,12 +89,12 @@ export function CreateProductDialog({
     onOpenChange(false);
     onCreated();
     const qtyNote = result.data.initialStockApplied
-      ? " Initial stock recorded."
-      : "";
+      ? ` — ${values.initialQuantity} ${values.unit} initial stock recorded.`
+      : " — ready for stock in.";
     toast.add({
       type: "success",
-      title: "Product created",
-      description: `${values.name} added to inventory.${qtyNote}`,
+      title: `${values.name} added`,
+      description: `${values.sku} is now in ${warehouseId.slice(0,6)}… inventory.${qtyNote}`,
     });
   };
 
@@ -156,8 +156,8 @@ export function EditProductDialog({
     onUpdated();
     toast.add({
       type: "success",
-      title: "Product updated",
-      description: product.name,
+      title: `${values.name} saved`,
+      description: `${values.sku} — changes applied.`,
     });
   };
 
@@ -170,8 +170,8 @@ export function EditProductDialog({
         </DialogHeader>
         {/* Meta line — kolom yang tersembunyi di tabel mobile tetap accessible
             (temuan audit UI #7). */}
-        <p className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-          <span className="font-mono">{product.sku}</span>
+        <p className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+          <span className="font-mono text-sm">{product.sku}</span>
           {product.category ? <span>{product.category}</span> : null}
           <span className="uppercase">{product.unit}</span>
           {product.updatedAt ? (
@@ -229,8 +229,8 @@ export function ArchiveProductDialog({
     onArchived();
     toast.add({
       type: "success",
-      title: "Product archived",
-      description: product.name,
+      title: `“${product.name}” archived`,
+      description: `${product.quantity ?? 0} ${product.unit} hidden from active inventory. History preserved — view archived to restore.`,
     });
   };
 
@@ -238,20 +238,21 @@ export function ArchiveProductDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Archive {product.name}?</DialogTitle>
-          <DialogDescription>
-            Archiving hides the product from the active inventory list. This
-            cannot be undone.
+          <DialogTitle>Archive “{product.name}”?</DialogTitle>
+          <DialogDescription className="text-sm text-pretty">
+            <span className="font-medium">{product.name}</span> will disappear from active inventory. Its movement history and proofs remain.
+            <br />
+            <span className="text-muted-foreground">This can be restored from archived products.</span>
           </DialogDescription>
         </DialogHeader>
         {error ? <ErrorBanner message={error} /> : null}
-        <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={busy}
           >
-            Cancel
+            Keep product
           </Button>
           <Button variant="destructive" onClick={confirm} disabled={busy}>
             {busy ? (
@@ -339,7 +340,7 @@ export function ProductDetailSheet({
         <div className="flex flex-col gap-4 p-4">
           <div className="ring-foreground/10 flex items-center justify-between rounded-lg p-3 ring-1">
             <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground text-sm">
                 Current stock
               </span>
               <span className="text-foreground text-2xl font-semibold tabular-nums">
@@ -369,22 +370,22 @@ export function ProductDetailSheet({
 
           {product.description ? (
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs">Description</span>
+              <span className="text-muted-foreground text-sm">Description</span>
               <p className="text-sm">{product.description}</p>
             </div>
           ) : null}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground text-xs">Category</span>
+              <span className="text-muted-foreground text-sm">Category</span>
               <span className="text-sm">{product.category ?? "—"}</span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground text-xs">Unit</span>
+              <span className="text-muted-foreground text-sm">Unit</span>
               <span className="text-sm">{product.unit}</span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground text-sm">
                 Low stock threshold
               </span>
               <span className="font-mono text-sm tabular-nums">
@@ -392,7 +393,7 @@ export function ProductDetailSheet({
               </span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground text-xs">Movements</span>
+              <span className="text-muted-foreground text-sm">Movements</span>
               <span className="font-mono text-sm tabular-nums">
                 {product.movementCount}
               </span>
@@ -410,7 +411,7 @@ export function ProductDetailSheet({
               </span>
             </div>
             {loading ? (
-              <p className="text-muted-foreground text-xs">Loading...</p>
+              <p className="text-muted-foreground text-sm">Loading movements…</p>
             ) : movements && movements.length > 0 ? (
               <ul className="flex flex-col divide-y">
                 {movements.map((m) => {
@@ -427,11 +428,11 @@ export function ProductDetailSheet({
                             tone={typeMeta.tone}
                             label={typeMeta.label}
                           />
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-muted-foreground text-sm tabular-nums">
                             {formatDate(m.created_at)}
                           </span>
                         </div>
-                        <span className="text-muted-foreground text-xs">
+                        <span className="text-muted-foreground font-mono text-sm">
                           {m.actorWallet
                             ? `${m.actorWallet.slice(0, 6)}…${m.actorWallet.slice(-4)}`
                             : "Unknown actor"}
@@ -452,7 +453,7 @@ export function ProductDetailSheet({
                 })}
               </ul>
             ) : (
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground text-sm">
                 No movements recorded yet.
               </p>
             )}

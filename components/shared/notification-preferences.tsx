@@ -110,7 +110,7 @@ export function NotificationPreferencesPanel({
           >
             <div className="min-w-0">
               <p className="text-foreground text-sm font-medium">{cat.label}</p>
-              <p className="text-muted-foreground truncate text-xs">
+              <p className="text-muted-foreground truncate text-sm">
                 {cat.description}
               </p>
             </div>
@@ -126,7 +126,7 @@ export function NotificationPreferencesPanel({
             />
           </div>
         ))}
-        <p className="text-muted-foreground mt-1 text-xs" aria-live="polite">
+        <p className="text-muted-foreground mt-1 text-sm" aria-live="polite">
           {saving ? "Saving…" : " "}
         </p>
       </CardContent>

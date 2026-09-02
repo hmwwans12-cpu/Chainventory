@@ -36,7 +36,7 @@ export function MarketingFooter() {
             Modern inventory management with real-time stock and blockchain
             verification- built to feel like a normal SaaS.
           </p>
-          <span className="text-muted-foreground bg-background border-border mt-1 inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium">
+          <span className="text-muted-foreground bg-background border-border mt-1 inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium">
             <span className="bg-primary size-1.5 rounded-full" />
             Base Sepolia · test network
           </span>
@@ -68,14 +68,14 @@ export function MarketingFooter() {
           <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
             Verification runs on Base Sepolia, a safe and free test network.
           </p>
-          <span className="text-muted-foreground text-xs tabular-nums">
+          <span className="text-muted-foreground text-sm tabular-nums">
             Chain ID {BASE_SEPOLIA_CHAIN_ID}
           </span>
         </div>
       </div>
 
       <div className="border-border border-t">
-        <div className="text-muted-foreground mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs sm:flex-row sm:px-6">
+        <div className="text-muted-foreground mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm sm:flex-row sm:px-6">
           <span>
             © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
           </span>

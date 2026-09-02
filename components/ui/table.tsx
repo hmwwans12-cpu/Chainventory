@@ -55,7 +55,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "hover:bg-muted/50 data-[state=selected]:bg-muted/50 border-b transition-colors",
+        "hover:bg-muted/50 data-[state=selected]:bg-muted/50 data-[status=archived]:bg-muted/30 data-[status=archived]:opacity-70 border-b transition-colors",
         className
       )}
       {...props}
@@ -69,8 +69,8 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
       data-slot="table-head"
       scope="col"
       className={cn(
-        // Density freeze (DESIGN §84.8): header 44px (touch target), gutter 16px.
-        "text-muted-foreground h-11 px-4 text-left align-middle text-xs font-medium whitespace-nowrap",
+        // Density freeze (DESIGN §84.8): header 44px (touch target), gutter 16px. text-sm per Deep Audit P0-08
+        "text-muted-foreground h-11 px-4 text-left align-middle text-sm font-medium whitespace-nowrap",
         className
       )}
       {...props}

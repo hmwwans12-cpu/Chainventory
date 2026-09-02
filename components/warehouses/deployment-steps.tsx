@@ -57,7 +57,7 @@ export function DeploymentSteps({
         <span className="text-foreground text-sm font-semibold">
           Deployment progress
         </span>
-        <span className="text-muted-foreground text-xs tabular-nums">
+        <span className="text-muted-foreground text-sm tabular-nums">
           {reached} of {steps.length}
         </span>
       </div>
@@ -71,7 +71,7 @@ export function DeploymentSteps({
               key={step.key}
               className={cn(
                 "relative flex gap-3.5 pb-3 last:pb-0",
-                isActive && "bg-primary/5 rounded-xl"
+                isActive && "bg-primary/5 rounded-lg"
               )}
               aria-current={isActive ? "step" : undefined}
             >

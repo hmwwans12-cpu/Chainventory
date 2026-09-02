@@ -30,7 +30,7 @@ export function BaseScanLink({
       rel="noopener noreferrer"
       aria-label={ariaLabel}
       className={cn(
-        "focus-visible:ring-ring relative inline-flex min-h-11 items-center gap-1 rounded text-xs before:absolute before:-inset-[7px] focus-visible:ring-3 focus-visible:outline-none",
+        "focus-visible:ring-ring relative inline-flex min-h-11 items-center gap-1 rounded text-sm before:absolute before:-inset-[7px] focus-visible:ring-3 focus-visible:outline-none",
         tone === "primary"
           ? "text-primary hover:text-primary/80"
           : "text-muted-foreground hover:text-foreground",

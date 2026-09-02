@@ -41,23 +41,18 @@ export function ProfileWalletCard({
       className="focus-visible:ring-ring block rounded-lg transition-shadow hover:shadow-(--shadow-elevated) focus-visible:ring-3 focus-visible:outline-none"
     >
       <Card>
-        {/*
-          Anatomy responsive (temuan audit UI #12):
-          - Desktop (sm+): [Avatar] [Identity] ......... [Balance >]
-          - Mobile: Avatar|Identity di baris atas, wallet/warehouse/balance
-            menjadi baris sendiri di bawah — tinggi stabil, tanpa flex-wrap.
-        */}
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Primary identity — name + role (visual weight 1) */}
           <div className="flex min-w-0 items-center gap-3">
-            <span className="bg-primary text-primary-foreground font-display flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold">
+            <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold">
               {initial}
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
               <div className="flex items-center gap-2">
-                <span className="text-foreground truncate text-sm font-semibold">
+                <span className="text-foreground truncate text-[15px] font-semibold">
                   {name}
                 </span>
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-sm">
                   {{
                     OWNER: "Owner",
                     MANAGER: "Manager",
@@ -67,56 +62,59 @@ export function ProfileWalletCard({
                   }[role] ?? role}
                 </Badge>
               </div>
-              {walletAddress ? (
-                <span className="text-muted-foreground truncate font-mono text-xs tabular-nums">
-                  {shorten(walletAddress)}
-                  <span className="ms-1.5 hidden font-sans not-italic sm:inline">
-                    · Base Sepolia
-                  </span>
+              {/* Secondary — warehouse name only, muted */}
+              {warehouseName ? (
+                <span className="text-muted-foreground truncate text-sm">
+                  {warehouseName}
                 </span>
-              ) : (
-                <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                  <Wallet aria-hidden="true" className="size-3.5" />
-                  No wallet connected yet
-                </span>
-              )}
+              ) : null}
             </div>
           </div>
 
-          {/* Baris detail mobile — tersembunyi di desktop (sudah di identity) */}
-          <div className="flex flex-col gap-1 sm:hidden">
-            {warehouseName ? (
-              <DetailRow label="Warehouse" value={warehouseName} mono={false} />
-            ) : null}
-            {contractAddress ? (
-              <DetailRow label="Contract" value={shorten(contractAddress)} />
-            ) : null}
-            <DetailRow
-              label="Balance"
-              value={
-                <Suspense fallback={<span>—</span>}>
-                  <WalletBalance address={walletAddress} suffix=" ETH" />
-                </Suspense>
-              }
-            />
-          </div>
-
-          <div className="hidden items-center gap-2 ps-2 sm:ms-auto sm:flex">
-            <div className="flex flex-col items-end gap-0.5">
-              <Suspense fallback={<Skeleton className="h-6 w-20" />}>
-                <WalletBalance
-                  address={walletAddress}
-                  suffix=""
-                  className="text-foreground text-lg font-semibold tracking-tight tabular-nums"
-                />
+          {/* Utility — balance + network, right aligned desktop */}
+          <div className="flex items-center justify-between gap-4 sm:ms-auto sm:justify-end">
+            <div className="flex flex-col sm:items-end gap-0.5">
+              <Suspense
+                fallback={<Skeleton className="h-6 w-24" />}
+              >
+                <span className="flex items-baseline gap-1.5">
+                  <WalletBalance
+                    address={walletAddress}
+                    suffix=""
+                    className="text-foreground text-lg font-semibold tracking-tight tabular-nums"
+                  />
+                  <span className="text-muted-foreground text-sm">ETH</span>
+                </span>
               </Suspense>
-              <span className="text-muted-foreground text-xs">ETH balance</span>
+              <span className="text-muted-foreground text-sm">
+                Base Sepolia
+                {walletAddress ? (
+                  <span className="hidden sm:inline"> · {shorten(walletAddress)}</span>
+                ) : null}
+              </span>
             </div>
             <ChevronRight
               aria-hidden="true"
-              className="text-muted-foreground size-5 shrink-0"
+              className="text-muted-foreground/40 size-5 shrink-0"
             />
           </div>
+
+          {/* Mobile detail rows — progressive disclosure for technical IDs */}
+          {walletAddress || contractAddress ? (
+            <div className="flex flex-col gap-1.5 border-t pt-3 sm:hidden">
+              {walletAddress ? (
+                <DetailRow label="Wallet" value={shorten(walletAddress)} />
+              ) : null}
+              {contractAddress ? (
+                <DetailRow label="Contract" value={shorten(contractAddress)} />
+              ) : null}
+            </div>
+          ) : !walletAddress ? (
+            <p className="text-muted-foreground flex items-center gap-1.5 border-t pt-3 text-sm sm:hidden">
+              <Wallet aria-hidden="true" className="size-3.5" />
+              No wallet connected yet — connect in Settings
+            </p>
+          ) : null}
         </CardContent>
       </Card>
     </Link>
@@ -137,13 +135,13 @@ function DetailRow({
   mono?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 text-xs">
+    <div className="flex items-center justify-between gap-3 text-sm">
       <span className="text-muted-foreground">{label}</span>
       <span
         className={
           mono
-            ? "text-foreground truncate font-mono tabular-nums"
-            : "text-foreground truncate"
+            ? "text-foreground truncate font-mono text-sm tabular-nums"
+            : "text-foreground truncate text-sm"
         }
       >
         {value}

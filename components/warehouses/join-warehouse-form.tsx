@@ -193,7 +193,7 @@ export function JoinWarehouseForm() {
             role="status"
             className="flex flex-col items-center gap-3 text-center"
           >
-            <span className="bg-primary/10 text-primary flex size-12 items-center justify-center rounded-xl">
+            <span className="bg-primary/10 text-primary flex size-12 items-center justify-center rounded-lg">
               <KeyRound aria-hidden="true" className="size-5" />
             </span>
             <div className="flex flex-col gap-1">
@@ -240,7 +240,7 @@ export function JoinWarehouseForm() {
                 >
                   {step.label}
                 </span>
-                <span className="text-muted-foreground text-xs leading-snug text-pretty">
+                <span className="text-muted-foreground text-sm leading-snug text-pretty">
                   {step.sub}
                 </span>
               </li>
@@ -249,13 +249,13 @@ export function JoinWarehouseForm() {
 
           <PanelCard padding="none" className="bg-muted/40">
             <div className="flex flex-col gap-1 px-4 py-3.5">
-              <span className="text-muted-foreground text-xs">Warehouse</span>
+              <span className="text-muted-foreground text-sm">Warehouse</span>
               <span className="text-foreground truncate text-sm font-medium">
                 {requestedWarehouseName ?? "—"}
               </span>
             </div>
             <div className="border-border flex flex-col gap-1 border-t px-4 py-3.5">
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground text-sm">
                 Warehouse code
               </span>
               <code
@@ -266,7 +266,7 @@ export function JoinWarehouseForm() {
               </code>
             </div>
             <div className="border-border flex flex-col gap-1 border-t px-4 py-3.5">
-              <span className="text-muted-foreground text-xs">Status</span>
+              <span className="text-muted-foreground text-sm">Status</span>
               <span className="text-foreground flex items-center gap-1.5 text-sm font-medium">
                 <Clock
                   aria-hidden="true"
@@ -292,7 +292,7 @@ export function JoinWarehouseForm() {
           >
             Request another code
           </Button>
-          <p className="text-muted-foreground text-center text-xs">
+          <p className="text-muted-foreground text-center text-sm">
             The owner will find your request in Members. Joining is free.
           </p>
         </div>
@@ -356,7 +356,7 @@ export function JoinWarehouseForm() {
     <PhaseFade phase="form">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-3">
-          <span className="bg-primary/10 text-primary flex size-11 items-center justify-center rounded-xl">
+          <span className="bg-primary/10 text-primary flex size-11 items-center justify-center rounded-lg">
             <KeyRound aria-hidden="true" className="size-5" />
           </span>
           <div className="flex flex-col gap-1">
@@ -428,7 +428,7 @@ export function JoinWarehouseForm() {
                 )}
                 {pending ? "Requesting access…" : "Request Access"}
               </Button>
-              <p className="text-muted-foreground text-center text-xs">
+              <p className="text-muted-foreground text-center text-sm">
                 The owner reviews your request in Members — no payment needed.
               </p>
             </div>
@@ -443,7 +443,7 @@ export function JoinWarehouseForm() {
             >
               <span
                 className={cn(
-                  "flex size-7 items-center justify-center rounded-full text-xs tabular-nums",
+                  "flex size-7 items-center justify-center rounded-full text-sm tabular-nums",
                   index === 0
                     ? "bg-primary text-primary-foreground"
                     : "border-border bg-muted text-muted-foreground border"
@@ -453,7 +453,7 @@ export function JoinWarehouseForm() {
               </span>
               <span
                 className={cn(
-                  "text-xs",
+                  "text-sm",
                   index === 0
                     ? "text-foreground font-medium"
                     : "text-muted-foreground"

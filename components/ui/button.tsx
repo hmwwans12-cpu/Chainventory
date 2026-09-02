@@ -21,19 +21,19 @@ const buttonVariants = cva(
       },
       size: {
         default:
-          "h-11 gap-1.5 px-2.5 min-w-11 before:absolute before:content-[''] before:-inset-[7px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+          "h-11 gap-1.5 px-3 min-w-11 before:absolute before:content-[''] before:-inset-[7px] has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
         input:
-          "h-11 gap-1.5 px-2.5 min-w-11 before:absolute before:content-[''] before:-inset-[7px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        xs: "h-8 min-w-11 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs before:absolute before:content-[''] before:-inset-[11px] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-9 min-w-11 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-sm before:absolute before:content-[''] before:-inset-[9px] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-12 min-w-11 gap-1.5 px-2.5 before:absolute before:content-[''] before:-inset-[5px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        icon: "size-8 before:absolute before:content-[''] before:-inset-[7px]",
+          "h-11 gap-1.5 px-3 min-w-11 before:absolute before:content-[''] before:-inset-[7px] has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
+        xs: "h-8 min-w-10 gap-1 rounded-[min(var(--radius-md),10px)] px-2.5 text-sm before:absolute before:content-[''] before:-inset-[11px] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-10 min-w-10 gap-1.5 rounded-[min(var(--radius-md),12px)] px-3 text-sm before:absolute before:content-[''] before:-inset-[9px] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: "h-12 min-w-11 gap-1.5 px-4 before:absolute before:content-[''] before:-inset-[5px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        icon: "size-11 before:absolute before:content-[''] before:-inset-[7px] [&_svg:not([class*='size-'])]:size-4",
         "icon-xs":
-          "size-6 rounded-[min(var(--radius-md),10px)] before:absolute before:content-[''] before:-inset-[11px] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+          "size-9 rounded-[min(var(--radius-md),10px)] before:absolute before:content-[''] before:-inset-[11px] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-4",
         "icon-sm":
-          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg before:absolute before:content-[''] before:-inset-[9px]",
+          "size-10 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg before:absolute before:content-[''] before:-inset-[9px] [&_svg:not([class*='size-'])]:size-4",
         "icon-lg":
-          "size-9 before:absolute before:content-[''] before:-inset-[5px]",
+          "size-12 before:absolute before:content-[''] before:-inset-[5px] [&_svg:not([class*='size-'])]:size-5",
       },
     },
     defaultVariants: {

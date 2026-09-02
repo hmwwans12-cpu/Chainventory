@@ -191,12 +191,12 @@
   --density: var(--density);
   --space-unit: var(--space-unit);
 
-  /* Z-index scale (audit UI #16) — systemic layering, no arbitrary z-* */
-  --z-dropdown: 60;
-  --z-select: 61;
-  --z-toast: 1000;
-  --z-modal: 50;
+  /* Z-index scale (audit UI #16 / Deep D-032) — dropdown < select < overlay < modal < toast */
+  --z-dropdown: 20;
+  --z-select: 30;
   --z-overlay: 40;
+  --z-modal: 50;
+  --z-toast: 1000;
 
   /* Motion tokens (Emil Design Eng §3) — custom easing curves for premium feel */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -237,16 +237,21 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Typography: single family for app UI — Plus Jakarta Sans (weight 400/500/600/700). Space Grotesk reserved for marketing hero/brand only */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    font-family:
-      var(--font-display), var(--font-sans), ui-sans-serif, system-ui,
-      sans-serif;
-    letter-spacing: -0.01em;
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.015em;
+  }
+
+  /* Marketing hero retains display font */
+  [data-marketing] h1,
+  [data-marketing] h2 {
+    font-family: var(--font-display), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   }
 
   ::selection {

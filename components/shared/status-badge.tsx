@@ -31,12 +31,12 @@ const STATUS_META: Record<
   warning: {
     label: "Warning",
     icon: AlertTriangle,
-    className: "bg-warning/15 text-warning border border-warning/20 font-medium",
+    className: "bg-warning/15 text-warning-foreground border border-warning/20 font-medium",
   },
   failed: {
     label: "Failed",
     icon: XCircle,
-    className: "bg-destructive/15 text-destructive",
+    className: "bg-destructive/15 text-destructive border border-destructive/20",
   },
   inactive: {
     label: "Inactive",
@@ -46,7 +46,7 @@ const STATUS_META: Record<
   suspended: {
     label: "Suspended",
     icon: PauseCircle,
-    className: "bg-warning/10 text-warning border border-warning/20",
+    className: "bg-warning/10 text-warning-foreground border border-warning/20",
   },
 };
 

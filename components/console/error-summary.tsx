@@ -83,17 +83,17 @@ export function ErrorSummary({ errors }: { errors: ErrorEntry[] }) {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-muted-foreground font-mono text-xs">
+                      <span className="text-muted-foreground font-mono text-sm">
                         {entry.movementId ? entry.movementId.slice(0, 8) : "—"}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-muted-foreground max-w-36 truncate text-xs">
+                      <span className="text-muted-foreground max-w-36 truncate text-sm">
                         {entry.warehouseName ?? shortHash(entry.warehouseId)}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-muted-foreground font-mono text-xs">
+                      <span className="text-muted-foreground font-mono text-sm">
                         {entry.txHash ? shortHash(entry.txHash, 6, 4) : "—"}
                       </span>
                     </TableCell>
@@ -103,7 +103,7 @@ export function ErrorSummary({ errors }: { errors: ErrorEntry[] }) {
                           render={
                             <span
                               tabIndex={0}
-                              className="text-muted-foreground block max-w-56 truncate text-xs"
+                              className="text-muted-foreground block max-w-56 truncate text-sm"
                             />
                           }
                         >
@@ -113,7 +113,7 @@ export function ErrorSummary({ errors }: { errors: ErrorEntry[] }) {
                       </Tooltip>
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                      <span className="text-muted-foreground font-mono text-sm tabular-nums">
                         {entry.attemptCount}
                       </span>
                     </TableCell>

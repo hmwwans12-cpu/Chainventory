@@ -123,11 +123,11 @@ export function AppSidebar({
                     />
                   }
                 >
-                  <span className="bg-sidebar-primary text-sidebar-primary-foreground font-display flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-semibold">
+                  <span className="bg-sidebar-primary text-sidebar-primary-foreground font-display flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold">
                     {getInitials(active?.name, null, "W")}
                   </span>
                   <span className="flex min-w-0 flex-col leading-tight">
-                    <span className="text-muted-foreground text-xs uppercase">
+                    <span className="text-muted-foreground text-sm uppercase">
                       {t("common.active_warehouse")}
                     </span>
                     <span className="truncate text-sm font-medium">
@@ -252,14 +252,14 @@ export function AppSidebar({
                         />
                       }
                     >
-                      <span className="bg-sidebar-primary text-sidebar-primary-foreground font-display flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-semibold">
+                      <span className="bg-sidebar-primary text-sidebar-primary-foreground font-display flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold">
                         {getInitials(user.name, user.email, "U")}
                       </span>
                       <span className="flex min-w-0 flex-col leading-tight">
                         <span className="truncate text-sm font-medium">
                           {user.name ?? "User"}
                         </span>
-                        <span className="text-sidebar-accent-foreground/70 truncate text-xs">
+                        <span className="text-sidebar-accent-foreground/70 truncate text-sm">
                           {role
                             ? `${role} · ${active?.name ?? ""}`
                             : user.email}
@@ -276,7 +276,7 @@ export function AppSidebar({
                           <span className="block truncate text-sm font-medium">
                             {user.name ?? "User"}
                           </span>
-                          <span className="block truncate text-xs font-normal">
+                          <span className="block truncate text-sm font-normal">
                             {user.email}
                           </span>
                         </DropdownMenuLabel>

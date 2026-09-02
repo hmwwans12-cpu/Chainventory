@@ -171,7 +171,7 @@ export function TransactionsPage({
             </SelectContent>
           </Select>
         </div>
-        <span className="text-muted-foreground text-xs">
+        <span className="text-muted-foreground text-sm">
           {totalCount} transaction{totalCount === 1 ? "" : "s"}
         </span>
       </div>
@@ -231,7 +231,7 @@ export function TransactionsPage({
                           <span className="text-foreground font-medium">
                             {m.productName}
                           </span>
-                          <span className="text-muted-foreground font-mono text-xs">
+                          <span className="text-muted-foreground font-mono text-sm">
                             {m.productSku} · {m.id.slice(0, 8)}
                           </span>
                         </div>
@@ -253,7 +253,7 @@ export function TransactionsPage({
                       >
                         {negative ? "\u2212" : "+"}
                         {m.quantity}
-                        <span className="text-muted-foreground ml-1 font-sans text-xs">
+                        <span className="text-muted-foreground ml-1 font-sans text-sm">
                           {m.unit}
                         </span>
                       </TableCell>
@@ -269,7 +269,7 @@ export function TransactionsPage({
                             href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-primary hover:text-primary/80 focus-visible:ring-ring inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-xs focus-visible:ring-3 focus-visible:outline-none"
+                            className="text-primary hover:text-primary/80 focus-visible:ring-ring inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-sm focus-visible:ring-3 focus-visible:outline-none"
                             aria-label="View transaction on BaseScan"
                           >
                             <ExternalLink
@@ -284,15 +284,15 @@ export function TransactionsPage({
                             label={proofMeta.label}
                           />
                         ) : (
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-muted-foreground text-sm">
                             —
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-muted-foreground hidden font-mono text-xs lg:table-cell">
+                      <TableCell className="text-muted-foreground hidden font-mono text-sm lg:table-cell">
                         {shortWallet(m.actorWallet)}
                       </TableCell>
-                      <TableCell className="text-muted-foreground hidden text-xs tabular-nums lg:table-cell">
+                      <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
                         {formatDateTime(m.created_at)}
                       </TableCell>
                       <TableCell>
@@ -349,10 +349,10 @@ export function TransactionsPage({
                         label={statusMeta.label}
                       />
                     </div>
-                    <p className="text-muted-foreground mt-0.5 font-mono text-xs">
+                    <p className="text-muted-foreground mt-0.5 font-mono text-sm">
                       {m.productSku} · {m.id.slice(0, 8)}
                     </p>
-                    <p className="text-muted-foreground mt-1 text-xs">
+                    <p className="text-muted-foreground mt-1 text-sm">
                       {typeMeta.label} ·{" "}
                       <span
                         className={
@@ -365,7 +365,7 @@ export function TransactionsPage({
                         {m.quantity} {m.unit}
                       </span>
                     </p>
-                    <p className="text-muted-foreground mt-1 text-xs tabular-nums">
+                    <p className="text-muted-foreground mt-1 text-sm tabular-nums">
                       {shortWallet(m.actorWallet)} ·{" "}
                       {formatDateTime(m.created_at)}
                     </p>
@@ -378,7 +378,7 @@ export function TransactionsPage({
                         Verified
                       </BaseScanLink>
                     ) : proofMeta ? (
-                      <p className="text-muted-foreground mt-1 text-xs">
+                      <p className="text-muted-foreground mt-1 text-sm">
                         {proofMeta.label}
                       </p>
                     ) : null}

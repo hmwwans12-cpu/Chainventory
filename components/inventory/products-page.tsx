@@ -147,6 +147,8 @@ export function ProductsPage({
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = React.useState(false);
   const [confirmBulkArchive, setConfirmBulkArchive] = React.useState(false);
+  const [bulkCategoryOpen, setBulkCategoryOpen] = React.useState(false);
+  const [bulkCategoryValue, setBulkCategoryValue] = React.useState("");
   const toggleSelect = (id: string) =>
     setSelected((prev) => {
       const next = new Set(prev);
@@ -216,6 +218,34 @@ export function ProductsPage({
     window.open(url, "_blank");
   };
 
+  const bulkChangeCategory = async () => {
+    if (!canEdit || selected.size === 0 || !bulkCategoryValue.trim()) return;
+    setBulkBusy(true);
+    const ids = [...selected];
+    const results = await Promise.allSettled(
+      ids.map((id) =>
+        // reuse updateProduct with only category change — keep other fields
+        fetch("/api/warehouses/inventory/products", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productId: id, category: bulkCategoryValue.trim() }),
+        }).then((r) => r.json())
+      )
+    );
+    const failed = results.filter((r) => r.status === "rejected").length;
+    setBulkBusy(false);
+    setBulkCategoryOpen(false);
+    setBulkCategoryValue("");
+    if (failed === 0) {
+      toast.add({ type: "success", title: `${ids.length} products updated`, description: `Category → ${bulkCategoryValue.trim()}` });
+      clearSelection();
+      refresh();
+    } else {
+      toast.add({ type: "warning", title: "Partial update", description: `${ids.length - failed} updated, ${failed} failed.` });
+      refresh();
+    }
+  };
+
   // Pindah halaman (pagination) — reset scroll, pertahankan q/status/warehouse.
   const goToPage = React.useCallback(
     (next: number) => {
@@ -230,8 +260,70 @@ export function ProductsPage({
 
   // Aksi per-produk (dropdown) — dipakai di tabel desktop & card list mobile
   // supaya tidak duplikasi markup (audit: mobile card-list).
-  const renderActions = (product: ProductRow) => {
+  const renderActions = (product: ProductRow, mode: "dropdown" | "inline" = "dropdown") => {
     const archived = product.status === "archived";
+    const inlineStockActions = !archived && (canStockIn || canStockOut);
+    if (mode === "inline" && inlineStockActions) {
+      return (
+        <div className="flex items-center gap-1.5">
+          {canStockIn && !archived ? (
+            <Button
+              size="sm"
+              onClick={() => setStockTarget({ product, type: "stock_in" })}
+              aria-label={`Stock In for ${product.name}`}
+            >
+              <ArrowDownToLine aria-hidden="true" />
+              Stock In
+            </Button>
+          ) : null}
+          {canStockOut && !archived ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setStockTarget({ product, type: "stock_out" })}
+              aria-label={`Stock Out for ${product.name}`}
+            >
+              <ArrowUpFromLine aria-hidden="true" />
+              Stock Out
+            </Button>
+          ) : null}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`More actions for ${product.name}`}
+                />
+              }
+            >
+              <MoreHorizontal aria-hidden="true" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setDetailTarget(product)}>
+                <Eye aria-hidden="true" />
+                View
+              </DropdownMenuItem>
+              {canEdit ? (
+                <DropdownMenuItem onClick={() => setEditTarget(product)}>
+                  <Pencil aria-hidden="true" />
+                  Edit
+                </DropdownMenuItem>
+              ) : null}
+              {canArchive && !archived ? (
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setArchiveTarget(product)}
+                >
+                  <Trash2 aria-hidden="true" />
+                  Archive
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    }
     return (
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -303,6 +395,36 @@ export function ProductsPage({
     return () => clearTimeout(timer);
   }, [searchInput, statusFilter, applyFilters]);
 
+  const SAVED_VIEWS_KEY = `chainventory:savedViews:${warehouseId}`;
+  type SavedView = { id: string; name: string; q: string; status: "active" | "archived" | "all" };
+  const [savedViews, setSavedViews] = React.useState<SavedView[]>([]);
+  const [saveName, setSaveName] = React.useState("");
+  const [showSave, setShowSave] = React.useState(false);
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SAVED_VIEWS_KEY);
+      if (raw) setSavedViews(JSON.parse(raw));
+      else setSavedViews([]);
+    } catch { setSavedViews([]); }
+  }, [SAVED_VIEWS_KEY]);
+  const persistViews = (next: SavedView[]) => {
+    setSavedViews(next);
+    try { localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(next)); } catch {}
+  };
+  const saveCurrentView = () => {
+    const name = saveName.trim() || `${query || "All"} · ${statusFilter}`;
+    const next: SavedView = { id: `${Date.now()}`, name, q: query, status: statusFilter };
+    persistViews([...savedViews, next]);
+    setSaveName("");
+    setShowSave(false);
+    toast.add({ type: "success", title: `View “${name}” saved`, description: "Quick access below." });
+  };
+  const applySavedView = (v: SavedView) => {
+    setSearchInput(v.q);
+    applyFilters(v.q, v.status);
+  };
+  const deleteView = (id: string) => persistViews(savedViews.filter((v) => v.id !== id));
+
   const refresh = () => router.refresh();
 
   const switchWarehouse = (id: string) => {
@@ -313,8 +435,8 @@ export function ProductsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 flex-1 items-center gap-2 flex-wrap">
           <div className="relative w-full sm:w-64">
             <Search
               aria-hidden="true"
@@ -411,6 +533,73 @@ export function ProductsPage({
           ) : null}
         </div>
       </div>
+      {/* Active filter chips — I03 progressive disclosure + F05 saved views */}
+      {(query.trim() || statusFilter !== "active") && (
+        <div className="flex flex-wrap items-center gap-2">
+          {query.trim() && (
+            <span className="bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
+              Search: “{query.trim()}”
+              <button
+                type="button"
+                aria-label="Clear search filter"
+                onClick={() => setSearchInput("")}
+                className="hover:bg-primary/20 -mr-1 rounded-full p-0.5 transition-colors"
+              >
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
+            </span>
+          )}
+          {statusFilter !== "active" && (
+            <span className="bg-secondary/20 text-secondary-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
+              Status: {statusFilter}
+              <button
+                type="button"
+                aria-label="Clear status filter"
+                onClick={() => setStatus("active")}
+                className="hover:bg-secondary/30 -mr-1 rounded-full p-0.5 transition-colors"
+              >
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setSearchInput("");
+              setStatus("active");
+            }}
+            className="text-muted-foreground hover:text-foreground text-sm font-medium underline-offset-4 hover:underline"
+          >
+            Clear all
+          </button>
+          <span className="text-border hidden sm:inline">|</span>
+          {!showSave ? (
+            <Button variant="outline" size="sm" onClick={() => setShowSave(true)}>Save view</Button>
+          ) : (
+            <span className="flex items-center gap-1.5">
+              <Input value={saveName} onChange={(e) => setSaveName(e.target.value)} placeholder="My low-stock view" className="h-8 w-40" aria-label="Saved view name" />
+              <Button size="sm" onClick={saveCurrentView}>Save</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowSave(false)}>Cancel</Button>
+            </span>
+          )}
+        </div>
+      )}
+      {/* Saved views — F05 repeat-work efficiency, local first (no backend) */}
+      {savedViews.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-muted-foreground text-sm">Saved views:</span>
+          {savedViews.map((v) => (
+            <span key={v.id} className="bg-card border-border inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-sm">
+              <button type="button" onClick={() => applySavedView(v)} className="hover:text-primary font-medium">{v.name}</button>
+              <span className="text-muted-foreground text-sm">· {v.q || "all"} · {v.status}</span>
+              <button type="button" aria-label={`Delete ${v.name}`} onClick={() => deleteView(v.id)} className="hover:text-destructive -mr-1 rounded-full p-0.5"><X aria-hidden="true" className="size-3" /></button>
+            </span>
+          ))}
+          {savedViews.length > 0 && (query.trim() || statusFilter !== "active") && (
+            <span className="text-muted-foreground hidden text-sm sm:inline">→ one click to reapply</span>
+          )}
+        </div>
+      )}
 
       {products.length === 0 ? (
         <EmptyState
@@ -436,12 +625,18 @@ export function ProductsPage({
         />
       ) : (
         <>
-          {selected.size > 0 && (canArchive || canExport) ? (
+          {selected.size > 0 && (canArchive || canExport || canEdit) ? (
             <div className="bg-card sticky bottom-4 z-10 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 shadow-elevated">
               <span className="text-sm font-medium tabular-nums">
                 {selected.size} selected
               </span>
               <div className="ml-auto flex flex-wrap items-center gap-2">
+                {canEdit && (
+                  <Button variant="outline" size="sm" onClick={() => setBulkCategoryOpen(true)} disabled={bulkBusy}>
+                    <Pencil aria-hidden="true" />
+                    Category
+                  </Button>
+                )}
                 {canExport ? (
                   <Button variant="outline" size="sm" onClick={exportSelected}>
                     <Download aria-hidden="true" />
@@ -473,8 +668,8 @@ export function ProductsPage({
 
           <PanelCard padding="none">
             {/* Desktop: tabel (scroll horizontal terbatas) */}
-            <div className="hidden overflow-x-auto md:block">
-              <Table className="md:min-w-[760px]">
+            <div className="hidden overflow-x-auto lg:block">
+              <Table className="lg:min-w-[860px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10">
@@ -513,7 +708,8 @@ export function ProductsPage({
                     return (
                       <TableRow
                         key={product.id}
-                        data-state={archived ? "selected" : undefined}
+                        data-status={archived ? "archived" : undefined}
+                        className={archived ? "opacity-70" : undefined}
                       >
                         <TableCell>
                           <input
@@ -529,7 +725,7 @@ export function ProductsPage({
                             <span className="text-foreground font-medium">
                               {product.name}
                             </span>
-                            <span className="text-muted-foreground font-mono text-xs">
+                            <span className="text-muted-foreground font-mono text-sm">
                               {product.sku}
                             </span>
                           </div>
@@ -546,10 +742,15 @@ export function ProductsPage({
                               className={`font-mono text-sm tabular-nums ${low ? "text-warning" : ""}`}
                             >
                               {product.quantity ?? "0"}
+                              {Number(product.lowStockThreshold) > 0 ? (
+                                <span className="text-muted-foreground ml-1 text-sm font-normal">
+                                  / {product.lowStockThreshold}
+                                </span>
+                              ) : null}
                             </span>
                             {low ? (
-                              <span className="text-warning text-xs">
-                                Low stock
+                              <span className="text-warning flex items-center gap-1 text-sm font-medium">
+                                ⚠ Low stock
                               </span>
                             ) : null}
                           </div>
@@ -560,10 +761,13 @@ export function ProductsPage({
                             label={archived ? "Archived" : "Active"}
                           />
                         </TableCell>
-                        <TableCell className="text-muted-foreground hidden text-xs tabular-nums md:table-cell">
+                        <TableCell className="text-muted-foreground hidden text-sm tabular-nums md:table-cell">
                           {formatDate(product.updatedAt)}
                         </TableCell>
-                        <TableCell>{renderActions(product)}</TableCell>
+                        <TableCell>
+                          <div className="hidden xl:flex">{renderActions(product, "inline")}</div>
+                          <div className="xl:hidden">{renderActions(product, "dropdown")}</div>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -571,7 +775,7 @@ export function ProductsPage({
               </Table>
             </div>
             {/* Mobile: card list ergonomis (audit: mobile card-list) */}
-            <ul className="divide-y md:hidden">
+            <ul className="divide-y lg:hidden">
               {products.map((product) => {
                 const archived = product.status === "archived";
                 const low =
@@ -601,10 +805,10 @@ export function ProductsPage({
                           label={archived ? "Archived" : "Active"}
                         />
                       </div>
-                      <p className="text-muted-foreground mt-0.5 font-mono text-xs">
+                      <p className="text-muted-foreground mt-0.5 font-mono text-sm">
                         {product.sku}
                       </p>
-                      <p className="text-muted-foreground text-xs">
+                      <p className="text-muted-foreground text-sm">
                         {product.category ?? "—"} · {product.unit}
                       </p>
                       <p className="mt-1 text-sm tabular-nums">
@@ -617,16 +821,26 @@ export function ProductsPage({
                         >
                           {product.quantity ?? "0"}
                         </span>{" "}
-                        <span className="text-muted-foreground text-xs">
+                        <span className="text-muted-foreground text-sm">
                           in stock
                         </span>
                         {low ? (
-                          <span className="text-warning text-xs">
+                          <span className="text-warning text-sm font-medium">
                             {" "}
                             · Low stock
                           </span>
                         ) : null}
                       </p>
+                      {!archived && (canStockIn || canStockOut) ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {canStockIn ? (
+                            <Button size="sm" onClick={() => setStockTarget({ product, type: "stock_in" })}>Stock In</Button>
+                          ) : null}
+                          {canStockOut ? (
+                            <Button variant="outline" size="sm" onClick={() => setStockTarget({ product, type: "stock_out" })}>Stock Out</Button>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                     {renderActions(product)}
                   </li>
@@ -742,6 +956,25 @@ export function ProductsPage({
               ) : (
                 "Archive products"
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={bulkCategoryOpen} onOpenChange={setBulkCategoryOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change category for {selected.size} products?</DialogTitle>
+            <DialogDescription>Set a new category for all selected products. SKU, unit and stock unaffected.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="bulk-cat" className="text-sm font-medium">Category</label>
+            <Input id="bulk-cat" value={bulkCategoryValue} onChange={(e) => setBulkCategoryValue(e.target.value)} placeholder="e.g. Packaging" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkCategoryOpen(false)}>Cancel</Button>
+            <Button onClick={bulkChangeCategory} disabled={bulkBusy || !bulkCategoryValue.trim()}>
+              {bulkBusy ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Pencil aria-hidden="true" />}
+              Update {selected.size} products
             </Button>
           </DialogFooter>
         </DialogContent>

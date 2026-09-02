@@ -71,19 +71,19 @@ export function RejectJoinDialog({
         {error ? (
           <p
             role="alert"
-            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-xs"
+            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-sm"
           >
             {error}
           </p>
         ) : null}
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="reject-reason">Reason (optional)</Label>
+          <Label htmlFor="reject-reason">Reason for rejection (optional)</Label>
           <Input
             id="reject-reason"
             value={reason}
             maxLength={500}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="e.g. Warehouse is at capacity"
+            placeholder="Explain why this request cannot be approved"
           />
         </div>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

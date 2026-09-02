@@ -273,7 +273,7 @@ export function MovementsPage({
         <div className="flex min-w-0 items-center gap-2">
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs",
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm",
               liveStatus === "live"
                 ? "bg-primary/10 text-primary"
                 : "bg-warning/15 text-warning"
@@ -319,6 +319,7 @@ export function MovementsPage({
                 render={
                   <Button variant="outline" aria-label="More movement types">
                     <MoreHorizontal aria-hidden="true" />
+                    <span className="hidden sm:inline">More</span>
                   </Button>
                 }
               >
@@ -360,6 +361,15 @@ export function MovementsPage({
               Export CSV
             </Button>
           ) : null}
+          {canStockIn ? (
+            <Button
+              onClick={() => setMovementDialog({ type: "stock_in" })}
+              disabled={suspended}
+            >
+              <Plus aria-hidden="true" />
+              Stock In
+            </Button>
+          ) : null}
           {canStockOut ? (
             <Button
               variant="outline"
@@ -368,15 +378,6 @@ export function MovementsPage({
             >
               <ArrowUpFromLine aria-hidden="true" />
               Stock Out
-            </Button>
-          ) : null}
-          {canStockIn ? (
-            <Button
-              onClick={() => setMovementDialog({ type: "stock_in" })}
-              disabled={suspended}
-            >
-              <Plus aria-hidden="true" />
-              Stock In
             </Button>
           ) : null}
         </div>
@@ -424,8 +425,8 @@ export function MovementsPage({
               </p>
             )
           ) : null}
-          <div className="hidden overflow-x-auto md:block">
-            <Table className="md:min-w-[820px]">
+          <div className="hidden overflow-x-auto lg:block">
+            <Table className="lg:min-w-[860px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
@@ -459,7 +460,7 @@ export function MovementsPage({
                           <span className="text-foreground font-medium">
                             {m.productName}
                           </span>
-                          <span className="text-muted-foreground font-mono text-xs">
+                          <span className="text-muted-foreground font-mono text-sm">
                             {m.productSku}
                           </span>
                         </div>
@@ -481,7 +482,7 @@ export function MovementsPage({
                       >
                         {negative ? "\u2212" : "+"}
                         {m.quantity}
-                        <span className="text-muted-foreground ml-1 font-sans text-xs">
+                        <span className="text-muted-foreground ml-1 font-sans text-sm">
                           {m.unit}
                         </span>
                       </TableCell>
@@ -491,7 +492,7 @@ export function MovementsPage({
                           label={statusMeta.label}
                         />
                       </TableCell>
-                      <TableCell className="text-muted-foreground hidden font-mono text-xs lg:table-cell">
+                      <TableCell className="text-muted-foreground hidden font-mono text-sm lg:table-cell">
                         {shortWallet(m.actorWallet)}
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
@@ -509,12 +510,12 @@ export function MovementsPage({
                             label={proofMeta.label}
                           />
                         ) : (
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-muted-foreground text-sm">
                             —
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-muted-foreground hidden text-xs tabular-nums lg:table-cell">
+                      <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
                         {formatDateTime(m.created_at)}
                       </TableCell>
                       <TableCell>
@@ -566,7 +567,7 @@ export function MovementsPage({
             </Table>
           </div>
           {/* Mobile: card list (audit N) */}
-          <ul className="divide-y md:hidden">
+          <ul className="divide-y lg:hidden">
             {movements.map((m) => {
               const typeMeta = MOVEMENT_TYPE_META[m.movementType];
               const statusMeta = MOVEMENT_STATUS_META[m.status];
@@ -590,10 +591,10 @@ export function MovementsPage({
                         label={statusMeta.label}
                       />
                     </div>
-                    <p className="text-muted-foreground mt-0.5 font-mono text-xs">
+                    <p className="text-muted-foreground mt-0.5 font-mono text-sm">
                       {m.productSku}
                     </p>
-                    <p className="text-muted-foreground mt-1 text-xs">
+                    <p className="text-muted-foreground mt-1 text-sm">
                       {typeMeta.label} ·{" "}
                       <span
                         className={
@@ -606,7 +607,7 @@ export function MovementsPage({
                         {m.quantity} {m.unit}
                       </span>
                     </p>
-                    <p className="text-muted-foreground mt-1 text-xs tabular-nums">
+                    <p className="text-muted-foreground mt-1 text-sm tabular-nums">
                       {shortWallet(m.actorWallet)} ·{" "}
                       {formatDateTime(m.created_at)}
                     </p>
@@ -619,7 +620,7 @@ export function MovementsPage({
                         Verified
                       </BaseScanLink>
                     ) : proofMeta ? (
-                      <p className="text-muted-foreground mt-1 text-xs">
+                      <p className="text-muted-foreground mt-1 text-sm">
                         {proofMeta.label}
                       </p>
                     ) : null}

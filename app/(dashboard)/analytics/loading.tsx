@@ -8,9 +8,9 @@ export default function AnalyticsLoading() {
       {/* Controls (range + warehouse) */}
       <Skeleton className="h-10 w-full max-w-md rounded-lg" />
       {/* Chart utama */}
-      <Skeleton className="h-[320px] w-full rounded-xl" />
+      <Skeleton className="h-[320px] w-full rounded-lg" />
       {/* Top products */}
-      <Skeleton className="h-[220px] w-full rounded-xl" />
+      <Skeleton className="h-[220px] w-full rounded-lg" />
     </div>
   );
 }

@@ -131,29 +131,50 @@ export function SiteHeader({
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="ml-auto flex items-center gap-1">
-        <LocaleToggle />
-        <ThemeToggle />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() =>
-            window.dispatchEvent(
-              new KeyboardEvent("keydown", {
-                key: "k",
-                metaKey: true,
-                ctrlKey: true,
-                bubbles: true,
-              })
-            )
-          }
-          aria-label={t("common.open_command")}
-          className="gap-1.5"
-        >
-          <Search aria-hidden="true" className="size-3.5" />
-          <span className="hidden lg:inline">Search</span>
-          <kbd className="hidden font-mono text-xs lg:inline">⌘K</kbd>
-        </Button>
+      <div className="ml-auto flex items-center gap-0.5 sm:gap-1">
+        <span className="hidden xl:flex items-center gap-1">
+          <LocaleToggle />
+          <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              window.dispatchEvent(
+                new KeyboardEvent("keydown", {
+                  key: "k",
+                  metaKey: true,
+                  ctrlKey: true,
+                  bubbles: true,
+                })
+              )
+            }
+            aria-label={t("common.open_command")}
+            className="gap-1.5"
+          >
+            <Search aria-hidden="true" className="size-3.5" />
+            <span className="hidden lg:inline">Search</span>
+            <kbd className="hidden font-mono text-sm lg:inline">⌘K</kbd>
+          </Button>
+        </span>
+        <span className="flex xl:hidden items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t("common.open_command")}
+            onClick={() =>
+              window.dispatchEvent(
+                new KeyboardEvent("keydown", {
+                  key: "k",
+                  metaKey: true,
+                  ctrlKey: true,
+                  bubbles: true,
+                })
+              )
+            }
+          >
+            <Search aria-hidden="true" />
+          </Button>
+        </span>
         <RealtimeIndicator warehouseId={active?.id ?? null} />
         <NotificationBell />
         {user ? (
@@ -176,7 +197,7 @@ export function SiteHeader({
                 <span className="text-foreground text-sm font-medium">
                   {user.name ?? "User"}
                 </span>
-                <span className="text-muted-foreground text-xs">
+                <span className="text-muted-foreground text-sm">
                   {user.email}
                 </span>
               </div>
@@ -188,7 +209,7 @@ export function SiteHeader({
                   <span className="text-foreground block truncate text-sm font-medium">
                     {user.name ?? "User"}
                   </span>
-                  <span className="text-muted-foreground block truncate text-xs font-normal">
+                  <span className="text-muted-foreground block truncate text-sm font-normal">
                     {user.email}
                   </span>
                 </DropdownMenuLabel>

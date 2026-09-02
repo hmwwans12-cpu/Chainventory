@@ -60,7 +60,7 @@ export function Security() {
           <Reveal className="sm:col-span-2 md:flex-row md:items-start md:gap-5">
             <DoubleBezelCard className="md:flex-row md:items-start md:gap-5 md:p-7">
               <DoubleBezelCardContent className="flex shrink-0 flex-col gap-1.5 md:flex-1">
-                <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-xl">
+                <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-lg">
                   <featured.icon aria-hidden="true" className="size-5" />
                 </span>
                 <div className="flex flex-col gap-1.5">

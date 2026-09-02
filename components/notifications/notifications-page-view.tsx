@@ -208,18 +208,7 @@ export function NotificationsPageView({
     setLoadingMore(false);
   }, [loadingMore, pageSize]);
 
-  const grouped = useMemo(() => {
-    const manyWarehouses = Object.keys(warehouseNames).length > 1;
-    return notifications.map((n, i) => {
-      const prev = notifications[i - 1];
-      const showGroup =
-        manyWarehouses &&
-        !!n.warehouse_id &&
-        warehouseNames[n.warehouse_id] &&
-        (!prev || prev.warehouse_id !== n.warehouse_id);
-      return { n, showGroup };
-    });
-  }, [notifications, warehouseNames]);
+  const manyWarehouses = Object.keys(warehouseNames).length > 1;
 
   return (
     <div className="flex flex-col gap-4">
@@ -251,7 +240,7 @@ export function NotificationsPageView({
       ) : (
         <PanelCard padding="none" className="bg-card">
           <ul>
-            {grouped.map(({ n, showGroup }) => {
+            {notifications.map((n) => {
               const meta = NOTIFICATION_TYPE_META[n.type];
               const unread = !n.read_at;
               return (
@@ -259,11 +248,6 @@ export function NotificationsPageView({
                   key={n.id}
                   className="not-last:border-border not-last:border-b"
                 >
-                  {showGroup ? (
-                    <p className="text-muted-foreground border-b-border/60 bg-muted/50 border-b px-4 py-1.5 text-xs font-medium tracking-wide uppercase">
-                      {warehouseNames[n.warehouse_id ?? ""] ?? "General"}
-                    </p>
-                  ) : null}
                   <button
                     type="button"
                     onClick={() => void handleRowClick(n)}
@@ -310,19 +294,27 @@ export function NotificationsPageView({
                           {n.body}
                         </span>
                       ) : null}
-                      <span className="text-muted-foreground mt-0.5 flex items-center gap-2 text-xs">
+                      {n.type === "join_request" || n.type === "adjustment_pending" || n.type === "proof_failed" ? (
+                        <span className="text-primary text-sm font-medium">Review →</span>
+                      ) : null}
+                      <span className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2 text-sm">
                         <time dateTime={n.last_event_at}>
                           {formatTimeAgo(n.last_event_at)}
                         </time>
+                        {manyWarehouses && n.warehouse_id && warehouseNames[n.warehouse_id] ? (
+                          <Badge variant="outline" className="text-sm">{warehouseNames[n.warehouse_id]}</Badge>
+                        ) : null}
                         {n.times > 1 ? (
-                          <Badge variant="secondary">×{n.times}</Badge>
+                          <Badge variant="secondary" className="gap-1">
+                            ×{n.times} · {n.times} updates in last 10 minutes
+                          </Badge>
                         ) : null}
                       </span>
                     </span>
                     <span className="flex shrink-0 flex-col items-end gap-1.5">
                       <ChevronRight
                         aria-hidden="true"
-                        className="text-muted-foreground/60 mt-1 size-4 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                        className="text-muted-foreground/50 mt-1 size-4 opacity-60 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
                       />
                       {unread ? (
                         <span

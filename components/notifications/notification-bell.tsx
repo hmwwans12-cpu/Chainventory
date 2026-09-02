@@ -242,18 +242,7 @@ export function NotificationBell() {
     }
   }, [unreadCount, setUnreadCount, setNotifications]);
 
-  const grouped = useMemo(() => {
-    const manyWarehouses = Object.keys(warehouseNames).length > 1;
-    return notifications.map((n, i) => {
-      const prev = notifications[i - 1];
-      const showGroup =
-        manyWarehouses &&
-        !!n.warehouse_id &&
-        warehouseNames[n.warehouse_id] &&
-        (!prev || prev.warehouse_id !== n.warehouse_id);
-      return { n, showGroup };
-    });
-  }, [notifications, warehouseNames]);
+  const manyWarehouses = Object.keys(warehouseNames).length > 1;
 
   const triggerLabel =
     unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications";
@@ -276,7 +265,7 @@ export function NotificationBell() {
               {unreadCount > 0 ? (
                 <Badge
                   className={cn(
-                    "absolute -top-0.5 -right-0.5 size-6 items-center justify-center p-0 text-xs tabular-nums",
+                    "absolute -top-0.5 -right-0.5 size-6 items-center justify-center p-0 text-sm tabular-nums",
                     badgePop && "motion-safe:animate-[bell-pop_200ms_ease-out]"
                   )}
                   aria-hidden="true"
@@ -297,7 +286,7 @@ export function NotificationBell() {
                 <div className="flex items-center gap-2">
                   <h2
                     id="notif-heading"
-                    className="font-display text-foreground text-sm font-semibold"
+                    className="text-foreground text-sm font-semibold"
                   >
                     Notifications
                   </h2>
@@ -330,7 +319,7 @@ export function NotificationBell() {
                       </div>
                     ))}
                   </div>
-                ) : grouped.length === 0 ? (
+                ) : notifications.length === 0 ? (
                   <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
                     <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
                       <Inbox aria-hidden="true" className="size-5" />
@@ -338,24 +327,18 @@ export function NotificationBell() {
                     <p className="text-foreground text-sm font-medium">
                       No notifications yet
                     </p>
-                    <p className="text-muted-foreground max-w-52 text-xs text-pretty">
+                    <p className="text-muted-foreground max-w-52 text-sm text-pretty">
                       Join requests, blockchain updates, and warehouse events
                       will show up here.
                     </p>
                   </div>
                 ) : (
                   <ul>
-                    {grouped.map(({ n, showGroup }) => {
+                    {notifications.map((n) => {
                       const meta = NOTIFICATION_TYPE_META[n.type];
                       const unread = !n.read_at;
                       return (
                         <li key={n.id}>
-                          {showGroup ? (
-                            <p className="text-muted-foreground border-b-border/60 bg-muted/50 border-b px-3 py-1 text-xs font-medium tracking-wide uppercase">
-                              {warehouseNames[n.warehouse_id ?? ""] ??
-                                "General"}
-                            </p>
-                          ) : null}
                           <button
                             type="button"
                             onClick={() => void handleRowClick(n)}
@@ -398,22 +381,25 @@ export function NotificationBell() {
                                 {n.title}
                               </span>
                               {n.body ? (
-                                <span className="text-muted-foreground line-clamp-2 text-xs leading-snug">
+                                <span className="text-muted-foreground line-clamp-2 text-sm leading-snug">
                                   {n.body}
                                 </span>
                               ) : null}
-                              <span className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
+                              <span className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5 text-sm">
                                 <span>{formatTimeAgo(n.last_event_at)}</span>
+                                {manyWarehouses && n.warehouse_id && warehouseNames[n.warehouse_id] ? (
+                                  <Badge variant="outline" className="text-sm">{warehouseNames[n.warehouse_id]}</Badge>
+                                ) : null}
                                 {n.times > 1 ? (
                                   <span className="bg-muted text-muted-foreground rounded-sm px-1">
-                                    ×{n.times}
+                                    ×{n.times} · {n.times} updates
                                   </span>
                                 ) : null}
                               </span>
                             </span>
                             <ChevronRight
                               aria-hidden="true"
-                              className="text-muted-foreground/60 mt-1 size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                              className="text-muted-foreground/50 mt-1 size-3.5 shrink-0 opacity-60 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
                             />
                             {unread ? (
                               <span

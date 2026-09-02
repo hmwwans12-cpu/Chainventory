@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
+import { ErrorAlert } from "@/components/shared/error-alert";
 import { removeMember } from "@/lib/warehouses/members-client";
 import type { MemberListItem } from "@/lib/members/types";
 
@@ -40,8 +41,8 @@ export function RemoveMemberDialog({
       onOpenChange(false);
       toast.add({
         type: "success",
-        title: "Member removed",
-        description: `${member.displayName ?? member.email} no longer has access.`,
+        title: `${member.displayName ?? member.email} removed`,
+        description: `Access revoked — ${member.displayName ?? member.email} can be re-invited later.`,
       });
       onDone();
     } else {
@@ -56,27 +57,19 @@ export function RemoveMemberDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Remove {member.displayName ?? "member"}?</DialogTitle>
-          <DialogDescription>
-            {member.displayName ?? member.email} will immediately lose access to
-            this warehouse. This cannot be undone.
+          <DialogTitle>Remove {member.displayName ?? member.email} from warehouse?</DialogTitle>
+          <DialogDescription className="text-sm">
+            {member.displayName ?? member.email} will immediately lose access to this warehouse. Existing activity and movement history remain unchanged. You can re-invite them later.
           </DialogDescription>
         </DialogHeader>
-        {error ? (
-          <p
-            role="alert"
-            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-xs"
-          >
-            {error}
-          </p>
-        ) : null}
+        {error ? <ErrorAlert>{error}</ErrorAlert> : null}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={busy}
           >
-            Cancel
+            Keep member
           </Button>
           <Button variant="destructive" onClick={remove} disabled={busy}>
             {busy ? (

@@ -58,16 +58,16 @@ export function LeaveWarehouseDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Leave warehouse?</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             {isOwner
-              ? "You are the owner of this warehouse. Transfer ownership first, then you can leave."
-              : "You will lose access to this warehouse. Members with higher roles can re-invite you."}
+              ? "You are the owner — you can't leave until ownership is transferred to another member. Transfer ownership first, then you can leave."
+              : "You will immediately lose access to this warehouse. Your past activity remains. A Manager or Owner can re-invite you later."}
           </DialogDescription>
         </DialogHeader>
         {error ? (
           <p
             role="alert"
-            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-xs"
+            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-sm"
           >
             {error}
           </p>

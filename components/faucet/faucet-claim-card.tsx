@@ -85,12 +85,12 @@ export function FaucetClaimCard({
           <p className="text-foreground text-sm font-semibold">
             Low Base Sepolia balance
           </p>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-muted-foreground text-sm">
             Claim 0.001 test ETH to pay for your next stock transaction.
           </p>
           {message ? (
             txHash ? (
-              <p className="text-muted-foreground mt-1 text-xs">{message}</p>
+              <p className="text-muted-foreground mt-1 text-sm">{message}</p>
             ) : (
               <p
                 role="alert"

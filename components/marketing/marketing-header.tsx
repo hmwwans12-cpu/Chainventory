@@ -58,7 +58,7 @@ export function MarketingHeader({
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all duration-200 ease-out before:absolute before:-inset-[6px] before:content-[''] [@media(hover:hover)_and_(pointer:fine)]:hover:scale-[1.03]",
+                  "relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ease-out before:absolute before:-inset-[6px] before:content-['']",
                   active
                     ? "text-foreground bg-muted font-medium"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"

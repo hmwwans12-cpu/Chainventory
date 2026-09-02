@@ -8,15 +8,15 @@ import type { StatusTone } from "@/components/shared/status-badge";
 
 export const PROOF_STATUS_META: Record<
   string,
-  { label: string; tone: StatusTone }
+  { label: string; tone: StatusTone; short: string }
 > = {
-  pending: { label: "Proof pending", tone: "pending" },
-  submitted: { label: "Proof submitted", tone: "pending" },
-  confirming: { label: "Confirming", tone: "pending" },
-  confirmed: { label: "Verified on-chain", tone: "success" },
-  retrying: { label: "Retrying", tone: "warning" },
-  manual_review: { label: "Manual review", tone: "warning" },
-  failed: { label: "Blockchain failed", tone: "failed" },
+  pending: { label: "Verifying", tone: "pending", short: "Recorded" },
+  submitted: { label: "Verifying", tone: "pending", short: "Verifying" },
+  confirming: { label: "Verifying", tone: "pending", short: "Verifying" },
+  confirmed: { label: "Verified", tone: "success", short: "Verified" },
+  retrying: { label: "Verification delayed", tone: "warning", short: "Recorded" },
+  manual_review: { label: "Verification delayed", tone: "warning", short: "Recorded" },
+  failed: { label: "Verification delayed", tone: "warning", short: "Verification delayed" },
 };
 
 export const DEPLOYMENT_STATUS_META: Record<

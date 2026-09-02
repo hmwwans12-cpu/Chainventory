@@ -216,9 +216,19 @@ export function BulkAddDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">1</span>
+            <span className={`text-sm ${step === "input" ? "font-semibold" : "text-muted-foreground"}`}>Add data</span>
+            <span className="text-muted-foreground text-sm">—</span>
+            <span className={`flex size-6 items-center justify-center rounded-full text-sm font-semibold ${step === "preview" ? "bg-primary text-primary-foreground" : step === "result" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>2</span>
+            <span className={`text-sm ${step === "preview" ? "font-semibold" : "text-muted-foreground"}`}>Review</span>
+            <span className="text-muted-foreground text-sm">—</span>
+            <span className={`flex size-6 items-center justify-center rounded-full text-sm font-semibold ${step === "result" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>3</span>
+            <span className={`text-sm ${step === "result" ? "font-semibold" : "text-muted-foreground"}`}>Complete</span>
+          </div>
           <DialogTitle>Bulk Add Products</DialogTitle>
           <DialogDescription>
-            Add many products at once with a preview before importing.
+            {step === "input" ? "Add many products at once with a preview before importing." : step === "preview" ? `Review ${rows.length} products before importing.` : "Import complete — review results."}
           </DialogDescription>
         </DialogHeader>
 
@@ -255,62 +265,72 @@ export function BulkAddDialog({
 
             {mode === "manual" ? (
               <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-6 gap-2 px-1 sm:grid-cols-12">
-                  <span className="text-muted-foreground col-span-6 text-xs font-medium sm:col-span-5">
+                <div className="hidden grid-cols-12 gap-2 px-1 sm:grid">
+                  <span className="text-muted-foreground col-span-5 text-sm font-medium">
                     Name
                   </span>
-                  <span className="text-muted-foreground col-span-3 text-xs font-medium sm:col-span-3">
+                  <span className="text-muted-foreground col-span-3 text-sm font-medium">
                     SKU
                   </span>
-                  <span className="text-muted-foreground col-span-3 text-xs font-medium sm:col-span-2">
+                  <span className="text-muted-foreground col-span-2 text-sm font-medium">
                     Unit
                   </span>
-                  <span className="text-muted-foreground hidden text-xs font-medium sm:col-span-2 sm:block">
+                  <span className="text-muted-foreground col-span-2 text-sm font-medium">
                     Category
                   </span>
                 </div>
                 {manualRows.map((row, i) => (
                   <div
                     key={row.id}
-                    className="grid grid-cols-6 items-center gap-2 sm:grid-cols-12"
+                    className="flex flex-col gap-2 rounded-lg border p-3 sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 sm:border-0 sm:p-0"
                   >
-                    <Input
-                      className="col-span-6 sm:col-span-5"
-                      value={row.name}
-                      onChange={(e) =>
-                        updateManualRow(i, "name", e.target.value)
-                      }
-                      placeholder="Product name"
-                    />
-                    <Input
-                      className="col-span-3 sm:col-span-3"
-                      value={row.sku}
-                      onChange={(e) =>
-                        updateManualRow(i, "sku", e.target.value)
-                      }
-                      placeholder="SKU"
-                    />
-                    <Input
-                      className="col-span-3 sm:col-span-2"
-                      value={row.unit}
-                      onChange={(e) =>
-                        updateManualRow(i, "unit", e.target.value)
-                      }
-                      placeholder="pcs"
-                    />
-                    <div className="col-span-6 flex items-center gap-1 sm:col-span-2">
+                    <div className="flex flex-col gap-1 sm:col-span-5">
+                      <span className="text-muted-foreground text-sm font-medium sm:hidden">Product name</span>
                       <Input
-                        value={row.category}
+                        value={row.name}
                         onChange={(e) =>
-                          updateManualRow(i, "category", e.target.value)
+                          updateManualRow(i, "name", e.target.value)
                         }
-                        placeholder="Cat."
+                        placeholder="Product name"
                       />
+                    </div>
+                    <div className="flex flex-col gap-1 sm:col-span-3">
+                      <span className="text-muted-foreground text-sm sm:hidden">SKU</span>
+                      <Input
+                        value={row.sku}
+                        onChange={(e) =>
+                          updateManualRow(i, "sku", e.target.value)
+                        }
+                        placeholder="SKU"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1 sm:col-span-2">
+                      <span className="text-muted-foreground text-sm sm:hidden">Unit</span>
+                      <Input
+                        value={row.unit}
+                        onChange={(e) =>
+                          updateManualRow(i, "unit", e.target.value)
+                        }
+                        placeholder="pcs"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1 sm:col-span-2">
+                      <div className="flex-1 flex flex-col gap-1">
+                        <span className="text-muted-foreground text-sm sm:hidden">Category</span>
+                        <Input
+                          value={row.category}
+                          onChange={(e) =>
+                            updateManualRow(i, "category", e.target.value)
+                          }
+                          placeholder="Cat."
+                        />
+                      </div>
                       {manualRows.length > 1 ? (
                         <Button
                           variant="ghost"
-                          size="icon-sm"
+                          size="icon"
                           aria-label="Remove row"
+                          className="mt-5 sm:mt-0"
                           onClick={() =>
                             setManualRows((prev) =>
                               prev.filter((_, idx) => idx !== i)
@@ -361,7 +381,7 @@ export function BulkAddDialog({
                       : "Paste CSV data, one product per line.\n\nname,sku,unit,initial_qty\nSteel Rod 12mm,SR-12-001,pcs,100"
                   }
                 />
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-sm">
                   Columns: <span className="font-mono">name, sku, unit</span>{" "}
                   (required) +{" "}
                   <span className="font-mono">
@@ -384,7 +404,7 @@ export function BulkAddDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button onClick={goToPreview}>Review import</Button>
+              <Button onClick={goToPreview}>Continue to review</Button>
             </div>
           </div>
         ) : null}
@@ -398,7 +418,7 @@ export function BulkAddDialog({
                 Invalid rows:{" "}
                 <span className="font-mono tabular-nums">{invalid.length}</span>
               </p>
-              <p className="text-muted-foreground mt-0.5 text-xs">
+              <p className="text-muted-foreground mt-0.5 text-sm">
                 {rows.length} product{rows.length === 1 ? "" : "s"} will be
                 imported
                 {rows.some((r) => r.initialQty)
@@ -454,11 +474,23 @@ export function BulkAddDialog({
 
         {step === "result" && results ? (
           <div className="flex flex-col gap-4">
-            <div className="ring-foreground/10 flex items-center justify-between rounded-lg px-4 py-3 ring-1">
-              <span className="text-foreground text-sm font-medium">
-                Import finished
+            <div className={`flex flex-col gap-1 rounded-lg px-4 py-4 ${results.failed === 0 ? "bg-primary/10 border border-primary/20" : results.created === 0 ? "bg-destructive/10 border border-destructive/20" : "bg-warning/10 border border-warning/20"}`}>
+              <span className="flex items-center gap-2 text-base font-semibold">
+                <CheckCircle2 aria-hidden="true" className={`size-5 ${results.failed === 0 ? "text-primary" : results.created === 0 ? "text-destructive" : "text-warning"}`} />
+                {results.failed === 0
+                  ? `Import complete — ${results.created} products added`
+                  : results.created === 0
+                    ? "Import failed — no products added"
+                    : `Import complete — ${results.created} added, ${results.failed} need attention`}
               </span>
-              <span className="text-muted-foreground text-xs">
+              <span className="text-muted-foreground text-sm">
+                {results.failed === 0
+                  ? "All products are now in your inventory."
+                  : results.created === 0
+                    ? "Check errors below and try again."
+                    : "Review failed rows below. Successful imports are already saved."}
+              </span>
+              <span className="text-muted-foreground text-sm">
                 <span className="text-foreground font-mono tabular-nums">
                   {results.created}
                 </span>{" "}
@@ -471,31 +503,59 @@ export function BulkAddDialog({
             </div>
 
             {results.failed > 0 ? (
-              <ul className="flex max-h-48 flex-col gap-1 overflow-y-auto">
-                {results.results
-                  .filter((r) => !r.ok)
-                  .map((r) => (
-                    <li
-                      key={r.index}
-                      className="text-destructive flex items-center gap-1.5 text-xs"
-                    >
-                      <AlertTriangle
-                        aria-hidden="true"
-                        className="size-3.5 shrink-0"
-                      />
-                      <span>
-                        Row {r.index + 1}: {r.error}
-                      </span>
-                    </li>
-                  ))}
-              </ul>
+              <div className="flex flex-col gap-2">
+                <span className="text-foreground text-sm font-medium">Failed rows</span>
+                <ul className="flex max-h-48 flex-col gap-1 overflow-y-auto rounded-lg bg-destructive/5 p-2">
+                  {results.results
+                    .filter((r) => !r.ok)
+                    .map((r) => (
+                      <li
+                        key={r.index}
+                        className="text-destructive flex items-start gap-1.5 text-sm"
+                      >
+                        <AlertTriangle
+                          aria-hidden="true"
+                          className="mt-0.5 size-3.5 shrink-0"
+                        />
+                        <span>
+                          Row {r.index + 1}: {r.error}
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const failedRows = results.results.filter((r) => !r.ok);
+                    const csv = ["row,error", ...failedRows.map((r) => `${r.index+1},"${(r.error ?? "").replace(/"/g,'""')}"`)].join("\n");
+                    const blob = new Blob([csv], { type: "text/csv" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "failed-rows.csv";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  Download failed rows (CSV)
+                </Button>
+              </div>
             ) : null}
 
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="outline" onClick={() => setStep("input")}>
-                Import more
+              {results.failed > 0 ? (
+                <Button variant="outline" onClick={() => setStep("input")}>
+                  Fix and re-upload
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={() => setStep("input")}>
+                  Import more
+                </Button>
+              )}
+              <Button onClick={() => onOpenChange(false)}>
+                {results.failed > 0 ? `Review ${results.failed} errors` : "Done"}
               </Button>
-              <Button onClick={() => onOpenChange(false)}>Done</Button>
             </div>
           </div>
         ) : null}

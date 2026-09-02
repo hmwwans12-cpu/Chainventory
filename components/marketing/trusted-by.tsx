@@ -22,7 +22,7 @@ export function TrustedBy() {
     <section className="border-border/60 bg-muted/30 border-y py-10">
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6 px-4 sm:px-6">
         <Reveal>
-          <p className="text-muted-foreground text-center text-xs font-medium tracking-widest uppercase">
+          <p className="text-muted-foreground text-center text-sm font-medium tracking-widest uppercase">
             {t("landing.trustedby.label")}
           </p>
         </Reveal>

@@ -48,6 +48,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CopyButton } from "@/components/shared/copy-button";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md §6); cegah percobaan prerender saat env build minim.
@@ -256,13 +257,30 @@ export default async function DashboardPage({
   const rangeHint = t("dashboard.vs_previous", { n: String(range) });
   const whQuery = `warehouse=${active.id}`;
 
+  const needsAttention = (lowStockCount > 0 ? 1 : 0) + ((pendingRes.count ?? 0) > 0 ? 1 : 0);
   return (
     <div className="flex flex-col gap-4 md:gap-6">
       <PageHeader
         title={t("dashboard.title")}
         description={t("dashboard.description")}
+        actions={
+          <div className="flex items-center gap-2">
+            <a
+              href={`/inventory/movements?warehouse=${active.id}`}
+              className="bg-primary text-primary-foreground inline-flex h-11 items-center gap-1.5 rounded-lg px-4 text-sm font-medium hover:bg-primary/90"
+            >
+              <PackagePlus aria-hidden="true" className="size-4" /> Stock In
+            </a>
+            <a
+              href={`/inventory/movements?warehouse=${active.id}`}
+              className="border-border hover:bg-muted inline-flex h-11 items-center gap-1.5 rounded-lg border bg-card px-4 text-sm font-medium"
+            >
+              <PackageMinus aria-hidden="true" className="size-4" /> Stock Out
+            </a>
+          </div>
+        }
       />
-      {/* 1. Profile / Wallet Card (DESIGN Â§30) â€” lokasi halaman dibawa breadcrumb header */}
+      {/* 1. Profile / Wallet Card — streamlined, wallet details secondary */}
       <ProfileWalletCard
         name={displayName}
         role={active.role}
@@ -271,8 +289,44 @@ export default async function DashboardPage({
         contractAddress={active.contractAddress}
       />
 
-      {/* 2. Statistics Cards (DESIGN Â§31) */}
-      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs sm:grid-cols-2 lg:grid-cols-4">
+      {/* 2. Needs Attention — Von Restorff: visually distinct from KPI */}
+      {lowStockCount > 0 || (pendingRes.count ?? 0) > 0 ? (
+        <div className="border-warning/30 bg-warning/10 flex flex-col gap-3 rounded-lg border p-4">
+          <div className="flex items-center gap-2">
+            <TriangleAlert aria-hidden="true" className="text-warning size-5" />
+            <h2 className="text-foreground text-sm font-semibold">Needs attention — {needsAttention} {needsAttention === 1 ? "item" : "items"}</h2>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            {lowStockCount > 0 ? (
+              <a
+                href={`/inventory/products?${whQuery}`}
+                className="bg-card border-warning/20 flex flex-1 items-center justify-between gap-3 rounded-lg border px-4 py-3 hover:bg-muted/50"
+              >
+                <span className="flex items-center gap-2">
+                  <TriangleAlert aria-hidden="true" className="text-warning size-4" />
+                  <span className="text-sm font-medium">{lowStockCount} product{lowStockCount > 1 ? "s" : ""} below minimum stock</span>
+                </span>
+                <span className="text-primary text-sm font-medium">Review →</span>
+              </a>
+            ) : null}
+            {(pendingRes.count ?? 0) > 0 ? (
+              <a
+                href={`/members?${whQuery}`}
+                className="bg-card border-warning/20 flex flex-1 items-center justify-between gap-3 rounded-lg border px-4 py-3 hover:bg-muted/50"
+              >
+                <span className="flex items-center gap-2">
+                  <UserPlus aria-hidden="true" className="text-warning size-4" />
+                  <span className="text-sm font-medium">{pendingRes.count} join request{(pendingRes.count ?? 0) > 1 ? "s" : ""} awaiting approval</span>
+                </span>
+                <span className="text-primary text-sm font-medium">Review →</span>
+              </a>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {/* 3. Statistics Cards (DESIGN §31) — KPI only, no alert mixed */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={Package}
           label={t("dashboard.total_products")}
@@ -311,35 +365,59 @@ export default async function DashboardPage({
         />
       </div>
 
-      {/* Alert stats — section terpisah (audit C4) supaya grid utama 4-kolom
-          selalu prediktabel dan tidak reflow saat kondisi terpenuhi. */}
-      {lowStockCount > 0 || (pendingRes.count ?? 0) > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {lowStockCount > 0 ? (
-            <StatCard
-              icon={TriangleAlert}
-              label={t("dashboard.low_stock")}
-              value={String(lowStockCount)}
-              hint={t("dashboard.at_below_threshold")}
-              href={`/inventory/products?${whQuery}`}
-            />
-          ) : null}
-          {(pendingRes.count ?? 0) > 0 ? (
-            <StatCard
-              icon={UserPlus}
-              label={t("dashboard.pending_requests")}
-              value={String(pendingRes.count ?? 0)}
-              hint={t("dashboard.join_awaiting")}
-              href={`/members?${whQuery}`}
-            />
-          ) : null}
-        </div>
-      ) : null}
-
       {/* Faucet: contextual alert — hanya tampil saat balance rendah (DESIGN §55) */}
       <FaucetClaimCard walletAddress={walletAddress} />
 
-      {/* 3. Charts (DESIGN Â§32) + Top Products (Â§33, hemat) */}
+      {/* Onboarding Checklist — F15 Activation, Peak-End: better use of empty dashboard than decorative widgets */}
+      {(analytics?.totalProducts ?? 0) === 0 && (
+        <PanelCard className="bg-card">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full text-sm font-semibold">✓</span>
+              <h3 className="text-foreground text-sm font-semibold">Set up your warehouse</h3>
+              <span className="text-muted-foreground ml-auto text-sm">{analytics?.totalProducts ? 2 : 1}/4 completed</span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="flex items-center gap-2.5 rounded-lg border bg-primary/5 px-3 py-2.5">
+                <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full text-sm">✓</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">Create warehouse</span>
+                  <span className="text-muted-foreground text-sm">{active.name} — ready</span>
+                </div>
+              </div>
+              <a href={`/inventory/products?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors">
+                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">2</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{(recentMovements.length === 0 && (analytics?.totalProducts ?? 0) === 0) ? "Add first product" : "Manage products"}</span>
+                  <span className="text-muted-foreground text-sm">{(analytics?.totalProducts ?? 0) === 0 ? "No products yet" : `${analytics?.totalProducts} products`}</span>
+                </div>
+                <span className="text-primary ml-auto text-sm font-medium">→</span>
+              </a>
+              <a href={`/members?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors">
+                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">3</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">Invite team</span>
+                  <span className="text-muted-foreground text-sm">Share warehouse code</span>
+                </div>
+                <span className="text-primary ml-auto text-sm font-medium">→</span>
+              </a>
+              <a href={`/inventory/movements?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors">
+                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">4</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">Record stock movement</span>
+                  <span className="text-muted-foreground text-sm">Stock in / out</span>
+                </div>
+                <span className="text-primary ml-auto text-sm font-medium">→</span>
+              </a>
+            </div>
+            {(analytics?.totalProducts ?? 0) === 0 && (pendingRes.count ?? 0) === 0 && lowStockCount === 0 && (
+              <p className="text-muted-foreground text-sm">Your warehouse is ready — add your first product to start the checklist.</p>
+            )}
+          </div>
+        </PanelCard>
+      )}
+
+      {/* 3. Charts (DESIGN §32) + Top Products (§33, hemat) */}
       {analytics ? (
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-2">
@@ -380,28 +458,37 @@ export default async function DashboardPage({
         <RecentActivity items={recentActivity} />
       </div>
 
-      {/* Kartu warehouse — dipindah ke bawah sesuai aliran informasi §29 */}
+      {/* Warehouse health — P2 copy affordance + supply chain context, impeccable quiet hierarchy */}
       <PanelCard className="bg-card flex flex-wrap items-center gap-3 p-5">
         <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full">
           <Warehouse aria-hidden="true" className="size-5" />
         </span>
-        <div className="flex min-w-0 flex-col">
-          <h2 className="font-display text-foreground text-base font-semibold">
-            {active.name}
-          </h2>
-          <p className="text-muted-foreground truncate text-sm">
-            {active.code}
-            {active.contractAddress
-              ? ` · ${t("dashboard.deployed_on_chain")}`
-              : ` · ${t("dashboard.not_deployed")}`}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex items-center gap-2">
+            <h2 className="text-foreground text-base font-semibold">
+              {active.name}
+            </h2>
+            <CopyButton text={active.code} label="Copy warehouse code" />
+          </div>
+          <p className="text-muted-foreground flex flex-wrap items-center gap-1.5 truncate text-sm">
+            <span className="font-mono">{active.code}</span>
+            <span className="hidden sm:inline">·</span>
+            <span className={active.contractAddress ? "text-primary text-sm font-medium" : "text-muted-foreground"}>
+              {active.contractAddress ? t("dashboard.deployed_on_chain") : t("dashboard.not_deployed")}
+            </span>
+            <span>· Last activity {daysSince(active.lastActivityAt)}d ago</span>
+            <span className="hidden sm:inline">·</span>
+            <span className="hidden sm:inline">{analytics?.totalProducts ?? 0} products</span>
           </p>
         </div>
-        <Badge
-          variant={active.status === "active" ? "default" : "destructive"}
-          className="ms-auto"
-        >
-          {active.status}
-        </Badge>
+        <div className="flex shrink-0 items-center gap-2">
+          <Badge
+            variant={active.status === "active" ? "default" : "destructive"}
+            className="capitalize"
+          >
+            {active.status}
+          </Badge>
+        </div>
       </PanelCard>
 
       {/* Von Restorff â€” satu-satunya elemen bernada peringatan di halaman ini */}

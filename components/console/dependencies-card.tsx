@@ -39,15 +39,15 @@ function Row({ dep }: { dep: DependencyStatus }) {
         <Dot ok={dep.ok} configured={dep.configured} />
         <span className="text-foreground text-sm font-medium">{dep.label}</span>
         {!dep.configured ? (
-          <span className="text-muted-foreground text-xs">not configured</span>
+          <span className="text-muted-foreground text-sm">not configured</span>
         ) : null}
         {dep.latencyMs !== undefined ? (
-          <span className="text-muted-foreground font-mono text-xs tabular-nums">
+          <span className="text-muted-foreground font-mono text-sm tabular-nums">
             {dep.latencyMs}ms
           </span>
         ) : null}
       </div>
-      <span className="text-muted-foreground min-w-0 truncate font-mono text-xs">
+      <span className="text-muted-foreground min-w-0 truncate font-mono text-sm">
         {dep.error
           ? sanitizeConsoleError(dep.error, "Probe error")
           : dep.detail ?? (dep.ok ? "ok" : "down")}

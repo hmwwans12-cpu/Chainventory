@@ -43,7 +43,7 @@ function ErrorBanner({ message }: { message: string }) {
   return (
     <p
       role="alert"
-      className="bg-destructive/15 text-destructive flex items-start gap-1.5 rounded-lg px-3 py-2 text-xs"
+      className="bg-destructive/15 text-destructive flex items-start gap-1.5 rounded-lg px-3 py-2 text-sm"
     >
       <AlertTriangle aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
       {message}
@@ -369,14 +369,25 @@ export function StockMovementDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{meta.label}</DialogTitle>
+          <DialogTitle className="text-lg">
+            {movementType === "adjustment"
+              ? "Stock Adjustment"
+              : movementType === "reversal"
+                ? "Reverse Movement"
+                : meta.label}
+            {selected ? (
+              <span className="text-muted-foreground ml-2 font-mono text-sm font-normal">
+                · {selected.name}
+              </span>
+            ) : null}
+          </DialogTitle>
           <DialogDescription>
             {movementType === "stock_in"
-              ? "Add stock to this product."
+              ? `Add stock to ${selected?.name ?? "this product"}. Current: ${selected?.quantity ?? 0} ${selected?.unit ?? ""}`
               : movementType === "stock_out"
-                ? "Remove stock from this product."
+                ? `Remove stock from ${selected?.name ?? "this product"}. Current: ${selected?.quantity ?? 0} ${selected?.unit ?? ""}`
                 : movementType === "adjustment"
-                  ? "Record an adjustment. Applied to stock after approval."
+                  ? "Correct stock count — requires Owner/Manager approval before balance changes."
                   : "Reverse a previous movement to restore the balance."}
           </DialogDescription>
         </DialogHeader>
@@ -384,7 +395,7 @@ export function StockMovementDialog({
         {stale ? (
           <p
             role="alert"
-            className="bg-primary/10 text-primary flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+            className="bg-primary/10 text-primary flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
           >
             <Loader2 aria-hidden="true" className="animate-spin" />
             Stock updated by another user. Refreshing inventory...
@@ -394,7 +405,7 @@ export function StockMovementDialog({
         {phase ? (
           <p
             aria-live="polite"
-            className="bg-primary/10 text-primary flex flex-col gap-1 rounded-lg px-3 py-2 text-xs"
+            className="bg-primary/10 text-primary flex flex-col gap-1 rounded-lg px-3 py-2 text-sm"
           >
             <span className="flex items-center gap-2">
               <Loader2 aria-hidden="true" className="animate-spin" />
@@ -407,7 +418,7 @@ export function StockMovementDialog({
           </p>
         ) : null}
         {currentBalance != null ? (
-          <p className="text-muted-foreground text-xs">
+          <p className="text-muted-foreground text-sm">
             Current balance:{" "}
             <span className="font-mono tabular-nums">{currentBalance}</span>{" "}
             {selected?.unit}
@@ -420,7 +431,7 @@ export function StockMovementDialog({
             {product ? (
               <div className="ring-foreground/10 flex h-8 items-center rounded-lg px-2.5 text-sm ring-1">
                 {product.name}
-                <span className="text-muted-foreground ml-auto font-mono text-xs">
+                <span className="text-muted-foreground ml-auto font-mono text-sm">
                   {product.sku}
                 </span>
               </div>
@@ -444,7 +455,7 @@ export function StockMovementDialog({
                 <Label htmlFor="movement-target">Movement to reverse</Label>
                 {targetsLoaded ? (
                   reversalTargets.length === 0 ? (
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-muted-foreground text-sm">
                       No committed movements to reverse for this product.
                     </p>
                   ) : (
@@ -468,13 +479,13 @@ export function StockMovementDialog({
                     </Select>
                   )
                 ) : (
-                  <p className="text-muted-foreground flex items-center gap-2 text-xs">
+                  <p className="text-muted-foreground flex items-center gap-2 text-sm">
                     <Loader2 aria-hidden="true" className="animate-spin" />
                     Loading recent movements...
                   </p>
                 )}
                 {selectedTarget ? (
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-muted-foreground text-sm">
                     Reversing{" "}
                     <span className="font-mono tabular-nums">
                       {selectedTarget.quantity}
@@ -497,13 +508,41 @@ export function StockMovementDialog({
                   }
                 />
                 {selected ? (
-                  <p className="text-muted-foreground text-xs">
-                    Current stock:{" "}
-                    <span className="font-mono tabular-nums">
-                      {selected.quantity ?? "0"}
-                    </span>{" "}
-                    {selected.unit}
-                  </p>
+                  <div className="flex flex-col gap-1.5 rounded-lg border bg-muted/20 px-3 py-2.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Current stock</span>
+                      <span className="font-mono font-medium tabular-nums">
+                        {selected.quantity ?? "0"} {selected.unit}
+                      </span>
+                    </div>
+                    {quantity.trim() && /^\d+(\.\d{1,3})?$/.test(quantity.trim()) && Number(quantity) > 0 ? (
+                      <>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {movementType === "stock_in" ? "Quantity added" : "Quantity removed"}
+                          </span>
+                          <span className={`font-mono font-medium tabular-nums ${movementType === "stock_in" ? "text-primary" : "text-destructive"}`}>
+                            {movementType === "stock_in" ? "+" : "−"}
+                            {quantity.trim()} {selected.unit}
+                          </span>
+                        </div>
+                        <div className="border-t pt-1.5 flex items-center justify-between text-sm font-semibold">
+                          <span>New stock</span>
+                          <span className="font-mono tabular-nums">
+                            {(() => {
+                              const cur = Number(selected.quantity ?? 0);
+                              const qty = Number(quantity.trim());
+                              const next = movementType === "stock_in" ? cur + qty : cur - qty;
+                              return `${next} ${selected.unit}`;
+                            })()}
+                          </span>
+                        </div>
+                        {movementType === "stock_out" && Number(quantity.trim()) > Number(selected.quantity ?? 0) ? (
+                          <p className="text-destructive text-sm font-medium">⚠ Quantity exceeds current stock</p>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </div>
                 ) : null}
               </>
             )}
@@ -520,7 +559,15 @@ export function StockMovementDialog({
               id="movement-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Why is this stock being recorded?"
+              placeholder={
+                movementType === "adjustment"
+                  ? "Explain why the stock balance must be adjusted (e.g. damaged, miscounted)..."
+                  : movementType === "reversal"
+                    ? "Explain why this movement must be reversed..."
+                    : movementType === "stock_out"
+                      ? "Why is this stock being removed? (optional)"
+                      : "Why is this stock being added? (optional)"
+              }
               rows={2}
             />
           </div>
@@ -539,7 +586,11 @@ export function StockMovementDialog({
               ) : (
                 <meta.icon aria-hidden="true" />
               )}
-              Record {meta.label}
+              {movementType === "adjustment"
+                ? "Submit Adjustment for Approval"
+                : movementType === "reversal"
+                  ? "Submit Reversal"
+                  : `Record ${meta.label}`}
             </Button>
           </div>
         </div>

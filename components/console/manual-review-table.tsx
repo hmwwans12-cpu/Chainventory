@@ -95,7 +95,7 @@ export function ManualReviewTable({
                         <span className="text-foreground max-w-44 truncate text-sm font-medium">
                           {proof.warehouseName ?? shortHash(proof.warehouseId)}
                         </span>
-                        <span className="text-muted-foreground font-mono text-xs">
+                        <span className="text-muted-foreground font-mono text-sm">
                           {shortHash(proof.warehouseAddress)}
                         </span>
                       </div>
@@ -106,14 +106,14 @@ export function ManualReviewTable({
                           {shortHash(proof.payloadHash)}
                         </span>
                         {proof.movementId ? (
-                          <span className="text-muted-foreground font-mono text-xs">
+                          <span className="text-muted-foreground font-mono text-sm">
                             movement {proof.movementId.slice(0, 8)}
                           </span>
                         ) : null}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                      <span className="text-muted-foreground font-mono text-sm tabular-nums">
                         {proof.attemptCount}
                       </span>
                     </TableCell>
@@ -123,7 +123,7 @@ export function ManualReviewTable({
                           render={
                             <span
                               tabIndex={0}
-                              className="text-muted-foreground block max-w-64 truncate text-xs"
+                              className="text-muted-foreground block max-w-64 truncate text-sm"
                             />
                           }
                         >
@@ -135,7 +135,7 @@ export function ManualReviewTable({
                       </Tooltip>
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-muted-foreground text-sm">
                         {formatDateTime(proof.updatedAt)}
                       </span>
                     </TableCell>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, Clock3, XCircle, type LucideIcon } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, type LucideIcon } from "lucide-react";
 
 import {
   Card,
@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EntityName } from "@/components/shared/entity-name";
-import { cn, formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 /**
  * Recent Transactions (DESIGN §29) — operasi terbaru + status proof on-chain
@@ -32,19 +33,19 @@ const PROOF_META: Record<
   { label: string; icon: LucideIcon; className: string }
 > = {
   confirmed: {
-    label: "Confirmed",
+    label: "Verified",
     icon: CheckCircle2,
     className: "bg-primary/10 text-primary",
   },
   pending: {
-    label: "Pending",
+    label: "Verifying",
     icon: Clock3,
     className: "bg-secondary/20 text-secondary-foreground",
   },
   failed: {
-    label: "Failed",
-    icon: XCircle,
-    className: "bg-destructive/15 text-destructive",
+    label: "Verification delayed",
+    icon: AlertTriangle as unknown as LucideIcon,
+    className: "bg-warning/15 text-warning-foreground border border-warning/20",
   },
 };
 
@@ -86,31 +87,39 @@ export function RecentTransactions({
               const proof =
                 item.proofStatus != null ? PROOF_META[item.proofStatus] : null;
               const ProofIcon = proof?.icon;
+              const qtyNegative = item.movementType === "stock_out" || item.movementType === "reversal";
               return (
-                <li key={item.id} className="flex items-center gap-3 py-2.5">
+                <li key={item.id} className="flex items-center gap-3 py-3">
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <EntityName>{item.productName}</EntityName>
-                    <span className="text-muted-foreground text-xs">
-                      {TYPE_LABEL[item.movementType] ?? item.movementType} ·{" "}
-                      {formatDateTime(item.createdAt)}
+                    <span className="text-foreground truncate text-sm font-medium">
+                      {item.productName} — {TYPE_LABEL[item.movementType] ?? item.movementType}
+                    </span>
+                    <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
+                      <span className={cn("font-mono tabular-nums", qtyNegative ? "text-destructive" : "text-foreground")}>
+                        {qtyNegative ? "−" : "+"}{item.quantity} {item.unit}
+                      </span>
+                      <span>·</span>
+                      <Tooltip>
+                        <TooltipTrigger render={<time dateTime={item.createdAt} className="cursor-help tabular-nums" />}>
+                          {formatTimeAgo(item.createdAt)}
+                        </TooltipTrigger>
+                        <TooltipContent>{formatDateTime(item.createdAt)}</TooltipContent>
+                      </Tooltip>
                     </span>
                   </div>
-                  <div className="ms-auto flex shrink-0 items-center gap-2">
+                  <div className="ms-auto flex shrink-0 items-center">
                     {proof && ProofIcon ? (
                       <Badge
                         variant="secondary"
                         data-icon="inline-start"
-                        className={cn(proof.className)}
+                        className={cn("text-sm", proof.className)}
                       >
                         <ProofIcon aria-hidden="true" />
                         {proof.label}
                       </Badge>
                     ) : (
-                      <Badge variant="outline">No proof</Badge>
+                      <span className="text-muted-foreground text-sm">—</span>
                     )}
-                    <span className="text-foreground w-20 text-end text-sm font-medium tabular-nums">
-                      {item.quantity} {item.unit}
-                    </span>
                   </div>
                 </li>
               );

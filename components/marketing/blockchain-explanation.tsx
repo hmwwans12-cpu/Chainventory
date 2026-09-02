@@ -43,14 +43,14 @@ export function BlockchainExplanation() {
             <DoubleBezelCard className="bg-primary rounded-lg px-6 py-12 md:px-12 md:py-16">
               <DoubleBezelCardContent className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
                 <div className="flex flex-col gap-5">
-                  <span className="text-primary-foreground inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium">
+                  <span className="text-primary-foreground inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-sm font-medium">
                     <Blocks
                       aria-hidden="true"
                       className="text-primary-foreground size-3.5"
                     />
                     {t("landing.blockchain.badge")}
                   </span>
-                  <h2 className="font-display text-primary-foreground text-3xl font-semibold tracking-tight text-balance md:text-4xl">
+                  <h2 className="text-primary-foreground text-3xl font-semibold tracking-tight text-balance md:text-4xl">
                     {t("landing.blockchain.title")}
                   </h2>
                   <p className="text-primary-foreground/90 max-w-lg text-base leading-relaxed text-pretty">
@@ -74,7 +74,7 @@ export function BlockchainExplanation() {
 
                 <DoubleBezelCard className="bg-white/5 p-6 ring-1 ring-white/10">
                   <DoubleBezelCardContent className="space-y-4">
-                    <span className="text-primary-foreground text-xs font-semibold">
+                    <span className="text-primary-foreground text-sm font-semibold">
                       {t("landing.blockchain.typical_record")}
                     </span>
                     <div>
@@ -102,10 +102,10 @@ export function BlockchainExplanation() {
                       </div>
                     </div>
                     <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
-                      <span className="text-primary-foreground/90 text-xs">
+                      <span className="text-primary-foreground/90 text-sm">
                         {t("landing.blockchain.anchored_on")}
                       </span>
-                      <span className="text-primary-foreground text-xs font-medium">
+                      <span className="text-primary-foreground text-sm font-medium">
                         {t("landing.blockchain.block")}
                       </span>
                     </div>

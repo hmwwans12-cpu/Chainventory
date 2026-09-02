@@ -80,7 +80,7 @@ export function Features() {
             <DoubleBezelCard className="md:p-8">
               <DoubleBezelCardContent className="flex flex-col justify-between gap-6">
                 <div className="flex flex-col gap-3">
-                  <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-xl">
+                  <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-lg">
                     <featured.icon aria-hidden="true" className="size-5" />
                   </span>
                   <h3 className="font-display text-foreground text-xl font-semibold">
@@ -94,7 +94,7 @@ export function Features() {
                   {featured.proof!.map((hash) => (
                     <span
                       key={hash}
-                      className="text-muted-foreground bg-card flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-xs"
+                      className="text-muted-foreground bg-card flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-sm"
                     >
                       <Link2
                         aria-hidden="true"
@@ -103,7 +103,7 @@ export function Features() {
                       {hash}
                     </span>
                   ))}
-                  <span className="bg-primary text-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
+                  <span className="bg-primary text-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium">
                     <ShieldCheck aria-hidden="true" className="size-3" />
                     {t("landing.features.verified")}
                   </span>
@@ -120,19 +120,17 @@ export function Features() {
                 delay={index * 0.04}
                 className="h-full"
               >
-                <DoubleBezelCard className="bg-card">
-                  <DoubleBezelCardContent className="flex flex-col gap-3 p-6">
-                    <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
-                      <Icon aria-hidden="true" className="size-5" />
-                    </span>
-                    <h3 className="font-display text-foreground text-base font-semibold">
-                      {t(feature.titleKey)}
-                    </h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-                      {t(feature.descKey)}
-                    </p>
-                  </DoubleBezelCardContent>
-                </DoubleBezelCard>
+                <div className="bg-card ring-foreground/10 flex h-full flex-col gap-3 rounded-lg p-6 ring-1">
+                  <span className="bg-muted text-foreground flex size-10 items-center justify-center rounded-lg">
+                    <Icon aria-hidden="true" className="size-5" />
+                  </span>
+                  <h3 className="text-foreground text-base font-semibold">
+                    {t(feature.titleKey)}
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                    {t(feature.descKey)}
+                  </p>
+                </div>
               </Reveal>
             );
           })}

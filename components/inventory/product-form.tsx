@@ -165,7 +165,7 @@ export function ProductForm({
             aria-describedby={errors.unit ? "err-product-unit" : undefined}
           />
           {unitLocked ? (
-            <p className="text-muted-foreground flex items-center gap-1 text-xs">
+            <p className="text-muted-foreground flex items-center gap-1 text-sm">
               <LockIcon aria-hidden="true" className="size-3" />
               Unit is locked after the first stock movement to keep inventory
               records consistent.
@@ -240,7 +240,7 @@ export function ProductForm({
                 {errors.initialQuantity}
               </p>
             ) : (
-              <p className="text-muted-foreground flex items-start gap-1 text-xs">
+              <p className="text-muted-foreground flex items-start gap-1 text-sm">
                 <InfoIcon
                   aria-hidden="true"
                   className="mt-0.5 size-3 shrink-0"
