@@ -56,6 +56,15 @@ export default async function StockMovementsPageRoute({
     );
   }
 
+  // Audit v0.3.2 §2.17: load product list HANYA bila user punya stock
+  // movement permission. Untuk AUDITOR/VIEWER, daftar produk tidak
+  // dipakai (tidak ada dialog stock movement) — hemat bandwidth dan
+  // mempercepat render.
+  const canStockMovement =
+    active.role === "OWNER" ||
+    active.role === "MANAGER" ||
+    active.role === "STAFF";
+
   const [movementsResult, productsResult] = await Promise.all([
     supabase
       .from("stock_movements")
@@ -65,14 +74,16 @@ export default async function StockMovementsPageRoute({
       .eq("warehouse_id", active.id)
       .order("created_at", { ascending: false })
       .range(0, PAGE_SIZE - 1),
-    supabase
-      .from("products")
-      .select(
-        "id, sku, name, category, unit, status, low_stock_threshold, inventory_balances(quantity, version)"
-      )
-      .eq("warehouse_id", active.id)
-      .eq("status", "active")
-      .order("name", { ascending: true }),
+    canStockMovement
+      ? supabase
+          .from("products")
+          .select(
+            "id, sku, name, category, unit, status, low_stock_threshold, inventory_balances(quantity, version)"
+          )
+          .eq("warehouse_id", active.id)
+          .eq("status", "active")
+          .order("name", { ascending: true })
+      : Promise.resolve({ data: [] as never[], error: null }),
   ]);
 
   if (movementsResult.error || productsResult.error) {

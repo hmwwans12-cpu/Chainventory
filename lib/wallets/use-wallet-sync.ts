@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 import {
@@ -18,6 +18,11 @@ import {
  * Privy access token (fail-closed) + network guard sebelum mendaftarkan.
  *
  * Menghasilkan `{ syncing, synced, error }` untuk state UI.
+ *
+ * Audit v0.3.2 §9.6: Privy's `wallets` dan `getAccessToken` adalah referensi
+ * baru tiap render. Effect dengan deps langsung = N+1 sync API calls per
+ * session load. Stabilkan via JSON stringification untuk derive signature
+ * effect yang stabil.
  */
 
 export interface WalletSyncState {
@@ -57,23 +62,40 @@ export function useWalletSync(
   // Address yang sudah dicoba (sukses/gagal) — dedupe antar-render.
   const attemptedRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (!ready || !authenticated || !walletsReady) return;
-    let cancelled = false;
-
-    const run = async () => {
-      const walletList: SyncableWallet[] = wallets
+  // Audit v0.3.2 §9.6: derive signature stabil dari address list.
+  // Privy returns new wallet array tiap render — pakai signature string
+  // untuk deps agar effect hanya jalan saat wallet BERUBAH (added/removed),
+  // bukan tiap render.
+  const syncableWallets: SyncableWallet[] = useMemo(
+    () =>
+      wallets
         .filter((wallet) => wallet.type === "ethereum")
         .map((wallet) => ({
           type: wallet.type,
           address: wallet.address,
           chainId: wallet.chainId,
           connectorType: wallet.connectorType,
-        }));
+        })),
+    [wallets]
+  );
+  const walletSignature = useMemo(
+    () =>
+      syncableWallets
+        .map((w) => `${w.address}:${w.chainId}`)
+        .sort()
+        .join("|"),
+    [syncableWallets]
+  );
 
+  useEffect(() => {
+    if (!ready || !authenticated || !walletsReady) return;
+    if (syncableWallets.length === 0) return;
+    let cancelled = false;
+
+    const run = async () => {
       setState((current) => ({ ...current, syncing: true, error: null }));
       const result = await syncWallets({
-        wallets: walletList,
+        wallets: syncableWallets,
         getToken: getAccessToken,
         fetcher,
         skip: attemptedRef.current,
@@ -105,7 +127,11 @@ export function useWalletSync(
     return () => {
       cancelled = true;
     };
-  }, [ready, authenticated, walletsReady, wallets, getAccessToken, fetcher]);
+    // Deps: signature wallet stabil + fetcher stabil (defaultFetcher).
+    // getAccessToken dari Privy returns new ref tiap render — sengaja
+    // TIDAK dimasukkan; effect re-runs hanya saat wallet address set berubah.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, authenticated, walletsReady, walletSignature, fetcher]);
 
   return state;
 }

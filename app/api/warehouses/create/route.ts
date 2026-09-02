@@ -307,16 +307,27 @@ export async function POST(request: Request) {
 
   if (existing) {
     await finalizeIfMined(supabase, existing);
+    // Audit v0.3.2 §2.7: warehouseCode dari request body dapat stale
+    // (client lost original) — ambil dari warehouses row, bukan dari
+    // parsed.data. Fallback ke body hanya jika DB read gagal (transient).
     const { data: warehouse } = await supabase
       .from("warehouses")
-      .select("contract_address")
+      .select("contract_address, warehouse_code")
       .eq("id", existing.warehouse_id)
       .maybeSingle();
+    const { data: ws } = warehouse
+      ? await supabase
+          .from("warehouse_summaries")
+          .select("warehouse_code")
+          .eq("id", existing.warehouse_id)
+          .maybeSingle()
+      : { data: null };
     return ok({
       status: existing.status,
       deploymentId: existing.id,
       warehouseId: existing.warehouse_id,
-      warehouseCode: parsed.data.warehouseCode,
+      warehouseCode:
+        ws?.warehouse_code ?? warehouse?.warehouse_code ?? parsed.data.warehouseCode,
       txHash: existing.tx_hash,
       contractAddress: warehouse?.contract_address ?? null,
     });
