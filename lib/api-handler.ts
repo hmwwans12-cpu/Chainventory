@@ -107,6 +107,25 @@ export function fromPostgrestError(message: string): NextResponse {
   );
 }
 
+/**
+ * Log detail kesalahan + kembalikan respons generic 500 ke client.
+ *
+ * Audit v0.3.0 1.1: pesan `err.message` (PostgREST/viem/JSON) tidak pernah
+ * dikirim ke client — berpotensi bocor schema, constraint name, RPC URL.
+ * Pemanggil diharapkan menggunakan `safeError` untuk SEMUA blok `catch`
+ * yang membungkus kode tak-deterministik; `fromPostgrestError` tetap untuk
+ * kasus yang sudah terpetakan.
+ */
+export function safeError(
+  err: unknown,
+  context: Record<string, unknown> = {},
+  fallbackMessage = "Internal error."
+): NextResponse {
+  const message = err instanceof Error ? err.message : String(err);
+  logger.error({ err: message, ...context }, "handler caught");
+  return serverError(fallbackMessage);
+}
+
 /** Parse JSON body dengan aman; `{ ok: false }` bila bukan JSON valid. */
 export async function readJson(request: Request) {
   try {
@@ -145,8 +164,12 @@ export async function getMemberRole(
 
 /**
  * Gate RBAC sekali pakai: member ACTIVE + punya `permission` → null (lanjut),
- * selain itu response 403. HANYA untuk kapabilitas; operasi assign-role tetap
- * wajib `canAssignRole` di sisi DB (permissions.ts).
+ * selain itu response 403 generic. HANYA untuk kapabilitas; operasi
+ * assign-role tetap wajib `canAssignRole` di sisi DB (permissions.ts).
+ *
+ * Audit v0.3.0 §1.9: pesan 403 di-unify untuk mencegah enumerasi
+ * warehouse (sebelumnya "Not a member" vs "Insufficient permission"
+ * memberi beda informasi).
  */
 export async function requirePermission(
   supabase: SupabaseClient,
@@ -155,9 +178,9 @@ export async function requirePermission(
   permission: Permission
 ): Promise<NextResponse | null> {
   const role = await getMemberRole(supabase, warehouseId, userId);
-  if (!role) return forbidden("Not a member of this warehouse.");
-  if (!hasPermission(role, permission))
-    return forbidden("Insufficient permission.");
+  if (!role || !hasPermission(role, permission)) {
+    return forbidden("You do not have access to this warehouse.");
+  }
   return null;
 }
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { fromPostgrestError } from "@/lib/api-handler";
 
 export type UpdateProfileState = {
   error: string | null;
@@ -44,7 +45,11 @@ export async function updateDisplayNameAction(
     .eq("id", user.id);
 
   if (error) {
-    return { error: error.message };
+    // Pesan DB mentah (constraint/RLS) tidak pernah sampai ke client;
+    // mapDbError merangkum ke pesan user-friendly dan log detail.
+    const mapped = fromPostgrestError(error.message);
+    const body = await mapped.json();
+    return { error: body?.error?.message ?? "Could not update profile." };
   }
 
   revalidatePath("/settings");

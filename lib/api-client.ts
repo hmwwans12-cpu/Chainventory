@@ -79,6 +79,18 @@ export function toFailure<T>(status: number, json: unknown): ApiResult<T> {
 export function parseSuccess<T>(status: number, json: unknown): ApiResult<T> {
   if (status >= 200 && status < 300) {
     const body = json as { ok?: boolean; data?: T };
+    // Audit v0.3.0 §1.4: BFF kadang mengembalikan { ok: true } tanpa
+    // `data` (mis. RPC yang return void). Jika caller menggunakan
+    // `created.data.id` dll, akan crash. Tangani sebagai failure.
+    if (body?.ok === true && "data" in body) {
+      return { ok: true, status, data: body.data as T };
+    }
+    if (body?.ok === true) {
+      return toFailure<T>(
+        status,
+        { error: "Server returned success without a payload." }
+      );
+    }
     return { ok: true, status, data: body?.data as T };
   }
   return toFailure<T>(status, json);

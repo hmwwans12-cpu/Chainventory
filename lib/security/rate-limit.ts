@@ -20,8 +20,11 @@ import { logger } from "@/lib/logger";
 
 /** Interface minimal agar core mudah di-unit-test tanpa network. */
 export interface RateLimitStore {
-  incr(key: string): Promise<number>;
-  expire(key: string, seconds: number): Promise<number>;
+  /** Atomic INCR + (EXPIRE on first hit). Returns post-incr count.
+   *  Implementasi wajib atomic — pipeline (INCR, EXPIRE) saja TIDAK
+   *  cukup karena key yang baru dibuat tanpa TTL dapat di-INCR ulang
+   *  sebelum EXPIRE tiba (audit v0.3.0 §1.10). */
+  incrWithExpiry(key: string, seconds: number): Promise<number>;
 }
 
 /** Window tetap 1 menit untuk semua aksi mutasi. */
@@ -95,8 +98,9 @@ export async function checkMutationRateLimit(input: {
     let minRemaining = Number.POSITIVE_INFINITY;
     for (const { dim, id, limit } of dimensions) {
       const key = `rl:${action}:${dim}:${id}:${bucket}`;
-      const count = await store.incr(key);
-      if (count === 1) await store.expire(key, RATE_LIMIT_WINDOW_SEC);
+      // Atomic INCR + EXPIRE-via-Lua: satu round-trip ke Redis, tidak
+      // ada jendela di mana key tanpa TTL bisa di-increment tanpa batas.
+      const count = await store.incrWithExpiry(key, RATE_LIMIT_WINDOW_SEC);
       minRemaining = Math.min(minRemaining, Math.max(limit - count, 0));
       if (count > limit) {
         logger.info(
@@ -121,9 +125,10 @@ export async function checkMutationRateLimit(input: {
 /* -------------------------------------------------------------------------- */
 
 let redisClient: Redis | null | undefined;
+let redisAdapter: RateLimitStore | null | undefined;
 
 function getRedisStore(): RateLimitStore | null {
-  if (redisClient !== undefined) return redisClient;
+  if (redisAdapter !== undefined) return redisAdapter;
 
   const url = env.UPSTASH_REDIS_REST_URL;
   const token = env.UPSTASH_REDIS_REST_TOKEN;
@@ -133,11 +138,29 @@ function getRedisStore(): RateLimitStore | null {
       "Upstash Redis not configured — mutation rate limiter disabled (fail-closed)"
     );
     redisClient = null;
+    redisAdapter = null;
     return null;
   }
 
   redisClient = new Redis({ url, token });
-  return redisClient;
+  // Wrapper: INCR + EXPIRE dalam satu Lua script agar atomic.
+  // Per audit v0.3.0 §1.10: INCR+EXPIRE terpisah meninggalkan jendela
+  // di mana key tanpa TTL bisa di-increment tanpa batas pada concurrent
+  // request pertama.
+  const INCR_WITH_EXPIRY_LUA =
+    "local v = redis.call('INCR', KEYS[1]) " +
+    "if v == 1 then redis.call('EXPIRE', KEYS[1], tonumber(ARGV[1])) end " +
+    "return v";
+  redisAdapter = {
+    async incrWithExpiry(key, seconds) {
+      return (await redisClient!.eval(
+        INCR_WITH_EXPIRY_LUA,
+        [key],
+        [String(seconds)]
+      )) as number;
+    },
+  };
+  return redisAdapter;
 }
 
 /** IP klien dari header proxy standar (Vercel mengisi x-forwarded-for). */

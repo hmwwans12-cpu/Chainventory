@@ -13,8 +13,7 @@ import {
 
 function makeStore(overrides?: Partial<RateLimitStore>): RateLimitStore {
   return {
-    incr: vi.fn(async () => 1),
-    expire: vi.fn(async () => 1),
+    incrWithExpiry: vi.fn(async () => 1),
     ...overrides,
   };
 }
@@ -38,7 +37,7 @@ describe("checkMutationRateLimit", () => {
 
   it("fail-closed saat Redis error", async () => {
     const store = makeStore({
-      incr: vi.fn(async () => {
+      incrWithExpiry: vi.fn(async () => {
         throw new Error("upstash timeout");
       }),
     });
@@ -49,7 +48,7 @@ describe("checkMutationRateLimit", () => {
   it("allow di bawah limit dan menghitung sisa kuota", async () => {
     let calls = 0;
     const store = makeStore({
-      incr: vi.fn(async () => ++calls), // user=1, ip=2
+      incrWithExpiry: vi.fn(async () => ++calls), // user=1, ip=2
     });
     const decision = await checkMutationRateLimit({ ...BASE, store });
     expect(decision.allowed).toBe(true);
@@ -57,7 +56,7 @@ describe("checkMutationRateLimit", () => {
   });
 
   it("blok saat melewati limit per user", async () => {
-    const store = makeStore({ incr: vi.fn(async () => 31) });
+    const store = makeStore({ incrWithExpiry: vi.fn(async () => 31) });
     const decision = await checkMutationRateLimit({ ...BASE, store });
     expect(decision.allowed).toBe(false);
   });
@@ -65,7 +64,7 @@ describe("checkMutationRateLimit", () => {
   it("blok saat melewati limit per IP meski user masih longgar", async () => {
     const counts = new Map<string, number>();
     const store = makeStore({
-      incr: vi.fn(async (key: string) => {
+      incrWithExpiry: vi.fn(async (key: string) => {
         const next = (counts.get(key) ?? 0) + 1;
         counts.set(key, next);
         return next;
@@ -82,7 +81,7 @@ describe("checkMutationRateLimit", () => {
   it("tanpa IP tetap mengecek dimensi user saja", async () => {
     const keys: string[] = [];
     const store = makeStore({
-      incr: vi.fn(async (key: string) => {
+      incrWithExpiry: vi.fn(async (key: string) => {
         keys.push(key);
         return 1;
       }),

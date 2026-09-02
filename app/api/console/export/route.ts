@@ -4,7 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getConsoleActor } from "@/lib/console/guard";
 import { createProofServiceClient } from "@/lib/proof/supabase";
 import { csvFilename, toCsv } from "@/lib/console/csv";
-import { invalid, fromPostgrestError, serverError } from "@/lib/api-handler";
+import {
+  fromPostgrestError,
+  invalid,
+  safeError,
+} from "@/lib/api-handler";
 
 /**
  * Export DB → CSV (Developer Console).
@@ -62,7 +66,7 @@ export async function GET(request: NextRequest) {
       "Unknown export table. Use ?table=proofs or ?table=audit_logs."
     );
   } catch (err) {
-    return serverError(err instanceof Error ? err.message : "export failed");
+    return safeError(err, { route: "console/export" }, "export failed");
   }
 }
 

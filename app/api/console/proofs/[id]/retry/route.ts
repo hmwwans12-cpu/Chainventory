@@ -5,7 +5,7 @@ import { getConsoleActor } from "@/lib/console/guard";
 import { createProofServiceClient } from "@/lib/proof/supabase";
 import { publishProofJob } from "@/lib/proof/qstash";
 import { logger } from "@/lib/logger";
-import { invalid, ok, serverError } from "@/lib/api-handler";
+import { invalid, ok, safeError } from "@/lib/api-handler";
 import { mapDbError } from "@/lib/domain/errors";
 
 /**
@@ -59,6 +59,6 @@ export async function POST(
 
     return ok({ proofId: id, reenqueued: true, messageId: messageId ?? null });
   } catch (err) {
-    return serverError(err instanceof Error ? err.message : "retry failed");
+    return safeError(err, { route: "console/proofs/retry" }, "retry failed");
   }
 }

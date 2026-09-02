@@ -91,10 +91,12 @@ export default async function MembersPageRoute({
   // `request_join` hanya menulis di situ). RLS `join_requests_select_admin`
   // mengizinkan member ACTIVE membaca baris pending warehouse ini; filter
   // siapa yang boleh approve/reject dilakukan di UI via permission matrix.
+  // Audit v0.3.0 §2.11: tanpa hint FK agar PostgREST auto-detect; nama
+  // constraint `join_requests_user_id_fkey` rapuh terhadap rename migration.
   const { data: pendingRows } = await supabase
     .from("join_requests")
     .select(
-      "id, user_id, created_at, users!join_requests_user_id_fkey(id, email, display_name)"
+      "id, user_id, created_at, users(id, email, display_name)"
     )
     .eq("warehouse_id", active.id)
     .eq("status", "pending")

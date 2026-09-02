@@ -58,12 +58,9 @@ export function NotificationBell() {
   const setUnreadCount = useCallback((next: number) => {
     unreadStore.set(next);
   }, []);
-  // Mirror agar optimistik decrement selalu pakai nilai terkini (audit A3):
-  // cegah double-decrement saat klik cepat beberapa row sebelum re-render.
-  const unreadRef = useRef(unreadCount);
-  useEffect(() => {
-    unreadRef.current = unreadCount;
-  }, [unreadCount]);
+  // Audit v0.3.0 §2.1: setState-in-effect di subscribe telah digantikan
+  // unreadStore.set sebagai single source of truth — ref lokal sudah tidak
+  // diperlukan (store.adjust(-1) sudah atomic, lihat lib/notifications/unread-store).
   const markedReadRef = useRef<Set<string>>(new Set());
   const [notifications, setNotificationsState] = useState<NotificationRow[]>(
     []
@@ -71,18 +68,23 @@ export function NotificationBell() {
   // Ref mirror agar realtime callback selalu bandingkan dgn state terkini
   // (audit M-05: closure snapshot lama bikin flash palsu).
   const notificationsRef = useRef<NotificationRow[]>([]);
-  const setNotifications = (
-    value: NotificationRow[] | ((rows: NotificationRow[]) => NotificationRow[])
-  ) => {
-    const next =
-      typeof value === "function"
-        ? (value as (rows: NotificationRow[]) => NotificationRow[])(
-            notificationsRef.current
-          )
-        : value;
-    notificationsRef.current = next;
-    setNotificationsState(next);
-  };
+  const setNotifications = useCallback(
+    (
+      value:
+        | NotificationRow[]
+        | ((rows: NotificationRow[]) => NotificationRow[])
+    ) => {
+      const next =
+        typeof value === "function"
+          ? (value as (rows: NotificationRow[]) => NotificationRow[])(
+              notificationsRef.current
+            )
+          : value;
+      notificationsRef.current = next;
+      setNotificationsState(next);
+    },
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [flashId, setFlashId] = useState<string | null>(null);
   const [badgePop, setBadgePop] = useState(false);
@@ -193,7 +195,7 @@ export function NotificationBell() {
     ]);
     setUnreadCount(count);
     setNotifications(rows);
-  }, [setUnreadCount]);
+  }, [setUnreadCount, setNotifications]);
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
@@ -210,8 +212,10 @@ export function NotificationBell() {
         markedReadRef.current.add(n.id);
         const { ok } = await markNotificationsRead(supabase, [n.id]);
         if (ok) {
-          unreadRef.current = Math.max(0, unreadRef.current - 1);
-          setUnreadCount(unreadRef.current);
+          // Atomic functional decrement (audit v0.3.0 §2.1): store.adjust
+          // mencegah double-decrement saat klik cepat beberapa row
+          // sebelum re-render menyinkronkan state.
+          unreadStore.adjust(-1);
           setNotifications((rows) =>
             rows.map((r) =>
               r.id === n.id ? { ...r, read_at: new Date().toISOString() } : r
@@ -222,7 +226,7 @@ export function NotificationBell() {
       router.push(notificationHref(n));
       setOpen(false);
     },
-    [router, setUnreadCount]
+    [router, setNotifications]
   );
 
   const handleMarkAllRead = useCallback(async () => {
@@ -236,7 +240,7 @@ export function NotificationBell() {
       setNotifications((rows) => rows.map((r) => ({ ...r, read_at: now })));
       setAnnouncement("All notifications marked as read");
     }
-  }, [unreadCount, setUnreadCount]);
+  }, [unreadCount, setUnreadCount, setNotifications]);
 
   const grouped = useMemo(() => {
     const manyWarehouses = Object.keys(warehouseNames).length > 1;

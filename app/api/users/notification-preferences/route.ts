@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { invalid, ok, requireUser } from "@/lib/api-handler";
+import { fromPostgrestError, invalid, ok, requireUser } from "@/lib/api-handler";
 
 /**
  * PATCH /api/users/notification-preferences
@@ -23,7 +23,7 @@ export async function PATCH(request: Request) {
   const { error } = await supabase.rpc("upsert_notification_preferences", {
     p_prefs: prefs,
   });
-  if (error) return invalid(error.message);
+  if (error) return fromPostgrestError(error.message);
 
   return ok({ ok: true });
 }

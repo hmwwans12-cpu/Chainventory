@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 import { getWarehouseFactory } from "@/lib/blockchain/contracts";
 import { createClient } from "@/lib/supabase/server";
 import {
+  fromPostgrestError,
   invalid,
   json,
   ok,
@@ -460,7 +461,7 @@ export async function POST(request: Request) {
       { err: createError.message },
       "create_warehouse_and_deployment rejected"
     );
-    return serverError(createError.message);
+    return fromPostgrestError(createError.message);
   }
 
   const row = Array.isArray(created) ? created[0] : created;

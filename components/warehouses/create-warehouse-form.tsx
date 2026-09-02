@@ -792,12 +792,12 @@ export function CreateWarehouseForm() {
             </FormField>
 
             <div className="border-border flex flex-col gap-2 border-t pt-5">
-              <Button
-                type="submit"
-                size="lg"
-                className="h-12 w-full text-base"
-                disabled={busy || walletSync.syncing || !ready || !authenticated}
-              >
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full text-base"
+              disabled={busy || walletSync.syncing || !ready || !authenticated}
+            >
                 {walletSync.syncing ? (
                   <Loader2 aria-hidden="true" className="animate-spin" />
                 ) : (

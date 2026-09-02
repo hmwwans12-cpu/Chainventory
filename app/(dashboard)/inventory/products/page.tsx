@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Package } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
@@ -125,7 +126,17 @@ export default async function ProductsPageRoute({
       `name.ilike.%${escaped}%,sku.ilike.%${escaped}%,category.ilike.%${escaped}%`
     );
   }
-  const { count: totalCount } = await countQuery;
+  const { count: totalCount, error: countError } = await countQuery;
+  // Audit v0.3.0 §2.4: jangan swallow error count — fallback ke 0
+  // menyembunyikan masalah RLS/transien dari operator. Pagination di-hide
+  // saat count gagal; banner explisit disisipkan di ProductsPage client.
+  if (countError) {
+    logger.warn(
+      { err: countError.message, warehouseId: active.id },
+      "products count query failed"
+    );
+  }
+  const safeTotal = countError ? null : (totalCount ?? 0);
 
   const products: ProductRow[] = (data ?? []).map((row) => ({
     id: row.id,
@@ -161,7 +172,8 @@ export default async function ProductsPageRoute({
         query={q}
         page={pageNum}
         perPage={PER_PAGE}
-        total={totalCount ?? 0}
+        total={safeTotal ?? 0}
+        paginationDisabled={safeTotal === null}
       />
     </div>
   );

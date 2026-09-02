@@ -72,9 +72,13 @@ export function parseRange(raw: string | undefined | null): AnalyticsRange {
 }
 
 function toISODate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
+  // Audit v0.3.0 §2.2: pakai UTC komponen agar konsisten dengan DB
+  // (PostgREST returns timestamptz in UTC). getDate/getMonth local
+  // memecah satu hari UTC di zona non-UTC, menghasilkan label chart
+  // yang tidak cocok dengan kueri DB.
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
 

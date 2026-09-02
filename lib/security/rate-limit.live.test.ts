@@ -29,9 +29,20 @@ describe.skipIf(!url || !token)(
 
     beforeAll(() => {
       redis = new Redis({ url: url!, token: token! });
+      // Audit v0.3.0 §1.10: gunakan Lua INCR+EXPIRE atomic untuk verifikasi
+      // bahwa store wrapper produksi berperilaku benar di Redis sungguhan.
+      const INCR_WITH_EXPIRY_LUA =
+        "local v = redis.call('INCR', KEYS[1]) " +
+        "if v == 1 then redis.call('EXPIRE', KEYS[1], tonumber(ARGV[1])) end " +
+        "return v";
       store = {
-        incr: (key) => redis.incr(key),
-        expire: (key, seconds) => redis.expire(key, seconds),
+        async incrWithExpiry(key: string, seconds: number) {
+          return (await redis.eval(
+            INCR_WITH_EXPIRY_LUA,
+            [key],
+            [String(seconds)]
+          )) as number;
+        },
       };
       userId = `live-test-${randomUUID()}`;
       bucket = Math.floor(Date.now() / RATE_LIMIT_WINDOW_MS);

@@ -50,17 +50,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
-// (AGENT.md Â§6); cegah percobaan prerender saat env build minim.
+// (AGENT.md §6); cegah percobaan prerender saat env build minim.
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   robots: { index: false, follow: false },
 };
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 const MOVEMENT_COLS =
   "id, movement_type, quantity, status, created_at, products(name, unit)";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export default async function DashboardPage({
   searchParams,

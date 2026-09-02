@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getConsoleActor } from "@/lib/console/guard";
 import { probeDependencies } from "@/lib/console/dependencies";
-import { ok, serverError } from "@/lib/api-handler";
+import { ok, safeError } from "@/lib/api-handler";
 
 /**
  * Status dependency LIVE (Developer Console). Probe fail-soft satu per satu;
@@ -16,8 +16,10 @@ export async function GET() {
     const dependencies = await probeDependencies();
     return ok(dependencies);
   } catch (err) {
-    return serverError(
-      err instanceof Error ? err.message : "dependencies probe failed"
+    return safeError(
+      err,
+      { route: "console/dependencies" },
+      "dependencies probe failed"
     );
   }
 }

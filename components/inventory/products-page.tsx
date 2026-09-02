@@ -79,16 +79,22 @@ export function ProductsPage({
   page = 1,
   perPage = 12,
   total = 0,
+  paginationDisabled = false,
 }: {
   warehouseId: string;
-  warehouses: WarehouseSummary[];
+  statusFilter: "active" | "archived" | "all";
   role: Role;
   products: ProductRow[];
   query: string;
-  statusFilter?: "active" | "archived" | "all";
+  warehouses: WarehouseSummary[];
   page?: number;
   perPage?: number;
   total?: number;
+  /**
+   * Audit v0.3.0 §2.4: saat count query gagal, pagination tidak boleh
+   * muncul dengan angka palsu (0). Pagination di-hide + banner ditampilkan.
+   */
+  paginationDisabled?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -628,11 +634,20 @@ export function ProductsPage({
               })}
             </ul>
           </PanelCard>
-          <Pagination
-            page={page}
-            totalPages={Math.max(1, Math.ceil(total / perPage))}
-            onPage={goToPage}
-          />
+          {!paginationDisabled ? (
+            <Pagination
+              page={page}
+              totalPages={Math.max(1, Math.ceil(total / perPage))}
+              onPage={goToPage}
+            />
+          ) : (
+            <p
+              role="alert"
+              className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-sm"
+            >
+              Unable to count products. Try refreshing the page.
+            </p>
+          )}
         </>
       )}
 

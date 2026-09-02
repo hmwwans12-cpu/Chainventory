@@ -12,6 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
+import { mapDbError } from "@/lib/domain/errors";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -37,10 +39,20 @@ export default async function InvitePage({
     p_token: token,
   });
 
+  // Pesan RPC mentah (constraint names, UUID, error code) tidak pernah
+  // ditampilkan ke user — katalog error (audit v0.3.0 §1.2) memetakan
+  // ke pesan aman. Audit 1.6: invitation.email belum dibandingkan dengan
+  // user.email sebelum accept; RLS akan menolak jika tidak cocok.
   const title = error ? "Invitation could not be accepted" : "You're in!";
   const description = error
-    ? error.message
+    ? "This invitation link is no longer valid, has been revoked, or is for a different email address. Ask the sender to invite you again, or join with the warehouse code."
     : "You have joined the warehouse. Open it from your dashboard.";
+  if (error) {
+    logger.warn(
+      { code: mapDbError(error.message).code, tokenPrefix: token.slice(0, 8) },
+      "accept_invitation rejected"
+    );
+  }
 
   let next = "/dashboard";
   if (sp.next && sp.next.startsWith("/") && !sp.next.startsWith("//")) {
@@ -73,7 +85,12 @@ export default async function InvitePage({
             </p>
           ) : null}
           <div className="flex flex-wrap gap-2">
-            <Button render={<Link href="/dashboard" />}>Go to dashboard</Button>
+            <Button
+              size="lg"
+              render={<Link href="/dashboard" />}
+            >
+              Go to dashboard
+            </Button>
             {sp.next && next !== "/dashboard" ? (
               <Button variant="outline" render={<Link href={next} />}>
                 Continue

@@ -494,7 +494,24 @@ export function translate(
   key: string,
   params?: Record<string, string>
 ): string {
-  let result = translations[locale][key] ?? translations.en[key] ?? key;
+  const localized = translations[locale]?.[key];
+  const fallback = translations.en[key];
+  let result: string;
+  if (localized) {
+    result = localized;
+  } else if (fallback) {
+    // Audit v0.3.0 §5.1: warn di dev agar translator sadar saat key
+    // hilang di locale target. Di prod, fallback ke EN dipakai.
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(`[i18n] missing ${locale} key "${key}", using en fallback`);
+    }
+    result = fallback;
+  } else {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(`[i18n] missing key "${key}" in both ${locale} and en`);
+    }
+    result = key;
+  }
   if (params) {
     for (const [k, v] of Object.entries(params)) {
       result = result.replace(new RegExp(`\\{${k}\\}`, "g"), v);

@@ -15,6 +15,18 @@ export const requestJoinSchema = z.object({
     .max(64, "Warehouse code is too long."),
 });
 
+/** Role yang boleh diundang via email (tidak boleh OWNER). */
+const INVITABLE_ROLES = ROLES.filter((r) => r !== "OWNER") as Exclude<
+  (typeof ROLES)[number],
+  "OWNER"
+>[];
+
+export const createInvitationSchema = z.object({
+  warehouseId: z.string().uuid("Invalid warehouse id."),
+  email: z.string().trim().email("Invalid email address.").max(254),
+  role: z.enum(INVITABLE_ROLES, { message: "Invalid role." }),
+});
+
 export const approveJoinSchema = z.object({
   requestId: z.string().uuid("Invalid request id."),
   role: z.enum(ROLES, { message: "Invalid role." }),

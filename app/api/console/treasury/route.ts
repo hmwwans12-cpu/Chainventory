@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getConsoleActor } from "@/lib/console/guard";
 import { getTreasuryData } from "@/lib/console/data";
-import { ok, serverError } from "@/lib/api-handler";
+import { ok, safeError } from "@/lib/api-handler";
 
 export async function GET() {
   const supabase = await createClient();
@@ -12,8 +12,6 @@ export async function GET() {
     const treasury = await getTreasuryData();
     return ok(treasury);
   } catch (err) {
-    return serverError(
-      err instanceof Error ? err.message : "treasury read failed"
-    );
+    return safeError(err, { route: "console/treasury" }, "treasury read failed");
   }
 }

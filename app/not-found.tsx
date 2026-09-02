@@ -8,7 +8,7 @@ export default function NotFound() {
     <div className="bg-background flex min-h-screen flex-col">
       <header className="flex items-center justify-between px-4 py-6 sm:px-6">
         <Logo />
-        <Button variant="outline" size="sm" render={<Link href="/login" />}>
+        <Button variant="outline" render={<Link href="/login" />}>
           Login
         </Button>
       </header>

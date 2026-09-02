@@ -19,6 +19,7 @@ import { Loader2 } from "lucide-react";
 export function SignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [gender, setGender] = useState("");
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,7 +72,11 @@ export function SignupForm() {
         </FormField>
 
         <FormField id="gender" label="Gender" hint="Optional.">
-          <Select name="gender">
+          {/* Audit v0.3.0 §2.10: Base UI <Select name> tidak auto-emit value
+              ke FormData — hidden input menjamin `formData.get("gender")`
+              ada di server action. */}
+          <input type="hidden" name="gender" value={gender} />
+          <Select value={gender} onValueChange={(v) => setGender(v ?? "")}>
             <SelectTrigger className="h-11 w-full" aria-label="Gender">
               <SelectValue placeholder="Select gender" />
             </SelectTrigger>

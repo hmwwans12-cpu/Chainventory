@@ -129,10 +129,10 @@ export async function POST(request: Request) {
         parsed.data.warehouseId,
         auth.user.id
       );
-      if (!role) return forbidden("Not a member of this warehouse.");
+      if (!role) return forbidden("You do not have access to this warehouse.");
       const permission = STOCK_PERMISSION[parsed.data.movementType];
       if (!permission || !hasPermission(role, permission)) {
-        return forbidden("Insufficient permission.");
+        return forbidden("You do not have access to this warehouse.");
       }
 
       // Audit C-02: tolak mutasi bila warehouse suspended/inactive.
@@ -186,6 +186,12 @@ export async function POST(request: Request) {
           .maybeSingle(),
       ]);
       const contractAddress = warehouse.data?.contract_address;
+      if (contractAddress && !product.data) {
+        // Audit v0.3.0 §2.13: warehouse sudah di-deploy tapi product tidak
+        // ditemukan di warehouse ini — sebelumnya di-skip diam-diam sehingga
+        // movement tetap apply tanpa proof.
+        return notFound("Product not found in this warehouse.");
+      }
       const movementId = randomUUID();
 
       let proofPayload: unknown = null;
@@ -283,6 +289,13 @@ export async function POST(request: Request) {
         .eq("id", parsed.data.movementId)
         .maybeSingle();
       if (!movement.data) return notFound("Movement not found.");
+
+      // Audit v0.3.0 §1.12: empat-mata — approver tidak boleh sama dengan
+      // creator adjustment. Manager yang membuat adjustment harus
+      // minta orang lain (Owner/Manager lain) yang menyetujui.
+      if (movement.data.actor_user_id === auth.user.id) {
+        return invalid("You cannot approve your own adjustment.");
+      }
 
       // RBAC: approve requires STOCK_APPROVE_ADJUSTMENT (P1 blocker Q-01)
       const role = await getMemberRole(
