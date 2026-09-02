@@ -11,6 +11,8 @@ export const REQUEST_JOIN_ROUTE = "/api/warehouses/membership";
 export type JoinRequestResult = {
   id: string;
   status: string;
+  /** Audit v0.3.3 §2.20: warehouse name dari warehouse_summaries. */
+  warehouse_name?: string;
 };
 
 export type ApiSuccess<T> = { ok: true; status: number; data: T };

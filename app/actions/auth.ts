@@ -91,17 +91,33 @@ export async function signupAction(
   if (error) {
     // Audit v0.3.0 §6.6: pesan DB/Auth mentah dipetakan — user aman,
     // detail (constraint, rate-limit internal) di log.
-    const mapped = mapDbError(error.message);
-    logger.warn(
-      { err: error.message, code: mapped.code },
-      "signup rejected"
-    );
-    return {
-      error:
+    // Audit v0.3.3 §2.18: Supabase Auth memberi kode spesifik
+    // (user_already_exists, weak_password, dll) — pakai untuk pesan
+    // spesifik TANPA bocor apakah email terdaftar (anti-enumeration).
+    const authCode = error.code?.toLowerCase() ?? "";
+    let userMessage: string;
+    if (authCode === "user_already_exists" || authCode === "email_exists") {
+      // Sengaja generic: tidak memberi tahu password problem biar tidak
+      // jadi oracle. Suruh user sign in.
+      userMessage =
+        "An account with this email already exists. Try signing in, or use a different email.";
+    } else if (authCode === "weak_password") {
+      userMessage =
+        "Password is too weak. Use at least 8 characters with a mix of letters and numbers.";
+    } else if (authCode === "email_address_invalid") {
+      userMessage = "This email address is not accepted. Use a valid one.";
+    } else {
+      const mapped = mapDbError(error.message);
+      userMessage =
         mapped.code === "DB_UNEXPECTED"
           ? "Could not create your account. Please try again."
-          : mapped.userMessage,
-    };
+          : mapped.userMessage;
+    }
+    logger.warn(
+      { err: error.message, code: error.code, mappedTo: userMessage },
+      "signup rejected"
+    );
+    return { error: userMessage };
   }
 
   redirect("/onboarding");

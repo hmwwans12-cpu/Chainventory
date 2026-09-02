@@ -180,8 +180,43 @@ export function CreateWarehouseForm() {
   );
   const [phase, setPhase] = React.useState<Phase>("form");
   const [error, setError] = React.useState<FlowError | null>(null);
-  const [prepared, setPrepared] = React.useState<PreparedDeployment | null>(
-    null
+  // Audit v0.3.3 §2.6: persist `prepared` to sessionStorage so user bisa
+  // recover setelah refresh tab (idempotencyKey server-side tetap valid
+  // sampai DEPLOYMENT_EXPIRY_SECONDS). sessionStorage dibatasi 1 tab
+  // (auto-cleared on close) — tidak ada risiko antar-user.
+  const [prepared, setPreparedState] = React.useState<PreparedDeployment | null>(
+    () => {
+      if (typeof window === "undefined") return null;
+      try {
+        const raw = window.sessionStorage.getItem(
+          "chainventory:create-warehouse:prepared"
+        );
+        if (!raw) return null;
+        return JSON.parse(raw) as PreparedDeployment;
+      } catch {
+        return null;
+      }
+    }
+  );
+  const setPrepared = React.useCallback(
+    (next: PreparedDeployment | null) => {
+      try {
+        if (next) {
+          window.sessionStorage.setItem(
+            "chainventory:create-warehouse:prepared",
+            JSON.stringify(next)
+          );
+        } else {
+          window.sessionStorage.removeItem(
+            "chainventory:create-warehouse:prepared"
+          );
+        }
+      } catch {
+        /* sessionStorage unavailable */
+      }
+      setPreparedState(next);
+    },
+    []
   );
   const [result, setResult] = React.useState<SubmitResult | null>(null);
   const [refreshed, setRefreshed] = React.useState(false);
@@ -235,6 +270,9 @@ export function CreateWarehouseForm() {
     const reduced = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)"
     ).matches;
+    // Audit v0.3.3 §2.6: deployment selesai, clear session storage
+    // supaya user tidak sengaja retry dengan key stale.
+    setPrepared(null);
     if (reduced) {
       setResult(data);
       setPhase("success");

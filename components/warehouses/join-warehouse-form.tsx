@@ -72,6 +72,11 @@ export function JoinWarehouseForm() {
   const [error, setError] = React.useState<FlowError | null>(null);
   const [pending, setPending] = React.useState(false);
   const [requestedCode, setRequestedCode] = React.useState("");
+  // Audit v0.3.3 §2.20: warehouse name dari API agar user tahu
+  // warehouse mana yang dia minta join (bukan hanya kode abstrak).
+  const [requestedWarehouseName, setRequestedWarehouseName] = React.useState<
+    string | null
+  >(null);
 
   function validate(): boolean {
     const value = code.trim();
@@ -168,6 +173,7 @@ export function JoinWarehouseForm() {
       return;
     }
     setRequestedCode(value);
+    setRequestedWarehouseName(res.data.warehouse_name ?? null);
     setPhase("success");
   }
 
@@ -243,6 +249,12 @@ export function JoinWarehouseForm() {
 
           <PanelCard padding="none" className="bg-muted/40">
             <div className="flex flex-col gap-1 px-4 py-3.5">
+              <span className="text-muted-foreground text-xs">Warehouse</span>
+              <span className="text-foreground truncate text-sm font-medium">
+                {requestedWarehouseName ?? "—"}
+              </span>
+            </div>
+            <div className="border-border flex flex-col gap-1 border-t px-4 py-3.5">
               <span className="text-muted-foreground text-xs">
                 Warehouse code
               </span>

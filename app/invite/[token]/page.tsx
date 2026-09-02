@@ -68,6 +68,11 @@ export default async function InvitePage({
   }
 
   if (inv.status !== "pending" || new Date(inv.expires_at) < new Date()) {
+    if (inv.status === "accepted") {
+      // Audit v0.3.3 §2.21: invitation sudah dipakai → langsung ke
+      // dashboard, jangan tampilkan error state untuk link yang sebenarnya valid.
+      redirect("/dashboard");
+    }
     return (
       <InviteError
         title="Invitation has expired"

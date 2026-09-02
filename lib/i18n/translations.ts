@@ -514,7 +514,15 @@ export function translate(
   }
   if (params) {
     for (const [k, v] of Object.entries(params)) {
-      result = result.replace(new RegExp(`\\{${k}\\}`, "g"), v);
+      // Audit v0.3.3 §5.2: pakai function form String.replace agar
+      // value tidak di-interpret sebagai replacement pattern ($&, $1, dll).
+      // Beberapa translation (seperti `signed_in` di `en`) menerima email
+      // sebagai param — karakter `$` di email akan di-replace siluman
+      // dengan string match kalau pakai string-form replace.
+      result = result.replace(
+        new RegExp(`\\{${k}\\}`, "g"),
+        () => v
+      );
     }
   }
   return result;

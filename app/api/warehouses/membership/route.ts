@@ -172,5 +172,23 @@ export async function POST(request: Request) {
 
   if (error) return fromPostgrestError(error.message);
 
+  // Audit v0.3.3 §2.20: untuk `request`, tambahkan warehouse_name ke
+  // response agar client UI bisa menampilkan "You requested to join
+  // Acme Warehouse" alih-alih hanya kode yang abstrak.
+  if (action === "request" && data) {
+    const row = Array.isArray(data) ? data[0] : data;
+    const warehouseId = (row as { warehouse_id?: string })?.warehouse_id;
+    if (warehouseId) {
+      const { data: ws } = await supabase
+        .from("warehouse_summaries")
+        .select("name")
+        .eq("id", warehouseId)
+        .maybeSingle();
+      if (ws?.name) {
+        (row as { warehouse_name?: string }).warehouse_name = ws.name;
+      }
+    }
+  }
+
   return ok(data);
 }

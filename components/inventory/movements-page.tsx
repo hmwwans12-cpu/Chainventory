@@ -237,7 +237,7 @@ export function MovementsPage({
       refreshFirst.cancel();
       supabase.removeChannel(channel);
     };
-  }, [warehouseId, supabase]);
+  }, [warehouseId, supabase, refreshMovements]);
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
@@ -689,12 +689,7 @@ export function MovementsPage({
           }}
           onSuccess={() => {
             router.refresh();
-            fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1).then(
-              ({ items }) => {
-                setMovements(items);
-                setHasMore(items.length === PAGE_SIZE);
-              }
-            );
+            void refreshMovements();
           }}
         />
       ) : null}
@@ -714,12 +709,7 @@ export function MovementsPage({
           onOpenChange={(open) => setApproveTarget(open ? approveTarget : null)}
           onDone={() => {
             setApproveTarget(null);
-            fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1).then(
-              ({ items }) => {
-                setMovements(items);
-                setHasMore(items.length === PAGE_SIZE);
-              }
-            );
+            void refreshMovements();
           }}
         />
       ) : null}
@@ -730,12 +720,7 @@ export function MovementsPage({
           onOpenChange={(open) => setRejectTarget(open ? rejectTarget : null)}
           onDone={() => {
             setRejectTarget(null);
-            fetchPage(supabase, warehouseId, 0, PAGE_SIZE - 1).then(
-              ({ items }) => {
-                setMovements(items);
-                setHasMore(items.length === PAGE_SIZE);
-              }
-            );
+            void refreshMovements();
           }}
         />
       ) : null}
