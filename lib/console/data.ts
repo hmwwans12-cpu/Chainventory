@@ -55,6 +55,35 @@ export async function getConsoleSummary(): Promise<ConsoleSummary> {
     supabase.from("memberships").select("id", { count: "exact", head: true }),
   ]);
 
+  // Audit v0.3.0 §4.9: jangan silent-swallow partial failure — jika salah
+  // satu query error, summary angka (total warehouses, total proofs) akan
+  // misleading. Log warn + return neutral values agar operator tahu data
+  // tidak lengkap.
+  if (whRows.error) {
+    logger.warn(
+      { err: whRows.error.message },
+      "console summary: warehouses query failed"
+    );
+  }
+  if (proofRows.error) {
+    logger.warn(
+      { err: proofRows.error.message },
+      "console summary: proofs query failed"
+    );
+  }
+  if (outboxRows.error) {
+    logger.warn(
+      { err: outboxRows.error.message },
+      "console summary: outbox query failed"
+    );
+  }
+  if (memberCount.error) {
+    logger.warn(
+      { err: memberCount.error.message },
+      "console summary: memberships count failed"
+    );
+  }
+
   const warehouses = (whRows.data ?? []) as { status: string }[];
   const proofs = (proofRows.data ?? []) as {
     status: (typeof PROOF_STATUSES)[number];

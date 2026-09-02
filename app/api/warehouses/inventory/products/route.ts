@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 import {
   archiveProductSchema,
   createProductSchema,
@@ -135,7 +136,15 @@ export async function POST(request: Request) {
       .eq("movement_id", movementId)
       .maybeSingle();
     if (proofRow) {
-      await publishProofJob(proofRow.id).catch(() => undefined);
+      // Audit v0.3.0 §2.16: log ke server, jangan silent swallow. Operator
+      // butuh signal saat publishProofJob gagal agar bisa re-enqueue via
+      // Developer Console.
+      await publishProofJob(proofRow.id).catch((err) => {
+        logger.warn(
+          { err: err instanceof Error ? err.message : String(err), productId },
+          "publishProofJob failed after product create (reconcile will retry)"
+        );
+      });
     }
   }
 

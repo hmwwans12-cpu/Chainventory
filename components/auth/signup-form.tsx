@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { FormField } from "@/components/auth/form-field";
 import { GoogleButton, OAuthDivider } from "@/components/auth/google-button";
+import { ErrorAlert } from "@/components/shared/error-alert";
 import { signupAction } from "@/app/actions/auth";
 import { Loader2 } from "lucide-react";
 
@@ -36,13 +37,7 @@ export function SignupForm() {
     <>
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         {error ? (
-          <div
-            id="signup-error"
-            role="alert"
-            className="border-destructive/30 bg-destructive/15 text-destructive rounded-lg border px-3 py-2 text-sm"
-          >
-            {error}
-          </div>
+          <ErrorAlert id="signup-error">{error}</ErrorAlert>
         ) : null}
 
         <FormField id="name" label="Name">
@@ -77,7 +72,7 @@ export function SignupForm() {
               ada di server action. */}
           <input type="hidden" name="gender" value={gender} />
           <Select value={gender} onValueChange={(v) => setGender(v ?? "")}>
-            <SelectTrigger className="h-11 w-full" aria-label="Gender">
+            <SelectTrigger className="h-11 w-full">
               <SelectValue placeholder="Select gender" />
             </SelectTrigger>
             <SelectContent>

@@ -94,7 +94,7 @@ export function FaucetClaimCard({
             ) : (
               <p
                 role="alert"
-                className="bg-destructive/15 text-destructive mt-1 rounded-md px-2 py-1 text-xs"
+                className="bg-destructive/15 text-destructive mt-1 rounded-lg px-3 py-2 text-sm"
               >
                 {message}
               </p>

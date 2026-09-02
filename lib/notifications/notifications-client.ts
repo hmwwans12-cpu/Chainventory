@@ -30,12 +30,23 @@ export async function fetchUnreadCount(supabase: Supabase): Promise<number> {
   return count ?? 0;
 }
 
+/**
+ * Ambil id yang belum dibaca untuk "Mark all as read".
+ *
+ * Audit v0.3.0 §4.3: user dengan 50k+ unread akan mengirim array masif ke
+ * RPC `mark_notifications_read` — bisa timeout server atau melebihi limit
+ * param RPC. Cap ke MAX_UNREAD_IDS (cukup besar untuk use-case normal
+ * 99.9% user; sisanya akan di-handle di "Mark all read" berikutnya).
+ */
+const MAX_UNREAD_IDS = 1_000;
+
 /** Semua id belum dibaca (dipakai "Mark all as read" — 1 RPC batch). */
 export async function fetchUnreadIds(supabase: Supabase): Promise<string[]> {
   const { data, error } = await supabase
     .from("notifications")
     .select("id")
-    .is("read_at", null);
+    .is("read_at", null)
+    .limit(MAX_UNREAD_IDS);
   if (error || !data) return [];
   return data.map((row) => row.id);
 }

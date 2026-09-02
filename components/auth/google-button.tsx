@@ -10,6 +10,10 @@ import { signInWithGoogleAction } from "@/app/actions/auth";
 /**
  * Tombol OAuth Google + pembatas "or" (DESIGN §28).
  * Server action menangani redirect; form ini tidak berstate.
+ *
+ * Audit v0.3.0 §3.9: copy "Signing in…" berlaku untuk login DAN sign up;
+ * tinggal label tombol yang membedakan. Tampilkan label statis selama
+ * pending sehingga tidak ada misleading "Signing in" pada form "Sign up".
  */
 export function GoogleButton({
   label = "Continue with Google",
@@ -37,7 +41,7 @@ function GoogleSubmit({ label }: { label: string }) {
       ) : (
         <GoogleIcon />
       )}
-      {pending ? "Signing in…" : label}
+      {label}
     </Button>
   );
 }

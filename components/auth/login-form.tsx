@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/auth/form-field";
 import { GoogleButton, OAuthDivider } from "@/components/auth/google-button";
+import { ErrorAlert } from "@/components/shared/error-alert";
 import { loginAction } from "@/app/actions/auth";
 import { Loader2 } from "lucide-react";
 
@@ -35,13 +36,9 @@ export function LoginForm({
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         {next ? <input type="hidden" name="next" value={next} /> : null}
         {error ? (
-          <div
-            id="login-error"
-            role="alert"
-            className="border-destructive/30 bg-destructive/15 text-destructive rounded-lg border px-3 py-2 text-sm"
-          >
+          <ErrorAlert id="login-error" className="m-0">
             {error}
-          </div>
+          </ErrorAlert>
         ) : null}
 
         <FormField id="email" label="Email">

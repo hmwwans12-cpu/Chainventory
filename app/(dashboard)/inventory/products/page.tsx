@@ -42,8 +42,13 @@ export default async function ProductsPageRoute({
     typeof params.warehouse === "string" ? params.warehouse : undefined;
   const q = typeof params.q === "string" ? params.q.trim() : "";
   const rawStatus = typeof params.status === "string" ? params.status : "";
+  const normalizedStatus = rawStatus.toLowerCase();
+  // Audit v0.3.0 §2.5: case-insensitive ?status= — sebelumnya "Archived"
+  // (huruf besar A) silently jatuh ke default "active" tanpa indikasi.
   const statusFilter =
-    rawStatus === "archived" || rawStatus === "all" ? rawStatus : "active"; // default: main inventory = produk aktif (H-05)
+    normalizedStatus === "archived" || normalizedStatus === "all"
+      ? normalizedStatus
+      : "active";
 
   const warehouses = await getMyWarehouses(supabase, user.id);
   const active = pickActiveWarehouse(warehouses, warehouseParam);

@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { loginSchema, signupSchema } from "@/lib/validators/auth";
+import { mapDbError } from "@/lib/domain/errors";
+import { logger } from "@/lib/logger";
 
 /**
  * Server actions for authentication (Auth Foundation).
@@ -13,6 +15,9 @@ import { loginSchema, signupSchema } from "@/lib/validators/auth";
  *   Warehouse Code → Continue → Supabase Auth (email/Google) → session →
  *   Privy custom-auth (wallet layer) → embedded wallet.
  *
+ * Audit v0.3.0 §6.4/6.5: return type ditulis sebagai never (redirect()
+ * selalu throw). Audit §6.6: signup/reset error.message mentah dipetakan
+ * ke mapDbError — pesan user aman, detail DB di log server saja.
  * Privy wallet wiring is added in the wallet phase (P1); here we establish
  * the Supabase session that Privy custom-auth will consume.
  */
@@ -30,7 +35,7 @@ function safeNext(value: FormDataEntryValue | null): string {
 export async function loginAction(
   _prevState: unknown,
   formData: FormData
-): Promise<{ error: string | null }> {
+): Promise<{ error: string | null } | never> {
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -58,7 +63,7 @@ export async function loginAction(
 export async function signupAction(
   _prevState: unknown,
   formData: FormData
-): Promise<{ error: string | null }> {
+): Promise<{ error: string | null } | never> {
   const parsed = signupSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -84,7 +89,19 @@ export async function signupAction(
   });
 
   if (error) {
-    return { error: error.message };
+    // Audit v0.3.0 §6.6: pesan DB/Auth mentah dipetakan — user aman,
+    // detail (constraint, rate-limit internal) di log.
+    const mapped = mapDbError(error.message);
+    logger.warn(
+      { err: error.message, code: mapped.code },
+      "signup rejected"
+    );
+    return {
+      error:
+        mapped.code === "DB_UNEXPECTED"
+          ? "Could not create your account. Please try again."
+          : mapped.userMessage,
+    };
   }
 
   redirect("/onboarding");
@@ -108,7 +125,18 @@ export async function resetPasswordAction(
   });
 
   if (error) {
-    return { error: error.message };
+    // Audit v0.3.0 §6.6: map ke pesan aman; detail di log.
+    const mapped = mapDbError(error.message);
+    logger.warn(
+      { err: error.message, code: mapped.code },
+      "reset password rejected"
+    );
+    return {
+      error:
+        mapped.code === "DB_UNEXPECTED"
+          ? "We couldn't send the reset link. Please try again."
+          : mapped.userMessage,
+    };
   }
 
   return { error: null, success: true };
@@ -119,7 +147,7 @@ export async function resetPasswordAction(
  * PKCE flow - verifier disimpan di cookie oleh server client, kode
  * ditukar di /auth/callback. Provider Google diaktifkan di dashboard.
  */
-export async function signInWithGoogleAction(): Promise<void> {
+export async function signInWithGoogleAction(): Promise<never> {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithOAuth({

@@ -58,7 +58,11 @@ export async function GET(request: Request) {
       const ids = idsParam
         .split(",")
         .map((x) => x.trim())
-        .filter((x) => /^[0-9a-f-]{36}$/i.test(x));
+        .filter((x) =>
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            x
+          )
+        );
       if (ids.length > 200) return invalid("Too many ids (max 200).");
       if (ids.length) productsQuery = productsQuery.in("id", ids);
     }
