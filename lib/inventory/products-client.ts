@@ -71,13 +71,18 @@ export type CreateProductWithInitialStockResult = {
 export async function createProduct(
   values: CreateProductInput,
   fetcher: Fetcher = fetch
-): Promise<ApiResult<{ id: string }>> {
+): Promise<
+  ApiResult<{ id: string; initialStockApplied?: boolean }>
+> {
   const { status, json } = await sendJson(
     PRODUCTS_ROUTE,
     { body: values },
     fetcher
   );
-  return parseSuccess<{ id: string }>(status, json);
+  return parseSuccess<{ id: string; initialStockApplied?: boolean }>(
+    status,
+    json
+  );
 }
 
 export async function updateProduct(
@@ -127,15 +132,17 @@ export async function createProductWithInitialStock(
   values: CreateProductWithInitialStockInput,
   fetcher: Fetcher = fetch
 ): Promise<ApiResult<CreateProductWithInitialStockResult>> {
-  const qty = (values.initialQuantity ?? "").trim();
-  const wantsStock = qty !== "" && Number(qty) > 0;
-
   const created = await createProduct(values, fetcher);
   if (!created.ok) return created;
-
+  // Audit v0.3.4 §2.15: pakai initialStockApplied dari BFF (sumber
+  // kebenaran = DB transaksi), bukan dari user input. BFF hanya
+  // mengembalikan true jika RPC apply atomic + ledger tercatat.
   return {
     ok: true,
     status: created.status,
-    data: { productId: created.data.id, initialStockApplied: wantsStock },
+    data: {
+      productId: created.data.id,
+      initialStockApplied: created.data.initialStockApplied === true,
+    },
   };
 }

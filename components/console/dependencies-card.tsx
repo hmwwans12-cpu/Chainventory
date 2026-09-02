@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { sanitizeConsoleError } from "@/lib/utils/sanitize-console-error";
 import type { DependencyStatus } from "@/lib/console/types";
 
 function Dot({ ok, configured }: { ok: boolean; configured: boolean }) {
@@ -47,7 +48,9 @@ function Row({ dep }: { dep: DependencyStatus }) {
         ) : null}
       </div>
       <span className="text-muted-foreground min-w-0 truncate font-mono text-xs">
-        {dep.error ?? dep.detail ?? (dep.ok ? "ok" : "down")}
+        {dep.error
+          ? sanitizeConsoleError(dep.error, "Probe error")
+          : dep.detail ?? (dep.ok ? "ok" : "down")}
       </span>
     </li>
   );

@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatEthDecimal } from "@/lib/utils";
+import { sanitizeConsoleError } from "@/lib/utils/sanitize-console-error";
 import type { TreasuryData } from "@/lib/console/types";
 
 function shortAddress(address: string): string {
@@ -28,6 +29,13 @@ function formatCooldown(ms: number): string {
   const seconds = Math.floor((ms % (1000 * 60)) / 1000);
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
+
+/**
+ * Audit v0.3.4 §2.19: sanitasi pesan error dari server untuk konsol.
+ * viem/RPC error dapat memuat URL RPC + chain id.
+ */
+const formatTreasuryError = (raw: string | undefined) =>
+  sanitizeConsoleError(raw, "Treasury unavailable.");
 
 interface ClaimResponse {
   ok: boolean;
@@ -218,7 +226,7 @@ export function TreasuryCard({
           </>
         ) : (
           <p className="text-destructive text-sm">
-            {treasury?.error ?? "Treasury unavailable."}
+            {formatTreasuryError(treasury?.error)}
           </p>
         )}
       </CardContent>

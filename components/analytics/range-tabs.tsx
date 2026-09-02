@@ -44,6 +44,7 @@ export function RangeTabs({
               query: { warehouse: warehouseId, range: r },
             }}
             scroll={false}
+            prefetch={true}
             aria-current={active ? "true" : undefined}
             className={cn(
               "focus-visible:ring-ring min-h-11 rounded-[calc(var(--radius-md)-2px)] px-3 py-2.5 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none",

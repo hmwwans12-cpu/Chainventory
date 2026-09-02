@@ -56,4 +56,22 @@ describe("i18n key parity", () => {
     const result = translate("en", "definitely.not.a.key");
     expect(result).toBe("definitely.not.a.key");
   });
+
+  // Audit v0.3.4 §9.17: param value dengan $&, $1 dll tidak boleh
+  // di-interpret sebagai replacement pattern (function form replace).
+  it("param value with $& or $1 is treated as literal, not regex replacement", () => {
+    // Translation en: "Signed in as {email}". Email dengan $& harus
+    // tampil utuh, bukan hilang.
+    const result = translate("en", "settings.signed_in", {
+      email: "weird+$&.user@example.com",
+    });
+    expect(result).toBe("Signed in as weird+$&.user@example.com");
+  });
+
+  it("param value with $1 group ref is treated as literal", () => {
+    const result = translate("en", "settings.signed_in", {
+      email: "$1dollar@example.com",
+    });
+    expect(result).toBe("Signed in as $1dollar@example.com");
+  });
 });

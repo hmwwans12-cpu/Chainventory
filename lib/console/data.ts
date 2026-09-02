@@ -238,7 +238,17 @@ export async function getAuditTrail(limit = 100): Promise<AuditEntry[]> {
     )
     .order("created_at", { ascending: false })
     .limit(limit);
-  if (error || !rows) return [];
+  if (error) {
+    // Audit v0.3.4 §9.19: silent fallback = misleading; operator tidak
+    // tahu kalau DB sedang down. Log + return [] konsisten dengan
+    // getErrorSummary dan getManualReviewProofs.
+    logger.error(
+      { err: error.message },
+      "console audit_trail read failed"
+    );
+    return [];
+  }
+  if (!rows) return [];
 
   return rows.map((r) => ({
     id: r.id as string,

@@ -148,7 +148,10 @@ export async function POST(request: Request) {
     }
   }
 
-  return ok({ id: productId }, 201);
+  // Audit v0.3.4 §2.15: initialStockApplied dari state BUKAN dari
+  // request — RPC atomic hanya membuat stock_in saat initialQuantity
+  // valid. Sumber kebenaran adalah server (DB transaksi).
+  return ok({ id: productId, initialStockApplied: hasInitialQty }, 201);
 }
 
 export async function PATCH(request: Request) {
