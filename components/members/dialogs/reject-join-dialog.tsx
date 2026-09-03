@@ -92,7 +92,7 @@ export function RejectJoinDialog({
             onClick={() => onOpenChange(false)}
             disabled={busy}
           >
-            Cancel
+            Keep request pending
           </Button>
           <Button variant="destructive" onClick={reject} disabled={busy}>
             {busy ? (

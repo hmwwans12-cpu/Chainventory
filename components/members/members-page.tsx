@@ -514,8 +514,16 @@ export function MembersPage({
       {members.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="No members yet"
-          description="Invite teammates with the warehouse code, or share the invite link above."
+          title="No teammates yet"
+          description="Invite teammates with the warehouse code, or share the invite link above to get started."
+          primaryAction={
+            canInvite
+              ? {
+                  label: "Invite member",
+                  onClick: () => setInviteOpen(true),
+                }
+              : undefined
+          }
         />
       ) : (
         <PanelCard padding="none">

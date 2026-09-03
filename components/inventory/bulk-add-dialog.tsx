@@ -173,6 +173,19 @@ export function BulkAddDialog({
     setResults(result.data);
     setStep("result");
     onImported();
+    if (result.data.failed === 0) {
+      toast.add({
+        type: "success",
+        title: `${result.data.created} products added`,
+        description: "All products are now in your inventory.",
+      });
+    } else {
+      toast.add({
+        type: "warning",
+        title: `Import partial — ${result.data.created} added, ${result.data.failed} failed`,
+        description: "Review the failed rows inside the dialog to fix and re-upload.",
+      });
+    }
   };
 
   const updateManualRow = (

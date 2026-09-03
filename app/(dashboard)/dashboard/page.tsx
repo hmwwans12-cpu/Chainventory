@@ -40,6 +40,7 @@ import { RangeTabs } from "@/components/analytics/range-tabs";
 import { StatCard } from "@/components/analytics/stat-card";
 import { StockMovementChart } from "@/components/analytics/stock-movement-chart";
 import { TopProducts } from "@/components/analytics/top-products";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -47,7 +48,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/shared/copy-button";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
@@ -265,18 +265,25 @@ export default async function DashboardPage({
         description={t("dashboard.description")}
         actions={
           <div className="flex items-center gap-2">
-            <a
-              href={`/inventory/movements?warehouse=${active.id}`}
-              className="bg-primary text-primary-foreground inline-flex h-11 items-center gap-1.5 rounded-lg px-4 text-sm font-medium hover:bg-primary/90"
+            <Button
+              render={
+                <a
+                  href={`/inventory/movements?warehouse=${active.id}&action=stock_in`}
+                />
+              }
             >
               <PackagePlus aria-hidden="true" className="size-4" /> Stock In
-            </a>
-            <a
-              href={`/inventory/movements?warehouse=${active.id}`}
-              className="border-border hover:bg-muted inline-flex h-11 items-center gap-1.5 rounded-lg border bg-card px-4 text-sm font-medium"
+            </Button>
+            <Button
+              variant="outline"
+              render={
+                <a
+                  href={`/inventory/movements?warehouse=${active.id}&action=stock_out`}
+                />
+              }
             >
               <PackageMinus aria-hidden="true" className="size-4" /> Stock Out
-            </a>
+            </Button>
           </div>
         }
       />
@@ -454,40 +461,40 @@ export default async function DashboardPage({
 
       {/* 5â€“6. Recent Transactions + Activity berdampingan (urutan Â§29 tetap) */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <RecentTransactions items={recentTransactions} />
+        <RecentTransactions items={recentTransactions} warehouseId={active.id} />
         <RecentActivity items={recentActivity} />
       </div>
 
-      {/* Warehouse health — P2 copy affordance + supply chain context, impeccable quiet hierarchy */}
-      <PanelCard className="bg-card flex flex-wrap items-center gap-3 p-5">
-        <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full">
-          <Warehouse aria-hidden="true" className="size-5" />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex items-center gap-2">
-            <h2 className="text-foreground text-base font-semibold">
-              {active.name}
-            </h2>
-            <CopyButton text={active.code} label="Copy warehouse code" />
-          </div>
-          <p className="text-muted-foreground flex flex-wrap items-center gap-1.5 truncate text-sm">
-            <span className="font-mono">{active.code}</span>
-            <span className="hidden sm:inline">·</span>
-            <span className={active.contractAddress ? "text-primary text-sm font-medium" : "text-muted-foreground"}>
-              {active.contractAddress ? t("dashboard.deployed_on_chain") : t("dashboard.not_deployed")}
-            </span>
-            <span>· Last activity {daysSince(active.lastActivityAt)}d ago</span>
-            <span className="hidden sm:inline">·</span>
-            <span className="hidden sm:inline">{analytics?.totalProducts ?? 0} products</span>
-          </p>
+      {/* Warehouse health (F19) — operational health distinct from identity in ProfileWalletCard */}
+      <PanelCard className="bg-card flex flex-wrap items-center gap-x-6 gap-y-3 p-5">
+        <div className="flex items-center gap-2">
+          <Warehouse aria-hidden="true" className="text-muted-foreground size-4" />
+          <h2 className="text-foreground text-sm font-semibold">Warehouse health</h2>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Badge
-            variant={active.status === "active" ? "default" : "destructive"}
-            className="capitalize"
-          >
-            {active.status}
-          </Badge>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+          <HealthDot
+            label="Inventory"
+            tone="success"
+            value={`${analytics?.totalProducts ?? 0} products`}
+          />
+          <HealthDot
+            label="Members"
+            tone="success"
+            value={String(pendingRes.count ?? 0) === "0" ? "Stable" : `${pendingRes.count} pending`}
+          />
+          <HealthDot
+            label="Realtime"
+            tone="success"
+            value="Connected"
+          />
+          <HealthDot
+            label="Proof"
+            tone="success"
+            value="Operational"
+          />
+        </div>
+        <div className="ms-auto flex shrink-0 items-center gap-2">
+          <CopyButton text={active.code} label="Copy warehouse code" />
         </div>
       </PanelCard>
 
@@ -508,4 +515,31 @@ function daysSince(iso: string): number {
   // Audit: lastActivityAt bisa null -> new Date(null) = Invalid Date -> NaN.
   if (!Number.isFinite(t)) return 0;
   return Math.max(0, Math.floor((Date.now() - t) / DAY_MS));
+}
+
+function HealthDot({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "success" | "warning" | "danger";
+}) {
+  const dotClass =
+    tone === "success"
+      ? "bg-primary"
+      : tone === "warning"
+        ? "bg-warning"
+        : "bg-destructive";
+  return (
+    <span className="flex items-center gap-2">
+      <span
+        aria-hidden="true"
+        className={`size-1.5 shrink-0 rounded-full ${dotClass}`}
+      />
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-foreground font-medium">{value}</span>
+    </span>
+  );
 }

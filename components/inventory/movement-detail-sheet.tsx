@@ -189,17 +189,6 @@ export function MovementDetailSheet({
                     <span className="text-muted-foreground text-sm text-pretty">
                       {step.detail}
                     </span>
-                    {step.tone === "done" && movement.proofTxHash ? (
-                      <a
-                        href={`${BASESCAN_URL}/tx/${movement.proofTxHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-primary focus-visible:ring-ring mt-1 inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-sm focus-visible:ring-3 focus-visible:outline-none"
-                      >
-                        <ExternalLink aria-hidden="true" className="size-3.5" />
-                        View on BaseScan
-                      </a>
-                    ) : null}
                   </div>
                 </li>
               ))}

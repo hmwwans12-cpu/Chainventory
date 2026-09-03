@@ -5,11 +5,13 @@ import * as React from "react";
 
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { formatDateTime, formatTimeAgo } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -53,37 +55,49 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
               Requests, adjustments, and blockchain events.
             </CardDescription>
           </div>
-          {items.length > 0 && (
-            <div className="bg-muted flex shrink-0 items-center gap-0.5 rounded-lg p-1" role="tablist" aria-label="Activity filter">
-              {TABS.map((t) => (
-                <button
-                  key={t}
-                  role="tab"
-                  aria-selected={tab === t}
-                  onClick={() => setTab(t)}
-                  className={cn(
-                    "rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2",
-                    tab === t ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {items.length > 0 ? (
+              <div className="bg-muted flex items-center gap-0.5 rounded-lg p-1" role="tablist" aria-label="Activity filter">
+                {TABS.map((t) => (
+                  <button
+                    key={t}
+                    role="tab"
+                    aria-selected={tab === t}
+                    onClick={() => setTab(t)}
+                    className={cn(
+                      "rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2",
+                      tab === t ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <CardAction>
+              <Button
+                variant="outline"
+                size="sm"
+                className="min-h-11"
+                render={<Link href="/notifications" />}
+              >
+                View all
+              </Button>
+            </CardAction>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col">
         {items.length === 0 ? (
           <p className="text-muted-foreground py-4 text-sm">
-            No activity yet.{" "}
+            Nothing to review yet.{" "}
             <Link
               href="/notifications"
               className="text-primary underline-offset-4 hover:underline"
             >
               Open notifications
-            </Link>
-            .
+            </Link>{" "}
+            to see join requests and blockchain events.
           </p>
         ) : filtered.length === 0 ? (
           <p className="text-muted-foreground py-4 text-sm">

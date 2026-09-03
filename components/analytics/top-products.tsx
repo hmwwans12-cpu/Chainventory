@@ -20,7 +20,11 @@ export function TopProducts({ products }: { products: TopProduct[] }) {
       <EmptyState
         icon={BarChart3}
         title="No stock activity yet"
-        description="Record stock in or out to see which products move the most in this period."
+        description="Record your first stock in or out to see which products move the most in this period."
+        primaryAction={{
+          label: "Record Stock In",
+          href: `/inventory/movements?action=stock_in`,
+        }}
       />
     );
   }

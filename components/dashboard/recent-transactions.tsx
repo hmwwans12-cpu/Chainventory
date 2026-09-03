@@ -3,12 +3,14 @@ import { AlertTriangle, CheckCircle2, Clock3, type LucideIcon } from "lucide-rea
 
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EntityName } from "@/components/shared/entity-name";
 import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -58,8 +60,10 @@ const TYPE_LABEL: Record<string, string> = {
 
 export function RecentTransactions({
   items,
+  warehouseId,
 }: {
   items: RecentTransactionItem[];
+  warehouseId?: string;
 }) {
   return (
     <Card>
@@ -68,18 +72,36 @@ export function RecentTransactions({
         <CardDescription>
           Latest ledger entries and their proofs.
         </CardDescription>
+        <CardAction>
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11"
+            render={
+              <Link
+                href={
+                  warehouseId
+                    ? `/transactions?warehouse=${warehouseId}`
+                    : "/transactions"
+                }
+              />
+            }
+          >
+            View all
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col">
         {items.length === 0 ? (
           <p className="text-muted-foreground py-4 text-sm">
-            No transactions yet.{" "}
+            No ledger entries yet.{" "}
             <Link
               href="/transactions"
               className="text-primary underline-offset-4 hover:underline"
             >
               Open the ledger
-            </Link>
-            .
+            </Link>{" "}
+            to see all stock operations and their blockchain proofs.
           </p>
         ) : (
           <ul className="divide-border/60 -my-1 divide-y">

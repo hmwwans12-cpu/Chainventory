@@ -7,6 +7,7 @@ import {
   ArrowLeftRight,
   ArrowUpFromLine,
   Check,
+  ChevronDown,
   Eye,
   Loader2,
   MoreHorizontal,
@@ -48,6 +49,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
@@ -80,7 +82,7 @@ import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import { debounce } from "@/lib/realtime/debounce";
 import { PanelCard } from "@/components/shared/panel-card";
 import { BaseScanLink } from "@/components/shared/basescan-link";
-import { cn, formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils";
 
 const PAGE_SIZE = 25;
 
@@ -181,6 +183,30 @@ export function MovementsPage({
 
   const [supabase] = React.useState(() => createSupabaseClient());
   const [realtimeError, setRealtimeError] = React.useState<string | null>(null);
+
+  // Quick action deep-link (?action=stock_in|stock_out|adjustment|reversal)
+  // — Dashboard quick-actions pass these, auto-opening the right dialog.
+  // Search param adalah single-use trigger: setelah dialog terbuka, kita
+  // bersihkan param agar refresh manual tidak membuka dialog lagi.
+  React.useEffect(() => {
+    const action = searchParams.get("action");
+    if (
+      action !== "stock_in" &&
+      action !== "stock_out" &&
+      action !== "adjustment" &&
+      action !== "reversal"
+    ) {
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMovementDialog({ type: action });
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("action");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    // Hanya trigger saat mount / saat searchParams berubah dari navigasi
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Realtime (DESIGN §41) — Live/Reconnecting indicator + auto refresh.
   // On failure we KEEP the last known data and surface a notice instead of
@@ -320,6 +346,8 @@ export function MovementsPage({
                   <Button variant="outline" aria-label="More movement types">
                     <MoreHorizontal aria-hidden="true" />
                     <span className="hidden sm:inline">More</span>
+                    <ChevronDown aria-hidden="true" className="size-3.5 opacity-60" />
+                    <span className="sr-only"> movement types</span>
                   </Button>
                 }
               >
@@ -350,6 +378,8 @@ export function MovementsPage({
           {canExport ? (
             <Button
               variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex"
               render={
                 <a
                   href={`/api/warehouses/export?type=movements&warehouseId=${warehouseId}`}
@@ -399,13 +429,21 @@ export function MovementsPage({
       {movements.length === 0 ? (
         <EmptyState
           icon={ArrowDownToLine}
-          title="No movements yet."
-          description="Stock in/out, adjustments and reversals will appear here as they are recorded."
+          title="No movements recorded yet"
+          description="Record your first stock in or stock out to start tracking inventory changes."
           primaryAction={
             canStockIn
               ? {
-                  label: "Stock In",
+                  label: "Record Stock In",
                   onClick: () => setMovementDialog({ type: "stock_in" }),
+                }
+              : undefined
+          }
+          secondaryAction={
+            canStockOut
+              ? {
+                  label: "Record Stock Out",
+                  onClick: () => setMovementDialog({ type: "stock_out" }),
                 }
               : undefined
           }
@@ -516,7 +554,19 @@ export function MovementsPage({
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
-                        {formatDateTime(m.created_at)}
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <time
+                                dateTime={m.created_at}
+                                className="cursor-help"
+                              />
+                            }
+                          >
+                            {formatTimeAgo(m.created_at)}
+                          </TooltipTrigger>
+                          <TooltipContent>{formatDateTime(m.created_at)}</TooltipContent>
+                        </Tooltip>
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -609,7 +659,19 @@ export function MovementsPage({
                     </p>
                     <p className="text-muted-foreground mt-1 text-sm tabular-nums">
                       {shortWallet(m.actorWallet)} ·{" "}
-                      {formatDateTime(m.created_at)}
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <time
+                              dateTime={m.created_at}
+                              className="cursor-help"
+                            />
+                          }
+                        >
+                          {formatTimeAgo(m.created_at)}
+                        </TooltipTrigger>
+                        <TooltipContent>{formatDateTime(m.created_at)}</TooltipContent>
+                      </Tooltip>
                     </p>
                     {m.proofTxHash && m.proofStatus === "confirmed" ? (
                       <BaseScanLink

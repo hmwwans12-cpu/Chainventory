@@ -321,15 +321,15 @@ export function NotificationBell() {
                   </div>
                 ) : notifications.length === 0 ? (
                   <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-                    <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
+                    <span className="bg-muted text-muted-foreground flex size-10 items-center justify-center rounded-full">
                       <Inbox aria-hidden="true" className="size-5" />
                     </span>
                     <p className="text-foreground text-sm font-medium">
-                      No notifications yet
+                      You&apos;re all caught up
                     </p>
                     <p className="text-muted-foreground max-w-52 text-sm text-pretty">
                       Join requests, blockchain updates, and warehouse events
-                      will show up here.
+                      will appear here.
                     </p>
                   </div>
                 ) : (
@@ -353,13 +353,13 @@ export function NotificationBell() {
                               className={cn(
                                 "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg",
                                 meta?.tone === "success" &&
-                                  "bg-primary/10 text-primary",
+                                  "bg-muted text-muted-foreground",
                                 meta?.tone === "warning" &&
                                   "bg-warning/15 text-warning",
                                 meta?.tone === "danger" &&
                                   "bg-destructive/15 text-destructive",
                                 (!meta || meta.tone === "default") &&
-                                  "bg-primary/10 text-primary"
+                                  "bg-muted text-muted-foreground"
                               )}
                               aria-hidden="true"
                             >

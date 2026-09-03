@@ -508,6 +508,8 @@ export function ProductsPage({
           {canExport ? (
             <Button
               variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex"
               render={
                 <a
                   href={`/api/warehouses/export?type=products&warehouseId=${warehouseId}`}
@@ -520,10 +522,52 @@ export function ProductsPage({
             </Button>
           ) : null}
           {canBulk ? (
-            <Button variant="outline" onClick={() => setBulkOpen(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex"
+              onClick={() => setBulkOpen(true)}
+            >
               <FileUp aria-hidden="true" />
               Bulk Add
             </Button>
+          ) : null}
+          {(canExport || canBulk) ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    className="sm:hidden"
+                    aria-label="More actions"
+                  />
+                }
+              >
+                <MoreHorizontal aria-hidden="true" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {canExport ? (
+                  <DropdownMenuItem
+                    render={
+                      <a
+                        href={`/api/warehouses/export?type=products&warehouseId=${warehouseId}`}
+                        download
+                      />
+                    }
+                  >
+                    <ArrowDownToLine aria-hidden="true" />
+                    Export CSV
+                  </DropdownMenuItem>
+                ) : null}
+                {canBulk ? (
+                  <DropdownMenuItem onClick={() => setBulkOpen(true)}>
+                    <FileUp aria-hidden="true" />
+                    Bulk Add
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : null}
           {canCreate ? (
             <Button onClick={() => setCreateOpen(true)}>
@@ -579,7 +623,7 @@ export function ProductsPage({
             <span className="flex items-center gap-1.5">
               <Input value={saveName} onChange={(e) => setSaveName(e.target.value)} placeholder="My low-stock view" className="h-8 w-40" aria-label="Saved view name" />
               <Button size="sm" onClick={saveCurrentView}>Save</Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowSave(false)}>Cancel</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowSave(false)}>Discard</Button>
             </span>
           )}
         </div>
@@ -604,11 +648,11 @@ export function ProductsPage({
       {products.length === 0 ? (
         <EmptyState
           icon={Package}
-          title={query ? "No products found" : "No products yet."}
+          title={query ? "No products found" : "Your inventory is empty"}
           description={
             query
-              ? `Nothing matches "${query}". Try a different search.`
-              : "Start adding products to manage your warehouse inventory."
+              ? `Nothing matches "${query}". Try a different search or clear filters.`
+              : "Add your first product to start tracking stock for this warehouse."
           }
           primaryAction={
             query
@@ -619,7 +663,7 @@ export function ProductsPage({
           }
           secondaryAction={
             !query && canBulk
-              ? { label: "Bulk Add", onClick: () => setBulkOpen(true) }
+              ? { label: "Import products", onClick: () => setBulkOpen(true) }
               : undefined
           }
         />
@@ -941,7 +985,7 @@ export function ProductsPage({
               variant="outline"
               onClick={() => setConfirmBulkArchive(false)}
             >
-              Cancel
+              Keep active
             </Button>
             <Button
               variant="destructive"
@@ -971,7 +1015,7 @@ export function ProductsPage({
             <Input id="bulk-cat" value={bulkCategoryValue} onChange={(e) => setBulkCategoryValue(e.target.value)} placeholder="e.g. Packaging" />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkCategoryOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setBulkCategoryOpen(false)}>Keep current</Button>
             <Button onClick={bulkChangeCategory} disabled={bulkBusy || !bulkCategoryValue.trim()}>
               {bulkBusy ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Pencil aria-hidden="true" />}
               Update {selected.size} products

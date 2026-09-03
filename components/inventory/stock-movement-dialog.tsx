@@ -217,10 +217,13 @@ export function StockMovementDialog({
         onOpenChange(false);
         onSuccess();
         const verb = movementType === "stock_in" ? "added to" : "removed from";
+        const newMovementId = fin.data.movementId;
         toast.add({
           type: "success",
           title: meta.label,
-          description: `${qty} ${selected!.unit} ${verb} ${selected!.name}. Proof signed by your wallet.`,
+          description: newMovementId
+            ? `${qty} ${selected!.unit} ${verb} ${selected!.name}. New balance saved. Proof signed by your wallet.`
+            : `${qty} ${selected!.unit} ${verb} ${selected!.name}. Proof signed by your wallet.`,
         });
         return { handled: true };
       }
@@ -333,12 +336,19 @@ export function StockMovementDialog({
     if (result.ok) {
       onOpenChange(false);
       onSuccess();
-      const verb = movementType === "adjustment" ? "applied to" : "reversed on";
-      toast.add({
-        type: "success",
-        title: meta.label,
-        description: `${qty} ${selected.unit} ${verb} ${selected.name}.`,
-      });
+      if (movementType === "adjustment") {
+        toast.add({
+          type: "success",
+          title: "Adjustment submitted",
+          description: `${qty} ${selected.unit} adjustment for ${selected.name} is awaiting Owner/Manager approval. Stock balance is unchanged until approved.`,
+        });
+      } else {
+        toast.add({
+          type: "success",
+          title: meta.label,
+          description: `${qty} ${selected.unit} reversed on ${selected.name}.`,
+        });
+      }
       return;
     }
 
@@ -383,9 +393,9 @@ export function StockMovementDialog({
           </DialogTitle>
           <DialogDescription>
             {movementType === "stock_in"
-              ? `Add stock to ${selected?.name ?? "this product"}. Current: ${selected?.quantity ?? 0} ${selected?.unit ?? ""}`
+              ? `Add stock to ${selected?.name ?? "this product"}.`
               : movementType === "stock_out"
-                ? `Remove stock from ${selected?.name ?? "this product"}. Current: ${selected?.quantity ?? 0} ${selected?.unit ?? ""}`
+                ? `Remove stock from ${selected?.name ?? "this product"}.`
                 : movementType === "adjustment"
                   ? "Correct stock count — requires Owner/Manager approval before balance changes."
                   : "Reverse a previous movement to restore the balance."}
@@ -395,7 +405,7 @@ export function StockMovementDialog({
         {stale ? (
           <p
             role="alert"
-            className="bg-primary/10 text-primary flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+            className="bg-muted text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
           >
             <Loader2 aria-hidden="true" className="animate-spin" />
             Stock updated by another user. Refreshing inventory...
@@ -405,13 +415,13 @@ export function StockMovementDialog({
         {phase ? (
           <p
             aria-live="polite"
-            className="bg-primary/10 text-primary flex flex-col gap-1 rounded-lg px-3 py-2 text-sm"
+            className="bg-muted text-foreground flex flex-col gap-1 rounded-lg px-3 py-2 text-sm"
           >
             <span className="flex items-center gap-2">
               <Loader2 aria-hidden="true" className="animate-spin" />
               {phase}
             </span>
-            <span className="text-primary/80">
+            <span className="text-muted-foreground">
               You can safely leave this page — we&apos;ll notify you when
               it&apos;s confirmed.
             </span>
@@ -578,7 +588,7 @@ export function StockMovementDialog({
               onClick={() => onOpenChange(false)}
               disabled={busy}
             >
-              Cancel
+              Discard
             </Button>
             <Button onClick={submit} disabled={busy || stale}>
               {busy ? (

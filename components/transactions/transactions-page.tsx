@@ -179,11 +179,11 @@ export function TransactionsPage({
       {items.length === 0 ? (
         <EmptyState
           icon={ArrowLeftRight}
-          title="No transactions found."
+          title={type || proof ? "No transactions match your filters" : "No transactions yet"}
           description={
             type || proof
               ? "Try a different filter combination."
-              : "Stock operations and their blockchain proofs will appear here."
+              : "Stock operations and their blockchain proofs will appear here once you record a movement."
           }
           primaryAction={
             type || proof

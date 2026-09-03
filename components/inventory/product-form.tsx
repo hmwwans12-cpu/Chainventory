@@ -261,7 +261,7 @@ export function ProductForm({
             onClick={onCancel}
             disabled={busy}
           >
-            Cancel
+            Discard
           </Button>
         ) : null}
         <Button type="submit" disabled={busy}>

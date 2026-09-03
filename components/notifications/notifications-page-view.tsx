@@ -234,8 +234,8 @@ export function NotificationsPageView({
       {notifications.length === 0 ? (
         <EmptyState
           icon={Inbox}
-          title="No notifications yet"
-          description="Join requests, blockchain updates, and warehouse events will show up here."
+          title="You're all caught up"
+          description="Join requests, blockchain updates, and warehouse events will appear here."
         />
       ) : (
         <PanelCard padding="none" className="bg-card">
@@ -262,13 +262,13 @@ export function NotificationsPageView({
                       className={cn(
                         "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg",
                         meta?.tone === "success" &&
-                          "bg-primary/10 text-primary",
+                          "bg-muted text-muted-foreground",
                         meta?.tone === "warning" &&
                           "bg-warning/15 text-warning",
                         meta?.tone === "danger" &&
                           "bg-destructive/15 text-destructive",
                         (!meta || meta.tone === "default") &&
-                          "bg-primary/10 text-primary"
+                          "bg-muted text-muted-foreground"
                       )}
                       aria-hidden="true"
                     >

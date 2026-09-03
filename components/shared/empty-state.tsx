@@ -53,7 +53,7 @@ export function EmptyState({
       variant="dashed"
       className="bg-card flex flex-col items-center justify-center gap-2 px-6 py-12 text-center"
     >
-      <span className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
+      <span className="bg-muted text-muted-foreground flex size-10 items-center justify-center rounded-full">
         <Icon aria-hidden="true" className="size-5" />
       </span>
       <h3 className="text-foreground mt-2 text-base font-semibold">

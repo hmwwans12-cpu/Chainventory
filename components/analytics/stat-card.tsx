@@ -6,7 +6,6 @@ import {
   Card,
   CardAction,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -56,12 +55,10 @@ function DeltaBadge({ delta }: { delta: Delta }) {
 }
 
 /**
- * Statistic card — anatomi resmi SectionCards (dashboard-01):
- * Description label → nilai besar responsif (@[250px]/card) → Badge tren
- * outline di CardAction → CardFooter SATU baris sekunder (temuan audit UI #4:
- * takeaway + hint yang redundan digabung jadi satu baris — prioritas delta,
- * fallback hint kontekstual). Klik-able bila diberikan `href` — seluruh
- * kartu satu target sentuh (Fitts).
+ * Statistic card (D-007 calm KPI): Description label → nilai besar
+ * responsif (@[250px]/card) → Badge tren outline di CardAction. Footer
+ * delta + "View details →" inline TANPA background terpisah (CardFooter
+ * dengan bg-muted menambah layer visual — diganti plain div).
  */
 export function StatCard({
   icon: Icon,
@@ -101,7 +98,7 @@ export function StatCard({
   const cardFooterWithAffordance = (
     <>
       {secondary || chevron ? (
-        <CardFooter className="text-muted-foreground flex items-center justify-between text-sm">
+        <div className="text-muted-foreground flex items-center justify-between text-sm">
           <div className="line-clamp-1 flex items-center gap-2">
             {secondaryTooltip ? (
               <Tooltip>
@@ -115,7 +112,7 @@ export function StatCard({
             )}
           </div>
           {chevron}
-        </CardFooter>
+        </div>
       ) : null}
     </>
   );

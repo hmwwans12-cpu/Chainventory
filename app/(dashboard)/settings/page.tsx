@@ -121,7 +121,7 @@ export default async function SettingsPage({
             </div>
             {active ? (
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-xs">
+                <span className="text-muted-foreground text-sm">
                   {t("settings.role")}
                 </span>
                 <Badge variant="outline">

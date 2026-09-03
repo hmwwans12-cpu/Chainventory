@@ -89,7 +89,11 @@ export function RecentMovements({
           <EmptyState
             icon={ArrowDownToLine}
             title="No stock movements yet"
-            description="Record the first stock in to start the ledger."
+            description="Record your first stock in or out to start the ledger."
+            primaryAction={{
+              label: "Record Stock In",
+              href: `/inventory/movements?action=stock_in`,
+            }}
           />
         ) : (
           <div className="overflow-x-auto">

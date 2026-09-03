@@ -234,7 +234,7 @@ export function JoinWarehouseForm() {
                 </span>
                 <span
                   className={cn(
-                    "text-xs font-medium",
+                    "text-sm font-medium",
                     index === 2 && "text-muted-foreground"
                   )}
                 >
