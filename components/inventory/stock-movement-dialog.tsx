@@ -88,6 +88,20 @@ export function StockMovementDialog({
   >([]);
   const [targetsLoaded, setTargetsLoaded] = React.useState(false);
   const idempotencyKey = React.useRef<string | null>(null);
+  // Audit v0.3.9 H-15: track mount state so setBusy(false) inside a
+  // finally block does not run against an unmounted component. The
+  // parent unmounts this dialog after a successful submit (via
+  // onOpenChange(false)) and the finally still runs in the same tick.
+  const mountedRef = React.useRef(true);
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  const safeSetBusy = React.useCallback((b: boolean) => {
+    if (mountedRef.current) setBusy(b);
+  }, []);
   const { wallets } = useWallets();
   const [phase, setPhase] = React.useState<string | null>(null);
 
@@ -200,13 +214,42 @@ export function StockMovementDialog({
 
     setPhase("Submitting transaction hash…");
     const submitted = await submitStockIntent(prep.data.intentId, txHash);
-    if (!submitted.ok) {
+    // Audit v0.3.9 H-14: short-circuit when submitStockIntent says "the
+    // intent is already past submit". Without this, the code below would
+    // fall through to the 15×3s polling loop (~45s wasted). The intent
+    // is racing the confirmation on Base Sepolia; the polling loop is
+    // the right place for that wait, but only if the intent is not yet
+    // committed.
+    if (
+      submitted.ok &&
+      submitted.data &&
+      (submitted.data as { status?: string }).status === "submitted"
+    ) {
+      // Intent accepted; fall through to the polling loop to wait for
+      // confirmation. This is the normal happy path.
+    } else if (!submitted.ok) {
+      // Submit RPC failed; check if the intent was actually committed
+      // (race with the confirmation job). If so, treat as success and
+      // exit early.
       const direct = await finalizeStockIntent(prep.data.intentId);
-      if (!direct.ok || direct.data.status !== "committed") {
+      if (direct.ok && direct.data.status === "committed") {
         setPhase(null);
-        setError(submitted.error);
+        onOpenChange(false);
+        onSuccess();
+        const verb = movementType === "stock_in" ? "added to" : "removed from";
+        const newMovementId = direct.data.movementId;
+        toast.add({
+          type: "success",
+          title: meta.label,
+          description: newMovementId
+            ? `${qty} ${selected!.unit} ${verb} ${selected!.name}. New balance saved. Proof signed by your wallet.`
+            : `${qty} ${selected!.unit} ${verb} ${selected!.name}. Proof signed by your wallet.`,
+        });
         return { handled: true };
       }
+      setPhase(null);
+      setError(submitted.error);
+      return { handled: true };
     }
 
     setPhase("Waiting for Base Sepolia confirmation…");
@@ -299,7 +342,7 @@ export function StockMovementDialog({
       return;
     }
 
-    setBusy(true);
+    safeSetBusy(true);
     setError(null);
     setStale(false);
     setCurrentBalance(null);
@@ -309,7 +352,7 @@ export function StockMovementDialog({
         await submitViaIntent(qty);
         return;
       } finally {
-        setBusy(false);
+        safeSetBusy(false);
       }
     }
 
@@ -331,7 +374,7 @@ export function StockMovementDialog({
         movementType === "reversal" ? (selectedTarget?.id ?? null) : null,
       idempotencyKey: idempotencyKey.current,
     });
-    setBusy(false);
+    safeSetBusy(false);
 
     if (result.ok) {
       onOpenChange(false);

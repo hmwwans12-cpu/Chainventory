@@ -65,7 +65,7 @@ import type { MemberListItem, PendingJoinRequest } from "@/lib/members/types";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import { PanelCard } from "@/components/shared/panel-card";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
-import { formatDate } from "@/lib/utils";
+import { formatDate, isValidEmail } from "@/lib/utils";
 import { LeaveWarehouseDialog } from "@/components/members/dialogs/leave-warehouse-dialog";
 import { RejectJoinDialog } from "@/components/members/dialogs/reject-join-dialog";
 import { RemoveMemberDialog } from "@/components/members/dialogs/remove-member-dialog";
@@ -127,7 +127,7 @@ export function MembersPage({
   const [inviteError, setInviteError] = React.useState<string | null>(null);
 
   const handleInvite = async () => {
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(inviteEmail)) {
+    if (!isValidEmail(inviteEmail)) {
       setInviteError("Enter a valid email address.");
       return;
     }
@@ -163,6 +163,15 @@ export function MembersPage({
     } finally {
       setInviteBusy(false);
     }
+  };
+
+  // Audit v0.3.9 H-16: full reset of all invite state when the dialog
+  // closes, so re-opening it doesn't leak previous email/role/sent values.
+  const resetInviteState = () => {
+    setInviteUrl(null);
+    setInviteError(null);
+    setInviteEmail("");
+    setInviteSent(false);
   };
 
   const showRequests =
@@ -316,10 +325,7 @@ export function MembersPage({
             open={inviteOpen}
             onOpenChange={(open) => {
               setInviteOpen(open);
-              if (!open) {
-                setInviteUrl(null);
-                setInviteError(null);
-              }
+              if (!open) resetInviteState();
             }}
           >
             <DialogContent>

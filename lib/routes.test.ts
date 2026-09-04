@@ -21,7 +21,10 @@ describe("protected route registry vs proxy matcher", () => {
     const expected = [
       ...PROTECTED_ROUTES.map((route) => `${route}/:path*`),
       ...AUTH_ROUTES.map((route) => `${route}/:path*`),
-      "/api/:path*",
+      // Audit v0.3.9 H-11: API matcher now excludes internal webhooks,
+      // auth callbacks, and the health endpoint (no Supabase session needed
+      // for any of these). See proxy.ts for the full list.
+      "/api/((?!internal|auth|health).*)",
     ];
 
     expect(matcher).toEqual(expected);

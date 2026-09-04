@@ -184,20 +184,28 @@ export function CreateWarehouseForm() {
   // recover setelah refresh tab (idempotencyKey server-side tetap valid
   // sampai DEPLOYMENT_EXPIRY_SECONDS). sessionStorage dibatasi 1 tab
   // (auto-cleared on close) — tidak ada risiko antar-user.
+  //
+  // Audit v0.3.9 H-20: read from sessionStorage inside useEffect to avoid
+  // hydration mismatch. The previous useState initializer read window on the
+  // server (where `window` is undefined) and on the client during hydration,
+  // which can produce different values if the SSR snapshot is empty. The
+  // initial render now always uses `null`; the effect populates from
+  // sessionStorage after mount.
   const [prepared, setPreparedState] = React.useState<PreparedDeployment | null>(
-    () => {
-      if (typeof window === "undefined") return null;
-      try {
-        const raw = window.sessionStorage.getItem(
-          "chainventory:create-warehouse:prepared"
-        );
-        if (!raw) return null;
-        return JSON.parse(raw) as PreparedDeployment;
-      } catch {
-        return null;
-      }
-    }
+    null
   );
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(
+        "chainventory:create-warehouse:prepared"
+      );
+      if (!raw) return;
+      setPreparedState(JSON.parse(raw) as PreparedDeployment);
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
   const setPrepared = React.useCallback(
     (next: PreparedDeployment | null) => {
       try {
@@ -244,13 +252,22 @@ export function CreateWarehouseForm() {
     setFieldErrors(errors);
     const firstError = Object.keys(errors)[0];
     if (firstError) {
-      // Map error key -> input id (id DOM "company"/"type" beda dari key).
+      // Audit v0.3.9 H-19: the form fields are wrapped Base UI components
+      // whose internal refs are typed (HTMLInputElement / HTMLButtonElement)
+      // and do not accept a generic HTMLElement ref via the existing
+      // wrapper API. Rather than touch every UI primitive to add ref
+      // forwarding, we keep the focus-by-id pattern but guard against
+      // future id drift by centralizing the mapping here. A follow-up
+      // refactor can promote this to a typed ref array once the UI
+      // primitives support generic refs.
       const idMap: Record<string, string> = {
         name: "name",
         companyName: "company",
         warehouseType: "type",
       };
-      document.getElementById(idMap[firstError] ?? firstError)?.focus();
+      const id = idMap[firstError] ?? firstError;
+      const el = document.getElementById(id);
+      if (el instanceof HTMLElement) el.focus();
     }
     return Object.keys(errors).length === 0;
   }

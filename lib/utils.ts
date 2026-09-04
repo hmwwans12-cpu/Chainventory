@@ -83,3 +83,21 @@ export function getInitials(
   if (!source) return fallback;
   return source.charAt(0).toUpperCase();
 }
+
+/**
+ * Permissive but practical email validator (audit v0.3.9 H-18).
+ * The previous `/^[^@\s]+@[^@\s]+\.[^@\s]+$/` regex accepted "a@b.c"
+ * (a single-char TLD). This regex requires:
+ *   - local part: 1+ chars that aren't @ or whitespace
+ *   - @ symbol
+ *   - domain: 1+ chars that aren't @ or whitespace
+ *   - dot
+ *   - TLD: 2+ letters (so "a@b.c" is rejected; "a@b.co" is accepted)
+ * It is not RFC 5322 — that would be massively complex and reject valid
+ * addresses — but it is good enough for client-side pre-validation. The
+ * authoritative check is the Zod schema on the server.
+ */
+export function isValidEmail(input: string | null | undefined): boolean {
+  if (!input) return false;
+  return /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(input.trim());
+}

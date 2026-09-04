@@ -8,6 +8,28 @@ import { z } from "zod";
  * Secrets (Supabase service-role, Privy secret, treasury key, RPC secret)
  * are SERVER-ONLY and MUST NOT be prefixed with NEXT_PUBLIC_.
  */
+
+/**
+ * Audit v0.3.9 H-12: when a developer copies .env.example → .env.local,
+ * every empty placeholder becomes the empty string "" (not undefined).
+ * Zod's `.optional()` only forgives `undefined`, so an empty TREASURY_PRIVATE_KEY
+ * would crash the dev build. We normalize empty strings to `undefined` before
+ * validation so the optional path actually applies.
+ */
+const emptyToUndefined = (v: unknown) =>
+  typeof v === "string" && v.trim() === "" ? undefined : v;
+
+const optionalString = z.preprocess(emptyToUndefined, z.string().min(1).optional());
+const optionalUrl = z.preprocess(emptyToUndefined, z.string().url().optional());
+const optionalHexAddress = z.preprocess(
+  emptyToUndefined,
+  z.string().startsWith("0x").optional()
+);
+const optionalMin16 = z.preprocess(
+  emptyToUndefined,
+  z.string().min(16).optional()
+);
+
 export const env = createEnv({
   server: {
     NODE_ENV: z
@@ -16,42 +38,49 @@ export const env = createEnv({
 
     // Supabase server-only keys — never exposed to the browser.
     // New key model (2026): `secret` preferred, legacy `service_role` fallback.
-    SUPABASE_SECRET_KEY: z.string().min(1).optional(),
-    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+    SUPABASE_SECRET_KEY: optionalString,
+    SUPABASE_SERVICE_ROLE_KEY: optionalString,
 
     // Supabase Management API (project administration / live migration queries).
     // Used by RBAC contract test & migration tooling only — never the app.
-    SUPABASE_MANAGEMENT_TOKEN: z.string().min(1).optional(),
-    SUPABASE_PROJECT_REF: z.string().min(1).optional(),
+    SUPABASE_MANAGEMENT_TOKEN: optionalString,
+    SUPABASE_PROJECT_REF: optionalString,
 
     // Privy secret for custom-auth verification (wallet layer).
-    PRIVY_APP_SECRET: z.string().min(1).optional(),
+    PRIVY_APP_SECRET: optionalString,
 
     // Treasury signer for deployment/proof gas — server-side only.
-    TREASURY_PRIVATE_KEY: z.string().min(1).optional(),
+    TREASURY_PRIVATE_KEY: optionalString,
 
     // Blockchain
-    BASE_SEPOLIA_RPC_URL: z.string().url().optional(),
-    BASE_SEPOLIA_RPC_FALLBACK_URL: z.string().url().optional(),
-    WAREHOUSE_FACTORY_ADDRESS: z.string().startsWith("0x").optional(),
+    BASE_SEPOLIA_RPC_URL: optionalUrl,
+    BASE_SEPOLIA_RPC_FALLBACK_URL: optionalUrl,
+    WAREHOUSE_FACTORY_ADDRESS: optionalHexAddress,
+
+    // Audit v0.3.9 H-13: documented in .env.example but not validated here.
+    // BaseScan API key for contract verification & transaction lookups.
+    BASESCAN_API_KEY: optionalString,
 
     // Async proof delivery
-    QSTASH_TOKEN: z.string().min(1).optional(),
-    QSTASH_URL: z.string().url().optional(),
-    QSTASH_CURRENT_SIGNING_KEY: z.string().min(1).optional(),
-    QSTASH_NEXT_SIGNING_KEY: z.string().min(1).optional(),
+    QSTASH_TOKEN: optionalString,
+    QSTASH_URL: optionalUrl,
+    QSTASH_CURRENT_SIGNING_KEY: optionalString,
+    QSTASH_NEXT_SIGNING_KEY: optionalString,
 
     // Rate limiting
-    UPSTASH_REDIS_REST_URL: z.string().url().optional(),
-    UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+    UPSTASH_REDIS_REST_URL: optionalUrl,
+    UPSTASH_REDIS_REST_TOKEN: optionalString,
 
     // Developer Console allowlist (ARSITEKTUR §7.4)
-    DEVELOPER_ALLOWLIST: z.string().optional(),
+    DEVELOPER_ALLOWLIST: z.preprocess(
+      emptyToUndefined,
+      z.string().optional()
+    ),
 
     // Vercel Cron keep-alive secret (ARSITEKTUR §7.3).
     // Vercel sends `Authorization: Bearer <CRON_SECRET>` on cron requests;
     // the internal keep-alive endpoint verifies it. Server-only.
-    CRON_SECRET: z.string().min(16).optional(),
+    CRON_SECRET: optionalMin16,
 
     // Base URL untuk delivery job QStash (proof process/confirm) saat RUNTIME.
     // Prioritas (lihat lib/proof/qstash.ts): QSTASH_APP_BASE_URL (override
@@ -60,11 +89,14 @@ export const env = createEnv({
     // otomatis oleh Vercel per deployment — menjamin preview & production
     // default selalu punya URL publik yang benar, tanpa konfigurasi manual).
     // Server-only; tidak pernah ke browser.
-    QSTASH_APP_BASE_URL: z.string().url().optional(),
-    VERCEL_URL: z.string().min(1).optional(),
+    QSTASH_APP_BASE_URL: optionalUrl,
+    VERCEL_URL: optionalString,
 
     // CI bypass for builds without live secrets
-    SKIP_ENV_VALIDATION: z.string().optional(),
+    SKIP_ENV_VALIDATION: z.preprocess(
+      emptyToUndefined,
+      z.string().optional()
+    ),
 
     // Observability
     LOG_LEVEL: z
@@ -74,11 +106,11 @@ export const env = createEnv({
 
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
-    NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+    NEXT_PUBLIC_SUPABASE_URL: optionalUrl,
     // New key model (2026): `publishable` preferred, legacy `anon` fallback.
-    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
-    NEXT_PUBLIC_PRIVY_APP_ID: z.string().min(1).optional(),
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: optionalString,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: optionalString,
+    NEXT_PUBLIC_PRIVY_APP_ID: optionalString,
   },
 
   runtimeEnv: {
@@ -92,6 +124,7 @@ export const env = createEnv({
     BASE_SEPOLIA_RPC_URL: process.env.BASE_SEPOLIA_RPC_URL,
     BASE_SEPOLIA_RPC_FALLBACK_URL: process.env.BASE_SEPOLIA_RPC_FALLBACK_URL,
     WAREHOUSE_FACTORY_ADDRESS: process.env.WAREHOUSE_FACTORY_ADDRESS,
+    BASESCAN_API_KEY: process.env.BASESCAN_API_KEY,
     QSTASH_TOKEN: process.env.QSTASH_TOKEN,
     QSTASH_URL: process.env.QSTASH_URL,
     QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,

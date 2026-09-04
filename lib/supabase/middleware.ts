@@ -53,9 +53,19 @@ export async function updateSession(request: NextRequest) {
   });
 
   // Do not run code between createServerClient and getUser().
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Audit v0.3.9 H-11: wrap in try/catch so a Supabase outage (or transient
+  // 5xx on the auth endpoint) does not cascade into a 500 for every
+  // protected page. The route handler is the primary authorization
+  // boundary per AGENT.md §3 — proxy.ts is only doing session refresh.
+  let user: { id: string; email?: string | null } | null = null;
+  try {
+    const result = await supabase.auth.getUser();
+    user = result.data.user;
+  } catch (err) {
+    // Log but do not block. Protected routes will reject the request via
+    // the in-route `requireUser` helper which is the actual auth gate.
+    console.warn("[proxy] supabase.auth.getUser failed:", err);
+  }
 
   const pathname = request.nextUrl.pathname;
   const matchesRoute = (routes: readonly string[]) =>

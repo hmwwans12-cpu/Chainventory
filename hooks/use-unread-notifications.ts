@@ -31,12 +31,27 @@ export function useUnreadNotifications(enabled = true): number {
     const supabase = createClient();
 
     async function refresh() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-      const count = await fetchUnreadCount(supabase);
-      if (!cancelled) unreadStore.set(count);
+      // Audit v0.3.9 H-21: wrap the polling in try/catch so a transient
+      // network blip or Supabase 5xx does not surface as an
+      // `unhandledrejection` every 60s for the lifetime of the mount.
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+        const count = await fetchUnreadCount(supabase);
+        if (!cancelled) unreadStore.set(count);
+      } catch (err) {
+        // Log and swallow; the next polling cycle will retry. The bell
+        // component has its own realtime channel for live updates so
+        // the sidebar badge can afford to be a few seconds stale.
+        if (!cancelled) {
+          console.warn(
+            "[useUnreadNotifications] refresh failed:",
+            err instanceof Error ? err.message : err
+          );
+        }
+      }
     }
 
     void refresh();
