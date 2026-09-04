@@ -41,8 +41,14 @@ export const MUTATION_RATE_LIMITS = {
   "product-write": { user: 30, ip: 120 },
   /** deploy warehouse (prepare/submit EIP-712 relay). */
   "warehouse-create": { user: 5, ip: 15 },
-  /** join/approve/reject/remove/change_role/transfer ownership. */
+  /** join/approve/reject/remove/change_role. Looser than ownership transfer. */
   membership: { user: 20, ip: 60 },
+  /**
+   * Audit v0.3.10 H-10: ownership transfer gets its own tighter bucket
+   * so a compromise of "membership" (e.g. mass join-approval abuse)
+   * cannot drain the ownership-transfer budget.
+   */
+  "ownership-transfer": { user: 3, ip: 10 },
   /** sinkronisasi wallet Privy. */
   "wallet-sync": { user: 10, ip: 30 },
   /** export CSV (products/movements). */

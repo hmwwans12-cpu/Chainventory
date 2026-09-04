@@ -19,6 +19,7 @@ import { mapDbError } from "@/lib/domain/errors";
 import { buildProofPayload } from "@/lib/proof/payload";
 import { hashProofPayload } from "@/lib/proof/hash";
 import { publishProofJob } from "@/lib/proof/qstash";
+import { logger } from "@/lib/logger";
 
 /**
  * Bulk Add Products (DESIGN §36) — loop create satu-per-baris di server.
@@ -156,10 +157,36 @@ export async function POST(request: Request) {
             .eq("movement_id", movementId)
             .maybeSingle();
           if (proofRow) {
-            await publishProofJob(proofRow.id).catch(() => undefined);
+            // Audit v0.3.10 H-08: surface publish failures as warnings
+            // rather than swallowing them. The reconciliation cron is
+            // the safety net, but operators need to know in the request
+            // log that a publish failed so they can spot repeated
+            // delivery problems quickly.
+            publishProofJob(proofRow.id).catch((publishErr) => {
+              logger.warn(
+                {
+                  err:
+                    publishErr instanceof Error
+                      ? publishErr.message
+                      : "publish failed",
+                  proofId: proofRow.id,
+                  movementId,
+                },
+                "bulk import: proof publish failed; reconciliation will retry"
+              );
+            });
           }
-        } catch {
-          /* ignore */
+        } catch (lookupErr) {
+          logger.warn(
+            {
+              err:
+                lookupErr instanceof Error
+                  ? lookupErr.message
+                  : "proof lookup failed",
+              movementId,
+            },
+            "bulk import: proof lookup failed; reconciliation will retry"
+          );
         }
       }
     } else {

@@ -1,7 +1,5 @@
-import { NextResponse } from "next/server";
-
 import { createClient } from "@/lib/supabase/server";
-import { requireRateLimit, requireUser } from "@/lib/api-handler";
+import { invalid, ok, requireRateLimit, requireUser, serverError } from "@/lib/api-handler";
 import { fetchWalletBalance } from "@/lib/blockchain/balance";
 import { formatEthValue } from "@/lib/utils";
 
@@ -11,6 +9,10 @@ import { formatEthValue } from "@/lib/utils";
  *
  * Audit v0.3.0 §1.7: meski data publik, endpoint diamankan via requireUser
  * + rate-limit untuk mencegah abuse (enumerasi saldo treasury).
+ *
+ * Audit v0.3.10 H-07: response envelope is now consistent with the rest
+ * of /api/* (ok wrapper) and the timeout-protected fetchWalletBalance
+ * keeps the route under 4s even when the public RPC is slow.
  */
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -22,10 +24,12 @@ export async function GET(request: Request) {
 
   const address = new URL(request.url).searchParams.get("address");
   if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    return NextResponse.json({ balance: null }, { status: 400 });
+    return invalid("Invalid wallet address.");
   }
-  const wei = await fetchWalletBalance(address);
-  return NextResponse.json({
-    balance: wei == null ? null : formatEthValue(wei),
-  });
+  try {
+    const wei = await fetchWalletBalance(address);
+    return ok({ balance: wei == null ? null : formatEthValue(wei) });
+  } catch {
+    return serverError("Could not read wallet balance.");
+  }
 }
