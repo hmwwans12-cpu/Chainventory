@@ -796,8 +796,10 @@ export function MembersPage({
       {rejectTarget ? (
         <RejectJoinDialog
           request={rejectTarget}
-          open={Boolean(rejectTarget)}
-          onOpenChange={(open) => setRejectTarget(open ? rejectTarget : null)}
+          open
+          onOpenChange={(open) => {
+            if (!open) setRejectTarget(null);
+          }}
           onDone={refresh}
         />
       ) : null}
@@ -805,8 +807,10 @@ export function MembersPage({
         <RemoveMemberDialog
           warehouseId={warehouseId}
           member={removeTarget}
-          open={Boolean(removeTarget)}
-          onOpenChange={(open) => setRemoveTarget(open ? removeTarget : null)}
+          open
+          onOpenChange={(open) => {
+            if (!open) setRemoveTarget(null);
+          }}
           onDone={refresh}
         />
       ) : null}
@@ -814,8 +818,10 @@ export function MembersPage({
         <LeaveWarehouseDialog
           warehouseId={warehouseId}
           isOwner={isOwner}
-          open={Boolean(leaveTarget)}
-          onOpenChange={(open) => setLeaveTarget(open ? leaveTarget : null)}
+          open
+          onOpenChange={(open) => {
+            if (!open) setLeaveTarget(null);
+          }}
           onTransfer={() => {
             setLeaveTarget(null);
             setTransferOpen(true);

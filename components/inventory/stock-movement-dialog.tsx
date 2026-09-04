@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useWallets } from "@privy-io/react-auth";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2, Package } from "lucide-react";
 
 import { toast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -375,7 +375,10 @@ export function StockMovementDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={(next) => (busy ? null : onOpenChange(next))}
+      onOpenChange={(next) => {
+        if (busy && !next) return;
+        onOpenChange(next);
+      }}
     >
       <DialogContent>
         <DialogHeader>
@@ -593,8 +596,10 @@ export function StockMovementDialog({
             <Button onClick={submit} disabled={busy || stale}>
               {busy ? (
                 <Loader2 aria-hidden="true" className="animate-spin" />
-              ) : (
+              ) : meta?.icon ? (
                 <meta.icon aria-hidden="true" />
+              ) : (
+                <Package aria-hidden="true" />
               )}
               {movementType === "adjustment"
                 ? "Submit Adjustment for Approval"

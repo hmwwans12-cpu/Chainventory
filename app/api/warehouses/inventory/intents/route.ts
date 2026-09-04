@@ -111,6 +111,24 @@ export async function POST(request: Request) {
       );
     const intentId = randomUUID();
     const occurredAt = new Date().toISOString();
+    // Audit v0.3.8 C-12: cap the BigInt input. The schema enforces
+    // digits-only, but a multi-MB string of "9"s would still parse to
+    // a huge BigInt and reach the RPC layer. 20 digits is far beyond
+    // any realistic inventory version (which is an int4 counter, so
+    // even 12 digits is wildly over-provisioned). Reject up front so
+    // we can return a 400 instead of letting BigInt throw inside the
+    // RPC call.
+    let expectedBalanceVersionBig: bigint | null = null;
+    if (parsed.data.expectedBalanceVersion) {
+      if (parsed.data.expectedBalanceVersion.length > 20) {
+        return invalid("Version number is too large.");
+      }
+      try {
+        expectedBalanceVersionBig = BigInt(parsed.data.expectedBalanceVersion);
+      } catch {
+        return invalid("Invalid version.");
+      }
+    }
     const payload = buildProofPayload({
       movementId: intentId,
       warehouseId: parsed.data.warehouseId,
@@ -136,9 +154,7 @@ export async function POST(request: Request) {
         p_product_id: parsed.data.productId,
         p_movement_type: parsed.data.movementType,
         p_quantity: parsed.data.quantity,
-        p_expected_balance_version: parsed.data.expectedBalanceVersion
-          ? BigInt(parsed.data.expectedBalanceVersion)
-          : null,
+        p_expected_balance_version: expectedBalanceVersionBig,
         p_reason: parsed.data.reason || null,
         p_reference: parsed.data.reference || null,
         p_actor_wallet: parsed.data.actorWallet,
@@ -185,10 +201,22 @@ export async function POST(request: Request) {
       return invalid("Invalid transaction hash.");
     const { data: intentWh } = await supabase
       .from("stock_intents")
-      .select("warehouse_id")
+      .select("warehouse_id, actor_user_id")
       .eq("id", body.intentId)
       .maybeSingle();
     if (!intentWh) return error("Stock intent not found.", "NOT_FOUND", 404);
+    // Audit v0.3.8 C-11: the previous handler skipped RBAC for submit/finalize.
+    // AGENT.md §3 mandates an explicit role check at the Route Handler. The
+    // intent's actor_user_id is the binding identity — only they may submit
+    // their own intent (this also prevents CSRF where an unrelated
+    // warehouse member learns an intent id and submits it).
+    if (intentWh.actor_user_id !== auth.user.id) {
+      return error(
+        "You can only submit stock requests you created.",
+        "FORBIDDEN",
+        403
+      );
+    }
     // Audit C-02: tolak bila warehouse suspended/inactive.
     const inactive = await requireActiveWarehouse(
       supabase,
@@ -213,11 +241,19 @@ export async function POST(request: Request) {
   if (action === "finalize") {
     const { data: intent, error: intentError } = await supabase
       .from("stock_intents")
-      .select("id, actor_wallet, payload_hash, warehouse_id, status, tx_hash")
+      .select("id, actor_user_id, actor_wallet, payload_hash, warehouse_id, status, tx_hash")
       .eq("id", body.intentId)
       .maybeSingle();
     if (intentError || !intent) {
       return error("Stock intent not found.", "NOT_FOUND", 404);
+    }
+    // Audit v0.3.8 C-11: same RBAC enforcement as submit.
+    if (intent.actor_user_id !== auth.user.id) {
+      return error(
+        "You can only finalize stock requests you created.",
+        "FORBIDDEN",
+        403
+      );
     }
     // Audit C-02: tolak bila warehouse suspended/inactive.
     const inactive = await requireActiveWarehouse(

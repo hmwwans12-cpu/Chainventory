@@ -114,6 +114,21 @@ export async function POST(request: Request) {
       const parsed = applyMovementSchema.safeParse(raw.body);
       if (!parsed.success) return invalid(parsed.error.issues[0]?.message);
 
+      // Audit v0.3.8 C-10: require a non-empty idempotencyKey. The previous
+      // behavior silently fell back to NULL, which let duplicate POSTs
+      // create duplicate stock_movements (the DB unique index is per
+      // warehouse, not null). AGENT.md §4 mandates idempotency for every
+      // stock mutation; the only acceptable NULL is the DB rejecting it
+      // before reaching apply_stock_movement.
+      if (
+        !parsed.data.idempotencyKey ||
+        !parsed.data.idempotencyKey.trim()
+      ) {
+        return invalid(
+          "idempotencyKey is required for stock movements."
+        );
+      }
+
       // Audit: adjustment/reversal bersifat struktur-ledger yang kritis —
       // reason wajib di UI, pastikan API menegakkan hal yang sama.
       const effectiveType = parsed.data.movementType;

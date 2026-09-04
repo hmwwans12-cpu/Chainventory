@@ -53,7 +53,10 @@ export function RemoveMemberDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={(next) => (busy ? null : onOpenChange(next))}
+      onOpenChange={(next) => {
+        if (busy && !next) return;
+        onOpenChange(next);
+      }}
     >
       <DialogContent>
         <DialogHeader>

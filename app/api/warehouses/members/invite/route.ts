@@ -6,6 +6,7 @@ import {
   getMemberRole,
   invalid,
   ok,
+  requireRateLimit,
   requireUser,
 } from "@/lib/api-handler";
 import { sendInvitationEmail } from "@/lib/email/resend";
@@ -21,6 +22,13 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const auth = await requireUser(supabase);
   if (auth.res) return auth.res;
+
+  // Audit v0.3.8 C-08: rate limit invite issuance per actor+per warehouse.
+  // Without this, a compromised MANAGER/OWNER account can be used to
+  // email-bomb arbitrary addresses or enumerate the user base by
+  // inspecting the success/failure response.
+  const limited = await requireRateLimit("membership", auth.user.id, request);
+  if (limited) return limited;
 
   // Audit v0.3.0 §1.5: Zod schema + UUID v4 strict regex (sebelumnya
   // loose 36-char hex+dash yang menerima UUID malformed).

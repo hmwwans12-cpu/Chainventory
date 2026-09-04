@@ -759,17 +759,19 @@ export function MovementsPage({
       {detailTarget ? (
         <MovementDetailSheet
           movement={detailTarget}
-          open={Boolean(detailTarget)}
+          open
           onOpenChange={(open) => {
-            setDetailTarget(open ? detailTarget : null);
+            if (!open) setDetailTarget(null);
           }}
         />
       ) : null}
       {approveTarget ? (
         <ApproveDialog
           movement={approveTarget}
-          open={Boolean(approveTarget)}
-          onOpenChange={(open) => setApproveTarget(open ? approveTarget : null)}
+          open
+          onOpenChange={(open) => {
+            if (!open) setApproveTarget(null);
+          }}
           onDone={() => {
             setApproveTarget(null);
             void refreshMovements();
@@ -779,8 +781,10 @@ export function MovementsPage({
       {rejectTarget ? (
         <RejectDialog
           movement={rejectTarget}
-          open={Boolean(rejectTarget)}
-          onOpenChange={(open) => setRejectTarget(open ? rejectTarget : null)}
+          open
+          onOpenChange={(open) => {
+            if (!open) setRejectTarget(null);
+          }}
           onDone={() => {
             setRejectTarget(null);
             void refreshMovements();
@@ -827,7 +831,10 @@ function ApproveDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={(next) => (busy ? null : onOpenChange(next))}
+      onOpenChange={(next) => {
+        if (busy && !next) return;
+        onOpenChange(next);
+      }}
     >
       <DialogContent>
         <DialogHeader>
@@ -908,7 +915,10 @@ function RejectDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={(next) => (busy ? null : onOpenChange(next))}
+      onOpenChange={(next) => {
+        if (busy && !next) return;
+        onOpenChange(next);
+      }}
     >
       <DialogContent>
         <DialogHeader>

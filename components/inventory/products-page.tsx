@@ -928,9 +928,9 @@ export function ProductsPage({
       {editTarget ? (
         <EditProductDialog
           product={editTarget}
-          open={Boolean(editTarget)}
+          open
           onOpenChange={(open) => {
-            setEditTarget(open ? editTarget : null);
+            if (!open) setEditTarget(null);
           }}
           onUpdated={refresh}
         />
@@ -939,9 +939,9 @@ export function ProductsPage({
         <ArchiveProductDialog
           warehouseId={warehouseId}
           product={archiveTarget}
-          open={Boolean(archiveTarget)}
+          open
           onOpenChange={(open) => {
-            setArchiveTarget(open ? archiveTarget : null);
+            if (!open) setArchiveTarget(null);
           }}
           onArchived={refresh}
         />
@@ -952,9 +952,9 @@ export function ProductsPage({
           products={products}
           product={stockTarget.product}
           movementType={stockTarget.type}
-          open={Boolean(stockTarget)}
+          open
           onOpenChange={(open) => {
-            setStockTarget(open ? stockTarget : null);
+            if (!open) setStockTarget(null);
           }}
           onSuccess={refresh}
         />
@@ -963,9 +963,9 @@ export function ProductsPage({
         <ProductDetailSheet
           warehouseId={warehouseId}
           product={detailTarget}
-          open={Boolean(detailTarget)}
+          open
           onOpenChange={(open) => {
-            setDetailTarget(open ? detailTarget : null);
+            if (!open) setDetailTarget(null);
           }}
         />
       ) : null}
