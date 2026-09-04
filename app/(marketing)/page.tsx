@@ -7,6 +7,7 @@ import { TrustedBy } from "@/components/marketing/trusted-by";
 import { HowItWorks } from "@/components/marketing/how-it-works";
 import { BlockchainExplanation } from "@/components/marketing/blockchain-explanation";
 import { Testimonials } from "@/components/marketing/testimonials";
+import { PeakProof } from "@/components/marketing/peak-proof";
 import { Security } from "@/components/marketing/security";
 import { Faq } from "@/components/marketing/faq";
 import { Cta } from "@/components/marketing/cta";
@@ -35,6 +36,7 @@ export default function LandingPage() {
       <HowItWorks />
       <BlockchainExplanation />
       <Testimonials />
+      <PeakProof />
       <Security />
       <Faq />
       <Cta />

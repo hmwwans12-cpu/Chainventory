@@ -25,7 +25,7 @@ export default function AuthLayout({
       <div className="bg-card w-full max-w-sm rounded-lg border p-6 shadow-sm sm:p-8">
         {children}
       </div>
-      <p className="text-muted-foreground mt-6 text-xs">
+      <p className="text-muted-foreground mt-6 text-sm">
         {"\u00A9"} {year} {APP_NAME}.{" "}
         <Link
           href="/"

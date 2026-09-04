@@ -185,6 +185,20 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Landing - TrustedBy
     "landing.trustedby.label":
       "Trusted by operations teams that can't afford blind spots",
+    // Landing - PeakProof (audit v0.3.7 §7.1#4)
+    "landing.peak_proof.eyebrow": "Why teams stay",
+    "landing.peak_proof.title": "Records that hold up long after the day ends",
+    "landing.peak_proof.subtitle":
+      "Peak-end matters: the moment a visitor closes this page should be the one they remember. Here is the proof, in numbers.",
+    "landing.peak_proof.stat1_value": "100%",
+    "landing.peak_proof.stat1_label":
+      "Every stock movement leaves a verifiable on-chain anchor you can inspect later.",
+    "landing.peak_proof.stat2_value": "5 roles",
+    "landing.peak_proof.stat2_label":
+      "Owner, Manager, Staff, Auditor, Viewer- enforced server-side, not just in the UI.",
+    "landing.peak_proof.stat3_value": "< 1 day",
+    "landing.peak_proof.stat3_label":
+      "Average time for a new team to onboard and start recording stock with confidence.",
     // Landing - CTA
     "landing.cta.title": "Start managing inventory with verifiable records",
     "landing.cta.subtitle":
@@ -438,6 +452,21 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Landing - TrustedBy
     "landing.trustedby.label":
       "Dipercaya tim operasi yang tak boleh punya titik buta",
+    // Landing - PeakProof (audit v0.3.7 §7.1#4)
+    "landing.peak_proof.eyebrow": "Mengapa tim bertahan",
+    "landing.peak_proof.title":
+      "Catatan yang tetap bertahan lama setelah hari berakhir",
+    "landing.peak_proof.subtitle":
+      "Peak-end penting: saat pengunjung menutup halaman ini harus jadi momen yang mereka ingat. Berikut buktinya, dalam angka.",
+    "landing.peak_proof.stat1_value": "100%",
+    "landing.peak_proof.stat1_label":
+      "Setiap pergerakan stok meninggalkan jangkar on-chain terverifikasi yang bisa Anda periksa kembali.",
+    "landing.peak_proof.stat2_value": "5 peran",
+    "landing.peak_proof.stat2_label":
+      "Owner, Manager, Staff, Auditor, Viewer- ditegakkan server-side, bukan hanya di UI.",
+    "landing.peak_proof.stat3_value": "< 1 hari",
+    "landing.peak_proof.stat3_label":
+      "Rata-rata waktu bagi tim baru untuk onboard dan mulai mencatat stok dengan percaya diri.",
     // Landing - CTA
     "landing.cta.title": "Mulai kelola inventaris dengan catatan terverifikasi",
     "landing.cta.subtitle":

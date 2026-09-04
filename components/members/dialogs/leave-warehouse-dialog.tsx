@@ -78,12 +78,12 @@ export function LeaveWarehouseDialog({
             onClick={() => onOpenChange(false)}
             disabled={busy}
           >
-            {isOwner ? "Close" : "Cancel"}
+            {isOwner ? "Keep as owner" : "Stay in warehouse"}
           </Button>
           {isOwner ? (
-            <Button onClick={onTransfer}>
+            <Button variant="outline" onClick={onTransfer}>
               <Crown aria-hidden="true" />
-              Transfer Ownership
+              Transfer ownership
             </Button>
           ) : (
             <Button variant="destructive" onClick={leave} disabled={busy}>

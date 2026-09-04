@@ -99,7 +99,7 @@ export function DeploymentSteps({
                 {step.hint ? (
                   <p
                     className={cn(
-                      "text-xs leading-relaxed",
+                      "text-sm leading-relaxed",
                       step.state === "pending"
                         ? "text-muted-foreground"
                         : "text-muted-foreground"

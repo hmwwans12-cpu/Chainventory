@@ -229,7 +229,9 @@ export function JoinWarehouseForm() {
                   {index === 0 ? (
                     <Check aria-hidden="true" className="size-4" />
                   ) : (
-                    <span className="text-xs tabular-nums">{index + 1}</span>
+                    <span className="text-sm font-semibold tabular-nums">
+                      {index + 1}
+                    </span>
                   )}
                 </span>
                 <span

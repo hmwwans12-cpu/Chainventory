@@ -164,7 +164,7 @@ export function TransferOwnershipDialog({
               onClick={() => onOpenChange(false)}
               disabled={busy}
             >
-              Cancel
+              Keep ownership
             </Button>
           )}
           <Button
