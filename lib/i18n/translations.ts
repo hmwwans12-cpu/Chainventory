@@ -54,6 +54,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.language": "Language",
     "common.open_command": "Open command palette",
     "common.close": "Close",
+    "common.cancel": "Cancel",
+    "common.confirm": "Confirm",
     // Landing - Hero
     "landing.hero.badge": "Blockchain verification on Base Sepolia",
     "landing.hero.title_main": "Inventory management with",
@@ -321,6 +323,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.language": "Bahasa",
     "common.open_command": "Buka palette perintah",
     "common.close": "Tutup",
+    "common.cancel": "Batal",
+    "common.confirm": "Konfirmasi",
     // Landing - Hero
     "landing.hero.badge": "Verifikasi blockchain di Base Sepolia",
     "landing.hero.title_main": "Manajemen inventaris dengan",

@@ -8,7 +8,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const ROOT = resolve(process.cwd());
@@ -30,18 +30,6 @@ function warn(msg, file) {
 
 function ok(msg) {
   console.log(`✅ ${msg}`);
-}
-
-function run(cmd) {
-  try {
-    return execSync(cmd, {
-      cwd: ROOT,
-      encoding: "utf-8",
-      stdio: "pipe",
-    }).trim();
-  } catch (e) {
-    return "";
-  }
 }
 
 function walk(dir, ext = ".tsx") {

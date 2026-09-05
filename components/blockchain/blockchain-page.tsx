@@ -141,7 +141,7 @@ export function BlockchainPage({
       refreshDebounced.cancel();
       supabase.removeChannel(channel);
     };
-  }, [warehouseId, supabase]);
+  }, [warehouseId, supabase, refreshProofsSafe]);
 
   const switchWarehouse = (id: string) => {
     if (id === warehouseId) return;

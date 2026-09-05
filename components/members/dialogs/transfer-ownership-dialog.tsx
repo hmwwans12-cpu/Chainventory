@@ -1,17 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ErrorAlert } from "@/components/shared/error-alert";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import {
   Select,
   SelectContent,
@@ -53,6 +46,16 @@ export function TransferOwnershipDialog({
     setTargetId("");
   };
 
+  const handleOpenChange = (next: boolean) => {
+    if (busy) return;
+    if (!next) {
+      setConfirming(false);
+      setTargetId("");
+      setError(null);
+    }
+    onOpenChange(next);
+  };
+
   const transfer = async () => {
     if (!targetId) {
       setError("Select a member to transfer ownership to.");
@@ -81,96 +84,61 @@ export function TransferOwnershipDialog({
   const selectedMember = members.find((m) => m.userId === targetId);
 
   return (
-    <Dialog
+    <ConfirmDialog
       open={open}
-      onOpenChange={(next) => {
-        if (busy) return;
-        if (!next) {
-          setConfirming(false);
-          setTargetId("");
-          setError(null);
-        }
-        onOpenChange(next);
-      }}
+      onOpenChange={handleOpenChange}
+      busy={busy}
+      title="Transfer ownership"
+      description="You will become a Manager. Only the new owner can manage ownership from now on."
+      error={error}
+      cancelLabel={confirming ? "Back" : "Keep ownership"}
+      primaryLabel={busy ? "Transferring…" : "Transfer ownership"}
+      primaryDisabled={!targetId || members.length === 0}
+      primaryIcon={
+        busy ? (
+          <Loader2 aria-hidden="true" className="animate-spin" />
+        ) : undefined
+      }
+      onConfirm={confirming ? transfer : handleCancelConfirm}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Transfer ownership</DialogTitle>
-          <DialogDescription>
-            You will become a Manager. Only the new owner can manage ownership
-            from now on.
-          </DialogDescription>
-        </DialogHeader>
-        {error ? (
-          <ErrorAlert size="md">{error}</ErrorAlert>
-        ) : null}
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="transfer-target">New owner</Label>
-          {members.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No active members to transfer to.
-            </p>
-          ) : confirming && selectedMember ? (
-            // Audit v0.3.5 §9.25: re-confirm destructive action. 2-step:
-            // pilih member -> konfirmasi "Transfer ownership" dengan
-            // nama target ditampilkan eksplisit.
-            <div
-              role="alert"
-              className="border-warning/30 bg-warning/5 flex flex-col gap-2 rounded-lg border p-3"
-            >
-              <p className="text-foreground text-sm">
-                Transfer ownership to{" "}
-                <span className="font-semibold">
-                  {selectedMember.displayName ?? selectedMember.email}
-                </span>
-                ?
-              </p>
-              <p className="text-muted-foreground text-sm">
-                You will become a Manager. Only the new owner can manage
-                ownership from now on. This action cannot be undone by you.
-              </p>
-            </div>
-          ) : (
-            <Select value={targetId} onValueChange={handleSelect}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a member" />
-              </SelectTrigger>
-              <SelectContent>
-                {members.map((m) => (
-                  <SelectItem key={m.userId} value={m.userId}>
-                    {m.displayName ?? m.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          {confirming ? (
-            <Button
-              variant="outline"
-              onClick={handleCancelConfirm}
-              disabled={busy}
-            >
-              Back
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={busy}
-            >
-              Keep ownership
-            </Button>
-          )}
-          <Button
-            onClick={transfer}
-            disabled={busy || !targetId || members.length === 0}
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="transfer-target">New owner</Label>
+        {members.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            No active members to transfer to.
+          </p>
+        ) : confirming && selectedMember ? (
+          <div
+            role="alert"
+            className="border-warning/30 bg-warning/5 flex flex-col gap-2 rounded-lg border p-3"
           >
-            {busy ? "Transferring…" : "Transfer ownership"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            <p className="text-foreground text-sm">
+              Transfer ownership to{" "}
+              <span className="font-semibold">
+                {selectedMember.displayName ?? selectedMember.email}
+              </span>
+              ?
+            </p>
+            <p className="text-muted-foreground text-sm">
+              You will become a Manager. Only the new owner can manage
+              ownership from now on. This action cannot be undone by you.
+            </p>
+          </div>
+        ) : (
+          <Select value={targetId} onValueChange={handleSelect}>
+            <SelectTrigger id="transfer-target" className="w-full">
+              <SelectValue placeholder="Select a member" />
+            </SelectTrigger>
+            <SelectContent>
+              {members.map((m) => (
+                <SelectItem key={m.userId} value={m.userId}>
+                  {m.displayName ?? m.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+    </ConfirmDialog>
   );
 }

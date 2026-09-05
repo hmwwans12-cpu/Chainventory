@@ -3,17 +3,9 @@
 import * as React from "react";
 import { Loader2, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ErrorAlert } from "@/components/shared/error-alert";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { toast } from "@/components/ui/toast";
 import { rejectJoin } from "@/lib/warehouses/members-client";
 import type { PendingJoinRequest } from "@/lib/members/types";
@@ -55,54 +47,35 @@ export function RejectJoinDialog({
   };
 
   return (
-    <Dialog
+    <ConfirmDialog
       open={open}
-      onOpenChange={(next) => {
-        if (busy && !next) return;
-        onOpenChange(next);
-      }}
+      onOpenChange={onOpenChange}
+      busy={busy}
+      title={`Reject ${request.displayName ?? "this join request"}?`}
+      description="They can submit a new request later. You can optionally include a reason."
+      error={error}
+      cancelLabel="Keep request pending"
+      primaryLabel="Reject request"
+      primaryVariant="destructive"
+      primaryIcon={
+        busy ? (
+          <Loader2 aria-hidden="true" className="animate-spin" />
+        ) : (
+          <X aria-hidden="true" />
+        )
+      }
+      onConfirm={reject}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            Reject {request.displayName ?? "this join request"}?
-          </DialogTitle>
-          <DialogDescription>
-            They can submit a new request later. You can optionally include a
-            reason.
-          </DialogDescription>
-        </DialogHeader>
-        {error ? (
-          <ErrorAlert size="md">{error}</ErrorAlert>
-        ) : null}
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="reject-reason">Reason for rejection (optional)</Label>
-          <Input
-            id="reject-reason"
-            value={reason}
-            maxLength={500}
-            onChange={(event) => setReason(event.target.value)}
-            placeholder="Explain why this request cannot be approved"
-          />
-        </div>
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={busy}
-          >
-            Keep request pending
-          </Button>
-          <Button variant="destructive" onClick={reject} disabled={busy}>
-            {busy ? (
-              <Loader2 aria-hidden="true" className="animate-spin" />
-            ) : (
-              <X aria-hidden="true" />
-            )}
-            Reject request
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="reject-reason">Reason for rejection (optional)</Label>
+        <Input
+          id="reject-reason"
+          value={reason}
+          maxLength={500}
+          onChange={(event) => setReason(event.target.value)}
+          placeholder="Explain why this request cannot be approved"
+        />
+      </div>
+    </ConfirmDialog>
   );
 }

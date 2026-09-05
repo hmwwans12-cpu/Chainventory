@@ -3,16 +3,8 @@
 import * as React from "react";
 import { Loader2, UserMinus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { toast } from "@/components/ui/toast";
-import { ErrorAlert } from "@/components/shared/error-alert";
 import { removeMember } from "@/lib/warehouses/members-client";
 import type { MemberListItem } from "@/lib/members/types";
 
@@ -51,39 +43,24 @@ export function RemoveMemberDialog({
   };
 
   return (
-    <Dialog
+    <ConfirmDialog
       open={open}
-      onOpenChange={(next) => {
-        if (busy && !next) return;
-        onOpenChange(next);
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Remove {member.displayName ?? member.email} from warehouse?</DialogTitle>
-          <DialogDescription className="text-sm">
-            {member.displayName ?? member.email} will immediately lose access to this warehouse. Existing activity and movement history remain unchanged. You can re-invite them later.
-          </DialogDescription>
-        </DialogHeader>
-        {error ? <ErrorAlert>{error}</ErrorAlert> : null}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={busy}
-          >
-            Keep member
-          </Button>
-          <Button variant="destructive" onClick={remove} disabled={busy}>
-            {busy ? (
-              <Loader2 aria-hidden="true" className="animate-spin" />
-            ) : (
-              <UserMinus aria-hidden="true" />
-            )}
-            Remove member
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      onOpenChange={onOpenChange}
+      busy={busy}
+      title={`Remove ${member.displayName ?? member.email} from warehouse?`}
+      description={`${member.displayName ?? member.email} will immediately lose access to this warehouse. Existing activity and movement history remain unchanged. You can re-invite them later.`}
+      error={error}
+      cancelLabel="Keep member"
+      primaryLabel="Remove member"
+      primaryVariant="destructive"
+      primaryIcon={
+        busy ? (
+          <Loader2 aria-hidden="true" className="animate-spin" />
+        ) : (
+          <UserMinus aria-hidden="true" />
+        )
+      }
+      onConfirm={remove}
+    />
   );
 }

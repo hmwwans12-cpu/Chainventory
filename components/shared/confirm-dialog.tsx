@@ -32,7 +32,13 @@ import { ErrorAlert } from "@/components/shared/error-alert";
  * dialog refuses to close (so an in-flight mutation cannot be cancelled
  * by pressing Escape or clicking the overlay).
  */
-export type ConfirmDialogVariant = "default" | "destructive";
+export type ConfirmDialogVariant =
+  | "default"
+  | "outline"
+  | "secondary"
+  | "ghost"
+  | "destructive"
+  | "link";
 
 export function ConfirmDialog({
   open,

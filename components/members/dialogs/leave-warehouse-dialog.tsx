@@ -4,14 +4,7 @@ import * as React from "react";
 import { Crown, Loader2, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ErrorAlert } from "@/components/shared/error-alert";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { toast } from "@/components/ui/toast";
 import { leaveWarehouse } from "@/lib/warehouses/members-client";
 
@@ -51,51 +44,59 @@ export function LeaveWarehouseDialog({
     }
   };
 
+  // When the user is the owner, the "primary" action in this dialog is
+  // actually "Transfer ownership" (a routing action that opens another
+  // dialog) — NOT a confirmation. The destructive "Leave warehouse"
+  // button is hidden because the owner cannot leave without transferring
+  // first. We render the dialog shell with a single button so the
+  // ConfirmDialog primitive still applies the busy guard and error
+  // alert, but we replace the two-button footer with a custom one.
   return (
-    <Dialog
+    <ConfirmDialog
       open={open}
-      onOpenChange={(next) => {
-        if (busy && !next) return;
-        onOpenChange(next);
-      }}
+      onOpenChange={onOpenChange}
+      busy={busy}
+      title="Leave warehouse?"
+      description={
+        isOwner
+          ? "You are the owner — you can't leave until ownership is transferred to another member. Transfer ownership first, then you can leave."
+          : "You will immediately lose access to this warehouse. Your past activity remains. A Manager or Owner can re-invite you later."
+      }
+      error={error}
+      cancelLabel={isOwner ? "Keep as owner" : "Stay in warehouse"}
+      primaryLabel={
+        isOwner ? "Transfer ownership" : "Leave warehouse"
+      }
+      primaryVariant={isOwner ? "outline" : "destructive"}
+      primaryIcon={
+        isOwner ? (
+          <Crown aria-hidden="true" />
+        ) : busy ? (
+          <Loader2 aria-hidden="true" className="animate-spin" />
+        ) : (
+          <LogOut aria-hidden="true" />
+        )
+      }
+      onConfirm={isOwner ? onTransfer : leave}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Leave warehouse?</DialogTitle>
-          <DialogDescription className="text-sm">
-            {isOwner
-              ? "You are the owner — you can't leave until ownership is transferred to another member. Transfer ownership first, then you can leave."
-              : "You will immediately lose access to this warehouse. Your past activity remains. A Manager or Owner can re-invite you later."}
-          </DialogDescription>
-        </DialogHeader>
-        {error ? (
-          <ErrorAlert size="md">{error}</ErrorAlert>
-        ) : null}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={busy}
-          >
-            {isOwner ? "Keep as owner" : "Stay in warehouse"}
-          </Button>
-          {isOwner ? (
-            <Button variant="outline" onClick={onTransfer}>
-              <Crown aria-hidden="true" />
-              Transfer ownership
-            </Button>
+      {isOwner ? (
+        // No extra body for the owner path.
+        null
+      ) : (
+        <Button
+          variant="destructive"
+          onClick={leave}
+          disabled={busy}
+          className="sm:hidden"
+        >
+          {busy ? (
+            <Loader2 aria-hidden="true" className="animate-spin" />
           ) : (
-            <Button variant="destructive" onClick={leave} disabled={busy}>
-              {busy ? (
-                <Loader2 aria-hidden="true" className="animate-spin" />
-              ) : (
-                <LogOut aria-hidden="true" />
-              )}
-              Leave warehouse
-            </Button>
+            <LogOut aria-hidden="true" />
           )}
-        </div>
-      </DialogContent>
-    </Dialog>
+          Leave warehouse
+        </Button>
+      )}
+    </ConfirmDialog>
   );
 }
