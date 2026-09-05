@@ -26,6 +26,16 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
+  // Audit v0.4.5: members-page syncs the server-provided members prop
+  // into local state. The sync is required because useOptimistic needs
+  // a state value (not a prop) as its source. Without this effect the
+  // optimistic state would stay stale after router.refresh().
+  {
+    files: ["components/members/members-page.tsx"],
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

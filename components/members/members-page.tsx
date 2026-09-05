@@ -93,6 +93,24 @@ export function MembersPage({
   const searchParams = useSearchParams();
 
   const [changing, setChanging] = React.useState<Set<string>>(new Set());
+  // Audit v0.4.5: useOptimistic for member role changes. We sync the
+  // server-provided members list into local state on every render so
+  // router.refresh() (called after a successful role change) re-derives
+  // the optimistic state to the server-confirmed value. The role pill
+  // flips immediately on change; on success the server response
+  // matches the optimistic value, on failure React rolls back the
+  // optimistic update automatically when the transition unwinds.
+  const [localMembers, setLocalMembers] =
+    React.useState<MemberListItem[]>(members);
+  React.useEffect(() => {
+    setLocalMembers(members);
+  }, [members]);
+  const [optimisticMembers, setOptimisticMember] = React.useOptimistic<
+    MemberListItem[],
+    { membershipId: string; role: Role }
+  >(localMembers, (current, { membershipId, role }) =>
+    current.map((m) => (m.membershipId === membershipId ? { ...m, role } : m))
+  );
   const [removeTarget, setRemoveTarget] = React.useState<MemberListItem | null>(
     null
   );
@@ -233,8 +251,19 @@ export function MembersPage({
     }
   };
 
+  const [, startTransition] = React.useTransition();
+
   const handleRoleChange = async (member: MemberListItem, newRole: Role) => {
     setChanging((prev) => new Set(prev).add(member.membershipId));
+    // Audit v0.4.5: optimistic UI for role changes. The row's role
+    // pill flips to the new role before the RPC returns. Failure
+    // rolls back automatically.
+    startTransition(() => {
+      setOptimisticMember({
+        membershipId: member.membershipId,
+        role: newRole,
+      });
+    });
     const result = await changeMemberRole({
       warehouseId,
       userId: member.userId,
@@ -517,7 +546,7 @@ export function MembersPage({
         </section>
       ) : null}
 
-      {members.length === 0 ? (
+      {localMembers.length === 0 ? (
         <EmptyState
           icon={Users}
           title="No teammates yet"
@@ -547,7 +576,7 @@ export function MembersPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {members.map((member) => {
+                {optimisticMembers.map((member) => {
                   const isSelf = member.userId === myUserId;
                   const manageable =
                     !isSelf &&
@@ -678,7 +707,7 @@ export function MembersPage({
           </div>
           {/* Mobile: card list (audit N) */}
           <ul className="divide-y md:hidden">
-            {members.map((member) => {
+            {optimisticMembers.map((member) => {
               const isSelf = member.userId === myUserId;
               const manageable =
                 !isSelf &&
@@ -838,7 +867,7 @@ export function MembersPage({
       {transferOpen ? (
         <TransferOwnershipDialog
           warehouseId={warehouseId}
-          members={members.filter(
+          members={localMembers.filter(
             (m) => m.userId !== myUserId && m.status === "ACTIVE"
           )}
           open

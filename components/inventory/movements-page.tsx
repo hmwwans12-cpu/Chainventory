@@ -152,26 +152,19 @@ export function MovementsPage({
 
   const [movements, setMovements] =
     React.useState<MovementListItem[]>(initialMovements);
-  // Audit v0.4.4: useOptimistic was added here in preparation for
-  // optimistic UI on approvals. The current parent component renders
-  // the rows directly from `movements` (post-`onDone` refresh), which
-  // is consistent with the existing refresh flow. To activate the
-  // optimistic path without touching the dialog API, a child
-  // component would need to call setOptimisticMovement from inside a
-  // startTransition. We wire the hook here so a follow-up PR can flip
-  // the rows to read from `optimisticMovements` without re-deriving
-  // the type. The two-arg setOptimisticMovement signature matches
-  // the React 19 useOptimistic contract.
-  const [, setOptimisticMovement] = useOptimistic<
+  // Audit v0.4.5: useOptimistic fully activated. The list renders from
+  // optimisticMovements so a status flip (approve/reject) lands in
+  // the UI immediately. The server call still runs; on success the
+  // underlying `movements` array is refreshed (which re-derives the
+  // optimistic state to the same value), and on failure React rolls
+  // back the optimistic update automatically when the transition
+  // unwinds.
+  const [optimisticMovements, setOptimisticMovement] = useOptimistic<
     MovementListItem[],
     { movementId: string; status: MovementListItem["status"] }
   >(movements, (current, { movementId, status }) =>
     current.map((m) => (m.id === movementId ? { ...m, status } : m))
   );
-  // Keep the variable in scope so the optimistic hook stays mounted
-  // even when no optimistic update is dispatched. Without this,
-  // React DevTools would warn about an unused result.
-  void setOptimisticMovement;
   const [hasMore, setHasMore] = React.useState(
     initialMovements.length === PAGE_SIZE
   );
@@ -503,7 +496,7 @@ export function MovementsPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {movements.map((m) => {
+                {optimisticMovements.map((m) => {
                   const typeMeta = MOVEMENT_TYPE_META[m.movementType];
                   const statusMeta = MOVEMENT_STATUS_META[m.status];
                   const negative =
@@ -639,7 +632,7 @@ export function MovementsPage({
           </div>
           {/* Mobile: card list (audit N) */}
           <ul className="divide-y lg:hidden">
-            {movements.map((m) => {
+            {optimisticMovements.map((m) => {
               const typeMeta = MOVEMENT_TYPE_META[m.movementType];
               const statusMeta = MOVEMENT_STATUS_META[m.status];
               const negative =
@@ -790,6 +783,12 @@ export function MovementsPage({
         <ApproveDialog
           movement={approveTarget}
           open
+          onOptimisticStatus={(status) =>
+            setOptimisticMovement({
+              movementId: approveTarget.id,
+              status,
+            })
+          }
           onOpenChange={(open) => {
             if (!open) setApproveTarget(null);
           }}
@@ -803,6 +802,12 @@ export function MovementsPage({
         <RejectDialog
           movement={rejectTarget}
           open
+          onOptimisticStatus={(status) =>
+            setOptimisticMovement({
+              movementId: rejectTarget.id,
+              status,
+            })
+          }
           onOpenChange={(open) => {
             if (!open) setRejectTarget(null);
           }}
@@ -821,25 +826,32 @@ function ApproveDialog({
   open,
   onOpenChange,
   onDone,
+  onOptimisticStatus,
 }: {
   movement: MovementListItem;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDone: () => void;
+  onOptimisticStatus?: (status: MovementListItem["status"]) => void;
 }) {
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [, startTransition] = React.useTransition();
   const meta = MOVEMENT_TYPE_META[movement.movementType];
 
   const approve = async () => {
     setBusy(true);
     setError(null);
+    // Audit v0.4.5: flip the row's status to "committed" before the
+    // RPC returns so the user sees the action land immediately. If
+    // the RPC fails, React automatically rolls back the optimistic
+    // update when the startTransition unwinds (after we set `error`
+    // and `onOpenChange` keeps the dialog open).
+    startTransition(() => {
+      onOptimisticStatus?.("committed");
+    });
     const result = await approveAdjustment(movement.id);
     if (result.ok) {
-      // Audit v0.4.4: optimistic UI via startTransition — the parent
-      // component's `optimisticMovements` is already wired to flip the
-      // row's status. The parent calls this handler inside a
-      // startTransition so the local optimistic update is committed.
       toast.add({
         type: "success",
         title: "Movement approved",
@@ -903,15 +915,18 @@ function RejectDialog({
   open,
   onOpenChange,
   onDone,
+  onOptimisticStatus,
 }: {
   movement: MovementListItem;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDone: () => void;
+  onOptimisticStatus?: (status: MovementListItem["status"]) => void;
 }) {
   const [reason, setReason] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [, startTransition] = React.useTransition();
   const meta = MOVEMENT_TYPE_META[movement.movementType];
 
   const reject = async () => {
@@ -921,6 +936,11 @@ function RejectDialog({
     }
     setBusy(true);
     setError(null);
+    // Audit v0.4.5: optimistic UI — flip the row to "rejected" before
+    // the RPC returns. Failure rolls back automatically.
+    startTransition(() => {
+      onOptimisticStatus?.("rejected");
+    });
     const result = await rejectAdjustment(movement.id, reason.trim());
     setBusy(false);
     if (result.ok) {
