@@ -57,6 +57,8 @@ const FAQ_ITEMS = [
  * Hairline-divided list- no card boxes, so it reads lighter than the card
  * sections above and below it.
  */
+type FaqItem = { q: string; a: string; isRaw?: boolean };
+
 export function Faq() {
   const { t } = useLocale();
   const hasTranslation = (key: string) => {
@@ -77,7 +79,10 @@ export function Faq() {
 
         <Reveal delay={0.05}>
           <Accordion multiple>
-            {(useKeys ? FAQ_KEYS : FAQ_ITEMS.map((f,i)=>({q:FAQ_ITEMS[i].question,a:FAQ_ITEMS[i].answer, isRaw:true}))).map((item: any) => {
+            {((useKeys
+              ? FAQ_KEYS
+              : FAQ_ITEMS.map((f) => ({ q: f.question, a: f.answer, isRaw: true }))
+            ) as FaqItem[]).map((item) => {
               const q = item.isRaw ? item.q : t(item.q);
               const a = item.isRaw ? item.a : t(item.a);
               return (

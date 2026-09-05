@@ -114,7 +114,9 @@ export async function claimFaucet(
   const transferResult = await transferFaucetEth(walletAddress);
 
   if (!transferResult.ok) {
-    // Mark claim as failed
+    // Mark claim as failed. transferFaucetEth returns ok:false ONLY
+    // when the broadcast was REJECTED (tx never made it to the mempool),
+    // so it is safe to reset the rate limit and let the user retry.
     await supabase.rpc("confirm_faucet_claim", {
       p_claim_id: claimId,
       p_tx_hash: "",
@@ -123,19 +125,38 @@ export async function claimFaucet(
 
     logger.warn(
       { userId, claimId, error: transferResult.error },
-      "faucet ETH transfer failed"
+      "faucet ETH transfer rejected"
     );
-    // User tidak menerima ETH -> kembalikan jatah agar bisa retry.
     await resetFaucetRateLimit(userId);
-    return { ok: false, error: transferResult.error ?? "ETH transfer failed" };
+    return { ok: false, error: transferResult.error };
   }
 
-  // 5. Update claim with tx hash (status stays pending until confirmed)
-  await supabase.rpc("confirm_faucet_claim", {
-    p_claim_id: claimId,
-    p_tx_hash: transferResult.txHash ?? "",
-    p_status: "pending",
-  });
+  // 5. Update claim with tx hash (status stays pending until confirmed).
+  // transferFaucetEth guarantees ok:true means the tx was broadcast
+  // successfully (audit v0.4.2: post-broadcast throw no longer
+  // possible). We MUST mark the claim with the txHash and NOT reset
+  // the rate limit, even if the DB update below fails — a manual
+  // reconciliation cron will pick up any orphans.
+  try {
+    await supabase.rpc("confirm_faucet_claim", {
+      p_claim_id: claimId,
+      p_tx_hash: transferResult.txHash,
+      p_status: "pending",
+    });
+  } catch (dbErr) {
+    // Broadcast already succeeded on-chain. Log loudly so operators
+    // can run reconciliation; do NOT reset the rate limit because
+    // the user has already received (or will receive) the ETH.
+    logger.error(
+      {
+        err: dbErr instanceof Error ? dbErr.message : String(dbErr),
+        userId,
+        claimId,
+        txHash: transferResult.txHash,
+      },
+      "faucet claim DB update failed AFTER successful broadcast — manual reconciliation required"
+    );
+  }
 
   logger.info(
     { userId, claimId, txHash: transferResult.txHash, to: walletAddress },

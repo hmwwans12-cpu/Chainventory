@@ -17,6 +17,15 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
+  // Audit v0.4.2: same rationale for products-page savedViews hydration
+  // from localStorage. The effect runs once per warehouseId change; the
+  // set-state is a one-time read of an external system.
+  {
+    files: ["components/inventory/products-page.tsx"],
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

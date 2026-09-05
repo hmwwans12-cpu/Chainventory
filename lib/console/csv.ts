@@ -1,3 +1,5 @@
+import { neutralizeFormula } from "@/lib/csv/formula-injection";
+
 /**
  * CSV serialization (Developer Console export).
  *
@@ -7,6 +9,12 @@
  *   - separator baris CRLF (`\r\n`) untuk kompatibilitas Excel.
  *
  * Tidak ada value secret yang boleh diekspor — pemanggil menentukan kolom.
+ *
+ * Audit v0.4.2 (dari `audidi.md` §1.6): `lib/console/csv.ts` (export
+ * Developer Console) belum punya mitigasi formula-injection yang sudah
+ * ada di `lib/inventory/csv.ts`. Kita delegasikan ke helper terpusat
+ * `lib/csv/formula-injection` agar kedua exporter konsisten dan semua
+ * sel user-controlled aman ketika dibuka di Excel/Sheets.
  */
 
 /** Escape satu value menjadi sel CSV yang valid. */
@@ -20,6 +28,10 @@ export function csvEscape(value: unknown): string {
   } else {
     s = String(value);
   }
+  // Mitigasi formula injection: prefix apostrof untuk sel yang berawalan
+  // karakter eksekusi spreadsheet (=, +, -, @). Setelah itu, escape
+  // RFC 4180 untuk koma, kutip ganda, atau newline.
+  s = neutralizeFormula(s);
   if (/[",\r\n]/.test(s)) {
     s = `"${s.replace(/"/g, '""')}"`;
   }

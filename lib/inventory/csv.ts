@@ -1,4 +1,5 @@
 import type { BulkProductRow } from "@/lib/inventory/products-client";
+import { neutralizeFormula } from "@/lib/csv/formula-injection";
 
 /**
  * CSV util untuk import/export produk (DESIGN §36 + §84.5)  final.
@@ -104,12 +105,13 @@ export function parseCsvMatrix(
   return { rows, overflow: false };
 }
 
-/** Escape satu sel sesuai RFC 4180 + mitigasi formula injection (M-03). */
+/** Escape satu sel sesuai RFC 4180 + mitigasi formula injection. */
 export function csvCell(value: string): string {
-  // Nilai berawalan karakter eksekusi formula spreadsheet diberi awalan
-  // apostrof. Angka negatif murni ("-30") dikecualikan agar tetap bersih.
-  const safe =
-    /^[=+@]/.test(value) || /^-(?!\d)/.test(value) ? `'${value}` : value;
+  // Mitigasi formula injection didelegasikan ke helper terpusat di
+  // lib/csv/formula-injection (audit v0.4.2: share antara export
+  // inventory dan console). Setelah prefix, kita TETAP harus escape
+  // RFC 4180 (kutip ganda, koma, newline) via quoting.
+  const safe = neutralizeFormula(value);
   return /[",\r\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
 }
 
