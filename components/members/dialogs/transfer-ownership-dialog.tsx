@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ErrorAlert } from "@/components/shared/error-alert";
 import {
   Select,
   SelectContent,
@@ -101,12 +102,7 @@ export function TransferOwnershipDialog({
           </DialogDescription>
         </DialogHeader>
         {error ? (
-          <p
-            role="alert"
-            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-sm"
-          >
-            {error}
-          </p>
+          <ErrorAlert size="md">{error}</ErrorAlert>
         ) : null}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="transfer-target">New owner</Label>

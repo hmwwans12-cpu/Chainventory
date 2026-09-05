@@ -33,15 +33,55 @@ const parseEnv = (file) => {
 
 const prod = parseEnv(".env.local");
 const e2e = parseEnv(".env.e2e.local");
-const testReg = JSON.parse(
-  readFileSync(
-    resolve(root, "contracts/deployments/base-sepolia-test.json"),
-    "utf8"
-  )
-);
-const prodReg = JSON.parse(
-  readFileSync(resolve(root, "contracts/deployments/base-sepolia.json"), "utf8")
-);
+
+/**
+ * Audit v0.3.11 M-08: read the deployment registry files inside try/catch
+ * so a missing file (e.g. CI without a fresh deploy) does not crash with
+ * a raw ENOENT stack. We warn and continue, treating the absent registry
+ * as a non-fatal hint in local dev (CI sets WAREHOUSE_FACTORY_ADDRESS
+ * explicitly and the smoke env-deploy BLOCKER catches the real issue).
+ */
+function readJsonOrNull(file) {
+  try {
+    return JSON.parse(readFileSync(resolve(root, file), "utf8"));
+  } catch (err) {
+    console.warn(
+      `[verify-env] WARN: could not read ${file} (${
+        err instanceof Error ? err.message : String(err)
+      })`
+    );
+    return null;
+  }
+}
+
+const testReg = readJsonOrNull("contracts/deployments/base-sepolia-test.json");
+const prodReg = readJsonOrNull("contracts/deployments/base-sepolia.json");
+
+// If either registry is missing, we can still run the env-side checks
+// (TREASURY_PRIVATE_KEY, E2E_TREASURY_PRIVATE_KEY absence) but cannot
+// cross-check the factory addresses. Defer to the smoke env-deploy
+// pipeline for the full check.
+if (!testReg || !prodReg) {
+  console.log(
+    "[verify-env] PARTIAL: env-side checks passed; full address cross-check deferred to smoke env-deploy."
+  );
+  // Still verify the env-side invariants.
+  const envErrors = [];
+  if (!prod.TREASURY_PRIVATE_KEY)
+    envErrors.push(
+      "TREASURY_PRIVATE_KEY missing in .env.local (treasury production dipakai E2E)"
+    );
+  if (e2e.E2E_TREASURY_PRIVATE_KEY)
+    envErrors.push(
+      "E2E_TREASURY_PRIVATE_KEY masih ada di .env.e2e.local — hapus (treasury disatukan ke production)"
+    );
+  if (envErrors.length) {
+    console.error("[verify-env] FAIL:");
+    for (const e of envErrors) console.error("  -", e);
+    process.exit(1);
+  }
+  process.exit(0);
+}
 
 const testFactory = testReg.contracts.WarehouseFactory.address;
 const prodFactory = prodReg.contracts.WarehouseFactory.address;

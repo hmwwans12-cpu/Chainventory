@@ -224,12 +224,29 @@ export function ProductsPage({
     const ids = [...selected];
     const results = await Promise.allSettled(
       ids.map((id) =>
-        // reuse updateProduct with only category change — keep other fields
+        // reuse updateProduct with only category change — keep other fields.
+        // Audit v0.3.11 M-18: throw on non-OK so Promise.allSettled's
+        // "rejected" status correctly counts network/HTTP failures. The
+        // previous version always resolved (`.then(r => r.json())`),
+        // which made 4xx/5xx responses invisible to the partial-update
+        // count below and gave the user a false "all updated" success.
         fetch("/api/warehouses/inventory/products", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productId: id, category: bulkCategoryValue.trim() }),
-        }).then((r) => r.json())
+          body: JSON.stringify({
+            productId: id,
+            category: bulkCategoryValue.trim(),
+          }),
+        }).then(async (r) => {
+          if (!r.ok) {
+            const body = await r.json().catch(() => ({}));
+            throw new Error(
+              (body as { error?: string })?.error ??
+                `HTTP ${r.status} for product ${id}`
+            );
+          }
+          return r.json();
+        })
       )
     );
     const failed = results.filter((r) => r.status === "rejected").length;

@@ -12,6 +12,13 @@ import { CommandMenu } from "@/components/shared/command-menu";
 import { LocaleProvider } from "@/components/providers/locale-provider";
 import { getLocale } from "@/lib/i18n/server";
 
+// Audit v0.3.11 M-01: per AGENT.md §6, all authenticated pages must be
+// dynamic. This layout reads cookies and the Supabase session, so it
+// already forces a dynamic render, but the explicit directive is the
+// SSoT and protects against future refactors that might remove the
+// cookie read without realizing the consequence.
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {

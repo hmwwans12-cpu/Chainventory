@@ -73,6 +73,39 @@ export async function POST(request: Request) {
   );
   if (inactive) return inactive;
 
+  // Audit v0.3.11 M-04: detect duplicate SKUs within the request body
+  // before per-row RPC calls. Without this, two rows with the same SKU
+  // race each other in the for-loop below; the DB unique constraint on
+  // (warehouse_id, sku) catches the second one, but the user sees a
+  // "duplicate key" message instead of a useful "row N has the same
+  // SKU as row M" error. We also detect SKUs that already exist in
+  // the warehouse so the user gets a clear pre-flight check.
+  const seenSku = new Map<string, number>();
+  for (const [idx, row] of parsed.data.products.entries()) {
+    const sku = String(row.sku ?? "").trim().toUpperCase();
+    if (!sku) continue;
+    if (seenSku.has(sku)) {
+      return invalid(
+        `Duplicate SKU "${sku}" in request (rows ${seenSku.get(sku)} and ${idx}).`
+      );
+    }
+    seenSku.set(sku, idx);
+  }
+  if (seenSku.size > 0) {
+    const skuList = Array.from(seenSku.keys());
+    const { data: existing } = await supabase
+      .from("products")
+      .select("sku")
+      .eq("warehouse_id", parsed.data.warehouseId)
+      .in("sku", skuList);
+    if (existing && existing.length > 0) {
+      const conflicts = existing.map((e) => e.sku).join(", ");
+      return invalid(
+        `These SKUs already exist in this warehouse: ${conflicts}.`
+      );
+    }
+  }
+
   // Contract address diambil sekali — dipakai untuk proof per baris ber-stok.
   const { data: wh } = await supabase
     .from("warehouses")

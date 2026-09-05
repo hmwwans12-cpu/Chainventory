@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { safeInternalPath } from "@/lib/auth/safe-internal-path";
 import { logger } from "@/lib/logger";
 
 /**
@@ -12,15 +13,14 @@ import { logger } from "@/lib/logger";
  * next=/reset-password — sesi recovery aktif membuat updateUser() di
  * halaman tersebut valid.
  */
-function safeNext(value: string | null): string {
-  if (value && value.startsWith("/") && !value.startsWith("//")) return value;
-  return "/dashboard";
-}
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = safeNext(searchParams.get("next"));
+  // Audit v0.3.11 M-02: use the shared safeInternalPath helper that
+  // also blocks backslash and percent-encoded // variants. The local
+  // safeNext() was insufficient (audit M-02).
+  const next = safeInternalPath(searchParams.get("next"));
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=confirm`);

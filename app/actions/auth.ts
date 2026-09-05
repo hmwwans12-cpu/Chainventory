@@ -7,6 +7,7 @@ import { env } from "@/lib/env";
 import { loginSchema, signupSchema } from "@/lib/validators/auth";
 import { mapDbError } from "@/lib/domain/errors";
 import { logger } from "@/lib/logger";
+import { safeInternalPath } from "@/lib/auth/safe-internal-path";
 
 /**
  * Server actions for authentication (Auth Foundation).
@@ -23,14 +24,10 @@ import { logger } from "@/lib/logger";
  */
 
 /**
- * Whitelist tujuan post-login (audit H-01): hanya path internal relatif,
- * tanpa protokol/double-slash — mencegah open redirect.
+ * Whitelist tujuan post-login (audit H-01). Audit v0.3.11 M-02: replaced
+ * with safeInternalPath from lib/auth/safe-internal-path, which also
+ * blocks backslash and percent-encoded // variants.
  */
-function safeNext(value: FormDataEntryValue | null): string {
-  if (typeof value !== "string") return "/dashboard";
-  if (value.startsWith("/") && !value.startsWith("//")) return value;
-  return "/dashboard";
-}
 
 export async function loginAction(
   _prevState: unknown,
@@ -57,7 +54,7 @@ export async function loginAction(
   }
 
   // H-01: hormati tujuan awal user (?next=) — sudah di-whitelist.
-  redirect(safeNext(formData.get("next")));
+  redirect(safeInternalPath(formData.get("next")));
 }
 
 export async function signupAction(

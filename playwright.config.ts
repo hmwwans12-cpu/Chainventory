@@ -30,7 +30,13 @@ const webServer = local
         .filter(Boolean)
         .join(" "),
       url: baseURL,
-      reuseExistingServer: !process.env.CI,
+      // Audit v0.3.11 L-04: in local mode, default to NOT reusing an
+      // existing server. Reusing a server from a previous run can mask
+      // build / env changes (the test silently runs against a stale
+      // build on port 3100). Set E2E_REUSE_SERVER=1 to opt back in for
+      // fast iteration. CI always starts fresh.
+      reuseExistingServer:
+        !!process.env.E2E_REUSE_SERVER && !process.env.CI,
       timeout: 240_000,
     }
   : undefined;

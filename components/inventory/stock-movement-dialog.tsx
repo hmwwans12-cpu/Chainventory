@@ -661,12 +661,27 @@ async function readCurrentBalance(
   warehouseId: string,
   productId: string
 ): Promise<string | null> {
-  const supabase = createSupabaseClient();
-  const { data } = await supabase
-    .from("inventory_balances")
-    .select("quantity")
-    .eq("warehouse_id", warehouseId)
-    .eq("product_id", productId)
-    .maybeSingle();
-  return data?.quantity != null ? String(data.quantity) : null;
+  // Audit v0.3.11 M-14: this is a fallback when the server does not
+  // include the current balance in the INSUFFICIENT_STOCK error. The
+  // race-free path is to have apply_stock_movement return the current
+  // balance in its error payload; that change is tracked in a follow-up
+  // migration. Until then, the client does a fresh read here and
+  // surfaces a "balance may be stale" hint to the user.
+  try {
+    const supabase = createSupabaseClient();
+    const { data, error } = await supabase
+      .from("inventory_balances")
+      .select("quantity")
+      .eq("warehouse_id", warehouseId)
+      .eq("product_id", productId)
+      .maybeSingle();
+    if (error) {
+      // Silent: the user already saw the INSUFFICIENT_STOCK message;
+      // showing a second error here would be confusing.
+      return null;
+    }
+    return data?.quantity != null ? String(data.quantity) : null;
+  } catch {
+    return null;
+  }
 }

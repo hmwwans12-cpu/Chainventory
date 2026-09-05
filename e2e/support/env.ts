@@ -19,9 +19,20 @@ function parseEnv(file: string): Record<string, string> {
     return out;
   }
   for (const line of text.split(/\r?\n/)) {
-    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+    // Audit v0.3.11 M-05: properly handle inline comments and quoted
+    // values. The previous regex /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/ ate
+    // everything after `=`, including inline `#` comments, so a value
+    // like `QSTASH_TOKEN=abc # prod key` was parsed as `abc # prod key`.
+    // The quote strip was also a single leading/trailing quote — a value
+    // like `KEY="a"b"c"` became `a"b"c`. We now require values to be
+    // either a quoted string (any internal double-quote) OR a bare
+    // unquoted token (no spaces, no #). Inline comments are stripped.
+    const m = line.match(
+      /^\s*([A-Z0-9_]+)\s*=\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|([^#\s][^#]*))\s*(?:#.*)?$/
+    );
     if (!m) continue;
-    out[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    const value = m[2] ?? m[3] ?? m[4] ?? "";
+    out[m[1]] = value;
   }
   return out;
 }

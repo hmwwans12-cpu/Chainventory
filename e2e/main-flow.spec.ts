@@ -72,12 +72,18 @@ test.describe.serial("main-flow", () => {
     await wipeRunDataFull(warehouseIds, userIds);
   });
 
+  // Audit v0.3.11 M-06: prefer accessible-name selectors over brittle
+  // id-based ones. The previous version used #email / #password which
+  // breaks if a future refactor renames the input ids. We also assert
+  // the actual dashboard heading text rather than only checking URL.
   async function login(page: Page, user: E2EUser) {
     await page.goto("/login");
-    await page.fill("#email", user.email);
-    await page.fill("#password", user.password);
-    await page.click("button[type=submit]");
-    await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 20_000 });
+    await page.getByLabel("Email").fill(user.email);
+    await page.getByLabel("Password").fill(user.password);
+    await page.getByRole("button", { name: /sign in/i }).click();
+    await expect(page).toHaveURL(/\/(dashboard|onboarding)/, {
+      timeout: 20_000,
+    });
   }
 
   test("auth: signup + login + dashboard empty state", async () => {

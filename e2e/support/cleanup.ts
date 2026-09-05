@@ -32,9 +32,12 @@ export function makeSupabase(): SupabaseClient {
   return createClient(URL, SECRET, { auth: { persistSession: false } });
 }
 
-export async function wipeRunData(warehouseIds: string[]) {
+export async function wipeRunData(
+  warehouseIds: string[],
+  userIds: string[] = []
+) {
   if (!URL || !SECRET) throw new Error("cleanup requires SUPABASE creds");
-  if (warehouseIds.length === 0) return;
+  if (warehouseIds.length === 0 && userIds.length === 0) return;
   const supabase = makeSupabase();
   const ids = warehouseIds;
 
@@ -52,9 +55,23 @@ export async function wipeRunData(warehouseIds: string[]) {
     /* continue */
   }
 
+  // notifications and audit_logs are user-scoped (per AGENT.md §6 the
+  // cleanup must not leave any user with a leftover notification). They
+  // DO NOT have a warehouse_id column. Clean by user_id instead.
+  if (userIds.length > 0) {
+    try {
+      await supabase.from("notifications").delete().in("user_id", userIds);
+    } catch {
+      /* continue */
+    }
+    try {
+      await supabase.from("audit_logs").delete().in("actor_user_id", userIds);
+    } catch {
+      /* continue */
+    }
+  }
+
   for (const table of [
-    "notifications",
-    "audit_logs",
     "proofs",
     "join_requests",
     "memberships",

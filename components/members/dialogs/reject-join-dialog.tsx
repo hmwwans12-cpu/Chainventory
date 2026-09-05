@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ErrorAlert } from "@/components/shared/error-alert";
 import { toast } from "@/components/ui/toast";
 import { rejectJoin } from "@/lib/warehouses/members-client";
 import type { PendingJoinRequest } from "@/lib/members/types";
@@ -72,12 +73,7 @@ export function RejectJoinDialog({
           </DialogDescription>
         </DialogHeader>
         {error ? (
-          <p
-            role="alert"
-            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-sm"
-          >
-            {error}
-          </p>
+          <ErrorAlert size="md">{error}</ErrorAlert>
         ) : null}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="reject-reason">Reason for rejection (optional)</Label>
