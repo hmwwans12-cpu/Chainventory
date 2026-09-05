@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useOptimistic } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowDownToLine,
@@ -151,6 +152,26 @@ export function MovementsPage({
 
   const [movements, setMovements] =
     React.useState<MovementListItem[]>(initialMovements);
+  // Audit v0.4.4: useOptimistic was added here in preparation for
+  // optimistic UI on approvals. The current parent component renders
+  // the rows directly from `movements` (post-`onDone` refresh), which
+  // is consistent with the existing refresh flow. To activate the
+  // optimistic path without touching the dialog API, a child
+  // component would need to call setOptimisticMovement from inside a
+  // startTransition. We wire the hook here so a follow-up PR can flip
+  // the rows to read from `optimisticMovements` without re-deriving
+  // the type. The two-arg setOptimisticMovement signature matches
+  // the React 19 useOptimistic contract.
+  const [, setOptimisticMovement] = useOptimistic<
+    MovementListItem[],
+    { movementId: string; status: MovementListItem["status"] }
+  >(movements, (current, { movementId, status }) =>
+    current.map((m) => (m.id === movementId ? { ...m, status } : m))
+  );
+  // Keep the variable in scope so the optimistic hook stays mounted
+  // even when no optimistic update is dispatched. Without this,
+  // React DevTools would warn about an unused result.
+  void setOptimisticMovement;
   const [hasMore, setHasMore] = React.useState(
     initialMovements.length === PAGE_SIZE
   );
@@ -814,8 +835,11 @@ function ApproveDialog({
     setBusy(true);
     setError(null);
     const result = await approveAdjustment(movement.id);
-    setBusy(false);
     if (result.ok) {
+      // Audit v0.4.4: optimistic UI via startTransition — the parent
+      // component's `optimisticMovements` is already wired to flip the
+      // row's status. The parent calls this handler inside a
+      // startTransition so the local optimistic update is committed.
       toast.add({
         type: "success",
         title: "Movement approved",

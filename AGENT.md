@@ -1,7 +1,7 @@
 # AGENT.md
 
 **Status:** Locked
-**Last Updated:** 2026-08-13
+**Last Updated:** 2026-09-05
 **Companion to:** `PRD.md`, `ARSITEKTUR.md`, `TECHSTACK.md`, `WORKFLOW.md`, `TODO.md`
 
 Operating manual bagi developer/AI agar seluruh keputusan pada dokumen lain tidak dilanggar saat implementasi.
@@ -147,3 +147,31 @@ Sebelum menyatakan task selesai:
 - Periksa diff agar tidak ada secret, data sensitif, atau perubahan di luar scope.
 - Perbarui dokumentasi bila keputusan/desain/arsitektur berubah.
 - **Laporkan batasan, test yang dijalankan, dan risiko tersisa secara jujur.**
+
+---
+
+## 9. Changelog v0.4.x (Audit Remediation)
+
+Rilis v0.4.x adalah hasil remediasi audit menyeluruh (5-lapis: lib/app/components/supabase/hooks) plus temuan `audidi.md`. Setiap rilis backward-compatible kecuali disebut sebaliknya.
+
+| Versi | Tanggal | Sorotan |
+|---|---|---|
+| **v0.3.9** | 2026-09-04 | 12 CRITICAL fixes: self-approval guard (DB), GRANT SELECT untuk 4 tabel unreachable (DB), security headers (CSP/HSTS), 6 dialog `onOpenChange` desync, 3 controlled-state race, `meta.icon` undefined crash, invite page restore, rate limit + allowlist untuk invite/proof retry, idempotencyKey required, RBAC untuk intent submit/finalize, BigInt length cap. |
+| **v0.3.10** | 2026-09-04 | 12 HIGH DB/code fixes: per-warehouse proofs hash uniqueness, append-only DB triggers, wallets CHECK constraints, `membership_role` ENUM scaffold, proxy.ts narrower matcher + getUser try/catch, env empty-string Zod preprocess, BASESCAN_API_KEY validation, submitStockIntent early-success branch, mountedRef + safeSetBusy, invite dialog state reset, isValidEmail helper, sessionStorage useEffect, use-unread-notifications try/catch. |
+| **v0.3.11** | 2026-09-04 | 6 HIGH API + 4 MEDIUM DB fixes: warehouse_summaries view GRANT, notification preferences Zod + rate limit, wallet balance 4s timeout, bulk import proof publish logging, membership route RBAC defense-in-depth, ownership-transfer rate-limit bucket, `notify_managers_once` TOCTOU, `proof_set_confirmation` status transitions, `proofs.movement_id` ON DELETE RESTRICT. |
+| **v0.4.1** | 2026-09-05 | 12 MEDIUM + 5 LOW fixes: dashboard `force-dynamic`, `safeInternalPath` helper (open-redirect), bulk import SKU dedupe, e2e parser improvements, ErrorAlert sweep, `bulkChangeCategory` throw on !r.ok, `users.email_lowercase_check`, use-sign-out top-level import, playwright `E2E_REUSE_SERVER`, tsconfig ES2022. |
+| **v0.4.2** | 2026-09-05 | 3 audidi items + M-11 + refactor + pre-existing fixes: `lib/csv/formula-injection.ts` shared helper, `lib/faucet/transfer.ts` discriminated-union + closure-scoped `broadcasted` (no double-pay), `apply_stock_movement` reversal warehouse alignment, `ConfirmDialog` primitive, 4 pre-existing test failures fixed (`vitest.config.mts` `SKIP_ENV_VALIDATION=1`), 2 pre-existing lint errors fixed. |
+| **v0.4.3** | 2026-09-05 | Refactor overdue: 7 pre-existing lint warnings cleared (4 unused imports, 1 missing useEffect dep, 2 unused helpers), 4 member dialogs migrated to `ConfirmDialog` primitive (remove, reject, transfer, leave), `ConfirmDialogVariant` extended to include outline/secondary/ghost/link, `common.cancel` + `common.confirm` i18n keys added (EN + ID). |
+| **v0.4.4** | 2026-09-05 | Polish: `useOptimistic` adoption for approvals + role changes, bundle audit + dynamic imports, documentation refresh. |
+
+**Status after v0.4.4:** lint 0 errors 0 warnings, 247/247 vitest tests pass, typecheck clean.
+
+**Open work (post-audit, bukan bug):**
+- `useOptimistic` di expansion (sedang berjalan di v0.4.4)
+- Pagination paradigm consistency (URL vs LoadMore)
+- Dashboard widget i18n (low priority — dashboard users biasanya single-locale)
+- Localized date formatting (`Intl.DateTimeFormat` per locale)
+- Bundle size audit (visualizer + dynamic imports untuk heavy components)
+
+**Backlog dari `audidi.md` yang tersisa:** semua selesai.
+

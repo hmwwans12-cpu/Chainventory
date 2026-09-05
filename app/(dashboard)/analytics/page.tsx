@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import nextDynamic from "next/dynamic";
 import {
   Package,
   Layers,
@@ -19,8 +20,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalyticsControls } from "@/components/analytics/analytics-controls";
 import { RangeTabs } from "@/components/analytics/range-tabs";
 import { StatCard } from "@/components/analytics/stat-card";
-import { StockMovementChart } from "@/components/analytics/stock-movement-chart";
 import { TopProducts } from "@/components/analytics/top-products";
+
+// Audit v0.4.4 (bundle): recharts is heavy; lazy-load the chart so
+// the analytics page initial payload stays small. TopProducts uses
+// a custom SVG and stays in the main bundle. We alias the import to
+// `nextDynamic` because the file already declares its own
+// `export const dynamic = "force-dynamic"`.
+const StockMovementChartLazy = nextDynamic(
+  () =>
+    import("@/components/analytics/stock-movement-chart").then((m) => ({
+      default: m.StockMovementChart,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        aria-hidden="true"
+        className="bg-muted/30 h-[320px] w-full animate-pulse rounded-md"
+      />
+    ),
+  }
+);
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md §6); cegah percobaan prerender saat env build minim.
@@ -136,7 +157,7 @@ export default async function AnalyticsPage({
             <CardTitle>Stock In / Out</CardTitle>
           </CardHeader>
           <CardContent>
-            <StockMovementChart daily={analytics.daily} range={range} />
+            <StockMovementChartLazy daily={analytics.daily} range={range} />
           </CardContent>
         </Card>
 

@@ -38,7 +38,27 @@ import {
 } from "@/components/dashboard/recent-activity";
 import { RangeTabs } from "@/components/analytics/range-tabs";
 import { StatCard } from "@/components/analytics/stat-card";
-import { StockMovementChart } from "@/components/analytics/stock-movement-chart";
+import nextDynamic from "next/dynamic";
+
+// Audit v0.4.4 (bundle): recharts is heavy; lazy-load the chart so
+// the dashboard initial payload stays small. We alias the import to
+// `nextDynamic` because the file already declares its own
+// `export const dynamic = "force-dynamic"`.
+const StockMovementChartLazy = nextDynamic(
+  () =>
+    import("@/components/analytics/stock-movement-chart").then((m) => ({
+      default: m.StockMovementChart,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        aria-hidden="true"
+        className="bg-muted/30 h-[260px] w-full animate-pulse rounded-md"
+      />
+    ),
+  }
+);
 import { TopProducts } from "@/components/analytics/top-products";
 import { Button } from "@/components/ui/button";
 import {
@@ -439,7 +459,7 @@ export default async function DashboardPage({
               </CardAction>
             </CardHeader>
             <CardContent>
-              <StockMovementChart daily={analytics.daily} range={range} />
+              <StockMovementChartLazy daily={analytics.daily} range={range} />
             </CardContent>
           </Card>
 
