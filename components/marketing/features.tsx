@@ -98,13 +98,13 @@ export function Features() {
                     >
                       <Link2
                         aria-hidden="true"
-                        className="text-primary size-3"
+                        className="text-primary size-3.5 shrink-0"
                       />
                       {hash}
                     </span>
                   ))}
-                  <span className="bg-primary text-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium">
-                    <ShieldCheck aria-hidden="true" className="size-3" />
+                  <span className="bg-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium">
+                    <ShieldCheck aria-hidden="true" className="size-3.5 shrink-0" />
                     {t("landing.features.verified")}
                   </span>
                 </div>

@@ -190,7 +190,7 @@ export function SiteHeader({
                   {getInitials(user.name, user.email, "U")}
                 </AvatarFallback>
               </Avatar>
-              <div className="hidden min-w-0 flex-col leading-tight md:flex">
+              <div className="hidden min-w-0 flex-col leading-tight lg:flex">
                 <span className="text-foreground truncate text-sm font-medium">
                   {user.name ?? "User"}
                 </span>

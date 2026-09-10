@@ -230,7 +230,7 @@ function Sidebar({
         data-slot="sidebar-container"
         data-side={side}
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear will-change-[width] data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
+          "fixed inset-y-0 z-[var(--z-sidebar)] hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear will-change-[width] data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
@@ -301,12 +301,14 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
   );
 }
 
-function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
+function SidebarInset({ className, ...props }: React.ComponentProps<"div">) {
+  // NOTE: merender <div>, BUKAN <main> — landmark utama adalah inner
+  // <main> per layout (dashboard) agar tidak ada main bersarang.
   return (
-    <main
+    <div
       data-slot="sidebar-inset"
       className={cn(
-        "bg-background relative flex w-full flex-1 flex-col transition-[margin] duration-200 ease-linear will-change-[margin] md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-lg md:peer-data-[variant=inset]:shadow-(--shadow-card) md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
+        "bg-background relative flex w-full min-w-0 flex-1 flex-col transition-[margin] duration-200 ease-linear will-change-[margin] md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-lg md:peer-data-[variant=inset]:shadow-(--shadow-card) md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
         className
       )}
       {...props}
@@ -513,6 +515,7 @@ function SidebarMenuButton({
     props: mergeProps<"button">(
       {
         className: cn(sidebarMenuButtonVariants({ variant, size }), className),
+        ...(isActive ? { "aria-current": "page" as const } : {}),
       },
       props
     ),
@@ -679,6 +682,7 @@ function SidebarMenuSubButton({
           "relative flex min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground ring-sidebar-ring outline-hidden group-data-[collapsible=icon]:hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-3 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 before:absolute before:content-[''] before:-inset-[9px] data-[size=sm]:h-9 data-[size=sm]:text-sm data-[size=md]:h-11 data-[size=md]:text-sm data-[size=lg]:h-12 data-[size=lg]:text-sm data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
           className
         ),
+        ...(isActive ? { "aria-current": "page" as const } : {}),
       },
       props
     ),

@@ -404,7 +404,7 @@ export default async function DashboardPage({
             <div className="grid gap-1 sm:grid-cols-2">
               <div className="bg-primary/5 flex items-center gap-2.5 rounded-md px-3 py-2.5">
                 <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full">
-                  <Check aria-hidden="true" className="size-3" />
+                  <Check aria-hidden="true" className="size-3.5" />
                   <span className="sr-only">Done</span>
                 </span>
                 <div className="flex flex-col">

@@ -468,7 +468,7 @@ export function ProductDetailSheet({
               </ul>
             ) : (
               <p className="text-muted-foreground text-sm">
-                No movements recorded yet.
+                No movements recorded yet
               </p>
             )}
           </div>

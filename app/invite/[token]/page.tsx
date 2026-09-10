@@ -1,9 +1,11 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { CheckCircle2, MailWarning, XCircle } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
+import { SignOutButton } from "@/components/shared/sign-out-button";
 import {
   Card,
   CardContent,
@@ -62,12 +64,14 @@ export default async function InvitePage({
       { err: previewError?.message, tokenPrefix: token.slice(0, 8) },
       "invite token not found"
     );
-    return (
-      <InviteError
-        title="Invitation could not be found"
-        detail="This invitation link is no longer valid or has been revoked. Ask the sender to invite you again."
-      />
-    );
+    // Token tak dikenal = sumber daya tidak ada → 404 semantik agar
+    // crawler/analytics dapat membedakan dari expired/mismatch (200).
+    // NOTE: jangan tambah loading.tsx di segmen ini — fallback streaming
+    // mengirim header 200 sebelum render selesai sehingga notFound() di
+    // bawah hanya jadi soft-404 (terverifikasi: 200 di dev+prod selama
+    // loading.tsx ada). Tanpa suspense boundary, render selesai sebelum
+    // byte pertama → status 404 asli. Lihat docs loading.md "Status Codes".
+    notFound();
   }
 
   if (inv.status !== "pending" || new Date(inv.expires_at) < new Date()) {
@@ -91,7 +95,8 @@ export default async function InvitePage({
     return (
       <InviteError
         title="Signed-in email does not match"
-        detail={`This invitation is for ${inv.email}. Please sign in with that email to accept.`}
+        detail={`This invitation is for ${inv.email}. Sign out, then sign in with that email to accept.`}
+        secondary={<SignOutButton label="Sign out and switch account" />}
       />
     );
   }
@@ -120,7 +125,7 @@ export default async function InvitePage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[560px] flex-col gap-6 py-10">
+    <main className="mx-auto flex w-full max-w-[560px] flex-col gap-6 py-10">
       <PageHeader title="Accept invitation" />
       <Card>
         <CardHeader>
@@ -150,13 +155,21 @@ export default async function InvitePage({
           </p>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }
 
-function InviteError({ title, detail }: { title: string; detail: string }) {
+function InviteError({
+  title,
+  detail,
+  secondary,
+}: {
+  title: string;
+  detail: string;
+  secondary?: ReactNode;
+}) {
   return (
-    <div className="mx-auto flex w-full max-w-[560px] flex-col gap-6 py-10">
+    <main className="mx-auto flex w-full max-w-[560px] flex-col gap-6 py-10">
       <PageHeader title="Accept invitation" />
       <Card>
         <CardHeader>
@@ -167,11 +180,14 @@ function InviteError({ title, detail }: { title: string; detail: string }) {
           <CardDescription>{detail}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button size="lg" render={<Link href="/dashboard" />}>
-            Go to dashboard
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button size="lg" render={<Link href="/dashboard" />}>
+              Go to dashboard
+            </Button>
+            {secondary}
+          </div>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

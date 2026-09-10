@@ -20,6 +20,16 @@ export function ThemeToggle() {
       typeof document !== "undefined" &&
       document.documentElement.classList.contains("dark")
   );
+  // Ronde-3 D-class: server selalu render varian light (document undefined).
+  // Tanpa guard ini, klien dark (class sudah di-set inline script) hydrate
+  // dengan ikon Sun + label berbeda → hydration mismatch di semua halaman.
+  // `mounted` memaksa render pertama klien identik dengan server (Moon),
+  // lalu flip ke Sun setelah mount — update biasa, bukan mismatch.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+  const showDark = mounted && dark;
   const { t } = useLocale();
 
   function toggle() {
@@ -38,11 +48,11 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon-sm"
       onClick={toggle}
-      aria-label={dark ? t("common.theme.light") : t("common.theme.dark")}
-      title={dark ? t("common.theme.light") : t("common.theme.dark")}
-      aria-pressed={dark}
+      aria-label={showDark ? t("common.theme.light") : t("common.theme.dark")}
+      title={showDark ? t("common.theme.light") : t("common.theme.dark")}
+      aria-pressed={showDark}
     >
-      {dark ? (
+      {showDark ? (
         <Sun aria-hidden="true" className="size-4" />
       ) : (
         <Moon aria-hidden="true" className="size-4" />

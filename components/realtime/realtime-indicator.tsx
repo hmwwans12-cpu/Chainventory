@@ -46,13 +46,13 @@ export function RealtimeIndicator({
       role="status"
       title={detail}
       className={cn(
-        "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium transition-colors",
-        effective === "live" && "bg-primary/10 text-primary",
+        "flex h-6 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-sm font-medium whitespace-nowrap transition-colors",
+        effective === "live" && "bg-primary/10 text-primary border-primary/20",
         effective === "reconnecting" &&
-          "bg-warning/15 text-warning-foreground border-warning/20 border",
+          "bg-warning/15 text-warning-foreground border-warning/20",
         effective === "offline" &&
-          "bg-destructive/10 text-destructive border-destructive/20 border",
-        effective === "outdated" && "bg-destructive/15 text-destructive"
+          "bg-destructive/10 text-destructive border-destructive/20",
+        effective === "outdated" && "bg-destructive/15 text-destructive border-destructive/20"
       )}
     >
       <span

@@ -24,7 +24,7 @@ function StatCard({
   accent?: "default" | "warning" | "destructive";
 }) {
   return (
-    <Card>
+    <Card className="@container/card min-h-[148px] gap-4 rounded-lg">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardAction>
@@ -42,7 +42,7 @@ function StatCard({
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-1">
-        <span className="text-foreground text-2xl font-semibold tabular-nums">
+        <span className="text-foreground text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
           {value}
         </span>
         <CardDescription>{description}</CardDescription>

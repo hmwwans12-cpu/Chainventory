@@ -92,5 +92,37 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Audit ronde-3 C3: token invite tak dikenal harus 404 asli, bukan
+  // soft-404. notFound() di page selalu jadi 200 karena shell layout
+  // ter-streaming duluan (docs loading.md "Status Codes") — bahkan tanpa
+  // loading.tsx. Per docs, cek keberadaan resource di proxy sebelum
+  // response ter-stream: rewrite ke path yang tidak ada route-nya
+  // sehingga routing layer mengembalikan 404 + not-found UI di URL asli.
+  // Scope sempit (GET /invite/<single-segment>, user login) + fail-open:
+  // bila RPC gagal (outage), biarkan page yang menangani.
+  if (user && (request.method === "GET" || request.method === "HEAD")) {
+    const inviteToken = /^\/invite\/([^/]+)$/.exec(pathname)?.[1];
+    if (inviteToken) {
+      try {
+        const { data, error } = await supabase.rpc("get_invitation_by_token", {
+          p_token: decodeURIComponent(inviteToken),
+        });
+        const row = Array.isArray(data) ? data[0] : null;
+        if (!error && !row) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/__missing-invitation__";
+          const rewrite = NextResponse.rewrite(url, { request });
+          // Jangan hilangkan cookie refresh yang sudah di-set supabase.
+          for (const { name, value } of supabaseResponse.cookies.getAll()) {
+            rewrite.cookies.set(name, value);
+          }
+          return rewrite;
+        }
+      } catch {
+        // Fail-open: page akan menangani via notFound()/InviteError.
+      }
+    }
+  }
+
   return supabaseResponse;
 }

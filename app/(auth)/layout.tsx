@@ -17,15 +17,25 @@ export default function AuthLayout({
 
   return (
     <div className="bg-muted flex min-h-dvh flex-col items-center justify-center px-4 py-12">
+      <a
+        href="#auth-main"
+        className="bg-primary text-primary-foreground sr-only rounded-lg px-4 py-2 text-sm font-medium focus-visible:not-sr-only"
+      >
+        Skip to sign-in form
+      </a>
       {/* NFE-01: Logo sudah me-render <Link> sendiri — wrapper Link luar
           membuat <a> bersarang (DOM invalid + label ganda). */}
       <div className="mb-8">
         <Logo />
       </div>
-      <div className="bg-card w-full max-w-sm rounded-lg border p-6 shadow-(--shadow-card) sm:p-8">
+      <main
+        id="auth-main"
+        tabIndex={-1}
+        className="bg-card w-full max-w-sm rounded-lg border p-6 shadow-(--shadow-card) outline-none sm:p-8"
+      >
         {children}
-      </div>
-      <p className="text-muted-foreground mt-6 text-sm">
+      </main>
+      <footer className="text-muted-foreground mt-6 text-sm">
         {"\u00A9"} {year} {APP_NAME}.{" "}
         <Link
           href="/"
@@ -33,7 +43,7 @@ export default function AuthLayout({
         >
           Back to home
         </Link>
-      </p>
+      </footer>
     </div>
   );
 }

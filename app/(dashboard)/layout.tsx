@@ -82,7 +82,11 @@ export default async function DashboardLayout({
             isDeveloper={isDeveloper}
           />
         </Suspense>
-        <SidebarInset id="dashboard-main">
+        <SidebarInset
+          id="dashboard-main"
+          tabIndex={-1}
+          className="outline-none"
+        >
           <Suspense fallback={<div className="h-14 shrink-0 border-b" />}>
             <SiteHeader
               warehouses={(warehouses ?? []).map((w) => ({
@@ -99,11 +103,11 @@ export default async function DashboardLayout({
               }
             />
           </Suspense>
-          <main className="bg-muted/30 flex-1">
+          <main className="bg-muted/30 flex-1" aria-label="Dashboard content">
             {/* Skeleton resmi dashboard-01: container query scope + ritme halaman.
               max-w 1600px: konten dashboard tidak meregang tak terbatas di
               ultrawide (konsistensi visual, temuan audit UI #9). */}
-            <div className="@container/main mx-auto w-full max-w-[1600px] px-4 py-6 md:px-6 md:py-8">
+            <div className="@container/main mx-auto w-full max-w-[1600px] min-w-0 px-4 py-6 md:px-6 md:py-8">
               <PageTransition>{children}</PageTransition>
             </div>
           </main>

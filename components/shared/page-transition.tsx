@@ -22,13 +22,14 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   const reduce = useReducedMotion();
 
   if (reduce) {
-    return <div className="animate-in fade-in duration-150">{children}</div>;
+    return <div className="animate-in fade-in min-w-0 duration-150">{children}</div>;
   }
 
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={pathname}
+        className="min-w-0"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{
@@ -37,7 +38,7 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
         }}
         transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
       >
-        <div className="animate-in fade-in duration-150 ease-out">
+        <div className="animate-in fade-in min-w-0 duration-150 ease-out">
           {children}
         </div>
       </motion.div>

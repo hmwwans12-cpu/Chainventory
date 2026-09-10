@@ -100,15 +100,9 @@ export default function RootLayout({
         />
         <TooltipProvider delay={150}>
           <PrivyProvider>
-            <a
-              href="#main-content"
-              className="bg-background text-foreground focus-visible:ring-ring sr-only outline-none focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus-visible:ring-3"
-            >
-              Skip to main content
-            </a>
-            <main id="main-content" className="flex-1">
+            <div id="main-content" className="flex min-h-dvh flex-1 flex-col">
               {children}
-            </main>
+            </div>
           </PrivyProvider>
           <Toaster />
         </TooltipProvider>
