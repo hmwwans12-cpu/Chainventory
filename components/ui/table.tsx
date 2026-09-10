@@ -10,7 +10,10 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm tabular-nums", className)}
+        className={cn(
+          "w-full caption-bottom text-[13px] leading-5 tabular-nums",
+          className
+        )}
         {...props}
       />
     </div>
@@ -55,7 +58,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "hover:bg-muted/50 data-[state=selected]:bg-muted/50 data-[status=archived]:bg-muted/30 border-b transition-colors data-[status=archived]:opacity-70",
+        "hover:bg-surface-container/60 data-[state=selected]:bg-surface-container data-[status=archived]:bg-muted/30 border-b transition-colors data-[status=archived]:opacity-70",
         className
       )}
       {...props}
@@ -69,8 +72,9 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
       data-slot="table-head"
       scope="col"
       className={cn(
-        // Density freeze (DESIGN §84.8): header 44px (touch target), gutter 16px. text-sm per Deep Audit P0-08
-        "text-muted-foreground h-11 px-4 text-left align-middle text-sm font-medium whitespace-nowrap",
+        // Stitch thead: warm surface strip, primary uppercase label.
+        // py-3 rows (no fixed height) — compact architectural density.
+        "bg-surface-low text-primary px-4 py-3 text-left align-middle text-xs font-semibold tracking-[0.04em] whitespace-nowrap uppercase",
         className
       )}
       {...props}
@@ -83,8 +87,8 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        // Row 56px (audit UI #9): tinggi tetap + gutter 16px selaras header.
-        "h-14 px-4 align-middle whitespace-nowrap",
+        // Stitch rows: py-3.5 airy cells, gutter 16px.
+        "px-4 py-3.5 align-middle whitespace-nowrap",
         className
       )}
       {...props}

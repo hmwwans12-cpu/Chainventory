@@ -10,6 +10,7 @@ import {
   LogOut,
   Settings,
   SquareTerminal,
+  Warehouse,
 } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
@@ -108,8 +109,12 @@ export function AppSidebar({
       : hrefActive(item.href);
 
   return (
-    <Sidebar variant="inset" collapsible="icon" aria-label="Primary navigation">
-      <SidebarHeader>
+    <Sidebar
+      variant="sidebar"
+      collapsible="icon"
+      aria-label="Primary navigation"
+    >
+      <SidebarHeader className="gap-2">
         <div className="border-sidebar-border flex h-14 items-center overflow-hidden px-2 group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
           <Logo
             href="/dashboard"
@@ -125,17 +130,17 @@ export function AppSidebar({
               <SidebarMenuButton
                 size="lg"
                 aria-label={t("common.active_warehouse")}
-                className="cursor-default"
+                className="bg-card cursor-default border shadow-sm"
               >
-                <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold">
-                  {getInitials(active.name, null, "W")}
+                <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-8 shrink-0 items-center justify-center rounded-lg">
+                  <Warehouse aria-hidden="true" className="size-4" />
                 </span>
                 <span className="flex min-w-0 flex-col leading-tight">
-                  <span className="text-muted-foreground text-sm uppercase">
-                    {t("common.active_warehouse")}
-                  </span>
-                  <span className="truncate text-sm font-medium">
+                  <span className="truncate text-sm font-semibold">
                     {active.name}
+                  </span>
+                  <span className="text-muted-foreground truncate font-mono text-[11px]">
+                    {active.code}
                   </span>
                 </span>
               </SidebarMenuButton>
@@ -151,19 +156,22 @@ export function AppSidebar({
                     <SidebarMenuButton
                       size="lg"
                       aria-label={t("common.switch_warehouse")}
+                      className="bg-card border shadow-sm"
                     />
                   }
                 >
-                  <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold">
-                    {getInitials(active?.name, null, "W")}
+                  <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-8 shrink-0 items-center justify-center rounded-lg">
+                    <Warehouse aria-hidden="true" className="size-4" />
                   </span>
                   <span className="flex min-w-0 flex-col leading-tight">
-                    <span className="text-muted-foreground text-sm uppercase">
-                      {t("common.active_warehouse")}
-                    </span>
-                    <span className="truncate text-sm font-medium">
+                    <span className="truncate text-sm font-semibold">
                       {active?.name ?? t("common.no_warehouse")}
                     </span>
+                    {active ? (
+                      <span className="text-muted-foreground truncate font-mono text-[11px]">
+                        {active.code}
+                      </span>
+                    ) : null}
                   </span>
                   <ChevronsUpDown
                     aria-hidden="true"

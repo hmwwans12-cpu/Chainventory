@@ -71,7 +71,7 @@ export default async function NotificationsPage() {
       {partialError ? (
         <p
           role="alert"
-          className="border-warning/30 bg-warning/10 text-warning-foreground rounded-lg border px-4 py-3 text-sm"
+          className="border-status-warn-border bg-status-warn-bg text-status-warn-fg rounded-xl border px-4 py-3 text-sm"
         >
           Some notification data failed to load. Unread counts may be outdated.
           Refresh to retry.

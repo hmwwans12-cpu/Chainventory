@@ -48,19 +48,18 @@ const PROOF_META: Record<
   confirmed: {
     label: "Verified",
     icon: CheckCircle2,
-    className: "bg-primary/10 text-primary border border-primary/20",
+    className: "bg-status-ok-bg text-status-ok-fg border-status-ok-border",
   },
   pending: {
     label: "Verifying",
     icon: Clock3,
     className:
-      "bg-secondary/20 text-secondary-foreground border border-secondary/30",
+      "bg-status-warn-bg text-status-warn-fg border-status-warn-border",
   },
   failed: {
     label: "Failed",
     icon: XCircle as unknown as LucideIcon,
-    className:
-      "bg-destructive/15 text-destructive border border-destructive/20",
+    className: "bg-status-err-bg text-status-err-fg border-status-err-border",
   },
 };
 
@@ -80,15 +79,16 @@ export function RecentTransactions({
 }) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Recent Transactions</CardTitle>
+      <CardHeader className="border-b">
+        <CardTitle className="t-headline-sm">
+          Recent Transactions & Ledger Proofs
+        </CardTitle>
         <CardDescription>
-          Latest ledger entries and their proofs.
+          Cryptographically signed batch commitments.
         </CardDescription>
         <CardAction>
           <Button
-            variant="outline"
-            size="sm"
+            variant="link"
             render={
               <Link
                 href={
@@ -99,7 +99,7 @@ export function RecentTransactions({
               />
             }
           >
-            View All
+            View All <span aria-hidden="true">→</span>
           </Button>
         </CardAction>
       </CardHeader>
@@ -157,6 +157,7 @@ export function RecentTransactions({
                             <time
                               dateTime={item.createdAt}
                               className="cursor-help tabular-nums"
+                              suppressHydrationWarning
                             />
                           }
                         >

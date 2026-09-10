@@ -24,6 +24,7 @@ export function ProfileWalletCard({
   walletAddress,
   warehouseName,
   warehouseId,
+  warehouseCode,
   contractAddress,
 }: {
   name: string;
@@ -31,6 +32,7 @@ export function ProfileWalletCard({
   walletAddress: string | null;
   warehouseName?: string;
   warehouseId?: string;
+  warehouseCode?: string | null;
   contractAddress?: string | null;
 }) {
   const initial = getInitials(name, null, "?");
@@ -41,85 +43,86 @@ export function ProfileWalletCard({
       // FE-19: label gabungan agar SR tidak mendengar "ETH + saldo" terpotong
       // tanpa konteks (nilai saldo async tetap diumumkan terpisah).
       aria-label={`${name}, open profile and wallet settings`}
-      className="focus-visible:ring-ring block rounded-lg transition-shadow hover:shadow-(--shadow-elevated) focus-visible:ring-3 focus-visible:outline-none"
+      className="focus-visible:ring-ring group hover:border-primary block rounded-xl transition-all hover:shadow-(--shadow-elevated) focus-visible:ring-3 focus-visible:outline-none"
     >
-      <Card>
-        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="p-4">
+        <CardContent className="flex flex-col justify-between gap-4 p-0 md:flex-row md:items-center">
           {/* Primary identity — name + role (visual weight 1) */}
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold">
+          <div className="flex min-w-0 items-center gap-4">
+            <span className="bg-primary text-primary-foreground font-display flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-bold shadow-sm">
               {initial}
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
               <div className="flex items-center gap-2">
-                <span className="text-foreground truncate text-sm font-semibold">
+                <span className="t-headline-sm text-foreground truncate">
                   {name}
                 </span>
-                <Badge variant="outline" className="text-sm">
-                  {roleLabel(role)}
-                </Badge>
+                <Badge variant="success">{roleLabel(role)}</Badge>
               </div>
-              {/* Secondary — warehouse name only, muted */}
+              {/* Secondary — warehouse name + code */}
               {warehouseName ? (
-                <span className="text-muted-foreground truncate text-sm">
-                  {warehouseName}
+                <span className="text-muted-foreground t-body-sm flex items-center gap-1.5">
+                  <span className="truncate">{warehouseName}</span>
+                  {warehouseCode ? (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span className="t-code text-primary font-medium">
+                        {warehouseCode}
+                      </span>
+                    </>
+                  ) : null}
                 </span>
               ) : null}
             </div>
           </div>
 
           {/* Utility — balance + network, right aligned desktop */}
-          <div className="flex items-center justify-between gap-4 sm:ms-auto sm:justify-end">
-            <div className="flex flex-col gap-0.5 sm:items-end">
-              <Suspense fallback={<Skeleton className="h-6 w-24" />}>
-                <span className="flex items-baseline gap-1.5">
+          <div className="flex items-center gap-3.5 self-end md:self-auto">
+            <div className="flex flex-col gap-0.5 text-right">
+              <span className="flex items-center justify-end gap-2">
+                <Suspense fallback={<Skeleton className="h-5 w-20" />}>
                   <WalletBalance
                     address={walletAddress}
-                    suffix=""
-                    className="text-foreground text-lg font-semibold tracking-tight tabular-nums"
+                    className="text-foreground t-code text-base font-bold tabular-nums"
                   />
-                  <span className="text-muted-foreground text-sm">ETH</span>
+                </Suspense>
+                <span className="bg-surface-high border-border text-muted-foreground rounded px-2 py-0.5 text-[11px] font-semibold">
+                  Base Sepolia
                 </span>
-              </Suspense>
-              <span className="text-muted-foreground text-sm">
-                Base Sepolia
-                {walletAddress ? (
-                  <span className="hidden sm:inline">
-                    {" "}
-                    · {shortenAddress(walletAddress)}
-                  </span>
-                ) : null}
               </span>
+              {walletAddress ? (
+                <span className="text-muted-foreground t-code justify-end text-[11px]">
+                  {shortenAddress(walletAddress)}
+                </span>
+              ) : null}
             </div>
+            <div className="bg-border h-8 w-px shrink-0" aria-hidden="true" />
             <ChevronRight
               aria-hidden="true"
-              className="text-muted-foreground/40 size-5 shrink-0"
+              className="text-muted-foreground group-hover:text-primary size-5 shrink-0 transition-all group-hover:translate-x-0.5"
             />
           </div>
-
-          {/* Mobile detail rows — progressive disclosure for technical IDs */}
-          {walletAddress || contractAddress ? (
-            <div className="flex flex-col gap-1.5 border-t pt-3 sm:hidden">
-              {walletAddress ? (
-                <DetailRow
-                  label="Wallet"
-                  value={shortenAddress(walletAddress)}
-                />
-              ) : null}
-              {contractAddress ? (
-                <DetailRow
-                  label="Contract"
-                  value={shortenAddress(contractAddress)}
-                />
-              ) : null}
-            </div>
-          ) : !walletAddress ? (
-            <p className="text-muted-foreground flex items-center gap-1.5 border-t pt-3 text-sm sm:hidden">
-              <Wallet aria-hidden="true" className="size-3.5" />
-              No wallet connected yet. Connect in Settings
-            </p>
-          ) : null}
         </CardContent>
+
+        {/* Mobile detail rows — progressive disclosure for technical IDs */}
+        {walletAddress || contractAddress ? (
+          <div className="flex flex-col gap-1.5 border-t pt-3 sm:hidden">
+            {walletAddress ? (
+              <DetailRow label="Wallet" value={shortenAddress(walletAddress)} />
+            ) : null}
+            {contractAddress ? (
+              <DetailRow
+                label="Contract"
+                value={shortenAddress(contractAddress)}
+              />
+            ) : null}
+          </div>
+        ) : !walletAddress ? (
+          <p className="text-muted-foreground flex items-center gap-1.5 border-t pt-3 text-sm sm:hidden">
+            <Wallet aria-hidden="true" className="size-3.5" />
+            No wallet connected yet. Connect in Settings
+          </p>
+        ) : null}
       </Card>
     </Link>
   );

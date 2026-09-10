@@ -28,6 +28,7 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { RealtimeIndicator } from "@/components/realtime/realtime-indicator";
 import { useSignOut } from "@/hooks/use-sign-out";
 import { NAV_ITEMS } from "@/lib/navigation";
+import { BASE_SEPOLIA_CHAIN_ID } from "@/lib/constants";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LocaleToggle } from "@/components/shared/locale-toggle";
 import { OPEN_COMMAND_EVENT } from "@/components/shared/command-menu";
@@ -95,14 +96,30 @@ export function SiteHeader({
   const title = pageTitle(pathname, t);
 
   return (
-    <header className="bg-background/80 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-3 backdrop-blur-sm transition-[height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:px-4">
+    <header className="bg-card sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b px-4 sm:gap-3 md:px-8">
       <SidebarTrigger aria-label="Toggle sidebar" className="-ml-1" />
       <Separator
         orientation="vertical"
         className="mr-1 data-[orientation=vertical]:h-4"
       />
 
-      <Breadcrumb className="min-w-0 flex-1">
+      {/* Stitch global search — membuka command palette yang sudah ada. */}
+      <button
+        type="button"
+        onClick={() =>
+          window.dispatchEvent(new CustomEvent(OPEN_COMMAND_EVENT))
+        }
+        aria-label={t("common.open_command")}
+        className="border-input bg-surface-low text-muted-foreground hover:border-primary/40 hover:text-foreground hidden h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border px-3 text-sm transition-colors sm:flex sm:max-w-56 lg:max-w-md"
+      >
+        <Search aria-hidden="true" className="size-4 shrink-0" />
+        <span className="truncate">{t("common.search_placeholder")}</span>
+        <kbd className="bg-card ms-auto hidden shrink-0 rounded border px-1.5 font-mono text-xs lg:inline">
+          ⌘K
+        </kbd>
+      </button>
+
+      <Breadcrumb className="hidden min-w-0 flex-1 xl:block">
         <BreadcrumbList className="min-w-0 text-nowrap">
           <BreadcrumbItem className="min-w-0">
             {active ? (
@@ -136,23 +153,18 @@ export function SiteHeader({
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
+        {/* Stitch network pill — Base Sepolia only (TECHSTACK §1). */}
+        <span className="border-input bg-surface-low text-muted-foreground mr-1 hidden items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-xs whitespace-nowrap lg:flex">
+          <span
+            aria-hidden="true"
+            className="bg-primary size-2 shrink-0 animate-pulse rounded-full"
+          />
+          Base Sepolia · {BASE_SEPOLIA_CHAIN_ID}
+        </span>
         <span className="hidden items-center gap-1 xl:flex">
           <LocaleToggle />
           <ThemeToggle />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() =>
-              window.dispatchEvent(new CustomEvent(OPEN_COMMAND_EVENT))
-            }
-            aria-label={t("common.open_command")}
-            className="gap-1.5"
-          >
-            <Search aria-hidden="true" className="size-4" />
-            <span>Search</span>
-            <kbd className="font-mono text-sm">⌘K</kbd>
-          </Button>
         </span>
         {/* FE-20: tema & bahasa tetap tersedia di mobile (sebelumnya
             hidden xl:flex — hilang total di bawah 1280px). */}
@@ -168,6 +180,7 @@ export function SiteHeader({
             onClick={() =>
               window.dispatchEvent(new CustomEvent(OPEN_COMMAND_EVENT))
             }
+            className="sm:hidden"
           >
             <Search aria-hidden="true" />
           </Button>
@@ -181,7 +194,7 @@ export function SiteHeader({
                 <button
                   type="button"
                   aria-label={t("common.account_menu")}
-                  className="hover:bg-muted/60 focus-visible:ring-ring relative flex min-h-11 items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors outline-none before:absolute before:-inset-2 before:content-[''] focus-visible:ring-3"
+                  className="hover:bg-muted/60 focus-visible:ring-ring relative flex size-11 items-center justify-center rounded-full transition-colors outline-none before:absolute before:-inset-2 before:content-[''] focus-visible:ring-3"
                 />
               }
             >
@@ -190,14 +203,6 @@ export function SiteHeader({
                   {getInitials(user.name, user.email, "U")}
                 </AvatarFallback>
               </Avatar>
-              <div className="hidden min-w-0 flex-col leading-tight lg:flex">
-                <span className="text-foreground truncate text-sm font-medium">
-                  {user.name ?? "User"}
-                </span>
-                <span className="text-muted-foreground max-w-40 truncate text-sm">
-                  {user.email}
-                </span>
-              </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               {/* Label wajib berada dalam Group (konteks MenuGroup Base UI) */}

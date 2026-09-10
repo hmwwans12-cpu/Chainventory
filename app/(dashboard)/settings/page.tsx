@@ -100,18 +100,15 @@ export default async function SettingsPage({
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User
-                aria-hidden="true"
-                className="text-muted-foreground size-4"
-              />
+            <CardTitle className="t-headline-sm flex items-center gap-2">
+              <User aria-hidden="true" className="text-primary size-4" />
               {t("settings.profile")}
             </CardTitle>
             <CardDescription>{t("settings.profile_desc")}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <span className="bg-primary text-primary-foreground flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold">
+              <span className="bg-primary text-primary-foreground font-display flex size-11 shrink-0 items-center justify-center rounded-full text-base font-bold">
                 {initial}
               </span>
               <div className="min-w-0">
@@ -126,7 +123,7 @@ export default async function SettingsPage({
                 <span className="text-muted-foreground text-sm">
                   {t("settings.role")}
                 </span>
-                <Badge variant="outline">{roleLabel(active.role)}</Badge>
+                <Badge variant="success">{roleLabel(active.role)}</Badge>
               </div>
             ) : null}
           </CardContent>
@@ -134,11 +131,8 @@ export default async function SettingsPage({
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet
-                aria-hidden="true"
-                className="text-muted-foreground size-4"
-              />
+            <CardTitle className="t-headline-sm flex items-center gap-2">
+              <Wallet aria-hidden="true" className="text-primary size-4" />
               {t("settings.wallet")}
             </CardTitle>
             <CardDescription>{t("settings.wallet_desc")}</CardDescription>
@@ -156,7 +150,7 @@ export default async function SettingsPage({
                       label={t("settings.copy_wallet")}
                     />
                   </div>
-                  <p className="bg-muted/50 text-foreground rounded-lg border px-3 py-2 font-mono text-sm break-all">
+                  <p className="bg-surface-low text-foreground rounded-lg border px-3 py-2 font-mono text-sm break-all">
                     {walletAddress}
                   </p>
                 </div>
@@ -168,7 +162,7 @@ export default async function SettingsPage({
                     <Suspense fallback={<Skeleton className="h-4 w-20" />}>
                       <WalletBalance
                         address={walletAddress}
-                        className="text-foreground text-sm font-semibold tabular-nums"
+                        className="text-primary text-sm font-semibold tabular-nums"
                       />
                     </Suspense>
                   </div>
@@ -199,11 +193,8 @@ export default async function SettingsPage({
       {active ? (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2
-                aria-hidden="true"
-                className="text-muted-foreground size-4"
-              />
+            <CardTitle className="t-headline-sm flex items-center gap-2">
+              <Building2 aria-hidden="true" className="text-primary size-4" />
               {t("settings.warehouse")}
             </CardTitle>
             <CardDescription>{t("settings.warehouse_desc")}</CardDescription>
@@ -214,10 +205,12 @@ export default async function SettingsPage({
                 <p className="text-foreground text-sm font-semibold">
                   {active.name}
                 </p>
-                <p className="text-muted-foreground text-sm">{active.code}</p>
+                <p className="text-muted-foreground font-mono text-sm">
+                  {active.code}
+                </p>
               </div>
               <Badge
-                variant={active.status === "active" ? "default" : "destructive"}
+                variant={active.status === "active" ? "success" : "destructive"}
               >
                 {active.status === "active" ? "Active" : "Suspended"}
               </Badge>
@@ -233,7 +226,7 @@ export default async function SettingsPage({
                     label={t("settings.copy_contract")}
                   />
                 </div>
-                <p className="bg-muted/50 text-foreground rounded-lg border px-3 py-2 font-mono text-sm break-all">
+                <p className="bg-surface-low text-foreground rounded-lg border px-3 py-2 font-mono text-sm break-all">
                   {active.contractAddress}
                 </p>
               </div>

@@ -4,25 +4,33 @@ export function PageHeader({
   title,
   description,
   actions,
+  pill,
 }: {
   title: string;
   description?: string;
   actions?: ReactNode;
+  /** Inline status pill next to the title (Stitch: "Live Hub", "Live Synced"). */
+  pill?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex min-w-0 flex-col gap-1.5">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
-          {title}
-        </h1>
+    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h1 className="t-headline-lg text-foreground text-balance">
+            {title}
+          </h1>
+          {pill}
+        </div>
         {description ? (
-          <p className="text-muted-foreground max-w-2xl text-sm text-pretty">
+          <p className="text-muted-foreground t-body-md max-w-3xl text-pretty">
             {description}
           </p>
         ) : null}
       </div>
       {actions ? (
-        <div className="flex items-center gap-2">{actions}</div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2.5 self-start sm:self-auto">
+          {actions}
+        </div>
       ) : null}
     </div>
   );

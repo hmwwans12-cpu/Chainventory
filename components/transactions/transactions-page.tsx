@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeftRight,
+  Download,
   ExternalLink,
   Eye,
   MoreHorizontal,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { DotStatus } from "@/components/shared/dot-status";
 import { EntityName } from "@/components/shared/entity-name";
 import { EmptyState } from "@/components/shared/empty-state";
 import { BaseScanLink } from "@/components/shared/basescan-link";
@@ -48,6 +51,7 @@ import {
 } from "@/components/inventory/movement-detail-sheet";
 import type { MovementListItem } from "@/lib/inventory/types";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
+import { hasPermission, PERMISSIONS, type Role } from "@/lib/auth/permissions";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import { PanelCard } from "@/components/shared/panel-card";
 import { cn, formatDateTime } from "@/lib/utils";
@@ -60,6 +64,7 @@ function shortWallet(wallet: string | null): string {
 export function TransactionsPage({
   warehouseId,
   warehouses,
+  role,
   items,
   page,
   totalPages,
@@ -69,6 +74,7 @@ export function TransactionsPage({
 }: {
   warehouseId: string;
   warehouses: WarehouseSummary[];
+  role: Role;
   items: MovementListItem[];
   page: number;
   totalPages: number;
@@ -108,7 +114,7 @@ export function TransactionsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 shadow-(--shadow-card)">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {warehouses.length > 1 ? (
             <Select
@@ -194,9 +200,26 @@ export function TransactionsPage({
             </SelectContent>
           </Select>
         </div>
-        <span className="text-muted-foreground text-sm">
-          {totalCount} transaction{totalCount === 1 ? "" : "s"}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground hidden text-sm tabular-nums sm:inline">
+            {totalCount} transaction{totalCount === 1 ? "" : "s"}
+          </span>
+          {hasPermission(role, PERMISSIONS.MOVEMENT_READ) ? (
+            <Button
+              variant="outline"
+              size="sm"
+              render={
+                <a
+                  href={`/api/warehouses/export?type=movements&warehouseId=${encodeURIComponent(warehouseId)}`}
+                  download
+                />
+              }
+            >
+              <Download aria-hidden="true" />
+              Export CSV
+            </Button>
+          ) : null}
+        </div>
       </div>
       {(type || proof) && (
         <div className="flex flex-wrap items-center gap-2">
@@ -262,12 +285,14 @@ export function TransactionsPage({
                   <TableHead>Transaction</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead className="text-right">Quantity</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Workflow</TableHead>
                   <TableHead className="hidden lg:table-cell">
-                    Blockchain
+                    Proof / Blockchain
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">Actor</TableHead>
-                  <TableHead className="hidden lg:table-cell">Date</TableHead>
+                  <TableHead className="hidden text-right lg:table-cell">
+                    Date
+                  </TableHead>
                   <TableHead className="w-12">
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -290,24 +315,40 @@ export function TransactionsPage({
                           <EntityName title={m.productName}>
                             {m.productName}
                           </EntityName>
-                          <span className="text-muted-foreground font-mono text-sm">
+                          <span className="t-code text-primary bg-surface-container w-fit rounded border px-1.5 py-px">
                             {m.productSku} · {m.id.slice(0, 8)}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-sm">
-                          <typeMeta.icon
-                            aria-hidden="true"
-                            className="size-3.5"
-                          />
+                        <Badge
+                          data-icon="inline-start"
+                          className={cn(
+                            "border",
+                            m.movementType === "stock_in" &&
+                              "bg-status-ok-bg text-status-ok-fg border-status-ok-border",
+                            m.movementType === "stock_out" &&
+                              "bg-status-warn-bg text-status-warn-fg border-status-warn-border",
+                            m.movementType === "adjustment" &&
+                              "bg-status-info-bg text-status-info-fg border-status-info-border",
+                            m.movementType === "reversal" &&
+                              "bg-status-violet-bg text-status-violet-fg border-status-violet-border"
+                          )}
+                        >
+                          <typeMeta.icon aria-hidden="true" />
                           {typeMeta.label}
-                        </span>
+                        </Badge>
                       </TableCell>
                       <TableCell
                         className={cn(
-                          "font-mono text-sm tabular-nums",
-                          negative ? "text-destructive" : ""
+                          "text-right font-mono text-[13px] font-bold tabular-nums",
+                          m.movementType === "stock_in" &&
+                            "text-emerald-700 dark:text-emerald-400",
+                          m.movementType === "stock_out" &&
+                            "text-amber-700 dark:text-amber-400",
+                          m.movementType === "reversal" &&
+                            "text-status-err-fg",
+                          m.movementType === "adjustment" && "text-foreground"
                         )}
                       >
                         {negative ? "\u2212" : "+"}
@@ -317,26 +358,38 @@ export function TransactionsPage({
                         </span>
                       </TableCell>
                       <TableCell>
-                        <StatusBadge
-                          tone={statusMeta.tone}
+                        <DotStatus
+                          tone={
+                            statusMeta.tone === "success"
+                              ? "success"
+                              : statusMeta.tone === "failed"
+                                ? "failed"
+                                : "pending"
+                          }
                           label={statusMeta.label}
                         />
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         {m.proofTxHash && m.proofStatus === "confirmed" ? (
-                          <a
-                            href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:text-primary/80 focus-visible:ring-ring inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-sm focus-visible:ring-3 focus-visible:outline-none"
-                            aria-label="View transaction on BaseScan"
-                          >
-                            <ExternalLink
-                              aria-hidden="true"
-                              className="size-3.5"
-                            />
-                            Verified
-                          </a>
+                          <span className="flex flex-col gap-0.5">
+                            <a
+                              href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:text-primary-hover focus-visible:ring-ring inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-sm font-semibold focus-visible:ring-3 focus-visible:outline-none"
+                              aria-label="View transaction on BaseScan"
+                            >
+                              <ExternalLink
+                                aria-hidden="true"
+                                className="size-3.5"
+                              />
+                              Verified
+                            </a>
+                            <span className="text-muted-foreground font-mono text-xs">
+                              {m.proofTxHash.slice(0, 6)}…
+                              {m.proofTxHash.slice(-4)}
+                            </span>
+                          </span>
                         ) : proofMeta ? (
                           <StatusBadge
                             tone={proofMeta.tone}

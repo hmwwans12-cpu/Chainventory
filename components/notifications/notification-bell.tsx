@@ -387,7 +387,12 @@ export function NotificationBell() {
                                 </span>
                               ) : null}
                               <span className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5 text-sm">
-                                <span>{formatTimeAgo(n.last_event_at)}</span>
+                                <time
+                                  dateTime={n.last_event_at}
+                                  suppressHydrationWarning
+                                >
+                                  {formatTimeAgo(n.last_event_at)}
+                                </time>
                                 {manyWarehouses &&
                                 n.warehouse_id &&
                                 warehouseNames[n.warehouse_id] ? (

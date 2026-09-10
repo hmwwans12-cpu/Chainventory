@@ -119,11 +119,14 @@ export default async function MembersPageRoute({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Members" description={`${active.name} · team.`} />
+      <PageHeader
+        title="Members"
+        description={`${active.name} · team members and role-based permissions.`}
+      />
       {pendingError ? (
         <p
           role="alert"
-          className="border-warning/30 bg-warning/10 text-warning-foreground rounded-lg border px-4 py-3 text-sm"
+          className="border-status-warn-border bg-status-warn-bg text-status-warn-fg rounded-xl border px-4 py-3 text-sm"
         >
           Could not load pending join requests. New requests may be hidden.
           Refresh to retry.

@@ -9,6 +9,7 @@ import {
 import { RetryErrorState } from "@/components/shared/retry-error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
+import { Badge } from "@/components/ui/badge";
 import { MovementsPage } from "@/components/inventory/movements-page";
 import {
   embedOne,
@@ -145,7 +146,12 @@ export default async function StockMovementsPageRoute({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Stock Movement"
-        description={`${active.name} · ledger.`}
+        description="Operational movement ledger and real-time verifiable audit trail."
+        pill={
+          <Badge variant="neutral" className="font-mono">
+            {active.code} · ledger
+          </Badge>
+        }
       />
       <MovementsPage
         warehouseId={active.id}

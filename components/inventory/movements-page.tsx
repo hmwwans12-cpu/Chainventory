@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Eye,
   Loader2,
+  Lock,
   MoreHorizontal,
   Plus,
   Scale,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -51,6 +53,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { DotStatus } from "@/components/shared/dot-status";
 import { EntityName } from "@/components/shared/entity-name";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
@@ -319,13 +322,8 @@ export function MovementsPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2">
-          <span
-            className={cn(
-              "inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-sm font-medium whitespace-nowrap",
-              liveStatus === "live"
-                ? "bg-primary/10 text-primary border-primary/20"
-                : "bg-warning/15 text-warning-foreground border-warning/20"
-            )}
+          <Badge
+            variant={liveStatus === "live" ? "success" : "warning"}
             role="status"
             aria-live="polite"
           >
@@ -334,12 +332,12 @@ export function MovementsPage({
               className={cn(
                 "size-1.5 rounded-full",
                 liveStatus === "live"
-                  ? "bg-primary"
-                  : "bg-warning animate-pulse"
+                  ? "bg-current"
+                  : "animate-pulse bg-current"
               )}
             />
             {liveStatus === "live" ? "Live" : "Reconnecting"}
-          </span>
+          </Badge>
           {warehouses.length > 1 ? (
             <Select
               value={warehouseId}
@@ -367,9 +365,9 @@ export function MovementsPage({
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button variant="outline" aria-label="More movement types">
-                    <MoreHorizontal aria-hidden="true" />
-                    <span className="hidden sm:inline">More</span>
+                  <Button variant="outline" aria-label="Special operations">
+                    <Lock aria-hidden="true" />
+                    <span className="hidden sm:inline">Special Operations</span>
                     <ChevronDown
                       aria-hidden="true"
                       className="size-3.5 opacity-60"
@@ -445,10 +443,10 @@ export function MovementsPage({
           padding="none"
           role="status"
           aria-live="polite"
-          className="border-warning/40 bg-warning/15 text-warning-foreground flex items-center gap-2 px-4 py-3 text-sm"
+          className="border-status-warn-border bg-status-warn-bg text-status-warn-fg flex items-center gap-2 px-4 py-3 text-sm"
         >
           <TriangleAlert aria-hidden="true" className="size-4 shrink-0" />
-          Warehouse suspended. Inventory mutations are temporarily unavailable.
+          Warehouse Suspended: inventory mutations are temporarily unavailable.
         </PanelCard>
       ) : null}
 
@@ -493,15 +491,13 @@ export function MovementsPage({
             <Table className="lg:min-w-[860px]">
               <TableHeader>
                 <TableRow>
+                  <TableHead>Timestamp</TableHead>
                   <TableHead>Product</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead className="text-right">Quantity</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden lg:table-cell">Actor</TableHead>
                   <TableHead className="hidden lg:table-cell">Proof</TableHead>
-                  <TableHead className="hidden lg:table-cell">
-                    Created
-                  </TableHead>
                   <TableHead className="w-12">
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -519,29 +515,70 @@ export function MovementsPage({
                     : null;
                   return (
                     <TableRow key={m.id}>
+                      <TableCell className="text-sm whitespace-nowrap tabular-nums">
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <time
+                                dateTime={m.created_at}
+                                className="cursor-help font-medium"
+                                suppressHydrationWarning
+                              />
+                            }
+                          >
+                            {formatTimeAgo(m.created_at)}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {formatDateTime(m.created_at)}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
                           <EntityName title={m.productName}>
                             {m.productName}
                           </EntityName>
-                          <span className="text-muted-foreground font-mono text-sm">
-                            {m.productSku}
+                          <span className="flex flex-wrap items-center gap-1">
+                            <span className="t-code text-primary bg-surface-container rounded border px-1.5 py-px">
+                              #{m.id.slice(0, 8)}
+                            </span>
+                            {m.productSku ? (
+                              <span className="text-muted-foreground font-mono text-xs">
+                                {m.productSku}
+                              </span>
+                            ) : null}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-sm">
-                          <typeMeta.icon
-                            aria-hidden="true"
-                            className="size-3.5"
-                          />
+                        <Badge
+                          data-icon="inline-start"
+                          className={cn(
+                            "border",
+                            m.movementType === "stock_in" &&
+                              "bg-status-ok-bg text-status-ok-fg border-status-ok-border",
+                            m.movementType === "stock_out" &&
+                              "bg-status-warn-bg text-status-warn-fg border-status-warn-border",
+                            m.movementType === "adjustment" &&
+                              "bg-status-info-bg text-status-info-fg border-status-info-border",
+                            m.movementType === "reversal" &&
+                              "bg-status-violet-bg text-status-violet-fg border-status-violet-border"
+                          )}
+                        >
+                          <typeMeta.icon aria-hidden="true" />
                           {typeMeta.label}
-                        </span>
+                        </Badge>
                       </TableCell>
                       <TableCell
                         className={cn(
-                          "font-mono text-sm tabular-nums",
-                          negative ? "text-destructive" : ""
+                          "text-right font-mono text-[13px] font-bold tabular-nums",
+                          m.movementType === "stock_in" &&
+                            "text-emerald-700 dark:text-emerald-400",
+                          m.movementType === "stock_out" &&
+                            "text-amber-700 dark:text-amber-400",
+                          m.movementType === "reversal" &&
+                            "text-status-err-fg",
+                          m.movementType === "adjustment" && "text-foreground"
                         )}
                       >
                         {negative ? "\u2212" : "+"}
@@ -551,8 +588,14 @@ export function MovementsPage({
                         </span>
                       </TableCell>
                       <TableCell>
-                        <StatusBadge
-                          tone={statusMeta.tone}
+                        <DotStatus
+                          tone={
+                            statusMeta.tone === "success"
+                              ? "success"
+                              : statusMeta.tone === "failed"
+                                ? "failed"
+                                : "pending"
+                          }
                           label={statusMeta.label}
                         />
                       </TableCell>
@@ -561,13 +604,19 @@ export function MovementsPage({
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         {m.proofTxHash && m.proofStatus === "confirmed" ? (
-                          <BaseScanLink
-                            href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
-                            ariaLabel="View transaction on BaseScan"
-                            className="before:-inset-[9px]"
-                          >
-                            Verified
-                          </BaseScanLink>
+                          <span className="flex flex-col gap-0.5">
+                            <BaseScanLink
+                              href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
+                              ariaLabel="View transaction on BaseScan"
+                              className="before:-inset-[9px]"
+                            >
+                              Verified
+                            </BaseScanLink>
+                            <span className="text-muted-foreground font-mono text-xs">
+                              {m.proofTxHash.slice(0, 6)}…
+                              {m.proofTxHash.slice(-4)}
+                            </span>
+                          </span>
                         ) : proofMeta ? (
                           <StatusBadge
                             tone={proofMeta.tone}
@@ -578,23 +627,6 @@ export function MovementsPage({
                             —
                           </span>
                         )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <time
-                                dateTime={m.created_at}
-                                className="cursor-help"
-                              />
-                            }
-                          >
-                            {formatTimeAgo(m.created_at)}
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {formatDateTime(m.created_at)}
-                          </TooltipContent>
-                        </Tooltip>
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -693,6 +725,7 @@ export function MovementsPage({
                             <time
                               dateTime={m.created_at}
                               className="cursor-help"
+                              suppressHydrationWarning
                             />
                           }
                         >

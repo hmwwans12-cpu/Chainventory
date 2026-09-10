@@ -9,9 +9,10 @@ import {
 import { RetryErrorState } from "@/components/shared/retry-error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
+import { Badge } from "@/components/ui/badge";
 import { TransactionsPage } from "@/components/transactions/transactions-page";
 import type { MovementListItem, MovementStatus } from "@/lib/inventory/types";
-import { TRANSACTIONS_PER_PAGE } from "@/lib/constants";
+import { BASE_SEPOLIA_CHAIN_ID, TRANSACTIONS_PER_PAGE } from "@/lib/constants";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md §6); cegah percobaan prerender saat env build minim.
@@ -151,11 +152,26 @@ export default async function TransactionsPageRoute({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Transactions"
-        description={`${active.name} · on-chain ledger.`}
+        description={`${active.name} · on-chain ledger and verifiable proof trail.`}
+        pill={
+          <Badge variant="success" className="font-mono">
+            Live Ledger
+          </Badge>
+        }
+        actions={
+          <Badge variant="neutral" className="gap-1.5 px-3 py-1.5 font-mono">
+            <span
+              aria-hidden="true"
+              className="bg-primary size-1.5 animate-pulse rounded-full"
+            />
+            Base Sepolia · Chain ID {BASE_SEPOLIA_CHAIN_ID}
+          </Badge>
+        }
       />
       <TransactionsPage
         warehouseId={active.id}
         warehouses={warehouses}
+        role={active.role}
         items={items}
         page={page}
         totalPages={totalPages}

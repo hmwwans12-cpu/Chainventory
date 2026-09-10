@@ -87,18 +87,16 @@ export function FaucetClaimCard({
   }
 
   return (
-    <Card className="border-primary/20 bg-primary/[0.04]">
+    <Card className="border-status-ok-border bg-status-ok-bg">
       <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
-        <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+        <span className="bg-card text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border">
           <Droplets aria-hidden="true" className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-foreground text-sm font-semibold">
-            Low Base Sepolia balance
-          </p>
-          <p className="text-muted-foreground text-sm">
-            Claim {FAUCET_AMOUNT_ETH} test ETH to pay for your next stock
-            transaction.
+          <p className="text-foreground t-headline-sm">Testnet Gas Reserve</p>
+          <p className="text-muted-foreground t-body-sm">
+            Base Sepolia balance is low ({balance} ETH). Claim{" "}
+            {FAUCET_AMOUNT_ETH} test ETH to keep recording stock transactions.
           </p>
           {message ? (
             txHash ? (
@@ -106,7 +104,7 @@ export function FaucetClaimCard({
             ) : (
               <p
                 role="alert"
-                className="bg-destructive/15 text-destructive mt-1 rounded-lg px-3 py-2 text-sm"
+                className="bg-status-err-bg text-status-err-fg border-status-err-border mt-1 rounded-lg border px-3 py-2 text-sm"
               >
                 {message}
               </p>
@@ -135,7 +133,7 @@ export function FaucetClaimCard({
             ) : (
               <Droplets aria-hidden="true" />
             )}
-            Claim {FAUCET_AMOUNT_ETH} ETH
+            Claim Test ETH ({FAUCET_AMOUNT_ETH} ETH)
           </Button>
         </div>
       </CardContent>

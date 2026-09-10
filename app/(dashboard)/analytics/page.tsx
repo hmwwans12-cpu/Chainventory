@@ -10,7 +10,13 @@ import { fetchAnalytics, parseRange } from "@/lib/analytics/aggregate";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { RetryErrorState } from "@/components/shared/retry-error-state";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { AnalyticsControls } from "@/components/analytics/analytics-controls";
 import { RangeTabs } from "@/components/analytics/range-tabs";
 import { StatCard } from "@/components/analytics/stat-card";
@@ -86,7 +92,7 @@ export default async function AnalyticsPage({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Analytics"
-        description={`${active.name} · stock movement overview.`}
+        description={`${active.name} · ${active.code} · inventory volume and movement trends.`}
         actions={
           <AnalyticsControls warehouses={warehouses} activeId={active.id}>
             <RangeTabs warehouseId={active.id} range={range} />
@@ -94,16 +100,18 @@ export default async function AnalyticsPage({
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={Package}
           label="Total Products"
           value={String(analytics.totalProducts)}
+          unit="SKUs Active"
         />
         <StatCard
           icon={Layers}
           label="Total Stock"
           value={analytics.totalStock}
+          unit="Units on hand"
         />
         <StatCard
           icon={PackagePlus}
@@ -129,17 +137,47 @@ export default async function AnalyticsPage({
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Stock In / Out</CardTitle>
+          <CardHeader className="border-b">
+            <CardTitle className="t-headline-sm">
+              Stock In / Out Trend
+            </CardTitle>
+            <CardDescription>
+              Daily volume comparison for the last {range} days.
+            </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4 flex items-center gap-5">
+              <span className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="bg-primary size-3 rounded-full"
+                />
+                <span className="text-foreground text-xs font-semibold">
+                  Stock In (+
+                  {Number(analytics.period.stockIn).toLocaleString()})
+                </span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="size-3 rounded-full bg-[#D97706]"
+                />
+                <span className="text-foreground text-xs font-semibold">
+                  Stock Out (−
+                  {Number(analytics.period.stockOut).toLocaleString()})
+                </span>
+              </span>
+            </div>
             <StockMovementChartLazy daily={analytics.daily} range={range} />
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Top Products</CardTitle>
+          <CardHeader className="border-b">
+            <CardTitle className="t-headline-sm">Top Products</CardTitle>
+            <CardDescription>
+              Highest turnover in the last {range} days.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <TopProducts

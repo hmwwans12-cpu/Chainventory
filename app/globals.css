@@ -17,7 +17,8 @@
   /* DESIGN.md §4 — Light Mode */
   --background: #e4d5c7;
   --foreground: #1c3b30;
-  --card: #f3ece5;
+  /* Stitch: primary data cards are pure white on warm canvas. */
+  --card: #ffffff;
   --card-foreground: #1c3b30;
   --popover: #ffffff;
   --popover-foreground: #1c3b30;
@@ -79,9 +80,8 @@
 
   /* Sidebar panel (audit UI sidebar — token sebelumnya TIDAK pernah
      didefinisikan sehingga bg-sidebar dkk tidak menghasilkan style).
-     Sidebar = panel terpisah: sedikit lebih terang dari background
-     (Dawn Pink), beda dari card, aksen hover memakai tone card. */
-  --sidebar: #ecdcc9;
+     Stitch: side navigation rail = surface-container-low (#fff1e5). */
+  --sidebar: #fff1e5;
   --sidebar-foreground: #1c3b30;
   --sidebar-primary: #186049;
   --sidebar-primary-foreground: #ffffff;
@@ -89,6 +89,39 @@
   --sidebar-accent-foreground: #1c3b30;
   --sidebar-border: #d4c2b2;
   --sidebar-ring: #186049;
+
+  /* Stitch surface scale (chainventory/DESIGN.md) — warm architectural
+     layering: canvas < low < container < high < highest. */
+  --canvas: #fff8f4;
+  --surface-low: #fff1e5;
+  --surface-container: #fbebdd;
+  --surface-high: #f5e6d7;
+  --surface-highest: #efe0d2;
+  /* Stitch active-nav pill. */
+  --nav-active: #a9eed0;
+  --nav-active-foreground: #2a6e56;
+  /* Stitch primary hover/active (buttons, CTA). */
+  --primary-hover: #247158;
+  --primary-active: #144d3b;
+  /* Stitch status badge palettes (solid tints, AA on white + canvas). */
+  --status-ok-bg: #e6f3ee;
+  --status-ok-fg: #186049;
+  --status-ok-border: #6ab29b;
+  --status-warn-bg: #fef3c7;
+  --status-warn-fg: #92400e;
+  --status-warn-border: #fde68a;
+  --status-err-bg: #fee2e2;
+  --status-err-fg: #b91c1c;
+  --status-err-border: #fecaca;
+  --status-info-bg: #e0f2fe;
+  --status-info-fg: #0369a1;
+  --status-info-border: #bae6fd;
+  --status-violet-bg: #f3e8ff;
+  --status-violet-fg: #6d28d9;
+  --status-violet-border: #e9d5ff;
+  --status-neutral-bg: #f3ece5;
+  --status-neutral-fg: #3f4944;
+  --status-neutral-border: #d4c2b2;
 
   /* Unified layout tokens — single source for page rhythm.
      Page: gap-6 root, py-6 md:py-8. Section: gap-6. Component: gap-4.
@@ -140,6 +173,35 @@
   --sidebar-accent-foreground: #e8f2ee;
   --sidebar-border: #2d5447;
   --sidebar-ring: #6ab29b;
+
+  /* Stitch surfaces (dark): deep evergreen charcoal layering. */
+  --canvas: #0e231b;
+  --surface-low: #122b23;
+  --surface-container: #143129;
+  --surface-high: #1a3d2f;
+  --surface-highest: #22493a;
+  --nav-active: #1d4a3c;
+  --nav-active-foreground: #a9eed0;
+  --primary-hover: #6ab29b;
+  --primary-active: #8bd5b7;
+  --status-ok-bg: #14342a;
+  --status-ok-fg: #8bd5b7;
+  --status-ok-border: #247158;
+  --status-warn-bg: #3a2c10;
+  --status-warn-fg: #f4b23e;
+  --status-warn-border: #7a5a1e;
+  --status-err-bg: #3d1a16;
+  --status-err-fg: #efa39c;
+  --status-err-border: #7a2d24;
+  --status-info-bg: #102f42;
+  --status-info-fg: #7dd3fc;
+  --status-info-border: #155e75;
+  --status-violet-bg: #2a1b4a;
+  --status-violet-fg: #c4b5fd;
+  --status-violet-border: #5b21b6;
+  --status-neutral-bg: #1a3d2f;
+  --status-neutral-fg: #b8c9c1;
+  --status-neutral-border: #2d5447;
 }
 
 @theme inline {
@@ -183,6 +245,35 @@
   --color-dawn-pink: var(--dawn-pink);
   --color-mint-soft: var(--mint-soft);
 
+  /* Stitch surface scale + nav + primary states + status palettes */
+  --color-canvas: var(--canvas);
+  --color-surface-low: var(--surface-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-high: var(--surface-high);
+  --color-surface-highest: var(--surface-highest);
+  --color-nav-active: var(--nav-active);
+  --color-nav-active-foreground: var(--nav-active-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-status-ok-bg: var(--status-ok-bg);
+  --color-status-ok-fg: var(--status-ok-fg);
+  --color-status-ok-border: var(--status-ok-border);
+  --color-status-warn-bg: var(--status-warn-bg);
+  --color-status-warn-fg: var(--status-warn-fg);
+  --color-status-warn-border: var(--status-warn-border);
+  --color-status-err-bg: var(--status-err-bg);
+  --color-status-err-fg: var(--status-err-fg);
+  --color-status-err-border: var(--status-err-border);
+  --color-status-info-bg: var(--status-info-bg);
+  --color-status-info-fg: var(--status-info-fg);
+  --color-status-info-border: var(--status-info-border);
+  --color-status-violet-bg: var(--status-violet-bg);
+  --color-status-violet-fg: var(--status-violet-fg);
+  --color-status-violet-border: var(--status-violet-border);
+  --color-status-neutral-bg: var(--status-neutral-bg);
+  --color-status-neutral-fg: var(--status-neutral-fg);
+  --color-status-neutral-border: var(--status-neutral-border);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -196,8 +287,11 @@
 
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
 
-  --shadow-card: 0 1px 2px rgb(28 59 48 / 0.05);
+  /* Stitch Level 2 (active work-surface cards) + Level 3 (drawers/modals). */
+  --shadow-card:
+    0 2px 6px -1px rgb(28 59 48 / 0.05), 0 1px 3px -1px rgb(28 59 48 / 0.03);
   --shadow-elevated: 0 2px 8px rgb(28 59 48 / 0.08);
   --shadow-modal: 0 12px 32px rgb(28 59 48 / 0.18);
   --shadow-inner-highlight: var(--shadow-inner-highlight);
@@ -252,14 +346,17 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Typography: single family for app UI — Plus Jakarta Sans (weight 400/500/600/700). Space Grotesk reserved for marketing hero/brand only */
+  /* Stitch type system: Manrope headings, Hanken Grotesk body/controls,
+     JetBrains Mono technical identifiers. */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-family:
+      var(--font-display), var(--font-sans), ui-sans-serif, system-ui,
+      sans-serif;
     letter-spacing: -0.015em;
   }
 
@@ -273,6 +370,65 @@
 
   ::selection {
     background-color: color-mix(in srgb, var(--primary) 20%, transparent);
+  }
+}
+
+/* Stitch type-scale utilities (chainventory/DESIGN.md typography). */
+@layer components {
+  .t-headline-lg {
+    font-family: var(--font-display), var(--font-sans), sans-serif;
+    font-size: 2rem;
+    line-height: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .t-headline-md {
+    font-family: var(--font-display), var(--font-sans), sans-serif;
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  .t-headline-sm {
+    font-family: var(--font-display), var(--font-sans), sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.625rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .t-body-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    font-weight: 400;
+  }
+  .t-body-md {
+    font-size: 0.9375rem;
+    line-height: 1.5rem;
+    font-weight: 400;
+  }
+  .t-body-sm {
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+  }
+  .t-label-lg {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .t-label-md {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .t-code {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+    font-weight: 500;
   }
 }
 

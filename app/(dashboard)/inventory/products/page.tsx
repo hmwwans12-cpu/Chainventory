@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Package } from "lucide-react";
+import { LayoutGrid, Package, TriangleAlert } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
@@ -7,9 +7,11 @@ import {
   getMyWarehouses,
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
+import { isLowStock } from "@/lib/inventory/low-stock";
 import { RetryErrorState } from "@/components/shared/retry-error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
+import { Badge } from "@/components/ui/badge";
 import { ProductsPage } from "@/components/inventory/products-page";
 import type { ProductRow } from "@/lib/inventory/types";
 import { PRODUCTS_PER_PAGE } from "@/lib/constants";
@@ -28,6 +30,7 @@ export default async function ProductsPageRoute({
   searchParams: Promise<{
     q?: string | string[];
     status?: string | string[];
+    category?: string | string[];
     page?: string | string[];
     warehouse?: string | string[];
   }>;
@@ -50,6 +53,11 @@ export default async function ProductsPageRoute({
     normalizedStatus === "archived" || normalizedStatus === "all"
       ? normalizedStatus
       : "active";
+  // Stitch category filter — exact match, dikosongkan bila "all".
+  const categoryFilter =
+    typeof params.category === "string" && params.category.trim() !== ""
+      ? params.category.trim()
+      : "";
 
   const warehouses = await getMyWarehouses(supabase, user.id);
   const active = pickActiveWarehouse(warehouses, warehouseParam);
@@ -91,6 +99,7 @@ export default async function ProductsPageRoute({
     .order("updated_at", { ascending: false });
 
   if (statusEq) listQuery.eq("status", statusEq);
+  if (categoryFilter) listQuery.eq("category", categoryFilter);
   if (q) {
     // Pencarian server-side (PostgREST ilike) — bukan filter frontend.
     // FE-26: sertakan `_` (wildcard 1-char) dan `\` (escape) — sebelumnya
@@ -128,6 +137,7 @@ export default async function ProductsPageRoute({
     .select("id", { count: "exact", head: true })
     .eq("warehouse_id", active.id);
   if (statusEq) countQuery.eq("status", statusEq);
+  if (categoryFilter) countQuery.eq("category", categoryFilter);
   if (q) {
     const escaped = q.replace(/[%_\\()]/g, " ");
     countQuery.or(
@@ -144,6 +154,42 @@ export default async function ProductsPageRoute({
       "products count query failed"
     );
   }
+  // Stitch KPI pills: low-stock count (aturan sama dengan dashboard) +
+  // daftar kategori distinct untuk filter. Ringan: kolom sempit + limit.
+  const [lowStockRes, categoriesRes] = await Promise.all([
+    supabase
+      .from("products")
+      .select("status, low_stock_threshold, inventory_balances(quantity)")
+      .eq("warehouse_id", active.id)
+      .eq("status", "active")
+      .limit(5000),
+    supabase
+      .from("products")
+      .select("category")
+      .eq("warehouse_id", active.id)
+      .limit(5000),
+  ]);
+  let lowStockCount = 0;
+  for (const row of lowStockRes.data ?? []) {
+    const balanceRow = Array.isArray(row.inventory_balances)
+      ? row.inventory_balances[0]
+      : row.inventory_balances;
+    if (
+      isLowStock({
+        status: "active",
+        quantity: balanceRow?.quantity ?? null,
+        threshold: row.low_stock_threshold,
+      })
+    )
+      lowStockCount += 1;
+  }
+  const categories = [
+    ...new Set(
+      (categoriesRes.data ?? [])
+        .map((r) => (r.category ?? "").trim())
+        .filter((c) => c !== "")
+    ),
+  ].sort((a, b) => a.localeCompare(b));
   const safeTotal = countError ? null : (totalCount ?? 0);
 
   const products: ProductRow[] = (data ?? []).map((row) => ({
@@ -169,10 +215,40 @@ export default async function ProductsPageRoute({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Products"
-        description={`${active.name} · inventory.`}
+        description={`${active.name} · ${active.code} · inventory catalog.`}
+        pill={
+          <Badge variant="success">
+            <span
+              aria-hidden="true"
+              className="size-1.5 animate-pulse rounded-full bg-current"
+            />
+            Live Synced
+          </Badge>
+        }
+        actions={
+          <>
+            <Badge variant="neutral" className="gap-1.5 px-3 py-1.5">
+              <Package aria-hidden="true" className="size-3.5" />
+              {(safeTotal ?? 0).toLocaleString()} SKUs Total
+            </Badge>
+            <Badge
+              variant={lowStockCount > 0 ? "warning" : "neutral"}
+              className="gap-1.5 px-3 py-1.5"
+            >
+              <TriangleAlert aria-hidden="true" className="size-3.5" />
+              {lowStockCount} Low Stock Alerts
+            </Badge>
+            <Badge variant="neutral" className="gap-1.5 px-3 py-1.5">
+              <LayoutGrid aria-hidden="true" className="size-3.5" />
+              {categories.length} Categories
+            </Badge>
+          </>
+        }
       />
       <ProductsPage
         statusFilter={statusFilter}
+        categoryFilter={categoryFilter}
+        categories={categories}
         warehouseId={active.id}
         warehouses={warehouses}
         role={active.role}

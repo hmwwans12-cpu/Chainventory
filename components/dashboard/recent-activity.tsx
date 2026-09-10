@@ -36,7 +36,7 @@ export type RecentActivityItem = {
   lastEventAt: string;
 };
 
-const TABS = ["All", "Inventory", "Members", "Blockchain"] as const;
+const TABS = ["All", "Inventory", "Members", "Audit"] as const;
 
 function matchesTab(
   item: RecentActivityItem,
@@ -47,7 +47,7 @@ function matchesTab(
   if (tab === "Inventory")
     return /stock|inventory|product|adjustment|reversal/.test(hay);
   if (tab === "Members") return /member|join|request|role|owner/.test(hay);
-  if (tab === "Blockchain")
+  if (tab === "Audit")
     return /proof|blockchain|verified|verification|basescan/.test(hay);
   return true;
 }
@@ -60,18 +60,18 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
   );
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="border-b">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
-            <CardTitle>Activity</CardTitle>
+            <CardTitle className="t-headline-sm">Recent Activity</CardTitle>
             <CardDescription>
-              Requests, adjustments, and blockchain events.
+              Real-time event feed for this workspace.
             </CardDescription>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {items.length > 0 ? (
               <div
-                className="bg-muted flex items-center gap-0.5 rounded-lg p-1"
+                className="bg-surface-container flex items-center gap-0.5 rounded-lg border p-1"
                 role="tablist"
                 aria-label="Activity filter"
               >
@@ -84,7 +84,7 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
                     className={cn(
                       "rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
                       tab === t
-                        ? "bg-card text-foreground shadow-(--shadow-card)"
+                        ? "bg-card text-primary shadow-(--shadow-card)"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -94,12 +94,8 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
               </div>
             ) : null}
             <CardAction>
-              <Button
-                variant="outline"
-                size="sm"
-                render={<Link href="/notifications" />}
-              >
-                View All
+              <Button variant="link" render={<Link href="/notifications" />}>
+                View All <span aria-hidden="true">→</span>
               </Button>
             </CardAction>
           </div>
@@ -158,6 +154,7 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
                       <time
                         dateTime={item.lastEventAt}
                         className="text-muted-foreground ms-auto shrink-0 cursor-help pt-0.5 text-sm tabular-nums"
+                        suppressHydrationWarning
                       />
                     }
                   >

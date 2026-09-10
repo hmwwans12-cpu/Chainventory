@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { StatusBadge, type StatusTone } from "@/components/shared/status-badge";
+import { DotStatus } from "@/components/shared/dot-status";
 import {
   Table,
   TableBody,
@@ -53,15 +53,25 @@ export type RecentMovementItem = {
 const TYPE_META = MOVEMENT_TYPE_META;
 const STATUS_TONE_LABEL = MOVEMENT_STATUS_META;
 
-// Tone → class mapping for type badges (keeps visual parity with StatusBadge)
+// Stitch type badges: Stock In green, Stock Out amber, Adjustment blue,
+// Reversal violet — keyed by movement TYPE (tone alone can't express it).
+const TYPE_CLASS: Record<RecentMovementItem["movementType"], string> = {
+  stock_in: "bg-status-ok-bg text-status-ok-fg border-status-ok-border",
+  stock_out: "bg-status-warn-bg text-status-warn-fg border-status-warn-border",
+  adjustment: "bg-status-info-bg text-status-info-fg border-status-info-border",
+  reversal:
+    "bg-status-violet-bg text-status-violet-fg border-status-violet-border",
+};
+
+// Tone → class mapping for type badges (Stitch solid status tints).
 const TONE_CLASS: Record<string, string> = {
-  success: "bg-primary/10 text-primary border border-primary/20",
-  pending:
-    "bg-secondary/20 text-secondary-foreground border border-secondary/30",
-  warning: "bg-warning/15 text-warning-foreground border border-warning/20",
-  failed: "bg-destructive/15 text-destructive border border-destructive/20",
-  inactive: "bg-muted text-muted-foreground border border-border",
-  suspended: "bg-warning/10 text-warning-foreground border border-warning/20",
+  success: "bg-status-ok-bg text-status-ok-fg border-status-ok-border",
+  pending: "bg-status-warn-bg text-status-warn-fg border-status-warn-border",
+  warning: "bg-status-warn-bg text-status-warn-fg border-status-warn-border",
+  failed: "bg-status-err-bg text-status-err-fg border-status-err-border",
+  inactive:
+    "bg-status-neutral-bg text-status-neutral-fg border-status-neutral-border",
+  suspended: "bg-status-warn-bg text-status-warn-fg border-status-warn-border",
 };
 
 export function RecentMovements({
@@ -77,16 +87,14 @@ export function RecentMovements({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Recent Stock Movements</CardTitle>
-        <CardDescription>Last 8 movements in this warehouse.</CardDescription>
+      <CardHeader className="border-b">
+        <CardTitle className="t-headline-sm">Recent Stock Movements</CardTitle>
+        <CardDescription>
+          Validated operational stock logs in this warehouse.
+        </CardDescription>
         <CardAction>
-          <Button
-            variant="outline"
-            size="sm"
-            render={<Link href={viewAllHref} />}
-          >
-            View All
+          <Button variant="link" render={<Link href={viewAllHref} />}>
+            View All Movements <span aria-hidden="true">→</span>
           </Button>
         </CardAction>
       </CardHeader>
@@ -132,9 +140,11 @@ export function RecentMovements({
                     <TableRow key={item.id}>
                       <TableCell>
                         <div className="flex min-w-0 flex-col gap-0.5">
-                          <EntityName className="max-w-52">
-                            {item.productName}
-                          </EntityName>
+                          <span className="text-foreground font-semibold">
+                            <EntityName className="max-w-52">
+                              {item.productName}
+                            </EntityName>
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -142,7 +152,10 @@ export function RecentMovements({
                           variant="secondary"
                           data-icon="inline-start"
                           className={cn(
-                            TONE_CLASS[meta.tone] ?? "bg-muted text-foreground"
+                            "border px-2.5 py-0.5 font-mono text-[11px] font-semibold",
+                            TYPE_CLASS[item.movementType] ??
+                              TONE_CLASS[meta.tone] ??
+                              "bg-muted text-foreground"
                           )}
                         >
                           <Icon aria-hidden="true" />
@@ -151,19 +164,43 @@ export function RecentMovements({
                       </TableCell>
                       <TableCell>
                         {status ? (
-                          <StatusBadge
-                            tone={status.tone as StatusTone}
+                          <DotStatus
+                            tone={
+                              status.tone === "success"
+                                ? "success"
+                                : status.tone === "failed"
+                                  ? "failed"
+                                  : status.tone === "inactive"
+                                    ? "inactive"
+                                    : "pending"
+                            }
                             label={status.label}
                           />
                         ) : (
-                          <span className="text-muted-foreground text-sm">
+                          <span className="text-muted-foreground text-[13px]">
                             {item.status.charAt(0).toUpperCase() +
                               item.status.slice(1).replace(/_/g, " ")}
                           </span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className="text-foreground font-mono text-sm tabular-nums">
+                        <span
+                          className={cn(
+                            "font-mono text-[13px] font-bold tabular-nums",
+                            item.movementType === "stock_in" &&
+                              "text-emerald-700 dark:text-emerald-400",
+                            item.movementType === "stock_out" &&
+                              "text-amber-700 dark:text-amber-400",
+                            item.movementType === "reversal" &&
+                              "text-status-err-fg",
+                            item.movementType === "adjustment" &&
+                              "text-foreground"
+                          )}
+                        >
+                          {item.movementType === "stock_out" ||
+                          item.movementType === "reversal"
+                            ? "−"
+                            : "+"}
                           {item.quantity} {item.unit}
                         </span>
                       </TableCell>
@@ -174,6 +211,7 @@ export function RecentMovements({
                               <time
                                 dateTime={item.createdAt}
                                 className="cursor-help"
+                                suppressHydrationWarning
                               />
                             }
                           >

@@ -32,7 +32,7 @@ export function RangeTabs({
     <div
       role="group"
       aria-label="Analytics time range"
-      className="bg-muted flex items-center gap-0.5 rounded-lg p-[3px]"
+      className="bg-surface-container flex items-center gap-0.5 rounded-lg border p-1"
     >
       {ANALYTICS_RANGES.map((r) => {
         const active = r === range;
@@ -49,9 +49,9 @@ export function RangeTabs({
             prefetch={active}
             aria-current={active ? "true" : undefined}
             className={cn(
-              "focus-visible:ring-ring min-h-11 rounded-md px-3 py-2.5 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none",
+              "focus-visible:ring-ring rounded-md px-3 py-1 text-xs font-semibold transition-colors focus-visible:ring-3 focus-visible:outline-none",
               active
-                ? "bg-card text-foreground shadow-(--shadow-card)"
+                ? "bg-card text-primary shadow-(--shadow-card)"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >

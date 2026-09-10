@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -80,6 +81,8 @@ export function ProductsPage({
   products,
   query,
   statusFilter = "active",
+  categoryFilter = "",
+  categories = [],
   page = 1,
   perPage = 12,
   total = 0,
@@ -87,6 +90,8 @@ export function ProductsPage({
 }: {
   warehouseId: string;
   statusFilter: "active" | "archived" | "all";
+  categoryFilter?: string;
+  categories?: string[];
   role: Role;
   products: ProductRow[];
   query: string;
@@ -104,12 +109,17 @@ export function ProductsPage({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // P2-04: satu tempat membangun URL query produk (q + warehouse + status)
-  // — sebelumnya logika ini ditulis ulang di tiga titik dan rawan inkonsisten.
-  // Hapus `page` agar filter/search baru mulai dari halaman 1.
+  // P2-04: satu tempat membangun URL query produk (q + warehouse + status
+  // + category) — sebelumnya logika ini ditulis ulang di tiga titik dan
+  // rawan inkonsisten. Hapus `page` agar filter/search baru mulai dari
+  // halaman 1.
   const [isPending, startTransition] = React.useTransition();
   const applyFilters = React.useCallback(
-    (nextQuery: string, nextStatus: "active" | "archived" | "all") => {
+    (
+      nextQuery: string,
+      nextStatus: "active" | "archived" | "all",
+      nextCategory: string
+    ) => {
       const params = new URLSearchParams(searchParams.toString());
       if (nextQuery.trim()) params.set("q", nextQuery.trim());
       else params.delete("q");
@@ -117,6 +127,8 @@ export function ProductsPage({
       else params.delete("warehouse");
       if (nextStatus !== "active") params.set("status", nextStatus);
       else params.delete("status");
+      if (nextCategory.trim()) params.set("category", nextCategory.trim());
+      else params.delete("category");
       params.delete("page");
       const qs = params.toString();
       // Guard anti-loop: jangan replace ke query string identik. Tanpa ini,
@@ -134,7 +146,11 @@ export function ProductsPage({
   );
 
   const setStatus = (value: "active" | "archived" | "all") => {
-    applyFilters(query, value);
+    applyFilters(query, value, categoryFilterRef.current ?? "");
+  };
+
+  const setCategory = (value: string) => {
+    applyFilters(query, statusFilter, value);
   };
 
   const [searchInput, setSearchInput] = React.useState(query);
@@ -446,13 +462,21 @@ export function ProductsPage({
   React.useEffect(() => {
     statusFilterRef.current = statusFilter;
   }, [statusFilter]);
+  const categoryFilterRef = React.useRef(categoryFilter);
+  React.useEffect(() => {
+    categoryFilterRef.current = categoryFilter;
+  }, [categoryFilter]);
   const applyFiltersRef = React.useRef(applyFilters);
   React.useEffect(() => {
     applyFiltersRef.current = applyFilters;
   });
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      applyFiltersRef.current(searchInput, statusFilterRef.current ?? "active");
+      applyFiltersRef.current(
+        searchInput,
+        statusFilterRef.current ?? "active",
+        categoryFilterRef.current ?? ""
+      );
     }, 350);
     return () => clearTimeout(timer);
   }, [searchInput]);
@@ -463,6 +487,7 @@ export function ProductsPage({
     name: string;
     q: string;
     status: "active" | "archived" | "all";
+    category: string;
   };
   const [savedViews, setSavedViews] = React.useState<SavedView[]>([]);
   const [saveName, setSaveName] = React.useState("");
@@ -491,6 +516,7 @@ export function ProductsPage({
       name,
       q: query,
       status: statusFilter,
+      category: categoryFilter,
     };
     persistViews([...savedViews, next]);
     setSaveName("");
@@ -503,7 +529,7 @@ export function ProductsPage({
   };
   const applySavedView = (v: SavedView) => {
     setSearchInput(v.q);
-    applyFilters(v.q, v.status);
+    applyFilters(v.q, v.status, v.category ?? "");
   };
   const deleteView = (id: string) =>
     persistViews(savedViews.filter((v) => v.id !== id));
@@ -514,7 +540,7 @@ export function ProductsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="bg-card flex flex-col gap-3 rounded-xl border p-3 shadow-(--shadow-card) xl:flex-row xl:items-center xl:justify-between">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-64">
             <Search
@@ -597,6 +623,32 @@ export function ProductsPage({
               <SelectItem value="all">All</SelectItem>
             </SelectContent>
           </Select>
+          {categories.length > 0 ? (
+            <Select
+              value={categoryFilter || "all"}
+              onValueChange={(value) => {
+                if (value !== null) setCategory(value === "all" ? "" : value);
+              }}
+            >
+              <SelectTrigger
+                aria-label="Product category filter"
+                className="min-w-32"
+              >
+                <span className="text-muted-foreground mr-1 hidden sm:inline">
+                  Category:
+                </span>
+                <SelectValue getLabel={(v) => (v === "all" ? "All" : v)} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           {canExport ? (
@@ -672,8 +724,11 @@ export function ProductsPage({
         </div>
       </div>
       {/* Active filter chips — I03 progressive disclosure + F05 saved views */}
-      {(query.trim() || statusFilter !== "active") && (
+      {(query.trim() || statusFilter !== "active" || categoryFilter) && (
         <div className="flex flex-wrap items-center gap-2">
+          <span className="text-muted-foreground t-label-md uppercase">
+            Active Filters:
+          </span>
           {query.trim() && (
             <span className="bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
               Search: “{query.trim()}”
@@ -700,15 +755,29 @@ export function ProductsPage({
               </button>
             </span>
           )}
+          {categoryFilter ? (
+            <span className="bg-card text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
+              Category: {categoryFilter}
+              <button
+                type="button"
+                aria-label="Clear category filter"
+                onClick={() => setCategory("")}
+                className="hover:bg-muted relative -mr-1 rounded-full p-1 transition-colors before:absolute before:-inset-[8px] before:content-['']"
+              >
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
+            </span>
+          ) : null}
           <button
             type="button"
             onClick={() => {
               setSearchInput("");
               setStatus("active");
+              setCategory("");
             }}
             className="text-muted-foreground hover:text-foreground text-sm font-medium underline-offset-4 hover:underline"
           >
-            Clear All
+            Clear all filters
           </button>
           <span className="text-border hidden sm:inline">|</span>
           {!showSave ? (
@@ -765,6 +834,7 @@ export function ProductsPage({
                   : v.status === "archived"
                     ? "Archived"
                     : "All"}
+                {v.category ? ` · ${v.category}` : ""}
               </span>
               <button
                 type="button"
@@ -820,9 +890,12 @@ export function ProductsPage({
       ) : (
         <>
           {selected.size > 0 && (canArchive || canExport || canEdit) ? (
-            <div className="bg-card sticky bottom-4 z-10 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 shadow-(--shadow-elevated)">
-              <span className="text-sm font-medium tabular-nums">
-                {selected.size} selected
+            <div className="bg-surface-high sticky bottom-4 z-10 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 shadow-(--shadow-elevated)">
+              <Badge variant="default" className="font-mono tabular-nums">
+                {selected.size}
+              </Badge>
+              <span className="text-muted-foreground hidden text-sm sm:inline">
+                products selected — ready for batch operations.
               </span>
               <div className="ml-auto flex flex-wrap items-center gap-2">
                 {canEdit && (
@@ -924,13 +997,15 @@ export function ProductsPage({
                             <EntityName title={product.name}>
                               {product.name}
                             </EntityName>
-                            <span className="text-muted-foreground font-mono text-sm">
+                            <span className="t-code text-primary bg-surface-container w-fit rounded border px-1.5 py-px">
                               {product.sku}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground hidden xl:table-cell">
-                          {product.category ?? "—"}
+                        <TableCell className="hidden xl:table-cell">
+                          <Badge variant="neutral">
+                            {product.category ?? "—"}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground hidden lg:table-cell">
                           {product.unit}
@@ -938,23 +1013,20 @@ export function ProductsPage({
                         <TableCell className="text-right">
                           <div className="flex flex-col items-end gap-0.5">
                             <span
-                              className={`font-mono text-sm tabular-nums ${low ? "text-warning" : ""}`}
+                              className={`font-mono text-sm font-semibold tabular-nums ${low ? "text-status-warn-fg" : ""}`}
                             >
-                              {product.quantity ?? "0"}
-                              {Number(product.lowStockThreshold) > 0 ? (
-                                <span className="text-muted-foreground ml-1 text-sm font-normal">
-                                  / {product.lowStockThreshold}
-                                </span>
-                              ) : null}
+                              {product.quantity ?? "0"} {product.unit}
                             </span>
-                            {low ? (
-                              <span className="text-warning flex items-center gap-1.5 text-sm font-medium">
-                                <TriangleAlert
-                                  aria-hidden="true"
-                                  className="size-3.5 shrink-0"
-                                />
-                                Low stock
+                            {Number(product.lowStockThreshold) > 0 ? (
+                              <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                                min alert: {product.lowStockThreshold}
                               </span>
+                            ) : null}
+                            {low ? (
+                              <Badge variant="warning" data-icon="inline-start">
+                                <TriangleAlert aria-hidden="true" />
+                                Low Stock
+                              </Badge>
                             ) : null}
                           </div>
                         </TableCell>

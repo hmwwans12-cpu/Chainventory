@@ -8,28 +8,34 @@ import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Self-hosted via next/font/local for offline build robustness (audit §3).
-// Previously next/font/google which fetches at build-time and fails offline.
-const plusJakartaSans = localFont({
-  variable: "--font-sans",
-  display: "swap",
-  src: [
-    { path: "./fonts/PlusJakartaSans-400.ttf", weight: "400", style: "normal" },
-    { path: "./fonts/PlusJakartaSans-500.ttf", weight: "500", style: "normal" },
-    { path: "./fonts/PlusJakartaSans-600.ttf", weight: "600", style: "normal" },
-    { path: "./fonts/PlusJakartaSans-700.ttf", weight: "700", style: "normal" },
-  ],
-});
-
-// DESIGN.md §6: Geist Variable + Cabinet Grotesk upgrade.
-// Space Grotesk self-hosted — distinctive technical character.
-const spaceGrotesk = localFont({
+// Stitch type system: Manrope (headings/data summaries), Hanken Grotesk
+// (body/controls), JetBrains Mono (SKU/hash/ledger identifiers).
+const manrope = localFont({
   variable: "--font-display",
   display: "swap",
   src: [
-    { path: "./fonts/SpaceGrotesk-400.ttf", weight: "400", style: "normal" },
-    { path: "./fonts/SpaceGrotesk-500.ttf", weight: "500", style: "normal" },
-    { path: "./fonts/SpaceGrotesk-600.ttf", weight: "600", style: "normal" },
-    { path: "./fonts/SpaceGrotesk-700.ttf", weight: "700", style: "normal" },
+    { path: "./fonts/Manrope-600.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/Manrope-700.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/Manrope-800.woff2", weight: "800", style: "normal" },
+  ],
+});
+
+const hankenGrotesk = localFont({
+  variable: "--font-sans",
+  display: "swap",
+  src: [
+    { path: "./fonts/HankenGrotesk-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/HankenGrotesk-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/HankenGrotesk-600.woff2", weight: "600", style: "normal" },
+  ],
+});
+
+const jetbrainsMono = localFont({
+  variable: "--font-mono",
+  display: "swap",
+  src: [
+    { path: "./fonts/JetBrainsMono-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/JetBrainsMono-500.woff2", weight: "500", style: "normal" },
   ],
 });
 
@@ -90,7 +96,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body
-        className={`${plusJakartaSans.variable} ${spaceGrotesk.variable} flex min-h-full flex-col antialiased`}
+        className={`${hankenGrotesk.variable} ${manrope.variable} ${jetbrainsMono.variable} flex min-h-full flex-col antialiased`}
       >
         <script
           dangerouslySetInnerHTML={{

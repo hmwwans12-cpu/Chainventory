@@ -17,6 +17,13 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -65,7 +72,6 @@ import {
 import { approveJoin, changeMemberRole } from "@/lib/warehouses/members-client";
 import type { MemberListItem, PendingJoinRequest } from "@/lib/members/types";
 import { useSwitchWarehouse } from "@/lib/warehouses/use-switch-warehouse";
-import { PanelCard } from "@/components/shared/panel-card";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { formatDate, isValidEmail } from "@/lib/utils";
 import { LeaveWarehouseDialog } from "@/components/members/dialogs/leave-warehouse-dialog";
@@ -301,7 +307,7 @@ export function MembersPage({
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 shadow-(--shadow-card)">
         <div className="flex min-w-0 items-center gap-2">
           {warehouses.length > 1 ? (
             <Select
@@ -483,21 +489,20 @@ export function MembersPage({
 
       {showRequests ? (
         <section aria-labelledby="join-requests-heading">
-          <PanelCard padding="none" className="bg-card">
-            <div className="border-border flex items-center gap-2 border-b px-4 py-3">
-              <span className="bg-warning/15 text-warning-foreground flex size-7 items-center justify-center rounded-full">
+          <Card className="overflow-hidden">
+            <div className="bg-surface-low/40 flex items-center gap-2.5 border-b px-4 py-3.5 sm:px-6">
+              <span className="bg-status-warn-bg text-status-warn-fg border-status-warn-border flex size-8 items-center justify-center rounded-lg border">
                 <UserPlus aria-hidden="true" className="size-4" />
               </span>
               <h2
                 id="join-requests-heading"
-                className="text-foreground text-sm font-semibold"
+                className="t-headline-sm text-foreground"
               >
-                Join requests
+                Join Requests
               </h2>
-              <StatusBadge
-                tone="pending"
-                label={`${pendingRequests.length} pending`}
-              />
+              <Badge variant="warning" className="ms-1">
+                {pendingRequests.length} Pending
+              </Badge>
             </div>
             <ul className="divide-border divide-y">
               {pendingRequests.map((request) => {
@@ -572,7 +577,7 @@ export function MembersPage({
                 );
               })}
             </ul>
-          </PanelCard>
+          </Card>
         </section>
       ) : null}
 
@@ -591,7 +596,13 @@ export function MembersPage({
           }
         />
       ) : (
-        <PanelCard padding="none" className="bg-card">
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b">
+            <CardTitle className="t-headline-sm">Team Members</CardTitle>
+            <CardDescription>
+              {localMembers.length} of {localMembers.length} members.
+            </CardDescription>
+          </CardHeader>
           <div className="hidden overflow-x-auto lg:block">
             <Table className="lg:min-w-[720px]">
               <TableHeader>
@@ -886,7 +897,12 @@ export function MembersPage({
               );
             })}
           </ul>
-        </PanelCard>
+          <div className="bg-surface-low/30 border-t px-4 py-3 text-sm sm:px-6">
+            <span className="text-muted-foreground tabular-nums">
+              Showing 1–{localMembers.length} of {localMembers.length} members
+            </span>
+          </div>
+        </Card>
       )}
 
       {rejectTarget ? (

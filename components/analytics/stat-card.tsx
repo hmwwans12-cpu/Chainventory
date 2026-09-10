@@ -4,7 +4,6 @@ import Link from "next/link";
 
 import {
   Card,
-  CardAction,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -39,15 +38,20 @@ function computeDelta(current: string, previous: string): Delta | null {
 function DeltaBadge({ delta }: { delta: Delta }) {
   if (delta.kind === "new") {
     return (
-      <Badge variant="outline" data-icon="inline-start">
+      <Badge variant="neutral" data-icon="inline-start">
         <Sparkles aria-hidden="true" />
         New
       </Badge>
     );
   }
   const Icon = delta.kind === "up" ? ArrowUpRight : ArrowDownRight;
+  // Stitch: delta pill solid tint (green up / amber down), mono 11px bold.
   return (
-    <Badge variant="outline" data-icon="inline-start">
+    <Badge
+      variant={delta.kind === "up" ? "success" : "warning"}
+      data-icon="inline-start"
+      className="font-mono text-[11px] font-bold"
+    >
       <Icon aria-hidden="true" />
       {`${delta.pct > 0 ? "+" : "-"}${Math.abs(delta.pct).toFixed(1)}%`}
     </Badge>
@@ -55,15 +59,14 @@ function DeltaBadge({ delta }: { delta: Delta }) {
 }
 
 /**
- * Statistic card (D-007 calm KPI): Description label → nilai besar
- * responsif (@[250px]/card) → Badge tren outline di CardAction. Footer
- * delta + "View Details →" inline TANPA background terpisah (CardFooter
- * dengan bg-muted menambah layer visual — diganti plain div).
+ * Stitch KPI card: label row (icon right) → value + inline unit/delta →
+ * sub copy → footer border-t with View Details only.
  */
 export function StatCard({
   icon: Icon,
   label,
   value,
+  unit,
   hint,
   delta,
   href,
@@ -71,100 +74,62 @@ export function StatCard({
   icon?: LucideIcon;
   label: string;
   value: string;
+  /** Inline unit label after the value (Stitch: "SKUs Active"). */
+  unit?: string;
   hint?: string;
   delta?: { current: string; previous: string };
   href?: string;
 }) {
   const d = delta ? computeDelta(delta.current, delta.previous) : null;
 
-  // SATU baris sekunder: delta menang atas hint — versi ringkas ↑ 12.3% dengan tooltip full copy (Miller)
-  const secondary = d
-    ? d.kind === "new"
-      ? "New this period"
-      : `${d.kind === "up" ? "↑" : "↓"} ${Math.abs(d.pct).toFixed(1)}%`
-    : (hint ?? null);
-  const secondaryTooltip = d
-    ? d.kind === "new"
-      ? "New activity this period"
-      : `${Math.abs(d.pct).toFixed(1)}% ${d.kind === "up" ? "higher" : "lower"} than previous period`
-    : null;
-
-  const chevron = href ? (
-    <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1.5 text-sm font-medium whitespace-nowrap">
-      View Details <span aria-hidden="true">→</span>
-    </span>
+  const deltaPill = d ? (
+    <Tooltip>
+      <TooltipTrigger
+        render={<span className="flex cursor-help items-center" />}
+      >
+        <DeltaBadge delta={d} />
+      </TooltipTrigger>
+      <TooltipContent>Compared to the previous period</TooltipContent>
+    </Tooltip>
   ) : null;
 
-  const cardFooterWithAffordance = (
+  const innerBody = (
     <>
-      {secondary || chevron ? (
-        <div className="text-muted-foreground flex items-center justify-between gap-3 px-(--card-spacing) text-sm">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            {secondaryTooltip ? (
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <span className="flex min-w-0 cursor-help items-center" />
-                  }
-                >
-                  <span
-                    title={
-                      typeof secondary === "string" ? secondary : undefined
-                    }
-                    className="truncate"
-                  >
-                    {secondary}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{secondaryTooltip}</TooltipContent>
-              </Tooltip>
-            ) : secondary ? (
-              <span
-                title={typeof secondary === "string" ? secondary : undefined}
-                className="truncate"
-              >
-                {secondary}
-              </span>
-            ) : null}
-          </div>
-          {chevron}
+      <CardHeader>
+        <div className="text-muted-foreground flex items-center justify-between">
+          <CardDescription className="t-label-md uppercase">
+            {label}
+          </CardDescription>
+          {Icon ? <Icon aria-hidden="true" className="size-[18px]" /> : null}
+        </div>
+        <div className="mt-3 flex flex-wrap items-baseline gap-2">
+          <CardTitle className="font-display text-3xl font-extrabold tracking-tight tabular-nums">
+            {value}
+          </CardTitle>
+          {unit ? (
+            <span className="t-label-md text-muted-foreground font-medium">
+              {unit}
+            </span>
+          ) : null}
+          {deltaPill}
+        </div>
+        {hint ? (
+          <p className="text-muted-foreground t-body-sm mt-1">{hint}</p>
+        ) : null}
+      </CardHeader>
+      {href ? (
+        <div className="border-border mt-4 flex items-center justify-between border-t px-(--card-spacing) pt-3">
+          <span className="text-primary inline-flex items-center gap-1 text-xs font-bold">
+            View Details <span aria-hidden="true">→</span>
+          </span>
         </div>
       ) : null}
     </>
   );
 
-  const innerBody = (
-    <>
-      <CardHeader>
-        <CardDescription className="flex items-center gap-1.5 text-sm">
-          {Icon ? <Icon aria-hidden="true" className="size-4" /> : null}
-          {label}
-        </CardDescription>
-        <CardTitle className="text-xl font-semibold tabular-nums @[250px]/card:text-2xl">
-          {value}
-        </CardTitle>
-        {d ? (
-          <CardAction>
-            <Tooltip>
-              <TooltipTrigger
-                render={<span className="flex cursor-help items-center" />}
-              >
-                <DeltaBadge delta={d} />
-              </TooltipTrigger>
-              <TooltipContent>Compared to the previous period</TooltipContent>
-            </Tooltip>
-          </CardAction>
-        ) : null}
-      </CardHeader>
-      {cardFooterWithAffordance}
-    </>
-  );
-
   if (!href)
     return (
-      <Card className="@container/card min-h-[148px] gap-4 rounded-lg">
-        {innerBody}
-      </Card>
+      <Card className="@container/card min-h-[148px] gap-4">{innerBody}</Card>
     );
 
   return (
@@ -172,14 +137,12 @@ export function StatCard({
       href={href}
       aria-label={`${label}: ${value}. View Details`}
       className={cn(
-        "focus-visible:ring-ring block rounded-lg transition-shadow",
+        "focus-visible:ring-ring block rounded-xl transition-shadow",
         "hover:ring-ring/40 hover:ring-2",
         "focus-visible:ring-3 focus-visible:outline-none"
       )}
     >
-      <Card className="@container/card min-h-[148px] gap-4 rounded-lg">
-        {innerBody}
-      </Card>
+      <Card className="@container/card min-h-[148px] gap-4">{innerBody}</Card>
     </Link>
   );
 }

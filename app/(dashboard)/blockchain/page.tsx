@@ -9,6 +9,7 @@ import {
 import { RetryErrorState } from "@/components/shared/retry-error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
+import { Badge } from "@/components/ui/badge";
 import { BlockchainPage } from "@/components/blockchain/blockchain-page";
 import type { DeploymentSummary, ProofRow } from "@/lib/blockchain/types";
 import { PROOF_LIMIT } from "@/lib/constants";
@@ -95,7 +96,16 @@ export default async function BlockchainPageRoute({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Audit Explorer"
-        description={`${active.name} · Base Sepolia.`}
+        description={`${active.name} · blockchain auditability and transaction proof on Base Sepolia.`}
+        actions={
+          <Badge variant="neutral" className="gap-1.5 px-3 py-1.5 font-mono">
+            <span
+              aria-hidden="true"
+              className="bg-primary size-1.5 animate-pulse rounded-full"
+            />
+            Base Sepolia · Chain ID 84532
+          </Badge>
+        }
       />
       <BlockchainPage
         warehouseId={active.id}

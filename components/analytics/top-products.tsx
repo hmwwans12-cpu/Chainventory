@@ -2,7 +2,6 @@ import { BarChart3 } from "lucide-react";
 
 import type { TopProduct } from "@/lib/analytics/aggregate";
 import { EmptyState } from "@/components/shared/empty-state";
-import { EntityName } from "@/components/shared/entity-name";
 
 /**
  * Top products (DESIGN §33) — 5-7 item, urut aktivitas (in+out) terbanyak.
@@ -39,7 +38,7 @@ export function TopProducts({
   }
 
   return (
-    <ol className="flex flex-col gap-4">
+    <ol className="flex flex-col">
       {products.map((p, index) => {
         const inQty = Number(p.inQty);
         const outQty = Number(p.outQty);
@@ -47,46 +46,41 @@ export function TopProducts({
         const outPct = (outQty / max) * 100;
 
         return (
-          <li key={p.productId} className="flex flex-col gap-1.5">
-            <div className="flex items-baseline justify-between gap-3">
-              <div className="flex min-w-0 items-baseline gap-2">
-                <span className="text-muted-foreground font-mono text-sm tabular-nums">
-                  {index + 1}
-                </span>
-                <EntityName>{p.name}</EntityName>
-                <span className="text-muted-foreground hidden font-mono text-sm sm:inline">
-                  {p.sku}
-                </span>
-              </div>
-              <div className="text-muted-foreground flex shrink-0 items-baseline gap-3 text-sm tabular-nums">
-                <span>
-                  In{" "}
-                  <span className="text-foreground font-medium">
-                    {p.inQty} {p.unit}
-                  </span>
-                </span>
-                <span>
-                  Out{" "}
-                  <span className="text-foreground font-medium">
-                    {p.outQty} {p.unit}
-                  </span>
-                </span>
-              </div>
+          <li
+            key={p.productId}
+            className="flex flex-col gap-1 py-2 first:pt-0 last:pb-0"
+          >
+            <div className="t-body-sm flex items-center justify-between gap-2">
+              <span className="text-foreground truncate font-semibold">
+                <span className="text-muted-foreground font-mono font-normal">
+                  #{index + 1}
+                </span>{" "}
+                {p.name}
+              </span>
+              <span className="text-primary shrink-0 font-mono text-xs font-bold tabular-nums">
+                {(inQty + outQty).toLocaleString()} units
+              </span>
+            </div>
+            <div className="text-muted-foreground mt-0.5 flex items-center justify-between font-mono text-[11px]">
+              <span className="truncate">{p.sku}</span>
+              <span className="shrink-0 tabular-nums">
+                In: {inQty} · Out: {outQty}
+              </span>
             </div>
             <div
               aria-hidden="true"
-              className="bg-muted flex h-2 gap-0.5 overflow-hidden rounded-full"
+              className="bg-surface-container mt-1 flex h-1.5 overflow-hidden rounded-full"
             >
               {inQty > 0 ? (
                 <div
-                  className="h-full rounded-full"
-                  style={{ width: `${inPct}%`, background: "var(--chart-1)" }}
+                  className="bg-primary h-full"
+                  style={{ width: `${inPct}%` }}
                 />
               ) : null}
               {outQty > 0 ? (
                 <div
-                  className="h-full rounded-full"
-                  style={{ width: `${outPct}%`, background: "var(--warning)" }}
+                  className="h-full bg-[#D97706]"
+                  style={{ width: `${outPct}%` }}
                 />
               ) : null}
             </div>

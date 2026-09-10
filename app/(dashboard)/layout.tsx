@@ -103,11 +103,14 @@ export default async function DashboardLayout({
               }
             />
           </Suspense>
-          <main className="bg-muted/30 flex-1" aria-label="Dashboard content">
+          <main
+            className="bg-surface-container flex-1"
+            aria-label="Dashboard content"
+          >
             {/* Skeleton resmi dashboard-01: container query scope + ritme halaman.
               max-w 1600px: konten dashboard tidak meregang tak terbatas di
               ultrawide (konsistensi visual, temuan audit UI #9). */}
-            <div className="@container/main mx-auto w-full max-w-[1600px] min-w-0 px-4 py-6 md:px-6 md:py-8">
+            <div className="@container/main mx-auto w-full max-w-[1600px] min-w-0 px-4 py-6 md:p-8">
               <PageTransition>{children}</PageTransition>
             </div>
           </main>

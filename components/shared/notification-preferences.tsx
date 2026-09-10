@@ -85,8 +85,8 @@ export function NotificationPreferencesPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bell aria-hidden="true" className="text-muted-foreground size-4" />
+        <CardTitle className="t-headline-sm flex items-center gap-2">
+          <Bell aria-hidden="true" className="text-primary size-4" />
           Notifications
         </CardTitle>
         <CardDescription>

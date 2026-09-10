@@ -1,11 +1,15 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import {
   AlertTriangle,
+  CalendarDays,
+  ChartNoAxesCombined,
   Check,
   Layers,
   Package,
   PackageMinus,
   PackagePlus,
+  ShieldCheck,
   UserPlus,
   Warehouse,
 } from "lucide-react";
@@ -23,6 +27,7 @@ import type { NotificationRow } from "@/lib/notifications/types";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { PanelCard } from "@/components/shared/panel-card";
+import { Badge } from "@/components/ui/badge";
 import { InactivityBanner } from "@/components/warehouses/inactivity-banner";
 import { ProfileWalletCard } from "@/components/dashboard/profile-wallet-card";
 import { FaucetClaimCard } from "@/components/faucet/faucet-claim-card";
@@ -49,6 +54,7 @@ import {
   Card,
   CardAction,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -261,11 +267,52 @@ export default async function DashboardPage({
   const needsAttention =
     (lowStockCount > 0 ? 1 : 0) + ((pendingRes.count ?? 0) > 0 ? 1 : 0);
   const pendingCount = pendingRes.count ?? 0;
+  // Stitch "Ledger Synced #N" — total ledger rows dari RPC list_transactions.
+  const ledgerTotal =
+    typeof ledger?.total === "number" && Number.isFinite(ledger.total)
+      ? ledger.total
+      : null;
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title={t("dashboard.title")}
         description={t("dashboard.description")}
+        pill={
+          <span className="bg-status-ok-bg text-status-ok-fg border-status-ok-border rounded-md px-2 py-0.5 text-xs font-semibold">
+            {t("dashboard.live_hub")}
+          </span>
+        }
+        actions={
+          <>
+            <Link
+              href={`/analytics?${whQuery}&range=${range}`}
+              className="focus-visible:ring-ring bg-card hover:border-primary flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold shadow-sm transition-colors outline-none focus-visible:ring-3"
+            >
+              <CalendarDays
+                aria-hidden="true"
+                className="text-primary size-[18px]"
+              />
+              {t("dashboard.last_range", { n: String(range) })}
+            </Link>
+            <Link
+              href={`/blockchain?${whQuery}`}
+              className="focus-visible:ring-ring bg-card hover:border-primary flex items-center gap-2 rounded-lg border px-3 py-2 shadow-sm transition-colors outline-none focus-visible:ring-3"
+            >
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+              </span>
+              <span className="text-primary text-xs font-semibold">
+                {t("dashboard.ledger_synced")}
+              </span>
+              {ledgerTotal !== null ? (
+                <span className="text-muted-foreground font-mono text-[11px]">
+                  #{ledgerTotal.toLocaleString()}
+                </span>
+              ) : null}
+            </Link>
+          </>
+        }
       />
       {/* 1. Profile / Wallet Card — streamlined, wallet details secondary */}
       <ProfileWalletCard
@@ -273,79 +320,94 @@ export default async function DashboardPage({
         role={active.role}
         walletAddress={walletAddress}
         warehouseName={active.name}
+        warehouseId={active.id}
+        warehouseCode={active.code}
         contractAddress={active.contractAddress}
       />
 
-      {/* 2. Needs Attention — Von Restorff: visually distinct from KPI */}
+      {/* 2. Needs Attention — Stitch amber action banner. */}
       {lowStockCount > 0 || pendingCount > 0 ? (
-        <div className="border-warning/30 bg-warning/10 flex flex-col gap-3 rounded-lg border p-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle aria-hidden="true" className="text-warning size-5" />
-            <h2 className="text-foreground text-sm font-semibold">
-              {needsAttention === 1
-                ? t("dashboard.needs_attention_one")
-                : t("dashboard.needs_attention_other", {
-                    n: String(needsAttention),
-                  })}
-            </h2>
+        <section
+          role="alert"
+          aria-label={t("dashboard.urgent_action")}
+          className="border-status-warn-border bg-status-warn-bg rounded-xl border p-4 shadow-sm"
+        >
+          <div className="flex items-start gap-3.5">
+            <span className="bg-status-warn-border text-status-warn-fg mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg">
+              <AlertTriangle aria-hidden="true" className="size-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-status-warn-fg text-[15px] font-bold">
+                  {needsAttention === 1
+                    ? t("dashboard.needs_attention_one")
+                    : t("dashboard.needs_attention_other", {
+                        n: String(needsAttention),
+                      })}
+                </h2>
+                <span className="text-[11px] font-bold tracking-wider text-[#B45309] uppercase">
+                  {t("dashboard.urgent_action")}
+                </span>
+              </div>
+              <div className="mt-2.5 flex flex-col gap-2">
+                {lowStockCount > 0 ? (
+                  <div className="border-status-warn-border/60 flex items-center justify-between gap-3 rounded-lg border bg-white/70 px-3 py-2">
+                    <span className="text-foreground t-body-sm flex min-w-0 items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="size-1.5 shrink-0 rounded-full bg-red-600"
+                      />
+                      <span className="truncate">
+                        <strong className="font-semibold">
+                          {lowStockCount}{" "}
+                          {lowStockCount === 1 ? "product" : "products"}
+                        </strong>{" "}
+                        {t("dashboard.below_threshold_suffix")}
+                      </span>
+                    </span>
+                    <Link
+                      href={`/inventory/products?${whQuery}`}
+                      className="focus-visible:ring-ring shrink-0 text-xs font-bold text-[#B45309] outline-none hover:text-[#92400E] focus-visible:ring-3"
+                    >
+                      {t("dashboard.review_products")} →
+                    </Link>
+                  </div>
+                ) : null}
+                {pendingCount > 0 ? (
+                  <div className="border-status-warn-border/60 flex items-center justify-between gap-3 rounded-lg border bg-white/70 px-3 py-2">
+                    <span className="text-foreground t-body-sm flex min-w-0 items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="size-1.5 shrink-0 rounded-full bg-amber-600"
+                      />
+                      <span className="truncate">
+                        <strong className="font-semibold">
+                          {pendingCount}
+                        </strong>{" "}
+                        {t("dashboard.pending_approval_suffix")}
+                      </span>
+                    </span>
+                    <Link
+                      href={`/members?${whQuery}`}
+                      className="focus-visible:ring-ring shrink-0 text-xs font-bold text-[#B45309] outline-none hover:text-[#92400E] focus-visible:ring-3"
+                    >
+                      {t("dashboard.review_members")} →
+                    </Link>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap">
-            {lowStockCount > 0 ? (
-              <a
-                href={`/inventory/products?${whQuery}`}
-                className="hover:bg-warning/15 flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-3 py-2.5 transition-colors"
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <AlertTriangle
-                    aria-hidden="true"
-                    className="text-warning size-4 shrink-0"
-                  />
-                  <span className="text-sm font-medium">
-                    {lowStockCount === 1
-                      ? t("dashboard.below_minimum_one")
-                      : t("dashboard.below_minimum_other", {
-                          n: String(lowStockCount),
-                        })}
-                  </span>
-                </span>
-                <span className="text-primary shrink-0 text-sm font-medium whitespace-nowrap">
-                  {t("dashboard.review")} →
-                </span>
-              </a>
-            ) : null}
-            {pendingCount > 0 ? (
-              <a
-                href={`/members?${whQuery}`}
-                className="hover:bg-warning/15 flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-3 py-2.5 transition-colors"
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <UserPlus
-                    aria-hidden="true"
-                    className="text-warning size-4 shrink-0"
-                  />
-                  <span className="text-sm font-medium">
-                    {pendingCount === 1
-                      ? t("dashboard.join_requests_one")
-                      : t("dashboard.join_requests_other", {
-                          n: String(pendingCount),
-                        })}
-                  </span>
-                </span>
-                <span className="text-primary shrink-0 text-sm font-medium whitespace-nowrap">
-                  {t("dashboard.review")} →
-                </span>
-              </a>
-            ) : null}
-          </div>
-        </div>
+        </section>
       ) : null}
 
       {/* 3. Statistics Cards (DESIGN §31) — KPI only, no alert mixed */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={Package}
           label={t("dashboard.total_products")}
           value={String(analytics?.totalProducts ?? 0)}
+          unit={t("dashboard.unit_skus_active")}
           hint={t("dashboard.active_products")}
           href={`/inventory/products?${whQuery}`}
         />
@@ -353,6 +415,7 @@ export default async function DashboardPage({
           icon={Layers}
           label={t("dashboard.total_stock")}
           value={analytics?.totalStock ?? "0"}
+          unit={t("dashboard.unit_units_on_hand")}
           hint={t("dashboard.units_all")}
           href={`/inventory/products?${whQuery}`}
         />
@@ -383,103 +446,125 @@ export default async function DashboardPage({
       {/* Faucet: contextual alert — hanya tampil saat balance rendah (DESIGN §55) */}
       <FaucetClaimCard walletAddress={walletAddress} />
 
-      {/* Onboarding Checklist — F15 Activation, Peak-End: better use of empty dashboard than decorative widgets */}
+      {/* Onboarding Checklist — F15 Activation, Stitch setup-progress card. */}
       {(analytics?.totalProducts ?? 0) === 0 && (
         <PanelCard className="bg-card">
           <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full">
-                <Check aria-hidden="true" className="size-3.5" />
-                <span className="sr-only">Done</span>
-              </span>
-              <h2 className="text-foreground text-sm font-semibold">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="t-headline-sm text-foreground">
                 {t("dashboard.setup_title")}
               </h2>
-              <span className="text-muted-foreground ml-auto text-sm">
-                {t("dashboard.setup_progress", {
-                  done: analytics?.totalProducts ? "2" : "1",
-                })}
+              <span className="text-muted-foreground t-body-sm ml-auto">
+                {t("dashboard.setup_progress", { done: "1" })}
               </span>
             </div>
-            <div className="grid gap-1 sm:grid-cols-2">
-              <div className="bg-primary/5 flex items-center gap-2.5 rounded-md px-3 py-2.5">
-                <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full">
-                  <Check aria-hidden="true" className="size-3.5" />
-                  <span className="sr-only">Done</span>
-                </span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">
+            <div
+              role="progressbar"
+              aria-valuenow={25}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={t("dashboard.setup_title")}
+              className="bg-surface-high h-2 overflow-hidden rounded-full"
+            >
+              <div className="bg-primary h-full w-1/4 rounded-full" />
+            </div>
+            <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-4">
+              <div className="bg-surface-low border-border flex flex-col justify-between rounded-lg border p-3.5">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full">
+                      <Check aria-hidden="true" className="size-4" />
+                      <span className="sr-only">Done</span>
+                    </span>
+                    <span className="text-muted-foreground font-mono text-[10px]">
+                      STEP 01
+                    </span>
+                  </div>
+                  <p className="text-foreground mt-3 text-sm font-bold">
                     {t("dashboard.step_create")}
-                  </span>
-                  <span className="text-muted-foreground text-sm">
+                  </p>
+                  <p className="text-primary t-body-sm mt-0.5">
                     {t("dashboard.step_ready", { name: active.name })}
-                  </span>
+                  </p>
                 </div>
               </div>
-              <a
+              <Link
                 href={`/inventory/products?warehouse=${active.id}`}
-                className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors"
+                className="hover:border-primary focus-visible:ring-ring bg-surface-low border-border flex flex-col justify-between rounded-lg border p-3.5 transition-colors outline-none focus-visible:ring-3"
               >
-                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">
-                  2
-                </span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">
-                    {recentMovements.length === 0 &&
-                    (analytics?.totalProducts ?? 0) === 0
-                      ? t("dashboard.step_products_add")
-                      : t("dashboard.step_products_manage")}
-                  </span>
-                  <span className="text-muted-foreground text-sm">
-                    {(analytics?.totalProducts ?? 0) === 0
-                      ? t("dashboard.step_products_empty")
-                      : t("dashboard.step_products_count", {
-                          n: String(analytics?.totalProducts ?? 0),
-                        })}
-                  </span>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="bg-primary-container text-primary-foreground flex size-6 items-center justify-center rounded-full text-xs font-bold">
+                      2
+                    </span>
+                    <span className="text-muted-foreground font-mono text-[10px]">
+                      STEP 02
+                    </span>
+                  </div>
+                  <p className="text-foreground mt-3 text-sm font-bold">
+                    {t("dashboard.step_products_add")}
+                  </p>
+                  <p className="text-muted-foreground t-body-sm mt-0.5">
+                    {t("dashboard.step_products_empty")}
+                  </p>
                 </div>
-                <span className="text-primary ml-auto text-sm font-medium">
-                  →
-                </span>
-              </a>
-              <a
+              </Link>
+              <Link
                 href={`/members?warehouse=${active.id}`}
-                className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors"
+                className="focus-visible:ring-ring border-primary bg-card flex flex-col justify-between rounded-lg border-2 p-3.5 shadow-sm transition-colors outline-none focus-visible:ring-3"
               >
-                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">
-                  3
-                </span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="bg-primary-container text-primary-foreground flex size-6 items-center justify-center rounded-full text-xs font-bold">
+                      3
+                    </span>
+                    {pendingCount > 0 ? (
+                      <span className="text-primary font-mono text-[10px] font-bold">
+                        {t("dashboard.action_needed").toUpperCase()}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground font-mono text-[10px]">
+                        STEP 03
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-foreground mt-3 text-sm font-bold">
                     {t("dashboard.step_invite")}
-                  </span>
-                  <span className="text-muted-foreground text-sm">
-                    {t("dashboard.step_invite_desc")}
-                  </span>
+                  </p>
+                  <p className="t-body-sm mt-0.5 font-semibold text-amber-700">
+                    {pendingCount > 0
+                      ? t("dashboard.join_requests_other", {
+                          n: String(pendingCount),
+                        })
+                      : t("dashboard.step_invite_desc")}
+                  </p>
                 </div>
-                <span className="text-primary ml-auto text-sm font-medium">
-                  →
+                <span className="text-primary border-border mt-3 flex items-center justify-between border-t pt-2 text-xs font-bold">
+                  {t("dashboard.manage_invites")}
+                  <span aria-hidden="true">→</span>
                 </span>
-              </a>
-              <a
+              </Link>
+              <Link
                 href={`/inventory/movements?warehouse=${active.id}`}
-                className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors"
+                className="hover:border-primary focus-visible:ring-ring bg-surface-low border-border flex flex-col justify-between rounded-lg border p-3.5 opacity-75 transition-colors outline-none focus-visible:ring-3"
               >
-                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">
-                  4
-                </span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground flex size-6 items-center justify-center rounded-full border-2 border-current text-xs font-bold">
+                      4
+                    </span>
+                    <span className="text-muted-foreground font-mono text-[10px]">
+                      STEP 04
+                    </span>
+                  </div>
+                  <p className="text-foreground mt-3 text-sm font-bold">
                     {t("dashboard.step_movement")}
-                  </span>
-                  <span className="text-muted-foreground text-sm">
+                  </p>
+                  <p className="text-muted-foreground t-body-sm mt-0.5">
                     {t("dashboard.step_movement_desc")}
-                  </span>
+                  </p>
                 </div>
-                <span className="text-primary ml-auto text-sm font-medium">
-                  →
-                </span>
-              </a>
+              </Link>
             </div>
             {(analytics?.totalProducts ?? 0) === 0 &&
               pendingCount === 0 &&
@@ -496,8 +581,17 @@ export default async function DashboardPage({
       {analytics ? (
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>{t("dashboard.stock_in_out")}</CardTitle>
+            <CardHeader className="border-b">
+              <CardTitle className="t-headline-sm flex items-center gap-2">
+                <ChartNoAxesCombined
+                  aria-hidden="true"
+                  className="text-primary size-4"
+                />
+                {t("dashboard.stock_velocity")}
+              </CardTitle>
+              <CardDescription>
+                {t("dashboard.stock_velocity_desc")}
+              </CardDescription>
               <CardAction>
                 <RangeTabs
                   warehouseId={active.id}
@@ -507,14 +601,41 @@ export default async function DashboardPage({
               </CardAction>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 flex items-center gap-5">
+                <span className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="bg-primary size-3 rounded-full"
+                  />
+                  <span className="text-foreground text-xs font-semibold">
+                    Stock In (+
+                    {Number(analytics.period.stockIn).toLocaleString()})
+                  </span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="size-3 rounded-full bg-[#D97706]"
+                  />
+                  <span className="text-foreground text-xs font-semibold">
+                    Stock Out (−
+                    {Number(analytics.period.stockOut).toLocaleString()})
+                  </span>
+                </span>
+              </div>
               <StockMovementChartLazy daily={analytics.daily} range={range} />
             </CardContent>
           </Card>
 
           {analytics.topProducts.length > 0 ? (
             <Card>
-              <CardHeader>
-                <CardTitle>{t("dashboard.top_products")}</CardTitle>
+              <CardHeader className="border-b">
+                <CardTitle className="t-headline-sm">
+                  {t("dashboard.top_products")}
+                </CardTitle>
+                <CardDescription>
+                  {t("dashboard.top_products_desc", { n: String(range) })}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <TopProducts
@@ -539,14 +660,11 @@ export default async function DashboardPage({
         <RecentActivity items={recentActivity} />
       </div>
 
-      {/* Warehouse health (F19) — operational health distinct from identity in ProfileWalletCard */}
-      <PanelCard className="bg-card flex flex-wrap items-center gap-x-6 gap-y-3 p-4">
+      {/* Warehouse health (F19) — Stitch operations-health panel. */}
+      <PanelCard className="bg-card flex flex-wrap items-center gap-x-6 gap-y-3 p-4 sm:p-5">
         <div className="flex items-center gap-2">
-          <Warehouse
-            aria-hidden="true"
-            className="text-muted-foreground size-4"
-          />
-          <h2 className="text-foreground text-sm font-semibold">
+          <Warehouse aria-hidden="true" className="text-primary size-4" />
+          <h2 className="t-headline-sm text-foreground">
             {t("dashboard.health_title")}
           </h2>
         </div>
@@ -560,7 +678,7 @@ export default async function DashboardPage({
           />
           <HealthDot
             label={t("dashboard.health_members")}
-            tone="success"
+            tone={pendingCount > 0 ? "warning" : "success"}
             value={
               pendingCount === 0
                 ? t("dashboard.health_stable")
@@ -573,6 +691,12 @@ export default async function DashboardPage({
           <LiveHealthDot warehouseId={active.id} />
         </div>
         <div className="ms-auto flex shrink-0 items-center gap-2">
+          <span className="text-muted-foreground t-label-md uppercase">
+            {t("dashboard.node_code")}
+          </span>
+          <code className="t-code bg-surface-low rounded-md border px-2 py-1">
+            {active.code}
+          </code>
           <CopyButton text={active.code} label="Copy warehouse code" />
         </div>
       </PanelCard>

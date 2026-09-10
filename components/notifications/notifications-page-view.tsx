@@ -23,8 +23,8 @@ import { openChannel } from "@/lib/realtime/channel";
 import { FLASH_MESSAGE_MS, REALTIME_DEBOUNCE_MS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
-import { PanelCard } from "@/components/shared/panel-card";
 import { cn } from "@/lib/utils";
 import { LoadMore } from "@/components/shared/load-more";
 
@@ -217,8 +217,17 @@ export function NotificationsPageView({
       </span>
 
       <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">
-          {unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
+        <p className="flex items-center gap-2 text-sm font-semibold">
+          <span
+            aria-hidden="true"
+            className={cn(
+              "size-2 rounded-full",
+              unreadCount > 0 ? "bg-primary" : "bg-muted-foreground/40"
+            )}
+          />
+          {unreadCount > 0
+            ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
+            : "You're all caught up"}
         </p>
         <Button
           variant="outline"
@@ -227,7 +236,7 @@ export function NotificationsPageView({
           disabled={unreadCount === 0}
         >
           <CheckCheck aria-hidden="true" />
-          Mark All Read
+          Mark all read
         </Button>
       </div>
 
@@ -238,8 +247,8 @@ export function NotificationsPageView({
           description="Join requests, blockchain updates, and warehouse events will appear here."
         />
       ) : (
-        <PanelCard padding="none" className="bg-card">
-          <ul>
+        <Card className="overflow-hidden">
+          <ul className="divide-border/50 divide-y">
             {notifications.map((n) => {
               const meta = NOTIFICATION_TYPE_META[n.type];
               const unread = !n.read_at;
@@ -252,23 +261,23 @@ export function NotificationsPageView({
                     type="button"
                     onClick={() => void handleRowClick(n)}
                     className={cn(
-                      "group hover:bg-muted/60 focus-visible:bg-muted/70 focus-visible:ring-ring flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors focus-visible:ring-3 focus-visible:outline-none",
-                      unread && "bg-primary/5",
+                      "group hover:bg-surface-container/60 focus-visible:bg-surface-container focus-visible:ring-ring flex w-full items-start gap-4 px-4 py-4 text-left transition-colors focus-visible:ring-3 focus-visible:outline-none sm:px-6",
+                      unread && "bg-primary/[0.04] hover:bg-primary/[0.07]",
                       flashId === n.id &&
                         "motion-safe:animate-[notif-flash_1.6s_ease-out]"
                     )}
                   >
                     <span
                       className={cn(
-                        "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent",
+                        "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg border",
                         meta?.tone === "success" &&
-                          "bg-muted text-muted-foreground",
+                          "bg-surface-container text-status-ok-fg border-transparent",
                         meta?.tone === "warning" &&
-                          "bg-warning/15 text-warning-foreground border-warning/20",
+                          "bg-status-warn-bg text-status-warn-fg border-status-warn-border",
                         meta?.tone === "danger" &&
-                          "bg-destructive/15 text-destructive border-destructive/20",
+                          "bg-status-err-bg text-status-err-fg border-status-err-border",
                         (!meta || meta.tone === "default") &&
-                          "bg-muted text-muted-foreground"
+                          "bg-surface-container text-muted-foreground border-transparent"
                       )}
                       aria-hidden="true"
                     >
@@ -281,10 +290,8 @@ export function NotificationsPageView({
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span
                         className={cn(
-                          "text-foreground text-sm leading-snug",
-                          unread
-                            ? "font-semibold"
-                            : "text-muted-foreground font-medium"
+                          "text-foreground t-body-md",
+                          unread ? "font-semibold" : "font-normal"
                         )}
                       >
                         {n.title}
@@ -305,6 +312,7 @@ export function NotificationsPageView({
                         <time
                           dateTime={n.last_event_at}
                           className="tabular-nums"
+                          suppressHydrationWarning
                         >
                           {formatTimeAgo(n.last_event_at)}
                         </time>
@@ -346,14 +354,14 @@ export function NotificationsPageView({
             })}
           </ul>
 
-          <div className="border-border border-t px-4 py-3">
+          <div className="bg-surface-low/30 border-t px-4 py-3">
             <LoadMore
               onClick={handleLoadMore}
               loading={loadingMore}
               hasMore={hasMore}
             />
           </div>
-        </PanelCard>
+        </Card>
       )}
     </div>
   );
