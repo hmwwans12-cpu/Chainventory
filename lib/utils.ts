@@ -14,6 +14,7 @@ export function cn(...inputs: ClassValue[]) {
 const FIXED_LOCALE = "en-US";
 
 export function formatDate(iso: string): string {
+  if (Number.isNaN(new Date(iso).getTime())) return "—";
   return new Date(iso).toLocaleDateString(FIXED_LOCALE, {
     month: "short",
     day: "numeric",
@@ -22,6 +23,7 @@ export function formatDate(iso: string): string {
 }
 
 export function formatDateTime(iso: string): string {
+  if (Number.isNaN(new Date(iso).getTime())) return "—";
   return new Date(iso).toLocaleString(FIXED_LOCALE, {
     month: "short",
     day: "numeric",
@@ -31,11 +33,12 @@ export function formatDateTime(iso: string): string {
 }
 
 export function formatTimeAgo(iso: string): string {
+  if (Number.isNaN(new Date(iso).getTime())) return "—";
   const diff = Date.now() - new Date(iso).getTime();
   const sec = Math.floor(diff / 1000);
   if (sec < 60) return `${sec}s ago`;
   const min = Math.floor(sec / 60);
-  if (min < 60) return `${min} min ago`;
+  if (min < 60) return `${min}m ago`;
   const hr = Math.floor(min / 60);
   if (hr < 24) return `${hr}h ago`;
   const d = Math.floor(hr / 24);
@@ -44,6 +47,7 @@ export function formatTimeAgo(iso: string): string {
 }
 
 export function formatChartDay(isoDay: string): string {
+  if (Number.isNaN(new Date(`${isoDay}T00:00:00`).getTime())) return "—";
   return new Date(`${isoDay}T00:00:00`).toLocaleDateString(FIXED_LOCALE, {
     month: "short",
     day: "numeric",
@@ -68,6 +72,19 @@ export function formatEthDecimal(value: string | number): string {
   const n = Number(value);
   if (!Number.isFinite(n)) return "\u2014";
   return n.toLocaleString("en-US", { maximumFractionDigits: 4 });
+}
+
+/**
+ * Alamat/hash pendek "0x12ab…cdef" — satu sumber (FE-23: sebelumnya 3
+ * implementasi slice(0,6) dengan karakter ellipsis berbeda).
+ */
+export function shortenAddress(
+  address: string,
+  head = 6,
+  tail = 4
+): string {
+  if (address.length <= head + tail + 1) return address;
+  return `${address.slice(0, head)}…${address.slice(-tail)}`;
 }
 
 /**

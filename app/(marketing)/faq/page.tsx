@@ -34,7 +34,7 @@ const FAQ_ITEMS = [
 export const metadata: Metadata = {
   title: "FAQ",
   description:
-    "Answers to common questions about Chainventory — inventory management, roles, real-time sync, and blockchain verification.",
+    "Answers to common questions about Chainventory: inventory management, roles, real-time sync, and blockchain verification.",
   alternates: { canonical: "/faq" },
 };
 

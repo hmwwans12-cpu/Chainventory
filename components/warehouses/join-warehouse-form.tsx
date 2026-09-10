@@ -12,6 +12,10 @@ import { PanelCard } from "@/components/shared/panel-card";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/auth/form-field";
 import { requestJoin } from "@/lib/warehouses/join-client";
+import {
+  WAREHOUSE_CODE_HINT,
+  WAREHOUSE_CODE_RE,
+} from "@/lib/warehouses/warehouse-code";
 import { cn } from "@/lib/utils";
 
 const HOW_IT_WORKS = [
@@ -79,13 +83,14 @@ export function JoinWarehouseForm() {
   >(null);
 
   function validate(): boolean {
-    const value = code.trim();
+    // FLO-04: format kanonis CHV-XXXXXXXX (WAREHOUSE_CODE_RE) — validasi
+    // WH- lama memblokir SEMUA kode nyata. Single source: lib/warehouses.
+    const value = code.trim().toUpperCase();
     let err: string | undefined;
     if (!value) err = "Enter a warehouse code.";
     else if (value.length > 64) err = "Warehouse code is too long.";
-    else if (!/^WH-[A-Z0-9-]+$/i.test(value))
-      err =
-        "Enter the warehouse code in the format WH-XXXX (e.g. WH-7K29-XP4).";
+    else if (!WAREHOUSE_CODE_RE.test(value))
+      err = `Enter the warehouse code in the format ${WAREHOUSE_CODE_HINT} (e.g. CHV-7K29XP4).`;
     setFieldError(err);
     if (err) {
       document.getElementById("code")?.focus();
@@ -135,7 +140,7 @@ export function JoinWarehouseForm() {
       fail({
         title: "You're already a member",
         detail:
-          "This account already belongs to that warehouse — no request needed. Head to your dashboard.",
+          "This account already belongs to that warehouse. No request needed. Head to your dashboard.",
         action: "dashboard",
       });
       return;
@@ -197,7 +202,7 @@ export function JoinWarehouseForm() {
               <KeyRound aria-hidden="true" className="size-5" />
             </span>
             <div className="flex flex-col gap-1">
-              <h1 className="font-display text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
+              <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
                 Access request sent
               </h1>
               <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
@@ -313,10 +318,10 @@ export function JoinWarehouseForm() {
               className="-ml-2 w-fit"
               render={<Link href="/onboarding" />}
             >
-              <ArrowLeft aria-hidden="true" className="size-3" />
+              <ArrowLeft aria-hidden="true" />
               Back to onboarding
             </Button>
-            <h1 className="font-display text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
+            <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
               Join Warehouse
             </h1>
           </div>
@@ -340,14 +345,24 @@ export function JoinWarehouseForm() {
               Go to dashboard
             </Button>
           ) : (
+            <>
             <Button
               size="lg"
               className="h-11 w-full text-base"
               onClick={retry}
               disabled={!ready || !authenticated}
+              title={!authenticated ? "Sign in first, then retry" : undefined}
             >
               Try Again
             </Button>
+            {!ready || !authenticated ? (
+              <p className="text-muted-foreground text-center text-sm">
+                {!authenticated
+                  ? "Sign in first, then try again."
+                  : "Still preparing. Wait a moment, then try again."}
+              </p>
+            ) : null}
+            </>
           )}
         </div>
       </PhaseFade>
@@ -362,7 +377,7 @@ export function JoinWarehouseForm() {
             <KeyRound aria-hidden="true" className="size-5" />
           </span>
           <div className="flex flex-col gap-1">
-            <h1 className="font-display text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
+            <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
               Join a Warehouse
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
@@ -374,12 +389,21 @@ export function JoinWarehouseForm() {
         {!ready || !authenticated ? (
           <PanelCard
             variant="dashed"
-            className="flex flex-col items-start gap-3"
+            className="bg-card/50 flex flex-col items-start gap-3"
           >
             <p className="text-foreground text-sm">
               Please sign in to continue.
             </p>
-            <Button variant="outline" size="sm" render={<Link href="/login" />}>
+            {/* NFE-10: bawa ?next agar post-login kembali ke join. */}
+            <Button
+              variant="outline"
+              size="sm"
+              render={
+                <Link
+                  href={`/login?next=${encodeURIComponent("/onboarding/join")}`}
+                />
+              }
+            >
               Go to login
             </Button>
           </PanelCard>
@@ -405,7 +429,7 @@ export function JoinWarehouseForm() {
                 onChange={(event) =>
                   setCode(event.target.value.toUpperCase().replace(/\s+/g, ""))
                 }
-                placeholder="e.g. WH-7K29-XP4…"
+                placeholder="e.g. CHV-7K29XP4…"
                 maxLength={64}
                 autoComplete="off"
                 autoCapitalize="characters"
@@ -431,7 +455,7 @@ export function JoinWarehouseForm() {
                 {pending ? "Requesting access…" : "Request Access"}
               </Button>
               <p className="text-muted-foreground text-center text-sm">
-                The owner reviews your request in Members — no payment needed.
+                The owner reviews your request in Members. No payment needed.
               </p>
             </div>
           </form>

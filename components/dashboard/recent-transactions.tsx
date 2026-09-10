@@ -1,5 +1,6 @@
+/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, Clock3, type LucideIcon } from "lucide-react";
+import { ArrowLeftRight, XCircle, CheckCircle2, Clock3, type LucideIcon } from "lucide-react";
 
 import {
   Card,
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -36,17 +38,17 @@ const PROOF_META: Record<
   confirmed: {
     label: "Verified",
     icon: CheckCircle2,
-    className: "bg-primary/10 text-primary",
+    className: "bg-primary/10 text-primary border border-primary/20",
   },
   pending: {
     label: "Verifying",
     icon: Clock3,
-    className: "bg-secondary/20 text-secondary-foreground",
+    className: "bg-secondary/20 text-secondary-foreground border border-secondary/30",
   },
   failed: {
-    label: "Verification delayed",
-    icon: AlertTriangle as unknown as LucideIcon,
-    className: "bg-warning/15 text-warning-foreground border border-warning/20",
+    label: "Failed",
+    icon: XCircle as unknown as LucideIcon,
+    className: "bg-destructive/15 text-destructive border border-destructive/20",
   },
 };
 
@@ -75,7 +77,6 @@ export function RecentTransactions({
           <Button
             variant="outline"
             size="sm"
-            className="min-h-11"
             render={
               <Link
                 href={
@@ -86,22 +87,24 @@ export function RecentTransactions({
               />
             }
           >
-            View all
+            View All
           </Button>
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col">
         {items.length === 0 ? (
-          <p className="text-muted-foreground py-4 text-sm">
-            No ledger entries yet.{" "}
-            <Link
-              href="/transactions"
-              className="text-primary underline-offset-4 hover:underline"
-            >
-              Open the ledger
-            </Link>{" "}
-            to see all stock operations and their blockchain proofs.
-          </p>
+          <EmptyState
+            icon={ArrowLeftRight}
+            bare
+            title="No ledger entries yet"
+            description="Stock operations and their blockchain proofs will appear here."
+            primaryAction={{
+              label: "Open the ledger",
+              href: warehouseId
+                ? `/transactions?warehouse=${warehouseId}`
+                : "/transactions",
+            }}
+          />
         ) : (
           <ul className="divide-border/60 -my-1 divide-y">
             {items.map((item) => {
@@ -112,8 +115,8 @@ export function RecentTransactions({
               return (
                 <li key={item.id} className="flex items-center gap-3 py-3">
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-foreground truncate text-sm font-medium">
-                      {item.productName} — {TYPE_LABEL[item.movementType] ?? item.movementType}
+                    <span className="text-foreground truncate text-sm font-medium" title={`${item.productName} · ${TYPE_LABEL[item.movementType] ?? item.movementType}`}>
+                      {item.productName} · {TYPE_LABEL[item.movementType] ?? item.movementType.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
                     </span>
                     <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
                       <span className={cn("font-mono tabular-nums", qtyNegative ? "text-destructive" : "text-foreground")}>

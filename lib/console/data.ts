@@ -1,4 +1,4 @@
-import { createPublicClient, formatEther, type Hex } from "viem";
+import { createPublicClient, formatEther, parseEther, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 import { baseSepolia, createChainTransport } from "@/lib/blockchain/chains";
@@ -34,81 +34,86 @@ const PROOF_STATUSES = [
   "failed",
 ] as const;
 
-function countBy<T extends string>(
-  rows: { status: string }[],
-  keys: readonly T[]
-): Record<T, number> {
-  const counts = {} as Record<T, number>;
-  for (const k of keys) counts[k] = 0;
-  for (const row of rows) {
-    if (counts[row.status as T] !== undefined) counts[row.status as T] += 1;
+/**
+ * APP-17: kejujuran data console. getManualReviewProofs/getErrorSummary/
+ * getAuditTrail mengembalikan [] saat DB gagal (fallback aman) — tanpa
+ * sinyal ini halaman console terlihat "sehat & kosong". Probe ringan ini
+ * memberi tahu halaman kapan harus menampilkan banner data-incomplete.
+ */
+export async function getConsoleDataHealth(): Promise<{ ok: boolean }> {
+  const supabase = createProofServiceClient();
+  const { error } = await supabase
+    .from("proofs")
+    .select("id", { count: "exact", head: true });
+  if (error) {
+    logger.warn(
+      { err: error.message },
+      "console data health probe failed"
+    );
+    return { ok: false };
   }
-  return counts;
+  return { ok: true };
 }
 
 export async function getConsoleSummary(): Promise<ConsoleSummary> {
   const supabase = createProofServiceClient();
 
-  const [whRows, proofRows, outboxRows, memberCount] = await Promise.all([
-    supabase.from("warehouses").select("status"),
-    supabase.from("proofs").select("status"),
-    supabase.from("proof_outbox").select("status"),
-    supabase.from("memberships").select("id", { count: "exact", head: true }),
-  ]);
+  // Fix BE-17 (PRD §29): summary sebelumnya select full-table (status semua
+  // warehouses/proofs/outbox) ke memori = OOM/latensi saat data tumbuh.
+  // Head-count exact per status: tanpa transfer baris, paralel.
+  const head = (table: string, match?: Record<string, string>) => {
+    let q = supabase.from(table).select("id", { count: "exact", head: true });
+    if (match) {
+      for (const [k, v] of Object.entries(match)) q = q.eq(k, v);
+    }
+    return q;
+  };
 
-  // Audit v0.3.0 §4.9: jangan silent-swallow partial failure — jika salah
-  // satu query error, summary angka (total warehouses, total proofs) akan
-  // misleading. Log warn + return neutral values agar operator tahu data
-  // tidak lengkap.
-  if (whRows.error) {
-    logger.warn(
-      { err: whRows.error.message },
-      "console summary: warehouses query failed"
-    );
-  }
-  if (proofRows.error) {
-    logger.warn(
-      { err: proofRows.error.message },
-      "console summary: proofs query failed"
-    );
-  }
-  if (outboxRows.error) {
-    logger.warn(
-      { err: outboxRows.error.message },
-      "console summary: outbox query failed"
-    );
-  }
-  if (memberCount.error) {
-    logger.warn(
-      { err: memberCount.error.message },
-      "console summary: memberships count failed"
-    );
-  }
+  const queries = {
+    whTotal: head("warehouses"),
+    whActive: head("warehouses", { status: "active" }),
+    whSuspended: head("warehouses", { status: "suspended" }),
+    members: head("memberships"),
+    proofTotal: head("proofs"),
+    ...Object.fromEntries(
+      PROOF_STATUSES.map((s) => [`proof_${s}`, head("proofs", { status: s })])
+    ),
+    outboxPending: head("proof_outbox", { status: "pending" }),
+    outboxLeased: head("proof_outbox", { status: "leased" }),
+    outboxFailed: head("proof_outbox", { status: "failed" }),
+  } as const;
 
-  const warehouses = (whRows.data ?? []) as { status: string }[];
-  const proofs = (proofRows.data ?? []) as {
-    status: (typeof PROOF_STATUSES)[number];
-  }[];
-  const outbox = (outboxRows.data ?? []) as { status: string }[];
+  const entries = await Promise.all(
+    Object.entries(queries).map(async ([key, q]) => {
+      const { count, error } = await q;
+      // Audit v0.3.0 §4.9: jangan silent-swallow partial failure.
+      if (error) {
+        logger.warn({ err: error.message }, `console summary: ${key} failed`);
+      }
+      return [key, count ?? 0] as const;
+    })
+  );
+  const n = Object.fromEntries(entries) as Record<string, number>;
 
-  const outboxCounts = countBy(outbox, [
-    "pending",
-    "leased",
-    "failed",
-  ] as const);
+  const proofCounts = {} as Record<(typeof PROOF_STATUSES)[number], number>;
+  for (const s of PROOF_STATUSES) proofCounts[s] = n[`proof_${s}`] ?? 0;
 
   return {
     warehouses: {
-      total: warehouses.length,
-      active: warehouses.filter((w) => w.status === "active").length,
-      suspended: warehouses.filter((w) => w.status === "suspended").length,
+      total: n.whTotal ?? 0,
+      active: n.whActive ?? 0,
+      suspended: n.whSuspended ?? 0,
     },
-    members: memberCount.count ?? 0,
+    members: n.members ?? 0,
     proofs: {
-      total: proofs.length,
-      ...countBy(proofs, PROOF_STATUSES),
+      total: n.proofTotal ?? 0,
+      ...proofCounts,
     },
-    outbox: outboxCounts,
+    outbox: {
+      pending: n.outboxPending ?? 0,
+      leased: n.outboxLeased ?? 0,
+      failed: n.outboxFailed ?? 0,
+    },
   };
 }
 
@@ -282,9 +287,11 @@ export async function getTreasuryData(): Promise<TreasuryData> {
     });
     const balance = await publicClient.getBalance({ address: account.address });
 
-    const amount = Number(FAUCET_AMOUNT_ETH);
-    const balanceNum = Number(balance);
-    const affordable = amount > 0 ? Math.floor(balanceNum / amount) : 0;
+    // Fix BE-11 (PRD §16: integer eksak pakai BigInt): Number(bigint wei)
+    // hilang presisi >2^53 (~0.009 ETH) → eligible/affordable salah total.
+    const amountWei = parseEther(FAUCET_AMOUNT_ETH);
+    const affordable =
+      amountWei > 0n ? Number(balance / amountWei) : 0;
 
     return {
       ok: true,
@@ -293,7 +300,7 @@ export async function getTreasuryData(): Promise<TreasuryData> {
       faucet: {
         amountEther: FAUCET_AMOUNT_ETH,
         cooldownMs: FAUCET_COOLDOWN_MS,
-        eligible: balanceNum >= amount,
+        eligible: balance >= amountWei,
         affordableClaims: affordable,
         balanceEther: formatEther(balance),
       },

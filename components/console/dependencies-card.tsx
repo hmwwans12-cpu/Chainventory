@@ -75,7 +75,7 @@ export function DependenciesCard({
       <CardHeader>
         <CardTitle>Dependencies</CardTitle>
         <CardDescription>
-          Live probes — Supabase, Upstash, QStash, RPC, Base Sepolia.
+          Live probes: Supabase, Upstash, QStash, RPC, Base Sepolia.
         </CardDescription>
         <CardAction>
           <Button

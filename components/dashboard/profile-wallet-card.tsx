@@ -3,7 +3,8 @@ import Link from "next/link";
 import { ChevronRight, Wallet } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { getInitials } from "@/lib/utils";
+import { getInitials, shortenAddress } from "@/lib/utils";
+import { roleLabel } from "@/lib/auth/permissions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WalletBalance } from "@/components/shared/wallet-balance";
@@ -37,7 +38,9 @@ export function ProfileWalletCard({
   return (
     <Link
       href={warehouseId ? `/settings?warehouse=${warehouseId}` : "/settings"}
-      aria-label="Open profile and wallet settings"
+      // FE-19: label gabungan agar SR tidak mendengar "ETH + saldo" terpotong
+      // tanpa konteks (nilai saldo async tetap diumumkan terpisah).
+      aria-label={`${name}, open profile and wallet settings`}
       className="focus-visible:ring-ring block rounded-lg transition-shadow hover:shadow-(--shadow-elevated) focus-visible:ring-3 focus-visible:outline-none"
     >
       <Card>
@@ -49,17 +52,11 @@ export function ProfileWalletCard({
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
               <div className="flex items-center gap-2">
-                <span className="text-foreground truncate text-[15px] font-semibold">
+                <span className="text-foreground truncate text-sm font-semibold">
                   {name}
                 </span>
                 <Badge variant="outline" className="text-sm">
-                  {{
-                    OWNER: "Owner",
-                    MANAGER: "Manager",
-                    STAFF: "Staff",
-                    AUDITOR: "Auditor",
-                    VIEWER: "Viewer",
-                  }[role] ?? role}
+                  {roleLabel(role)}
                 </Badge>
               </div>
               {/* Secondary — warehouse name only, muted */}
@@ -89,7 +86,10 @@ export function ProfileWalletCard({
               <span className="text-muted-foreground text-sm">
                 Base Sepolia
                 {walletAddress ? (
-                  <span className="hidden sm:inline"> · {shorten(walletAddress)}</span>
+                  <span className="hidden sm:inline">
+                    {" "}
+                    · {shortenAddress(walletAddress)}
+                  </span>
                 ) : null}
               </span>
             </div>
@@ -103,26 +103,25 @@ export function ProfileWalletCard({
           {walletAddress || contractAddress ? (
             <div className="flex flex-col gap-1.5 border-t pt-3 sm:hidden">
               {walletAddress ? (
-                <DetailRow label="Wallet" value={shorten(walletAddress)} />
+                <DetailRow label="Wallet" value={shortenAddress(walletAddress)} />
               ) : null}
               {contractAddress ? (
-                <DetailRow label="Contract" value={shorten(contractAddress)} />
+                <DetailRow
+                  label="Contract"
+                  value={shortenAddress(contractAddress)}
+                />
               ) : null}
             </div>
           ) : !walletAddress ? (
             <p className="text-muted-foreground flex items-center gap-1.5 border-t pt-3 text-sm sm:hidden">
               <Wallet aria-hidden="true" className="size-3.5" />
-              No wallet connected yet — connect in Settings
+              No wallet connected yet. Connect in Settings
             </p>
           ) : null}
         </CardContent>
       </Card>
     </Link>
   );
-}
-
-function shorten(address: string): string {
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
 function DetailRow({

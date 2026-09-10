@@ -1,7 +1,8 @@
 "use client";
 
+/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import * as React from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Check,
   Copy,
@@ -50,6 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { EntityName } from "@/components/shared/entity-name";
 import { toast } from "@/components/ui/toast";
 import { ROLE_META } from "@/lib/inventory/status-meta";
 import {
@@ -62,7 +64,7 @@ import {
 } from "@/lib/auth/permissions";
 import { approveJoin, changeMemberRole } from "@/lib/warehouses/members-client";
 import type { MemberListItem, PendingJoinRequest } from "@/lib/members/types";
-import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
+import { useSwitchWarehouse } from "@/lib/warehouses/use-switch-warehouse";
 import { PanelCard } from "@/components/shared/panel-card";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { formatDate, isValidEmail } from "@/lib/utils";
@@ -70,6 +72,17 @@ import { LeaveWarehouseDialog } from "@/components/members/dialogs/leave-warehou
 import { RejectJoinDialog } from "@/components/members/dialogs/reject-join-dialog";
 import { RemoveMemberDialog } from "@/components/members/dialogs/remove-member-dialog";
 import { TransferOwnershipDialog } from "@/components/members/dialogs/transfer-ownership-dialog";
+
+/**
+ * FE-25: normalisasi invite link — API mengembalikan path relatif
+ * (/invite/<token>), tapi jangan double-origin bila suatu saat absolut.
+ */
+function resolveInviteLink(inviteUrl: string): string {
+  if (/^https?:\/\//i.test(inviteUrl)) return inviteUrl;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const path = inviteUrl.startsWith("/") ? inviteUrl : `/${inviteUrl}`;
+  return `${origin}${path}`;
+}
 
 export function MembersPage({
   warehouseId,
@@ -89,8 +102,6 @@ export function MembersPage({
   pendingRequests: PendingJoinRequest[];
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   const [changing, setChanging] = React.useState<Set<string>>(new Set());
   // Audit v0.4.5: useOptimistic for member role changes. We sync the
@@ -136,6 +147,7 @@ export function MembersPage({
   // Email invite (audit: email invites)
   const [inviteOpen, setInviteOpen] = React.useState(false);
   const [inviteEmail, setInviteEmail] = React.useState("");
+  const inviteEmailRef = React.useRef<HTMLInputElement>(null);
   const [inviteRole, setInviteRole] = React.useState<Role>(
     assignableRoles[0] ?? "STAFF"
   );
@@ -147,6 +159,7 @@ export function MembersPage({
   const handleInvite = async () => {
     if (!isValidEmail(inviteEmail)) {
       setInviteError("Enter a valid email address.");
+      inviteEmailRef.current?.focus();
       return;
     }
     setInviteBusy(true);
@@ -228,11 +241,7 @@ export function MembersPage({
     }
   };
 
-  const switchWarehouse = (id: string) => {
-    if (id === warehouseId) return;
-    // P2-01: helper terpusat.
-    router.replace(switchWarehouseUrl(pathname, searchParams, id));
-  };
+  const switchWarehouse = useSwitchWarehouse(warehouseId);
 
   const copyInvite = async () => {
     try {
@@ -301,8 +310,10 @@ export function MembersPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger aria-label="Warehouse">
-                <SelectValue />
+              <SelectTrigger aria-label="Warehouse" className="min-w-36">
+                <SelectValue
+                  getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
+                />
               </SelectTrigger>
               <SelectContent>
                 {warehouses.map((w) => (
@@ -316,12 +327,13 @@ export function MembersPage({
           {isOwner ? (
             <Button variant="outline" onClick={() => setTransferOpen(true)}>
               <Crown aria-hidden="true" />
-              Transfer Ownership
+              <span className="hidden sm:inline">Transfer Ownership</span>
+              <span className="sm:hidden">Transfer</span>
             </Button>
           ) : null}
         </div>
         {canInvite ? (
-          <div className="border-border flex min-w-0 flex-wrap items-center gap-2 rounded-lg border px-3 py-1.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-1 py-1.5 sm:gap-2 sm:border sm:border-border sm:px-3">
             <span className="text-muted-foreground text-sm">Invite code</span>
             <span className="truncate font-mono text-sm tracking-wide">
               {inviteCode}
@@ -374,17 +386,17 @@ export function MembersPage({
                       id="invite-link"
                       className="bg-muted text-foreground flex-1 truncate rounded-md px-2 py-1.5 font-mono text-sm"
                     >
-                      {`${typeof window !== "undefined" ? window.location.origin : ""}${inviteUrl}`}
+                      {resolveInviteLink(inviteUrl)}
                     </code>
                     <CopyButton
-                      text={`${typeof window !== "undefined" ? window.location.origin : ""}${inviteUrl}`}
+                      text={resolveInviteLink(inviteUrl)}
                       label="Copy invite link"
                     />
                   </div>
                   <p className="text-muted-foreground text-sm">
                     {inviteSent
-                      ? "Invitation sent — they'll also get this link by email."
-                      : "Email delivery is not configured in this environment — share the link directly."}
+            ? "Invitation sent. They'll also get this link by email."
+            : "Email delivery is not configured in this environment. Share the link directly."}
                   </p>
                 </div>
               ) : (
@@ -393,6 +405,7 @@ export function MembersPage({
                     <Label htmlFor="invite-email">Email</Label>
                     <Input
                       id="invite-email"
+                      ref={inviteEmailRef}
                       type="email"
                       inputMode="email"
                       autoComplete="email"
@@ -400,6 +413,8 @@ export function MembersPage({
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       disabled={inviteBusy}
+                      aria-invalid={Boolean(inviteError)}
+                      aria-describedby={inviteError ? "invite-email-error" : undefined}
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -411,9 +426,14 @@ export function MembersPage({
                       }}
                     >
                       <SelectTrigger id="invite-role" className="w-full">
-                        <SelectValue />
+                        <SelectValue
+                          placeholder="Select role"
+                          getLabel={(v) =>
+                            ROLE_META[v as Role]?.label ?? v
+                          }
+                        />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent layer="modal">
                         {assignableRoles.map((r) => (
                           <SelectItem key={r} value={r}>
                             {ROLE_META[r].label}
@@ -423,7 +443,7 @@ export function MembersPage({
                     </Select>
                   </div>
                   {inviteError ? (
-                    <p className="text-destructive text-sm">{inviteError}</p>
+                    <p id="invite-email-error" role="alert" className="text-destructive text-sm">{inviteError}</p>
                   ) : null}
                 </div>
               )}
@@ -459,12 +479,12 @@ export function MembersPage({
         <section aria-labelledby="join-requests-heading">
           <PanelCard padding="none" className="bg-card">
             <div className="border-border flex items-center gap-2 border-b px-4 py-3">
-              <span className="bg-warning/15 text-warning flex size-7 items-center justify-center rounded-full">
+              <span className="bg-warning/15 text-warning-foreground flex size-7 items-center justify-center rounded-full">
                 <UserPlus aria-hidden="true" className="size-4" />
               </span>
               <h2
                 id="join-requests-heading"
-                className="font-display text-foreground text-sm font-semibold"
+                className="text-foreground text-sm font-semibold"
               >
                 Join requests
               </h2>
@@ -493,7 +513,7 @@ export function MembersPage({
                           : ""}
                       </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex max-w-full flex-wrap shrink-0 items-center gap-2">
                       <Select
                         value={chosen || undefined}
                         onValueChange={(value) => {
@@ -510,7 +530,12 @@ export function MembersPage({
                           aria-label={`Role for ${request.displayName ?? request.email}`}
                           disabled={busy}
                         >
-                          <SelectValue placeholder="Select role" />
+                          <SelectValue
+                            placeholder="Select role"
+                            getLabel={(v) =>
+                              ROLE_META[v as Role]?.label ?? v
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {assignableRoles.map((r) => (
@@ -524,6 +549,7 @@ export function MembersPage({
                         size="sm"
                         onClick={() => handleApprove(request)}
                         disabled={!chosen || busy}
+                        title={!chosen ? "Select a role first" : undefined}
                       >
                         <Check aria-hidden="true" />
                         Approve
@@ -561,9 +587,9 @@ export function MembersPage({
           }
         />
       ) : (
-        <PanelCard padding="none">
-          <div className="hidden overflow-x-auto md:block">
-            <Table className="md:min-w-[700px]">
+        <PanelCard padding="none" className="bg-card">
+          <div className="hidden overflow-x-auto lg:block">
+            <Table className="lg:min-w-[720px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Member</TableHead>
@@ -598,7 +624,9 @@ export function MembersPage({
                     >
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-foreground font-medium">
+                          <EntityName
+                            title={`${member.displayName ?? "Unnamed member"}${isSelf ? " (you)" : ""}`}
+                          >
                             {member.displayName ?? "Unnamed member"}
                             {isSelf ? (
                               <span className="text-muted-foreground font-normal">
@@ -606,8 +634,8 @@ export function MembersPage({
                                 (you)
                               </span>
                             ) : null}
-                          </span>
-                          <span className="text-muted-foreground text-sm">
+                          </EntityName>
+                          <span className="text-muted-foreground max-w-64 truncate text-sm" title={member.email}>
                             {member.email}
                           </span>
                         </div>
@@ -626,9 +654,23 @@ export function MembersPage({
                               className="w-32"
                               disabled={changing.has(member.membershipId)}
                             >
-                              <SelectValue />
+                            <SelectValue
+                              getLabel={(v) =>
+                                ROLE_META[v as Role]?.label ?? v
+                              }
+                            />
                             </SelectTrigger>
                             <SelectContent>
+                              {/* Role saat ini ikut dirender agar trigger
+                                  menampilkan label ("Staff"), bukan raw value
+                                  ("STAFF") — Base UI fallback ke value bila
+                                  tak ada item cocok. Pilih ulang = no-op. */}
+                              <SelectItem
+                                key={member.role}
+                                value={member.role}
+                              >
+                                {ROLE_META[member.role].label}
+                              </SelectItem>
                               {assignable.map((r) => (
                                 <SelectItem key={r} value={r}>
                                   {ROLE_META[r].label}
@@ -665,6 +707,7 @@ export function MembersPage({
                         {member.joinedAt ? formatDate(member.joinedAt) : "—"}
                       </TableCell>
                       <TableCell>
+                        {isSelf || manageable ? (
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             render={
@@ -698,6 +741,7 @@ export function MembersPage({
                             ) : null}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   );
@@ -706,7 +750,7 @@ export function MembersPage({
             </Table>
           </div>
           {/* Mobile: card list (audit N) */}
-          <ul className="divide-y md:hidden">
+          <ul className="divide-y lg:hidden">
             {optimisticMembers.map((member) => {
               const isSelf = member.userId === myUserId;
               const manageable =
@@ -736,7 +780,10 @@ export function MembersPage({
                   className="flex items-start justify-between gap-3 p-4"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="text-foreground truncate font-medium">
+                    <EntityName
+                      className="min-w-0"
+                      title={`${member.displayName ?? "Unnamed member"}${isSelf ? " (you)" : ""}`}
+                    >
                       {member.displayName ?? "Unnamed member"}
                       {isSelf ? (
                         <span className="text-muted-foreground font-normal">
@@ -744,8 +791,8 @@ export function MembersPage({
                           (you)
                         </span>
                       ) : null}
-                    </span>
-                    <p className="text-muted-foreground mt-0.5 text-sm">
+                    </EntityName>
+                    <p className="text-muted-foreground mt-0.5 truncate text-sm" title={member.email}>
                       {member.email}
                     </p>
                     <div className="mt-2 flex items-center gap-2">
@@ -762,9 +809,19 @@ export function MembersPage({
                             className="w-32"
                             disabled={changing.has(member.membershipId)}
                           >
-                            <SelectValue />
+                            <SelectValue
+                                getLabel={(v) =>
+                                  ROLE_META[v as Role]?.label ?? v
+                                }
+                              />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem
+                              key={member.role}
+                              value={member.role}
+                            >
+                              {ROLE_META[member.role].label}
+                            </SelectItem>
                             {assignable.map((r) => (
                               <SelectItem key={r} value={r}>
                                 {ROLE_META[r].label}
@@ -782,12 +839,13 @@ export function MembersPage({
                     <div className="mt-2 flex items-center gap-2">
                       <StatusBadge tone={statusTone} label={statusLabel} />
                       {member.joinedAt ? (
-                        <span className="text-muted-foreground text-sm">
+                        <span className="text-muted-foreground text-sm tabular-nums">
                           {formatDate(member.joinedAt)}
                         </span>
                       ) : null}
                     </div>
                   </div>
+                  {isSelf || manageable ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       render={
@@ -821,6 +879,7 @@ export function MembersPage({
                       ) : null}
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  ) : null}
                 </li>
               );
             })}
@@ -867,6 +926,9 @@ export function MembersPage({
       {transferOpen ? (
         <TransferOwnershipDialog
           warehouseId={warehouseId}
+          isDeployed={Boolean(
+            warehouses.find((w) => w.id === warehouseId)?.contractAddress
+          )}
           members={localMembers.filter(
             (m) => m.userId !== myUserId && m.status === "ACTIVE"
           )}

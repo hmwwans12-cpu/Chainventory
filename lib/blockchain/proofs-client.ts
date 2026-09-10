@@ -7,7 +7,11 @@ import {
 
 /**
  * Blockchain client (BFF `/api/warehouses/blockchain/proofs`).
- * Retry proof → route handler → RPC `proof_retry` (member-only, DB-enforced).
+ *
+ * NBE-06: retry proof adalah kapabilitas DEVELOPER ALLOWLIST (bukan
+ * member-only) — route menolak non-allowlist dengan 403 yang jelas.
+ * Jangan panggil dari UI member umum; Developer Console memakai
+ * `/api/console/proofs/[id]/retry` (jalur manual_review yang sama).
  */
 export const BLOCKCHAIN_PROOFS_ROUTE = "/api/warehouses/blockchain/proofs";
 

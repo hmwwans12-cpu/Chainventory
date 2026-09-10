@@ -9,7 +9,14 @@ import { EntityName } from "@/components/shared/entity-name";
  * Bar tumpuk CSS (bukan library chart): baris nol tidak dirender, jadi tidak
  * ada teks panjang/baris kosong; tetap SSR dan ringan.
  */
-export function TopProducts({ products }: { products: TopProduct[] }) {
+export function TopProducts({
+  products,
+  warehouseId,
+}: {
+  products: TopProduct[];
+  /** NFE-09: warehouse aktif agar CTA tidak jatuh ke warehouse lain. */
+  warehouseId?: string | null;
+}) {
   const max = Math.max(
     1,
     ...products.map((p) => Number(p.inQty) + Number(p.outQty))
@@ -23,7 +30,9 @@ export function TopProducts({ products }: { products: TopProduct[] }) {
         description="Record your first stock in or out to see which products move the most in this period."
         primaryAction={{
           label: "Record Stock In",
-          href: `/inventory/movements?action=stock_in`,
+          href: warehouseId
+            ? `/inventory/movements?warehouse=${encodeURIComponent(warehouseId)}&action=stock_in`
+            : `/inventory/movements?action=stock_in`,
         }}
       />
     );

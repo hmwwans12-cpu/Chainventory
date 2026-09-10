@@ -13,14 +13,14 @@ import { useLocale } from "@/components/providers/locale-provider";
  * surfaces ikut berganti via CSS variable.
  */
 export function ThemeToggle() {
-  const [dark, setDark] = React.useState(false);
+  // FE-04: baca class saat init (inline script layout sudah set sebelum
+  // hydrate) — tanpa flip aria-label setelah mount.
+  const [dark, setDark] = React.useState(
+    () =>
+      typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark")
+  );
   const { t } = useLocale();
-
-  React.useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDark(isDark);
-  }, []);
 
   function toggle() {
     const next = !dark;

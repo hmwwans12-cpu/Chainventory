@@ -34,7 +34,7 @@ export function RemoveMemberDialog({
       toast.add({
         type: "success",
         title: `${member.displayName ?? member.email} removed`,
-        description: `Access revoked — ${member.displayName ?? member.email} can be re-invited later.`,
+        description: `Access revoked. ${member.displayName ?? member.email} can be re-invited later.`,
       });
       onDone();
     } else {

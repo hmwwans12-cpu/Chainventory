@@ -12,6 +12,28 @@ export const ROLES = [
 ] as const;
 export type Role = (typeof ROLES)[number];
 
+/**
+ * Label tampil role (FE-23): satu sumber — sebelumnya diduplikasi di
+ * settings/page + profile-wallet-card (risiko divergen).
+ */
+export function roleLabel(role: string): string {
+  switch (role) {
+    case "OWNER":
+      return "Owner";
+    case "MANAGER":
+      return "Manager";
+    case "STAFF":
+      return "Staff";
+    case "AUDITOR":
+      return "Auditor";
+    case "VIEWER":
+      return "Viewer";
+    default:
+      // Fallback presentable (bukan mentah): tak dikenal pun tampil rapi.
+      return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+  }
+}
+
 export const MEMBERSHIP_STATUS = ["PENDING", "ACTIVE", "SUSPENDED"] as const;
 export type MembershipStatus = (typeof MEMBERSHIP_STATUS)[number];
 

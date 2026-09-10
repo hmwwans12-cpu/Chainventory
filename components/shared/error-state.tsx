@@ -26,21 +26,25 @@ export function ErrorState({
     <div
       role="alert"
       className={cn(
-        "border-border flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-8 text-center",
+        "border-border bg-card flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-8 text-center",
         className
       )}
     >
-      <Icon aria-hidden="true" className="text-destructive size-6" />
-      <div className="space-y-1">
-        <p className="text-foreground font-medium">{title}</p>
+      <span className="bg-destructive/15 text-destructive flex size-10 items-center justify-center rounded-full">
+        <Icon aria-hidden="true" className="size-5" />
+      </span>
+      <div className="mt-2 space-y-1">
+        <p className="text-foreground text-base font-semibold">{title}</p>
         {description ? (
-          <p className="text-muted-foreground text-sm">{description}</p>
+          <p className="text-muted-foreground mx-auto max-w-sm text-sm text-pretty">{description}</p>
         ) : null}
       </div>
       {onRetry ? (
-        <Button variant="outline" onClick={onRetry}>
-          Try again
-        </Button>
+        <div className="mt-4">
+          <Button variant="outline" onClick={onRetry}>
+            Try again
+          </Button>
+        </div>
       ) : null}
     </div>
   );

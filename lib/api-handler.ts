@@ -1,5 +1,5 @@
 /**
- * Shared Route Handler plumbing (P1 Step 5 harden — candidate C1).
+ * Shared Route Handler plumbing (P1 Step 5 harden: candidate C1).
  *
  * Sebelumnya tiap handler (wallets/sync, membership, inventory/products,
  * inventory/movements) mengulang sendiri: auth check + JSON parse + map
@@ -8,7 +8,7 @@
  *  - `readJson` (parse aman dengan response default 400)
  *  - `requireUser` (auth Supabase → 401 bila tidak login)
  *  - `getMemberRole`/`requirePermission` (RBAC TS yang sama dengan
- *    `lib/auth/permissions` — satu-satunya sumber matrix sisi client)
+ *    `lib/auth/permissions`: satu-satunya sumber matrix sisi client)
  *  - `rpcErrorStatus`/`fromPostgrestError` (error code / PostgREST → HTTP)
  */
 
@@ -24,7 +24,9 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import {
   enforceMutationRateLimit,
+  enforceReadRateLimit,
   type MutationAction,
+  type ReadAction,
 } from "@/lib/security/rate-limit";
 import { mapDbError } from "@/lib/domain/errors";
 
@@ -94,7 +96,7 @@ export function rpcErrorStatus(errorCode: string | undefined): number {
 
 /**
  * Map pesan error PostgREST/DB → respons terstruktur via katalog domain
- * (P1-09): pesan database mentah tidak pernah dikirim ke client — detail
+ * (P1-09): pesan database mentah tidak pernah dikirim ke client: detail
  * penuh hanya di log server.
  */
 export function fromPostgrestError(message: string): NextResponse {
@@ -111,7 +113,7 @@ export function fromPostgrestError(message: string): NextResponse {
  * Log detail kesalahan + kembalikan respons generic 500 ke client.
  *
  * Audit v0.3.0 1.1: pesan `err.message` (PostgREST/viem/JSON) tidak pernah
- * dikirim ke client — berpotensi bocor schema, constraint name, RPC URL.
+ * dikirim ke client: berpotensi bocor schema, constraint name, RPC URL.
  * Pemanggil diharapkan menggunakan `safeError` untuk SEMUA blok `catch`
  * yang membungkus kode tak-deterministik; `fromPostgrestError` tetap untuk
  * kasus yang sudah terpetakan.
@@ -186,14 +188,19 @@ export async function requirePermission(
 
 /**
  * Gate warehouse lifecycle (audit C-02): warehouse suspended menolak
- * SEMUA mutation produk — bukan cuma movement. Null = boleh lanjut.
+ * SEMUA mutation produk: bukan cuma movement. Null = boleh lanjut.
+ *
+ * NBE-12: WAJIB via `warehouse_summaries` (member-visible, gate
+ * private.is_member), BUKAN tabel dasar `warehouses` yang SELECT-nya
+ * owner-only: versi lama membuat seluruh mutasi MANAGER/STAFF gagal
+ * "suspended" walau warehouse active.
  */
 export async function requireActiveWarehouse(
   supabase: SupabaseClient,
   warehouseId: string
 ): Promise<NextResponse | null> {
   const { data } = await supabase
-    .from("warehouses")
+    .from("warehouse_summaries")
     .select("status")
     .eq("id", warehouseId)
     .maybeSingle();
@@ -215,6 +222,40 @@ export async function requireRateLimit(
 ): Promise<NextResponse | null> {
   const decision = await enforceMutationRateLimit(action, userId, request);
   if (decision.allowed) return null;
+  const retryAfterSec = Math.max(Math.ceil(decision.resetMs / 1000), 1);
+  const res = json(
+    {
+      ok: false,
+      error:
+        "Too many requests. Please slow down and try again in a few seconds.",
+      errorCode: "RATE_LIMITED",
+    },
+    429
+  );
+  res.headers.set("Retry-After", String(retryAfterSec));
+  return res;
+}
+
+/**
+ * Gate rate limit read-only fail-OPEN (fix BE-07): hanya untuk GET
+ * non-mutating (export, wallet balance, dashboard/search). Redis down →
+ * lolos + warning (lihat enforceReadRateLimit). JANGAN pakai untuk mutasi.
+ */
+export async function requireReadRateLimit(
+  action: ReadAction,
+  userId: string,
+  request: Request
+): Promise<NextResponse | null> {
+  const decision = await enforceReadRateLimit(action, userId, request);
+  if (decision.allowed) {
+    if ("degraded" in decision && decision.degraded) {
+      logger.warn(
+        { action, userId },
+        "read rate limiter degraded: request allowed fail-open"
+      );
+    }
+    return null;
+  }
   const retryAfterSec = Math.max(Math.ceil(decision.resetMs / 1000), 1);
   const res = json(
     {

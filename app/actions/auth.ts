@@ -61,10 +61,17 @@ export async function signupAction(
   _prevState: unknown,
   formData: FormData
 ): Promise<{ error: string | null } | never> {
+  // FLO-03: FormData.get mengembalikan null bila key absen (gender opsional
+  // tidak dikirim client) — sedangkan skema .optional() hanya terima
+  // undefined. Tanpa normalisasi, signup tanpa gender selalu gagal.
+  const genderValue = formData.get("gender");
   const parsed = signupSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
-    gender: formData.get("gender"),
+    gender:
+      typeof genderValue === "string" && genderValue !== ""
+        ? genderValue
+        : undefined,
     password: formData.get("password"),
   });
 

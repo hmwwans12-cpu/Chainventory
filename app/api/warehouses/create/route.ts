@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 import { getWarehouseFactory } from "@/lib/blockchain/contracts";
 import { createClient } from "@/lib/supabase/server";
 import {
+  forbidden,
   fromPostgrestError,
   invalid,
   json,
@@ -48,8 +49,9 @@ import {
  * `submit` → terima signature, VERIFIKASI EIP-712, re-baca nonce (stale check),
  * cek one-active-warehouse on-chain, simulasikan tx (revert → 409 jelas),
  * catat klaim atomik (warehouses + deployment + OWNER membership) lewat RPC,
- * relay via treasury, tunggu receipt pertama → `confirmed` (contract_address
- * dicatat) / `reverted` (klaim di-rollback) / `submitted` (async).
+ * relay via treasury, catat `submitted` lalu return 202 SEGERA (PRD §6.4/§15:
+ * konfirmasi async, tidak block request). Finalisasi confirmed/reverted
+ * terjadi saat retry idempotent (finalizeIfMined) / job konfirmasi.
  *
  * `idempotencyKey` (DB, TTL 24 jam) TIDAK menggantikan `deploymentNonce`
  * on-chain — Invariant D (PRD §7.5).
@@ -58,10 +60,11 @@ import {
 type Action = "prepare" | "submit";
 const ACTION_VALUES: Action[] = ["prepare", "submit"];
 
-// Selaras dengan client poll 24×5s=120s di create-warehouse-form.tsx
-// (Fase 1 pilih turunkan polling ke 120, bukan naikkan maxDuration ke 150,
-//  untuk jaga biaya Vercel function; reconcile harian jadi fallback).
-export const maxDuration = 120;
+// Selaras dengan client poll 24×5s=120s di create-warehouse-form.tsx.
+// Temuan audit segar: Vercel Hobby membatasi durasi fungsi 60 detik —
+// maxDuration 120 berisiko ditolak saat deploy. 60s cukup (finalisasi
+// 45s di jalur retry + reconcile harian sebagai fallback).
+export const maxDuration = 60;
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -299,11 +302,31 @@ export async function POST(request: Request) {
   }
 
   // Idempotency: idempotencyKey yang sama → kembalikan state eksisting.
+  // Fix BE-13: lookup di-scope ke pemohon agar penebak UUID tidak bisa baca
+  // status/txHash/contractAddress deployment orang lain (info-leak) atau
+  // memicu finalizeIfMined atas deployment korban. Balas 403 generik bila
+  // bukan milik (tanpa membocorkan keberadaan key).
   const { data: existing } = await supabase
     .from("warehouse_deployments")
     .select("id, status, tx_hash, warehouse_id")
     .eq("idempotency_key", parsed.data.idempotencyKey)
     .maybeSingle();
+
+  if (existing?.warehouse_id) {
+    const { data: ownerCheck } = await supabase
+      .from("warehouses")
+      .select("id")
+      .eq("id", existing.warehouse_id)
+      .eq("owner_user_id", auth.user.id)
+      .maybeSingle();
+    if (!ownerCheck) {
+      logger.warn(
+        { deploymentId: existing.id },
+        "deployment idempotency lookup by non-owner rejected"
+      );
+      return forbidden("You do not have access to this warehouse.");
+    }
+  }
 
   if (existing) {
     await finalizeIfMined(supabase, existing);
@@ -500,59 +523,15 @@ export async function POST(request: Request) {
     p_tx_hash: txHash,
   });
 
-  const outcome = await waitForWarehouseDeployment(txHash);
-
-  if (outcome.status === "reverted") {
-    await supabase.rpc("rollback_warehouse_creation", {
-      p_deployment_id: deploymentId,
-      p_error: "deployment reverted on-chain",
-    });
-    return json(
-      {
-        ok: false,
-        error: deploymentErrorMessage(outcome.reason),
-        errorCode: "CONFLICT",
-      },
-      409
-    );
-  }
-
-  if (outcome.status === "confirmed") {
-    if (outcome.warehouseAddress) {
-      const { error: addrErr } = await supabase.rpc(
-        "set_warehouse_contract_address",
-        {
-          p_warehouse_id: warehouseId,
-          p_contract_address: outcome.warehouseAddress,
-        }
-      );
-      if (addrErr) {
-        logger.warn(
-          { err: addrErr.message, warehouseId },
-          "set_warehouse_contract_address rejected"
-        );
-      }
-    }
-    await supabase.rpc("update_warehouse_deployment_status", {
-      p_deployment_id: deploymentId,
-      p_status: "confirmed",
-    });
-    logger.info(
-      { warehouseId, txHash, contractAddress: outcome.warehouseAddress },
-      "warehouse created and confirmed on-chain"
-    );
-    return ok({
-      status: "confirmed",
-      warehouseId,
-      deploymentId,
-      warehouseCode: parsed.data.warehouseCode,
-      contractAddress: outcome.warehouseAddress ?? null,
-      txHash,
-    });
-  }
-
-  // Timeout: konfirmasi async (≥2 blocks) — status `submitted`; retry
-  // idempotent (idempotencyKey sama) akan menfinalisasi.
+  // Fix A4: JANGAN tunggu receipt di dalam request (melanggar PRD §6.4/§15:
+  // "blockchain confirmation async, tidak block request"). Relay 45-90s
+  // menyebabkan timeout Vercel Hobby + retry client menumpuk relay.
+  // Return 202 segera; client poll dengan idempotencyKey sama →
+  // finalizeIfMined menfinalisasi confirmed/reverted saat receipt mined.
+  logger.info(
+    { warehouseId, deploymentId, txHash },
+    "warehouse deployment relayed, awaiting async confirmation"
+  );
   return json(
     {
       ok: true,

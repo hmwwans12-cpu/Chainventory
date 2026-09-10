@@ -1,3 +1,4 @@
+/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import Link from "next/link";
 import { ArrowDownToLine } from "lucide-react";
 
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge, type StatusTone } from "@/components/shared/status-badge";
 import {
   Table,
   TableBody,
@@ -49,12 +51,12 @@ const STATUS_TONE_LABEL = MOVEMENT_STATUS_META;
 
 // Tone → class mapping for type badges (keeps visual parity with StatusBadge)
 const TONE_CLASS: Record<string, string> = {
-  success: "bg-primary/10 text-primary",
-  pending: "bg-secondary/20 text-secondary-foreground",
-  warning: "bg-warning/15 text-warning",
-  failed: "bg-destructive/15 text-destructive",
-  inactive: "bg-muted text-muted-foreground",
-  suspended: "bg-warning/10 text-warning",
+  success: "bg-primary/10 text-primary border border-primary/20",
+  pending: "bg-secondary/20 text-secondary-foreground border border-secondary/30",
+  warning: "bg-warning/15 text-warning-foreground border border-warning/20",
+  failed: "bg-destructive/15 text-destructive border border-destructive/20",
+  inactive: "bg-muted text-muted-foreground border border-border",
+  suspended: "bg-warning/10 text-warning-foreground border border-warning/20",
 };
 
 export function RecentMovements({
@@ -77,10 +79,9 @@ export function RecentMovements({
           <Button
             variant="outline"
             size="sm"
-            className="min-h-11"
             render={<Link href={viewAllHref} />}
           >
-            View all
+            View All
           </Button>
         </CardAction>
       </CardHeader>
@@ -88,11 +89,14 @@ export function RecentMovements({
         {items.length === 0 ? (
           <EmptyState
             icon={ArrowDownToLine}
+            bare
             title="No stock movements yet"
             description="Record your first stock in or out to start the ledger."
             primaryAction={{
               label: "Record Stock In",
-              href: `/inventory/movements?action=stock_in`,
+              href: warehouseId
+                ? `/inventory/movements?warehouse=${warehouseId}&action=stock_in`
+                : `/inventory/movements?action=stock_in`,
             }}
           />
         ) : (
@@ -142,10 +146,13 @@ export function RecentMovements({
                       </TableCell>
                       <TableCell>
                         {status ? (
-                          <Badge variant="outline">{status.label}</Badge>
+                          <StatusBadge
+                            tone={status.tone as StatusTone}
+                            label={status.label}
+                          />
                         ) : (
                           <span className="text-muted-foreground text-sm">
-                            {item.status}
+                            {item.status.charAt(0).toUpperCase() + item.status.slice(1).replace(/_/g, " ")}
                           </span>
                         )}
                       </TableCell>

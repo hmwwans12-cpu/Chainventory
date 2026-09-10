@@ -7,7 +7,11 @@ import { supabaseClientKey, supabaseUrl } from "@/lib/supabase/config";
 
 /**
  * Read-only health check (TODO P0 — Supabase Foundation).
- * Public, fail-open: reports external dependency status without secrets.
+ * Public: reports external dependency presence (booleans only, no secrets).
+ *
+ * CF-23: HTTP 503 bila degraded agar monitor HTTP ikut alert — sebelumnya
+ * selalu 200 sehingga insiden senyap. Liveness murni (proses hidup) tetap
+ * 200-friendly: body selalu terkirim, hanya status code yang jujur.
  */
 export function GET() {
   const start = performance.now();
@@ -39,6 +43,6 @@ export function GET() {
       dependencies,
       latencyMs,
     },
-    { status: 200 }
+    { status: status === "ok" ? 200 : 503 }
   );
 }

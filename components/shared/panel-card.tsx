@@ -30,8 +30,8 @@ const PADDING: Record<PanelPadding, string> = {
 
 const VARIANT_EDGE: Record<PanelVariant, string> = {
   solid: "ring-foreground/10 ring-1",
-  dashed: "border-border border border-dashed",
-  tinted: "border",
+  dashed: "border border-dashed border-border",
+  tinted: "border border-border",
 };
 
 export function PanelCard({

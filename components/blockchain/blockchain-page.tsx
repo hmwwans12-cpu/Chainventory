@@ -1,7 +1,8 @@
 "use client";
 
+/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import * as React from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -48,12 +49,17 @@ import {
   type ProofRow,
 } from "@/lib/blockchain/types";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
-import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
+import { useSwitchWarehouse } from "@/lib/warehouses/use-switch-warehouse";
+import { useLiveStatus } from "@/hooks/use-live-status";
+import { openChannel } from "@/lib/realtime/channel";
 import { debounce } from "@/lib/realtime/debounce";
 import { PanelCard } from "@/components/shared/panel-card";
 import { cn, formatDateTime } from "@/lib/utils";
-
-const PROOF_LIMIT = 50;
+import {
+  BASE_SEPOLIA_CHAIN_ID,
+  PROOF_LIMIT,
+  REALTIME_DEBOUNCE_MS,
+} from "@/lib/constants";
 
 function shortHash(hash: string, head = 10, tail = 8): string {
   if (hash.length <= head + tail + 3) return hash;
@@ -63,7 +69,7 @@ function shortHash(hash: string, head = 10, tail = 8): string {
 async function fetchProofs(
   supabase: ReturnType<typeof createSupabaseClient>,
   warehouseId: string
-): Promise<{ rows: ProofRow[]; total: number }> {
+): Promise<{ rows: ProofRow[]; total: number; error: boolean }> {
   const { data, error } = await supabase
     .from("proofs")
     .select(
@@ -72,8 +78,10 @@ async function fetchProofs(
     .eq("warehouse_id", warehouseId)
     .order("created_at", { ascending: false })
     .limit(PROOF_LIMIT);
-  if (error || !data) return { rows: [], total: 0 };
-  return { rows: data as ProofRow[], total: data.length };
+  // APP-03: bedakan gagal vs kosong — tanpa flag ini refreshProofsSafe
+  // tak pernah masuk jalur error dan me-reset tabel ke 0.
+  if (error || !data) return { rows: [], total: 0, error: true };
+  return { rows: data as ProofRow[], total: data.length, error: false };
 }
 
 export function BlockchainPage({
@@ -81,6 +89,7 @@ export function BlockchainPage({
   warehouses,
   contractAddress,
   deployment,
+  deploymentError = false,
   proofs,
   totalProofs,
 }: {
@@ -88,18 +97,22 @@ export function BlockchainPage({
   warehouses: WarehouseSummary[];
   contractAddress: string | null;
   deployment: DeploymentSummary | null;
+  /** APP-17: query deployment gagal — jangan tampilkan "belum deploy". */
+  deploymentError?: boolean;
   proofs: ProofRow[];
   totalProofs: number;
 }) {
   const router = useRouter();
 
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [proofsState, setProofsState] = React.useState<ProofRow[]>(proofs);
   const [totalProofsState, setTotalProofsState] = React.useState(totalProofs);
-  const [liveStatus, setLiveStatus] = React.useState<"live" | "reconnecting">(
-    "reconnecting"
-  );
+  // Sinkronisasi warehouse (pola members-page): tanpa ini pindah warehouse
+  // A→B meninggalkan daftar proofs milik A.
+  React.useEffect(() => {
+    setProofsState(proofs);
+    setTotalProofsState(totalProofs);
+  }, [warehouseId, proofs, totalProofs]);
+  const [liveStatus, reportLive] = useLiveStatus();
   const [busyProof, setBusyProof] = React.useState<string | null>(null);
 
   const [supabase] = React.useState(() => createSupabaseClient());
@@ -110,20 +123,22 @@ export function BlockchainPage({
   const refreshProofsSafe = React.useCallback(async () => {
     try {
       const next = await fetchProofs(supabase, warehouseId);
+      if (next.error) throw new Error("refresh failed");
       setProofsState(next.rows);
       setTotalProofsState(next.total);
       setRealtimeError(null);
     } catch {
-      setRealtimeError("Live update failed — showing the last known proofs.");
+      setRealtimeError("Live update failed. Showing the last known proofs.");
     }
   }, [supabase, warehouseId]);
 
   React.useEffect(() => {
     const refreshDebounced = debounce(() => {
       void refreshProofsSafe();
-    }, 400);
-    const channel = supabase
-      .channel(`blockchain-${warehouseId}`)
+    }, REALTIME_DEBOUNCE_MS);
+    // Topik unik per mount — cegah "cannot add callbacks after
+    // subscribe()" saat StrictMode/remount cepat (lihat channel.ts).
+    const channel = openChannel(supabase, `blockchain-${warehouseId}`)
       .on(
         "postgres_changes",
         {
@@ -135,19 +150,15 @@ export function BlockchainPage({
         refreshDebounced
       )
       .subscribe((status) => {
-        setLiveStatus(status === "SUBSCRIBED" ? "live" : "reconnecting");
+        reportLive(status === "SUBSCRIBED");
       });
     return () => {
       refreshDebounced.cancel();
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel).catch(() => {});
     };
-  }, [warehouseId, supabase, refreshProofsSafe]);
+  }, [warehouseId, supabase, refreshProofsSafe, reportLive]);
 
-  const switchWarehouse = (id: string) => {
-    if (id === warehouseId) return;
-    // P2-01: helper terpusat.
-    router.replace(switchWarehouseUrl(pathname, searchParams, id));
-  };
+  const switchWarehouse = useSwitchWarehouse(warehouseId);
 
   const retry = async (proof: ProofRow) => {
     if (busyProof) return;
@@ -193,10 +204,10 @@ export function BlockchainPage({
         <div className="flex min-w-0 items-center gap-2">
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm",
+              "inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-sm font-medium whitespace-nowrap",
               liveStatus === "live"
-                ? "bg-primary/10 text-primary"
-                : "bg-warning/15 text-warning"
+                ? "bg-primary/10 text-primary border-primary/20"
+                : "bg-warning/15 text-warning-foreground border-warning/20"
             )}
             role="status"
             aria-live="polite"
@@ -219,8 +230,10 @@ export function BlockchainPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger aria-label="Warehouse">
-                <SelectValue />
+              <SelectTrigger aria-label="Warehouse" className="min-w-36">
+                <SelectValue
+                  getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
+                />
               </SelectTrigger>
               <SelectContent>
                 {warehouses.map((w) => (
@@ -233,14 +246,24 @@ export function BlockchainPage({
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          <span className="bg-muted text-muted-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-sm">
-            Base Sepolia · 84532
+          <span className="bg-muted text-muted-foreground inline-flex h-6 items-center gap-1.5 rounded-full border border-border px-2.5 py-0.5 font-mono text-sm whitespace-nowrap">
+            Base Sepolia · {BASE_SEPOLIA_CHAIN_ID}
           </span>
         </div>
       </div>
 
+      {deploymentError ? (
+        <p
+          role="alert"
+          className="border-warning/30 bg-warning/10 text-warning-foreground rounded-lg border px-4 py-3 text-sm"
+        >
+          Could not load deployment status. Contract info below may be
+          outdated. Refresh to retry.
+        </p>
+      ) : null}
+
       {/* Status warehouse on-chain */}
-      <PanelCard className="p-4 sm:p-5">
+      <PanelCard className="bg-card p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-1.5">
             <div className="flex items-center gap-2">
@@ -283,9 +306,9 @@ export function BlockchainPage({
               </BaseScanLink>
             ) : null}
           </div>
-          <div className="flex shrink-0 items-center gap-4">
+          <div className="flex shrink-0 flex-wrap items-center gap-x-6 gap-y-3">
             <div className="flex flex-col items-end">
-              <span className="text-foreground text-xl font-semibold tabular-nums">
+              <span className="text-foreground text-2xl font-semibold tabular-nums">
                 {totalProofsState}
               </span>
               <span className="text-muted-foreground text-sm">
@@ -293,20 +316,20 @@ export function BlockchainPage({
               </span>
             </div>
             <div className="flex flex-col items-end">
-              <span className="text-primary text-xl font-semibold tabular-nums">
+              <span className="text-primary text-2xl font-semibold tabular-nums">
                 {confirmedCount}
               </span>
               <span className="text-muted-foreground text-sm">confirmed</span>
             </div>
             <div className="flex flex-col items-end">
-              <span className="text-warning text-xl font-semibold tabular-nums">
+              <span className="text-warning text-2xl font-semibold tabular-nums">
                 {pendingCount}
               </span>
               <span className="text-muted-foreground text-sm">pending</span>
             </div>
             {failedProofs.length > 0 ? (
               <div className="flex flex-col items-end">
-                <span className="text-destructive text-xl font-semibold tabular-nums">
+                <span className="text-destructive text-2xl font-semibold tabular-nums">
                   {failedProofs.length}
                 </span>
                 <span className="text-muted-foreground text-sm">
@@ -329,7 +352,7 @@ export function BlockchainPage({
               <AlertTriangle aria-hidden="true" className="size-4" />
             </span>
             <div className="flex flex-col gap-0.5">
-              <h3 className="font-display text-foreground text-sm font-semibold">
+              <h3 className="text-foreground text-sm font-semibold">
                 Blockchain confirmation failed.
               </h3>
               <p className="text-muted-foreground text-sm text-pretty">
@@ -408,11 +431,11 @@ export function BlockchainPage({
       {proofsState.length === 0 ? (
         <EmptyState
           icon={Link2}
-          title="No on-chain proofs yet."
+          title="No on-chain proofs yet"
           description="Proofs are generated automatically for committed stock operations. They will appear here with their Base Sepolia transaction hash."
         />
       ) : (
-        <PanelCard padding="none">
+        <PanelCard padding="none" className="bg-card">
           {realtimeError ? (
             proofsState.length === 0 ? (
               <ErrorState
@@ -426,8 +449,10 @@ export function BlockchainPage({
               </p>
             )
           ) : null}
-          <div className="hidden overflow-x-auto md:block">
-            <Table className="min-w-[640px]">
+          {/* FE-20: breakpoint tabel disamakan ke lg seperti
+              products/movements (tablet 768–1024 konsisten tampil card). */}
+          <div className="hidden overflow-x-auto lg:block">
+            <Table className="lg:min-w-[720px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Proof</TableHead>
@@ -460,7 +485,7 @@ export function BlockchainPage({
                           <StatusBadge tone={meta.tone} label={meta.label} />
                         ) : (
                           <span className="text-muted-foreground text-sm">
-                            {proof.status}
+                            {proof.status.charAt(0).toUpperCase() + proof.status.slice(1)}
                           </span>
                         )}
                       </TableCell>
@@ -472,10 +497,6 @@ export function BlockchainPage({
                             className="font-mono text-sm"
                           >
                             {shortHash(proof.tx_hash, 10, 6)}
-                            <ExternalLink
-                              aria-hidden="true"
-                              className="size-3.5"
-                            />
                           </BaseScanLink>
                         ) : proof.error ? (
                           <Tooltip>
@@ -500,7 +521,7 @@ export function BlockchainPage({
                           {proof.status === "confirmed" ? (
                             <CheckCircle2
                               aria-hidden="true"
-                              className="text-primary ml-1 inline size-3.5"
+                              className="text-primary ml-1 inline size-3.5 align-middle"
                             />
                           ) : null}
                         </span>
@@ -515,7 +536,7 @@ export function BlockchainPage({
             </Table>
           </div>
           {/* Mobile: card list (audit N) */}
-          <ul className="divide-y md:hidden">
+          <ul className="divide-y lg:hidden">
             {proofsState.map((proof) => {
               const meta = PROOF_STATUS_META[proof.status];
               const confirmed = proof.status === "confirmed";
@@ -529,7 +550,7 @@ export function BlockchainPage({
                       <StatusBadge tone={meta.tone} label={meta.label} />
                     ) : (
                       <span className="text-muted-foreground text-sm">
-                        {proof.status}
+                        {proof.status.charAt(0).toUpperCase() + proof.status.slice(1)}
                       </span>
                     )}
                   </div>
@@ -547,7 +568,6 @@ export function BlockchainPage({
                         className="font-mono"
                       >
                         {shortHash(proof.tx_hash, 10, 6)}
-                        <ExternalLink aria-hidden="true" className="size-3.5" />
                       </BaseScanLink>
                     ) : proof.error ? (
                       <span

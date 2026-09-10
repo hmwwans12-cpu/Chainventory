@@ -18,11 +18,36 @@ function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   );
 }
 
-function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
+function SelectValue({
+  className,
+  getLabel,
+  children,
+  placeholder,
+  ...props
+}: SelectPrimitive.Value.Props & {
+  /**
+   * Pemetaan value → teks tampil. WAJIB diisi bila `value` berbeda dari
+   * label item (mis. "all"→"All types", "STAFF"→"Staff", UUID→nama).
+   * Base UI me-resolve label dari item yang ter-mount; popup di-portal
+   * dan lazy-mount sehingga value awal (dari URL/props) selalu jatuh ke
+   * raw `value`. Dengan getLabel, trigger benar sejak render pertama.
+   */
+  getLabel?: (value: string) => React.ReactNode;
+}) {
+  const resolvedChildren =
+    children ??
+    (getLabel
+      ? (v: string | null) =>
+          v == null ? (placeholder ?? null) : (getLabel(v) ?? v)
+      : undefined);
   return (
     <SelectPrimitive.Value
       data-slot="select-value"
       className={cn("flex flex-1 text-left", className)}
+      placeholder={placeholder}
+      {...(resolvedChildren !== undefined
+        ? { children: resolvedChildren }
+        : {})}
       {...props}
     />
   );
@@ -52,6 +77,13 @@ function SelectTrigger({
   );
 }
 
+/**
+ * SelectContent layer:
+ * - "page" (default): z-select, untuk trigger di permukaan halaman.
+ * - "modal": z-modal-popover, WAJIB untuk Select di dalam Dialog/Sheet.
+ *   Popup di-portal ke body sehingga z-select (30) terkubur di bawah
+ *   overlay (40) dan tidak bisa diklik.
+ */
 function SelectContent({
   className,
   children,
@@ -60,12 +92,17 @@ function SelectContent({
   align = "center",
   alignOffset = 0,
   alignItemWithTrigger = true,
+  layer = "page",
   ...props
 }: SelectPrimitive.Popup.Props &
   Pick<
     SelectPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
-  >) {
+  > & {
+    layer?: "page" | "modal";
+  }) {
+  const layerZ =
+    layer === "modal" ? "z-[var(--z-modal-popover)]" : "z-[var(--z-select)]";
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Positioner
@@ -74,13 +111,14 @@ function SelectContent({
         align={align}
         alignOffset={alignOffset}
         alignItemWithTrigger={alignItemWithTrigger}
-        className="isolate z-[var(--z-select)]"
+        className={cn("isolate", layerZ)}
       >
         <SelectPrimitive.Popup
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
           className={cn(
-            "bg-popover text-popover-foreground ring-foreground/10 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 relative isolate z-[var(--z-select)] max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg shadow-md ring-1 duration-100 data-[align-trigger=true]:animate-none",
+            "bg-popover text-popover-foreground ring-foreground/10 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 relative isolate max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg shadow-(--shadow-elevated) ring-1 duration-100 data-[align-trigger=true]:animate-none",
+            layerZ,
             className
           )}
           {...props}
@@ -110,13 +148,18 @@ function SelectLabel({
 function SelectItem({
   className,
   children,
+  label,
   ...props
 }: SelectPrimitive.Item.Props) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
+      // Label eksplisit untuk Select.Value: tanpa ini Value jatuh ke raw
+      // `value` ("all"/"STAFF") karena label hasil ukur teks tidak
+      // ter-resolve untuk value awal. String children dipakai otomatis.
+      label={label ?? (typeof children === "string" ? children : undefined)}
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground focus-visible:ring-ring/50 relative flex min-h-11 w-full cursor-default items-center gap-1.5 rounded-sm py-2 pr-8 pl-2 text-sm outline-hidden select-none focus-visible:ring-3 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground focus-visible:ring-ring/50 relative flex min-h-11 w-full cursor-default items-center gap-1.5 rounded-md py-2 pr-8 pl-2 text-sm outline-hidden select-none focus-visible:ring-3 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
       {...props}

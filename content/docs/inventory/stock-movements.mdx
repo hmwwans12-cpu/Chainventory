@@ -28,7 +28,7 @@ See [Core Concepts](/docs/getting-started/concepts) for a detailed description o
 
 <Callout type="warning">
   Stock Out validates against the live balance. If the balance changed since you
-  opened the form, the submission fails with **Stale Stock** — refresh and
+  opened the form, the submission fails with **Stale Stock**. Refresh and
   re-enter the quantity.
 </Callout>
 
@@ -62,7 +62,7 @@ Combine filters to investigate a specific discrepancy quickly.
 
 ## Approvals
 
-Adjustments and reversals require an Owner or Manager to approve before they affect the balance. Pending approvals show a **Pending** badge and can be approved or rejected from the movement detail view.
+Only adjustments require an Owner or Manager to approve before they affect the balance. Pending approvals show a **Pending** badge and can be approved or rejected from the movement detail view. Reversals commit immediately (no separate approval) but can only be created by Owner/Manager.
 
 <Callout type="info">
   Rejected adjustments leave the original balance untouched and are recorded as

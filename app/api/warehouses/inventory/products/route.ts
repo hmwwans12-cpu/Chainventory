@@ -81,8 +81,9 @@ export async function POST(request: Request) {
   let proofPayload: unknown = null;
   let proofPayloadHash: string | null = null;
   if (hasInitialQty) {
+    // NBE-12: via warehouse_summaries (member-visible).
     const { data: wh } = await supabase
-      .from("warehouses")
+      .from("warehouse_summaries")
       .select("contract_address")
       .eq("id", parsed.data.warehouseId)
       .maybeSingle();
@@ -129,6 +130,9 @@ export async function POST(request: Request) {
 
   // Publish job proof SETELAH commit (bila proof dibuat). Gagal publish
   // tidak menggagalkan request — reconciliation harian adalah safety net.
+  // NBE-14: initialStockApplied = ledger tercatat (dijamin RPC atau throw);
+  // proofPending = baris proof BENAR-BENAR ada (bukan dari request).
+  let proofCreated = false;
   if (proofPayload) {
     const { data: proofRow } = await supabase
       .from("proofs")
@@ -136,6 +140,7 @@ export async function POST(request: Request) {
       .eq("movement_id", movementId)
       .maybeSingle();
     if (proofRow) {
+      proofCreated = true;
       // Audit v0.3.0 §2.16: log ke server, jangan silent swallow. Operator
       // butuh signal saat publishProofJob gagal agar bisa re-enqueue via
       // Developer Console.
@@ -148,10 +153,17 @@ export async function POST(request: Request) {
     }
   }
 
-  // Audit v0.3.4 §2.15: initialStockApplied dari state BUKAN dari
-  // request — RPC atomic hanya membuat stock_in saat initialQuantity
-  // valid. Sumber kebenaran adalah server (DB transaksi).
-  return ok({ id: productId, initialStockApplied: hasInitialQty }, 201);
+  // Audit v0.3.4 §2.15: initialStockApplied = ledger tercatat (RPC throw
+  // bila gagal — bukan dari request). proofPending jujur: true hanya bila
+  // baris proof ada di DB (NBE-14).
+  return ok(
+    {
+      id: productId,
+      initialStockApplied: hasInitialQty,
+      proofPending: proofCreated,
+    },
+    201
+  );
 }
 
 export async function PATCH(request: Request) {

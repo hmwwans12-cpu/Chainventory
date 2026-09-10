@@ -4,12 +4,34 @@ import * as React from "react";
 import { Check, Copy } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { COPY_FEEDBACK_MS } from "@/lib/constants";
+import { toast } from "@/components/ui/toast";
 
 /**
  * Copy-to-clipboard affordance untuk alamat/kode (wallet, contract, invite).
  * Pola dikonsolidasi dari create-warehouse-form & members-page — satu sumber
- * kebenaran, dengan feedback ikon (Copy -> Check 1.5s) dan aria-label wajib.
+ * kebenaran, dengan feedback ikon (Copy -> Check) dan aria-label wajib.
+ *
+ * FE-09: kegagalan clipboard (HTTP/non-secure context) tidak lagi diam —
+ * fallback execCommand + toast error dengan jalur retry (klik lagi).
  */
+function fallbackCopy(text: string): boolean {
+  try {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(area);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 export function CopyButton({
   text,
   label,
@@ -29,17 +51,27 @@ export function CopyButton({
       aria-label={label}
       data-slot="copy-button"
       onClick={async () => {
+        let ok = false;
         try {
           await navigator.clipboard.writeText(text);
-          setCopied(true);
-          window.setTimeout(() => setCopied(false), 1500);
+          ok = true;
         } catch {
-          // clipboard tidak tersedia — jangan pura-pura sukses
+          ok = fallbackCopy(text);
         }
+        if (!ok) {
+          toast.add({
+            type: "error",
+            title: "Could not copy",
+            description: "Copy failed. Select the text manually and retry.",
+          });
+          return;
+        }
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
       }}
       title={label}
       className={cn(
-        "text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring relative inline-flex shrink-0 items-center justify-center rounded-md transition-colors outline-none before:absolute before:-inset-[9px] before:content-[''] focus-visible:ring-3",
+        "text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring relative inline-flex shrink-0 items-center justify-center rounded-lg transition-colors outline-none before:absolute before:-inset-[9px] before:content-[''] focus-visible:ring-3",
         size === "icon-xs" ? "size-7" : "size-8",
         className
       )}

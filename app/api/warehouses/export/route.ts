@@ -4,7 +4,7 @@ import {
   forbidden,
   getMemberRole,
   invalid,
-  requireRateLimit,
+  requireReadRateLimit,
   requireUser,
 } from "@/lib/api-handler";
 import { toCsv } from "@/lib/inventory/csv";
@@ -35,7 +35,12 @@ export async function GET(request: Request) {
   const auth = await requireUser(supabase);
   if (auth.res) return auth.res;
 
-  const rateLimited = await requireRateLimit("export", auth.user.id, request);
+  // Fix BE-07: export read-only = fail-open (TECHSTACK §6.2).
+  const rateLimited = await requireReadRateLimit(
+    "export",
+    auth.user.id,
+    request
+  );
   if (rateLimited) return rateLimited;
 
   const role = await getMemberRole(supabase, warehouseId, auth.user.id);

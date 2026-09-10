@@ -72,7 +72,10 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
 /** Gabungkan prefs tersimpan (JSONB bebas) dengan default agar aman di UI. */
 export function normalizePreferences(raw: unknown): NotificationPreferences {
   const base = DEFAULT_NOTIFICATION_PREFERENCES;
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return base;
+  // NBE-05: jangan kembalikan referensi default global — pemanggil yang
+  // memutasi hasil akan meracuni default untuk request berikutnya.
+  if (!raw || typeof raw !== "object" || Array.isArray(raw))
+    return structuredClone(base);
   const obj = raw as Partial<NotificationPreferences>;
   const merge = (
     channel: NotificationChannel

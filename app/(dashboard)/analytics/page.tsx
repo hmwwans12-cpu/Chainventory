@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import nextDynamic from "next/dynamic";
 import {
   Package,
   Layers,
@@ -15,33 +14,15 @@ import {
 import { fetchAnalytics, parseRange } from "@/lib/analytics/aggregate";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
-import { ErrorState } from "@/components/shared/error-state";
+import { RetryErrorState } from "@/components/shared/retry-error-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalyticsControls } from "@/components/analytics/analytics-controls";
 import { RangeTabs } from "@/components/analytics/range-tabs";
 import { StatCard } from "@/components/analytics/stat-card";
 import { TopProducts } from "@/components/analytics/top-products";
-
-// Audit v0.4.4 (bundle): recharts is heavy; lazy-load the chart so
-// the analytics page initial payload stays small. TopProducts uses
-// a custom SVG and stays in the main bundle. We alias the import to
-// `nextDynamic` because the file already declares its own
-// `export const dynamic = "force-dynamic"`.
-const StockMovementChartLazy = nextDynamic(
-  () =>
-    import("@/components/analytics/stock-movement-chart").then((m) => ({
-      default: m.StockMovementChart,
-    })),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        aria-hidden="true"
-        className="bg-muted/30 h-[320px] w-full animate-pulse rounded-md"
-      />
-    ),
-  }
-);
+// Audit v0.4.4 (bundle): recharts is heavy — lazy via wrapper client
+// (ssr:false tidak boleh inline di Server Component).
+import { StockMovementChartLazy } from "@/components/analytics/stock-movement-chart-lazy";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md §6); cegah percobaan prerender saat env build minim.
@@ -96,7 +77,7 @@ export default async function AnalyticsPage({
           title="Analytics"
           description={`${active.name} · overview.`}
         />
-        <ErrorState
+        <RetryErrorState
           title="Analytics unavailable"
           description="We could not load analytics for this warehouse. Please refresh the page to try again."
         />
@@ -166,7 +147,10 @@ export default async function AnalyticsPage({
             <CardTitle>Top Products</CardTitle>
           </CardHeader>
           <CardContent>
-            <TopProducts products={analytics.topProducts} />
+            <TopProducts
+              products={analytics.topProducts}
+              warehouseId={active.id}
+            />
           </CardContent>
         </Card>
       </div>

@@ -1,5 +1,5 @@
 /**
- * Faucet rate limiter — Upstash Redis sliding window (PRD §17, TECHSTACK §4).
+ * Faucet rate limiter: Upstash Redis sliding window (PRD §17, TECHSTACK §4).
  *
  * Fail-closed: jika Redis tidak tersedia, request DITOLAK (bukan diizinkan).
  * Key pattern: `faucet:claim:{userId}` dengan sliding window 12 jam.
@@ -23,7 +23,7 @@ function getRedis(): Redis | null {
 
   if (!url || !token) {
     logger.warn(
-      "Upstash Redis not configured — faucet rate limiter disabled (fail-closed)"
+      "Upstash Redis not configured: faucet rate limiter disabled (fail-closed)"
     );
     return null;
   }
@@ -123,6 +123,6 @@ export async function resetFaucetRateLimit(userId: string): Promise<void> {
   try {
     await r.del(key);
   } catch {
-    // Silently ignore — reset is best-effort
+    // Silently ignore: reset is best-effort
   }
 }

@@ -47,7 +47,7 @@ function ErrorBanner({ message }: { message: string }) {
   return (
     <ErrorAlert>
       <span className="flex items-start gap-1.5">
-        <AlertTriangle aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+        <AlertTriangle aria-hidden="true" className="size-4 shrink-0" />
         {message}
       </span>
     </ErrorAlert>
@@ -89,8 +89,8 @@ export function CreateProductDialog({
     onOpenChange(false);
     onCreated();
     const qtyNote = result.data.initialStockApplied
-      ? ` — ${values.initialQuantity} ${values.unit} initial stock recorded.`
-      : " — ready for stock in.";
+      ? ` ${values.initialQuantity} ${values.unit} initial stock recorded.`
+      : " Ready for stock in.";
     toast.add({
       type: "success",
       title: `${values.name} added`,
@@ -104,7 +104,7 @@ export function CreateProductDialog({
         <DialogHeader>
           <DialogTitle>Add Product</DialogTitle>
           <DialogDescription>
-            Create a new product for this warehouse (DESIGN §35).
+            Create a new product for this warehouse.
           </DialogDescription>
         </DialogHeader>
         {error ? <ErrorBanner message={error} /> : null}
@@ -157,7 +157,7 @@ export function EditProductDialog({
     toast.add({
       type: "success",
       title: `${values.name} saved`,
-      description: `${values.sku} — changes applied.`,
+      description: `${values.sku}. Changes applied.`,
     });
   };
 
@@ -173,7 +173,7 @@ export function EditProductDialog({
         <p className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
           <span className="font-mono text-sm">{product.sku}</span>
           {product.category ? <span>{product.category}</span> : null}
-          <span className="uppercase">{product.unit}</span>
+          <span>{product.unit}</span>
           {product.updatedAt ? (
             <span>Updated {formatDate(product.updatedAt)}</span>
           ) : null}
@@ -230,7 +230,7 @@ export function ArchiveProductDialog({
     toast.add({
       type: "success",
       title: `“${product.name}” archived`,
-      description: `${product.quantity ?? 0} ${product.unit} hidden from active inventory. History preserved — view archived to restore.`,
+      description: `${product.quantity ?? 0} ${product.unit} hidden from active inventory. History preserved. View archived to restore.`,
     });
   };
 
@@ -283,6 +283,9 @@ export function ProductDetailSheet({
     null
   );
   const [loading, setLoading] = React.useState(true);
+  // NFE-15: reset + error eksplisit tiap ganti produk — tanpa ini produk B
+  // sempat tampil movements A, dan gagal jaringan disamarkan sebagai kosong.
+  const [loadError, setLoadError] = React.useState(false);
 
   React.useEffect(() => {
     if (!open) return;
@@ -314,6 +317,8 @@ export function ProductDetailSheet({
               expectedBalanceVersion: null,
             }))
           );
+        } else {
+          setLoadError(true);
         }
       });
     return () => {
@@ -412,6 +417,10 @@ export function ProductDetailSheet({
             </div>
             {loading ? (
               <p className="text-muted-foreground text-sm">Loading movements…</p>
+            ) : loadError ? (
+              <p role="alert" className="text-destructive text-sm">
+                Could not load movements. Reopen this panel to retry.
+              </p>
             ) : movements && movements.length > 0 ? (
               <ul className="flex flex-col divide-y">
                 {movements.map((m) => {

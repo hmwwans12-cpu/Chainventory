@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { parseEnvFile } from "./parse-env.mjs";
+
 /**
  * Verifikasi wiring env E2E (item 1) — deterministik, tanpa login.
  *
@@ -16,20 +18,10 @@ import { resolve } from "node:path";
  */
 
 const root = resolve(import.meta.dirname, "..", "..");
-const parseEnv = (file) => {
-  const out = {};
-  try {
-    for (const line of readFileSync(resolve(root, file), "utf8").split(
-      /\r?\n/
-    )) {
-      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-      if (m) out[m[1]] = m[2].replace(/^["']|["']$/g, "");
-    }
-  } catch {
-    /* optional */
-  }
-  return out;
-};
+// NCF-17: parser bersama (dulu regex naif + strip quote sekali — nilai
+// ber-`#`, ber-`=` trailing, atau ber-quote di dalam terpotong salah,
+// dan `KEY=` kosong lolos sebagai string kosong, bukan unset).
+const parseEnv = (file) => parseEnvFile(resolve(root, file), readFileSync);
 
 const prod = parseEnv(".env.local");
 const e2e = parseEnv(".env.e2e.local");
@@ -89,10 +81,20 @@ const e2eFactory = e2e.WAREHOUSE_FACTORY_ADDRESS ?? testFactory;
 const prodTreasury = testReg.contracts.WarehouseFactory.proofRecorder;
 const e2eKeyOverride = e2e.E2E_TREASURY_PRIVATE_KEY; // must be ABSENT now
 
+// NCF-17(a): invarian #2 docstring dulu hanya di-log, tidak diassert.
+const EXPECTED_PROOF_RECORDER = "0x463841123df8f45F2d58bBFCD276493750Bbf004";
+
 const errors = [];
 if (!prod.TREASURY_PRIVATE_KEY)
   errors.push(
     "TREASURY_PRIVATE_KEY missing in .env.local (treasury production dipakai E2E)"
+  );
+if (
+  !prodTreasury ||
+  prodTreasury.toLowerCase() !== EXPECTED_PROOF_RECORDER.toLowerCase()
+)
+  errors.push(
+    `proofRecorder test factory mismatch: got ${prodTreasury}, expected ${EXPECTED_PROOF_RECORDER}`
   );
 if (e2eFactory !== testFactory)
   errors.push(

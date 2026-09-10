@@ -114,6 +114,59 @@ export async function syncWallet(
     };
   }
 
+  // Fix BE-14 (confused-deputy): token Privy valid milik user A tidak boleh
+  // dipakai sesi Supabase user B untuk mendaftarkan wallet A ke akun B.
+  // users.privy_user_id adalah peta binding (0001); cocokkan atau ikat
+  // sekali saat pertama (fail-closed pada mismatch).
+  const {
+    data: { user: sessionUser },
+  } = await supabase.auth.getUser();
+  if (!sessionUser) {
+    return {
+      ok: false,
+      errorCode: "UNAUTHENTICATED",
+      error: "Session expired.",
+    };
+  }
+  const { data: profile } = await supabase
+    .from("users")
+    .select("privy_user_id")
+    .eq("id", sessionUser.id)
+    .maybeSingle();
+  const bound = (profile as { privy_user_id?: string | null } | null)
+    ?.privy_user_id;
+  if (bound && bound !== verified.userId) {
+    logger.warn(
+      { privyUserId: verified.userId },
+      "wallet sync rejected: Privy session belongs to a different account"
+    );
+    return {
+      ok: false,
+      errorCode: "PRIVY_VERIFICATION_FAILED",
+      error: "Privy session does not belong to this account.",
+    };
+  }
+  if (!bound) {
+    const { error: bindError } = await supabase
+      .from("users")
+      .update({ privy_user_id: verified.userId })
+      .eq("id", sessionUser.id);
+    // NBE-07: fail-closed bila persist gagal — swallowed error berarti
+    // binding tak pernah menempel dan cek mismatch berikutnya selalu
+    // bypass (confused-deputy abadi).
+    if (bindError) {
+      logger.error(
+        { err: bindError.message },
+        "wallet sync rejected: privy binding persist failed"
+      );
+      return {
+        ok: false,
+        errorCode: "PRIVY_VERIFICATION_FAILED",
+        error: "Could not verify wallet ownership. Try again.",
+      };
+    }
+  }
+
   // Register wallet via RPC security-definer (auth.uid() = session user).
   const { data, error } = await supabase.rpc("register_wallet", {
     p_address: address,

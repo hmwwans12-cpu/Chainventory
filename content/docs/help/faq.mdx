@@ -15,7 +15,7 @@ description: Common issues and solutions for Chainventory users.
 
 **What to do:**
 
-- Wait a few minutes — proofs are processed automatically
+- Wait a few minutes. Proofs are processed automatically
 - Check the Developer Console → Dependencies to see if the proof pipeline is healthy
 - If the proof remains pending for more than 10 minutes, check the Blockchain page for error details
 
@@ -40,12 +40,12 @@ description: Common issues and solutions for Chainventory users.
 
 **What it means:** Your warehouse has been suspended due to inactivity.
 
-**Why it happens:** Warehouses that have no stock movements for 27 days are automatically suspended to keep the system healthy.
+**Why it happens:** Warehouses with no activity for 30 days are automatically suspended (warning at 23 days, critical at 27).
 
 **What to do:**
 
-- Perform any stock movement (Stock In, Stock Out, Adjustment, or Reversal) to reactivate the warehouse
-- Suspended warehouses cannot process new movements — you need to reactivate first
+- Contact Chainventory support to reactivate the warehouse (see Inactivity Policy)
+- Suspended warehouses reject all stock movements, so a movement cannot reactivate them
 
 ## Cannot create a second warehouse
 
@@ -114,19 +114,19 @@ description: Common issues and solutions for Chainventory users.
 
 ## Is this real cryptocurrency?
 
-**No.** Chainventory runs on **Base Sepolia** — a free test network. The ETH used for gas and faucet claims has no real value. It's used only for data integrity verification.
+**No.** Chainventory runs on **Base Sepolia**, a free test network. The ETH used for gas and faucet claims has no real value. It's used only for data integrity verification.
 
 ## Can I use Chainventory without blockchain?
 
-**Not really.** Blockchain verification is a core feature. Every important stock movement automatically creates a proof. You don't need to do anything special — it happens in the background.
+**Not really.** Blockchain verification is a core feature. Every important stock movement automatically creates a proof. You don't need to do anything special. It happens in the background.
 
 ## How do I export my data?
 
-**For users:** Ask your warehouse Owner or Manager to use the Developer Console export feature.
+**For users:** Use the Export CSV buttons on the Products and Movements pages (permission-gated by your role).
 
-**For Owners/Managers:**
+**For developers (allowlisted):**
 
-1. Go to Developer Console (if you have access)
+1. Go to Developer Console (requires a `DEVELOPER_ALLOWLIST` entry; warehouse Owner/Manager alone is not enough)
 2. Click **Export proofs (CSV)** or **Export audit logs (CSV)**
 3. The file downloads automatically
 

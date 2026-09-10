@@ -7,11 +7,12 @@ import {
   getMyWarehouses,
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
-import { ErrorState } from "@/components/shared/error-state";
+import { RetryErrorState } from "@/components/shared/retry-error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { ProductsPage } from "@/components/inventory/products-page";
 import type { ProductRow } from "@/lib/inventory/types";
+import { PRODUCTS_PER_PAGE } from "@/lib/constants";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md §6); cegah percobaan prerender saat env build minim.
@@ -71,7 +72,7 @@ export default async function ProductsPageRoute({
       ? Number(params.page)
       : 1
   );
-  const PER_PAGE = 12;
+  const PER_PAGE = PRODUCTS_PER_PAGE;
 
   // Tab status sekarang benar-benar memfilter (audit: products pagination).
   const statusEq =
@@ -92,7 +93,9 @@ export default async function ProductsPageRoute({
   if (statusEq) listQuery.eq("status", statusEq);
   if (q) {
     // Pencarian server-side (PostgREST ilike) — bukan filter frontend.
-    const escaped = q.replace(/[%,()]/g, " ");
+    // FE-26: sertakan `_` (wildcard 1-char) dan `\` (escape) — sebelumnya
+    // hanya %,() sehingga pola "_" over-match.
+    const escaped = q.replace(/[%_\\()]/g, " ");
     listQuery.or(
       `name.ilike.%${escaped}%,sku.ilike.%${escaped}%,category.ilike.%${escaped}%`
     );
@@ -110,7 +113,7 @@ export default async function ProductsPageRoute({
           title="Products"
           description={`${active.name} · inventory.`}
         />
-        <ErrorState
+        <RetryErrorState
           icon={Package}
           title="Unable to load inventory."
           description="Something went wrong while retrieving your inventory. Please try again."
@@ -126,7 +129,7 @@ export default async function ProductsPageRoute({
     .eq("warehouse_id", active.id);
   if (statusEq) countQuery.eq("status", statusEq);
   if (q) {
-    const escaped = q.replace(/[%,()]/g, " ");
+    const escaped = q.replace(/[%_\\()]/g, " ");
     countQuery.or(
       `name.ilike.%${escaped}%,sku.ilike.%${escaped}%,category.ilike.%${escaped}%`
     );

@@ -33,10 +33,23 @@ export const DEPLOYMENT_EXPIRY_SECONDS = 10 * 60;
 /** Batas atas expiry yang diterima `submit` (detik dari sekarang). */
 export const DEPLOYMENT_EXPIRY_MAX_SECONDS = 30 * 60;
 
-export const WAREHOUSE_CODE_PREFIX = "CHV-";
-export const WAREHOUSE_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-export const WAREHOUSE_CODE_LENGTH = 8;
-export const WAREHOUSE_CODE_RE = /^CHV-[A-Z2-9]{8}$/;
+// Format kode pindah ke ./warehouse-code (aman-client); re-export agar
+// import lama (server/tests) tetap jalan. Import lokal dulu (export-from
+// saja tidak membuat binding lokal) lalu re-export binding lokal.
+import {
+  WAREHOUSE_CODE_ALPHABET,
+  WAREHOUSE_CODE_HINT,
+  WAREHOUSE_CODE_LENGTH,
+  WAREHOUSE_CODE_PREFIX,
+  WAREHOUSE_CODE_RE,
+} from "./warehouse-code";
+export {
+  WAREHOUSE_CODE_ALPHABET,
+  WAREHOUSE_CODE_HINT,
+  WAREHOUSE_CODE_LENGTH,
+  WAREHOUSE_CODE_PREFIX,
+  WAREHOUSE_CODE_RE,
+};
 
 export type DeploymentAuthorizationMessage = {
   owner: Hex;

@@ -1,7 +1,7 @@
 # AGENT.md
 
 **Status:** Locked
-**Last Updated:** 2026-09-05
+**Last Updated:** 2026-09-06
 **Companion to:** `PRD.md`, `ARSITEKTUR.md`, `TECHSTACK.md`, `WORKFLOW.md`, `TODO.md`
 
 Operating manual bagi developer/AI agar seluruh keputusan pada dokumen lain tidak dilanggar saat implementasi.
@@ -163,8 +163,13 @@ Rilis v0.4.x adalah hasil remediasi audit menyeluruh (5-lapis: lib/app/component
 | **v0.4.2** | 2026-09-05 | 3 audidi items + M-11 + refactor + pre-existing fixes: `lib/csv/formula-injection.ts` shared helper, `lib/faucet/transfer.ts` discriminated-union + closure-scoped `broadcasted` (no double-pay), `apply_stock_movement` reversal warehouse alignment, `ConfirmDialog` primitive, 4 pre-existing test failures fixed (`vitest.config.mts` `SKIP_ENV_VALIDATION=1`), 2 pre-existing lint errors fixed. |
 | **v0.4.3** | 2026-09-05 | Refactor overdue: 7 pre-existing lint warnings cleared (4 unused imports, 1 missing useEffect dep, 2 unused helpers), 4 member dialogs migrated to `ConfirmDialog` primitive (remove, reject, transfer, leave), `ConfirmDialogVariant` extended to include outline/secondary/ghost/link, `common.cancel` + `common.confirm` i18n keys added (EN + ID). |
 | **v0.4.4** | 2026-09-05 | Polish: `useOptimistic` adoption for approvals + role changes, bundle audit + dynamic imports, documentation refresh. |
+| **v0.4.5** | 2026-09-06 | Audit Bagian A (7 Critical): faucet `pending` fix (0051), revert 0050 → 0052 kanonis+M-11, create submit async 202, treasury v1 deprecated untuk kontrak v2, blokir transfer off-chain bila deployed, `/blockchain` ke proxy matcher, env production fail-fast. Audit Bagian B (26 backend): IDEMPOTENT 200, read fail-open, fingerprint kanonis, faucet mapping+verified-wallet, treasury BigInt, deploy scope, Privy binding, QStash dedup unik, orphan upsert, ABI cache, bulk SKU-i, console head-count, TTL purge (0053), intent payloadHash check, logger redact, x-real-ip, guard FK fix (0054). Audit Bagian C: SEO, health 503, keepalive_ping, invite bucket, matcher lengkap, prettier/tsconfig. |
 
-**Status after v0.4.4:** lint 0 errors 0 warnings, 247/247 vitest tests pass, typecheck clean.
+| **v0.4.6** | 2026-09-06 | Audit Bagian D (frontend): server guards onboarding (login?next + redirect bila own aktif), 3 form RHF+zodResolver (skema sama dengan server), hydration fix (locale/theme lazy init, useOnline useSyncExternalStore), hapus 'use client' salah tempat, konstanta terpusat (BaseScan/pagination/realtime/feedback), CopyButton tunggal + fallback + toast, chart useId + tabel SR + empty, command menu (clamp render, filter bilingual, allowlist console, CustomEvent, ARIA valid), sidebar isActive exact + badge 99+ + switcher 1 warehouse, realtime jujur (initial reconnecting, LiveHealthDot, hapus dot Proof palsu), getMyWarehouses cache(), RetryErrorState di 7 halaman server, global-error lang, marketing force-dynamic, bulk spacer, helper shortenAddress/roleLabel/isLowStock/useSwitchWarehouse, invite normalize + export encode, search escape + debounce tunggal + prefetch aktif saja, i18n dashboard+settings penuh (+9 file i18n-todo), hapus SignOutButton/cn re-export, chart-lazy wrapper (fix build Turbopack ssr:false). |
+
+| **v0.4.7** | 2026-09-06 | Audit segar (skill impeccable-audit + supabase + web-guidelines, 3 subagen): 2 Critical (NBE-12 base-table reads → warehouse_summaries di 7 situs; NBE-10 0055 ON CONFLICT komposit), env fail-fast dipersempit ke build Vercel (perbaiki build lokal), 9 Major backend (resend escape, prefs strict, prefs clone, bind fail-closed, approve OWNER 400, cleanup userIds, preview masking 0056, probe error, products proofPending jujur), 21 NFE (nested-a, dialog back/cancel, dup button, label/id, idempotency reset, invite lowercase, join next, sheet render-link, top-products warehouse, bulk label/tabs/download, hero normalize, reveal delay, display focus, detail stale+key, treasury a11y, notif race, encode URL, footer copy), 20 NCF (ci backtick, secret-scan fallback+keys, write-env sync, seed runnable, proxy comment, robots /auth, smoke docs, TODO/AGENT/README tanggal, registry timestamp, dead schema, serve port, console RUN, parse-env bersama, verify assert, faucet gate Owner/Manager/Staff + 4 docs, USER_FLOW invite, reversal docs, lifecycle docs, developer.mdx, sitemap docs subtree, contrast CI). |
+
+**Status after v0.4.7:** lint 0 errors 0 warnings, 250/250 vitest tests pass (31 skipped live-gated), typecheck clean, `next build` clean.
 
 **Open work (post-audit, bukan bug):**
 - `useOptimistic` di expansion (sedang berjalan di v0.4.4)

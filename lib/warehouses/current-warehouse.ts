@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import type { Role } from "@/lib/auth/permissions";
 import type { SupabaseClient } from "@/lib/api-handler";
 
@@ -23,10 +25,17 @@ export type WarehouseSummary = {
   lastActivityAt: string;
 };
 
-export async function getMyWarehouses(
-  supabase: SupabaseClient,
-  userId: string
-): Promise<WarehouseSummary[]> {
+/**
+ * FE-14: cache() per-request — layout + setiap page memanggil dengan client
+ * & userId yang sama sehingga 2x query RLS menjadi 1x per navigasi.
+ * (Full WarehouseContext adalah follow-up; dedupe ini menutup biaya ganda
+ * tanpa refactor props drilling.)
+ */
+export const getMyWarehouses = cache(
+  async (
+    supabase: SupabaseClient,
+    userId: string
+  ): Promise<WarehouseSummary[]> => {
   const { data: memberships, error } = await supabase
     .from("memberships")
     .select("warehouse_id, role, status, joined_at")
@@ -61,7 +70,8 @@ export async function getMyWarehouses(
     });
   }
   return list;
-}
+  }
+);
 
 export function pickActiveWarehouse(
   warehouses: WarehouseSummary[],

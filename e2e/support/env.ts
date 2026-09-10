@@ -10,6 +10,11 @@ import { resolve } from "node:path";
 
 const ROOT = resolve(__dirname, "..", "..");
 
+/**
+ * NCF-17: tata bahasa SAMA dengan scripts/e2e/parse-env.mjs (dipakai
+ * serve.mjs + verify-env.mjs yang tak bisa import TS). Bila grammar
+ * berubah di satu tempat, mirror di tempat lain.
+ */
 function parseEnv(file: string): Record<string, string> {
   const out: Record<string, string> = {};
   let text: string;

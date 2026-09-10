@@ -2,9 +2,31 @@ import { describe, expect, it, vi } from "vitest";
 
 import { syncWallet, type PrivyVerifier } from "@/lib/wallets/sync";
 
-function mockSupabase(rpcImpl: (args: unknown) => unknown) {
+function mockSupabase(
+  rpcImpl: (args: unknown) => unknown,
+  opts?: {
+    sessionUser?: { id: string } | null;
+    privyBinding?: string | null;
+  }
+) {
+  const sessionUser =
+    opts && "sessionUser" in opts ? opts.sessionUser : { id: "u-1" };
+  const maybeSingle = vi.fn(async () => ({
+    data:
+      sessionUser === null
+        ? null
+        : { privy_user_id: opts?.privyBinding ?? null },
+    error: null,
+  }));
+  const eqSelect = vi.fn(() => ({ maybeSingle }));
+  const select = vi.fn(() => ({ eq: eqSelect }));
+  const eqUpdate = vi.fn(async () => ({ data: null, error: null }));
+  const update = vi.fn(() => ({ eq: eqUpdate }));
+  const from = vi.fn(() => ({ select, update }));
   return {
     rpc: vi.fn((_fn: string, args: unknown) => Promise.resolve(rpcImpl(args))),
+    auth: { getUser: vi.fn(async () => ({ data: { user: sessionUser } })) },
+    from,
   } as unknown as Parameters<typeof syncWallet>[0];
 }
 
@@ -131,5 +153,35 @@ describe("syncWallet", () => {
     );
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("RPC_FAILED");
+  });
+
+  it("rejects a Privy session bound to a different account (BE-14)", async () => {
+    const supabase = mockSupabase(() => ({ data: null, error: null }), {
+      privyBinding: "other-privy-user",
+    });
+    const result = await syncWallet(
+      supabase,
+      { address: VALID_ADDR, walletType: "embedded", chainId: 84532 },
+      "valid-token",
+      okVerifier
+    );
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("PRIVY_VERIFICATION_FAILED");
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects when the Supabase session is gone (BE-14)", async () => {
+    const supabase = mockSupabase(() => ({ data: null, error: null }), {
+      sessionUser: null,
+    });
+    const result = await syncWallet(
+      supabase,
+      { address: VALID_ADDR, walletType: "embedded", chainId: 84532 },
+      "valid-token",
+      okVerifier
+    );
+    expect(result.ok).toBe(false);
+    expect(result.errorCode).toBe("UNAUTHENTICATED");
+    expect(supabase.rpc).not.toHaveBeenCalled();
   });
 });

@@ -26,15 +26,15 @@ function StatCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">{title}</CardTitle>
+        <CardTitle>{title}</CardTitle>
         <CardAction>
           <span
             className={
               accent === "destructive"
-                ? "bg-destructive/15 text-destructive flex size-9 items-center justify-center rounded-lg"
+                ? "bg-destructive/15 text-destructive border border-destructive/20 flex size-9 items-center justify-center rounded-lg"
                 : accent === "warning"
-                  ? "bg-warning/15 text-warning flex size-9 items-center justify-center rounded-lg"
-                  : "bg-primary/10 text-primary flex size-9 items-center justify-center rounded-lg"
+                  ? "bg-warning/15 text-warning-foreground border border-warning/20 flex size-9 items-center justify-center rounded-lg"
+                  : "bg-primary/10 text-primary border border-primary/20 flex size-9 items-center justify-center rounded-lg"
             }
           >
             <Icon aria-hidden="true" className="size-4" />
@@ -55,7 +55,7 @@ export function SummaryCards({ summary }: { summary: ConsoleSummary }) {
   const needsAttention = summary.proofs.manual_review + summary.proofs.failed;
 
   return (
-    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-(--shadow-card) @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <StatCard
         icon={Building2}
         title="Warehouses"

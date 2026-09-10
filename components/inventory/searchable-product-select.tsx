@@ -21,11 +21,14 @@ export function SearchableProductSelect({
   value,
   onChange,
   placeholder = "Search product…",
+  id,
 }: {
   products: { id: string; name: string; sku: string; unit: string }[];
   value: string;
   onChange: (id: string) => void;
   placeholder?: string;
+  /** NFE-06: id untuk <Label htmlFor> pemanggil. */
+  id?: string;
 }) {
   const [query, setQuery] = React.useState("");
   const [open, setOpen] = React.useState(false);
@@ -123,6 +126,7 @@ export function SearchableProductSelect({
           className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
         />
         <Input
+          id={id}
           value={
             open
               ? query
@@ -162,7 +166,7 @@ export function SearchableProductSelect({
         filtered.length === 0 ? (
           <div
             role="status"
-            className="bg-popover text-popover-foreground ring-foreground/10 absolute z-50 mt-1 w-full rounded-lg p-2 text-sm shadow-md ring-1"
+            className="bg-popover text-popover-foreground ring-foreground/10 absolute z-[var(--z-dropdown)] mt-1 w-full rounded-lg p-2 text-sm shadow-(--shadow-elevated) ring-1"
           >
             No products found.
           </div>
@@ -171,7 +175,7 @@ export function SearchableProductSelect({
             ref={listRef}
             id={listboxId}
             role="listbox"
-            className="bg-popover text-popover-foreground ring-foreground/10 absolute z-50 mt-1 max-h-52 w-full overflow-y-auto rounded-lg p-1 shadow-md ring-1"
+            className="bg-popover text-popover-foreground ring-foreground/10 absolute z-[var(--z-dropdown)] mt-1 max-h-52 w-full overflow-y-auto rounded-lg p-1 shadow-(--shadow-elevated) ring-1"
           >
             {filtered.map((p, index) => {
               const isSelected = p.id === value;

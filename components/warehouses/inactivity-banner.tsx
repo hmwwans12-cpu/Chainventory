@@ -37,7 +37,8 @@ export async function InactivityBanner({
   warehouseId: string;
   warehouseName: string;
   status: "active" | "suspended";
-  inactiveDays: number;
+  /** null = tanggal aktivitas tidak valid/tidak diketahui (FE-24). */
+  inactiveDays: number | null;
 }) {
   const locale = await getLocale();
   const t = (key: string, params?: Record<string, string>) =>
@@ -54,7 +55,7 @@ export async function InactivityBanner({
           <Ban aria-hidden="true" className="size-4" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <p className="font-display text-foreground text-sm font-semibold">
+          <p className="text-foreground text-sm font-semibold">
             {t("inactivity.suspended_title", { name: warehouseName })}
           </p>
           <p className="text-muted-foreground text-sm">
@@ -83,7 +84,10 @@ export async function InactivityBanner({
     );
   }
 
-  if (inactiveDays < INACTIVITY_WARNING_DAYS) return null;
+  // FE-24: tanggal invalid → jangan tampilkan banner sehat palsu (0 hari)
+  // maupun warning tanpa dasar — sembunyikan sampai data valid.
+  if (inactiveDays === null || inactiveDays < INACTIVITY_WARNING_DAYS)
+    return null;
 
   const daysLeft = Math.max(SUSPEND_ARCHIVE_DAYS - inactiveDays, 1);
   const href = `/inventory/movements?warehouse=${warehouseId}`;
@@ -104,8 +108,8 @@ export async function InactivityBanner({
           className={cn(
             "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full",
             critical
-              ? "bg-destructive/15 text-destructive"
-              : "bg-warning/15 text-warning"
+              ? "bg-destructive/15 text-destructive border border-destructive/20"
+              : "bg-warning/15 text-warning-foreground border border-warning/20"
           )}
         >
           {critical ? (
@@ -114,8 +118,8 @@ export async function InactivityBanner({
             <Clock3 aria-hidden="true" className="size-4" />
           )}
         </span>
-        <div className="flex flex-col gap-0.5">
-          <p className="font-display text-foreground text-sm font-semibold">
+        <div className="flex flex-col gap-1.5">
+          <p className="text-foreground text-sm font-semibold">
             {critical
               ? t("inactivity.warning_title_critical", {
                   name: warehouseName,
@@ -124,10 +128,14 @@ export async function InactivityBanner({
               : t("inactivity.warning_title", { name: warehouseName })}
           </p>
           <p className="text-muted-foreground text-sm">
-            {t("inactivity.warning_desc", {
-              inactive: String(inactiveDays),
-              days: String(daysLeft),
-            })}
+            {daysLeft === 1
+              ? t("inactivity.warning_desc_one", {
+                  inactive: String(inactiveDays),
+                })
+              : t("inactivity.warning_desc_other", {
+                  inactive: String(inactiveDays),
+                  days: String(daysLeft),
+                })}
           </p>
         </div>
       </div>

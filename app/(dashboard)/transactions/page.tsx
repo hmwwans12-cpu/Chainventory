@@ -6,11 +6,12 @@ import {
   getMyWarehouses,
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
-import { ErrorState } from "@/components/shared/error-state";
+import { RetryErrorState } from "@/components/shared/retry-error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { TransactionsPage } from "@/components/transactions/transactions-page";
 import type { MovementListItem, MovementStatus } from "@/lib/inventory/types";
+import { TRANSACTIONS_PER_PAGE } from "@/lib/constants";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md §6); cegah percobaan prerender saat env build minim.
@@ -20,7 +21,7 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-const PER_PAGE = 20;
+const PER_PAGE = TRANSACTIONS_PER_PAGE;
 
 const TYPE_VALUES = [
   "stock_in",
@@ -115,7 +116,7 @@ export default async function TransactionsPageRoute({
           title="Transactions"
           description={`${active.name} · ledger.`}
         />
-        <ErrorState
+        <RetryErrorState
           icon={ArrowLeftRight}
           title="Unable to load transactions."
           description="Something went wrong while retrieving the ledger. Please try again."

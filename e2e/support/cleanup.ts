@@ -121,7 +121,9 @@ export async function wipeRunDataFull(
   warehouseIds: string[],
   userIds: string[]
 ) {
-  await wipeRunData(warehouseIds);
+  // NBE-09/NCF-10: teruskan userIds — tanpanya notifications/audit_logs
+  // (user-scoped, tanpa warehouse_id) yatim antar-run.
+  await wipeRunData(warehouseIds, userIds);
   await wipeWallets(userIds);
   await wipeUsers(userIds);
 }

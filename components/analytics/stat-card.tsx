@@ -57,7 +57,7 @@ function DeltaBadge({ delta }: { delta: Delta }) {
 /**
  * Statistic card (D-007 calm KPI): Description label → nilai besar
  * responsif (@[250px]/card) → Badge tren outline di CardAction. Footer
- * delta + "View details →" inline TANPA background terpisah (CardFooter
+ * delta + "View Details →" inline TANPA background terpisah (CardFooter
  * dengan bg-muted menambah layer visual — diganti plain div).
  */
 export function StatCard({
@@ -90,26 +90,30 @@ export function StatCard({
     : null;
 
   const chevron = href ? (
-    <span className="text-muted-foreground/60 inline-flex items-center gap-1 text-sm font-medium">
-      View details <span aria-hidden="true">→</span>
+    <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1.5 text-sm font-medium whitespace-nowrap">
+      View Details <span aria-hidden="true">→</span>
     </span>
   ) : null;
 
   const cardFooterWithAffordance = (
     <>
       {secondary || chevron ? (
-        <div className="text-muted-foreground flex items-center justify-between text-sm">
-          <div className="line-clamp-1 flex items-center gap-2">
+        <div className="text-muted-foreground flex items-center justify-between gap-3 px-(--card-spacing) text-sm">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             {secondaryTooltip ? (
               <Tooltip>
-                <TooltipTrigger render={<span className="flex cursor-help items-center" />}>
-                  {secondary}
+                <TooltipTrigger render={<span className="flex min-w-0 cursor-help items-center" />}>
+                  <span title={typeof secondary === "string" ? secondary : undefined} className="truncate">
+                    {secondary}
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent>{secondaryTooltip}</TooltipContent>
               </Tooltip>
-            ) : (
-              secondary
-            )}
+            ) : secondary ? (
+              <span title={typeof secondary === "string" ? secondary : undefined} className="truncate">
+                {secondary}
+              </span>
+            ) : null}
           </div>
           {chevron}
         </div>
@@ -124,7 +128,7 @@ export function StatCard({
           {Icon ? <Icon aria-hidden="true" className="size-4" /> : null}
           {label}
         </CardDescription>
-        <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+        <CardTitle className="text-xl font-semibold tabular-nums @[250px]/card:text-2xl">
           {value}
         </CardTitle>
         {d ? (
@@ -152,7 +156,7 @@ export function StatCard({
   return (
     <Link
       href={href}
-      aria-label={`${label}: ${value} — view details`}
+      aria-label={`${label}: ${value}. View Details`}
       className={cn(
         "focus-visible:ring-ring block rounded-lg transition-shadow",
         "hover:ring-ring/40 hover:ring-2",

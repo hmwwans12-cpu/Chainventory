@@ -31,7 +31,18 @@ type RegistryShape = {
   contracts: Record<string, RegistryEntry>;
 };
 
+/**
+ * Fix BE-24: cache registry + ABI di level modul. Sebelumnya setiap
+ * getWarehouseFactory() = readFileSync + JSON.parse (block event-loop per
+ * request, artefak forge belum tentu ikut deploy Vercel → throw saat
+ * runtime). Cache sukses; kegagalan tidak di-cache agar retry bisa pulih.
+ */
+let registryCache: RegistryShape | undefined;
+const abiCache = new Map<string, Abi>();
+
 function loadRegistry(): RegistryShape | null {
+  if (registryCache !== undefined) return registryCache;
+
   const registryPath = path.join(
     process.cwd(),
     "contracts",
@@ -44,7 +55,8 @@ function loadRegistry(): RegistryShape | null {
     // Windows tools (PowerShell 5.1 Set-Content) menulis UTF-8 WITH BOM;
     // JSON.parse menolak karakter BOM di awal string — buang selalu.
     raw = raw.replace(/^\uFEFF/, "");
-    return JSON.parse(raw) as RegistryShape;
+    registryCache = JSON.parse(raw) as RegistryShape;
+    return registryCache;
   } catch (err) {
     logger.warn({ err }, "contract registry not readable");
     return null;
@@ -53,11 +65,14 @@ function loadRegistry(): RegistryShape | null {
 
 function loadAbi(entry: RegistryEntry | undefined): Abi | null {
   if (!entry?.abiPath) return null;
+  const cached = abiCache.get(entry.abiPath);
+  if (cached) return cached;
 
   try {
     const abiPath = path.join(process.cwd(), "contracts", entry.abiPath);
     const raw = readFileSync(abiPath, "utf-8");
     const artifact = JSON.parse(raw) as { abi?: Abi };
+    if (artifact.abi) abiCache.set(entry.abiPath, artifact.abi);
     return artifact.abi ?? null;
   } catch (err) {
     logger.warn({ err }, "contract ABI not readable");

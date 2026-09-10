@@ -20,7 +20,7 @@ merge ke main / deploy production. Item yang gagal = BLOCKER.
 
 | #   | Item                             | Expected               | Status |
 | --- | -------------------------------- | ---------------------- | ------ |
-| 1.1 | Signup dengan email baru         | Redirect ke /dashboard |        |
+| 1.1 | Signup dengan email baru         | Redirect ke /onboarding (NCF-11: bukan /dashboard — lihat signupAction) |        |
 | 1.2 | Login dengan akun yang sudah ada | Redirect ke /dashboard |        |
 | 1.3 | Logout                           | Redirect ke /login     |        |
 | 1.4 | Akses /dashboard tanpa login     | Redirect ke /login     |        |
@@ -30,7 +30,7 @@ merge ke main / deploy production. Item yang gagal = BLOCKER.
 
 | #   | Item                          | Expected                         | Status |
 | --- | ----------------------------- | -------------------------------- | ------ |
-| 2.1 | Wallet seed (external)        | Address terdaftar di /wallets    |        |
+| 2.1 | Wallet seed (external)        | Address tersinkron (cek Settings → Wallet; tidak ada halaman /wallets — NCF-11) |        |
 | 2.2 | Wallet sign message (EIP-712) | Signature valid, nonce increment |        |
 | 2.3 | Deploy warehouse              | Contract deployed, DB updated    |        |
 | 2.4 | Cek contract di BaseScan      | Contract address valid           |        |
@@ -39,7 +39,7 @@ merge ke main / deploy production. Item yang gagal = BLOCKER.
 
 | #   | Item                       | Expected                               | Status |
 | --- | -------------------------- | -------------------------------------- | ------ |
-| 3.1 | Create product             | Product visible di /products           |        |
+| 3.1 | Create product             | Product visible di /inventory/products (NCF-11: bukan /products) |        |
 | 3.2 | Stock In                   | Balance bertambah, movement tercatat   |        |
 | 3.3 | Stock Out                  | Balance berkurang, movement tercatat   |        |
 | 3.4 | Stock Out melebihi balance | Error INSUFFICIENT_STOCK               |        |

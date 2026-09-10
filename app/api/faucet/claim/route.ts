@@ -48,6 +48,14 @@ export async function POST(request: Request) {
       { userId: user.id, error: result.error },
       "faucet claim failed"
     );
+    // Fix BE-10: outage infra (fail-closed Redis) = 503, bukan 429.
+    if (result.infra) {
+      return error(
+        result.error ?? "Faucet service is temporarily unavailable.",
+        "RPC_FAILED",
+        503
+      );
+    }
     // Cooldown is rate-limit, not validation — return 429 with Retry-After
     if (result.cooldownMs && result.cooldownMs > 0) {
       const retryAfter = Math.max(Math.ceil(result.cooldownMs / 1000), 1);

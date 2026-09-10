@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   bulkCreateProducts,
@@ -123,7 +124,7 @@ export function BulkAddDialog({
       if (parsed.overflow) {
         parsedInvalid.unshift({
           index: 0,
-          reason: `Only first ${parsed.rows.length} rows imported — file exceeds 1,000 row limit. Remainder was truncated.`,
+          reason: `Only first ${parsed.rows.length} rows imported. File exceeds 1,000 row limit. Remainder was truncated.`,
         });
         toast.add({
           type: "warning",
@@ -182,8 +183,9 @@ export function BulkAddDialog({
     } else {
       toast.add({
         type: "warning",
-        title: `Import partial — ${result.data.created} added, ${result.data.failed} failed`,
-        description: "Review the failed rows inside the dialog to fix and re-upload.",
+        title: `Import partial: ${result.data.created} added, ${result.data.failed} failed`,
+        description:
+          "Review the failed rows below, or download them as CSV before closing.",
       });
     }
   };
@@ -227,30 +229,32 @@ export function BulkAddDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90dvh]">
         <DialogHeader>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">1</span>
-            <span className={`text-sm ${step === "input" ? "font-semibold" : "text-muted-foreground"}`}>Add data</span>
+            <span className={`text-xs sm:text-sm ${step === "input" ? "font-semibold" : "text-muted-foreground"}`}><span className="hidden min-[420px]:inline">Add data</span><span className="min-[420px]:hidden">Add</span></span>
             <span className="text-muted-foreground text-sm">—</span>
             <span className={`flex size-6 items-center justify-center rounded-full text-sm font-semibold ${step === "preview" ? "bg-primary text-primary-foreground" : step === "result" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>2</span>
-            <span className={`text-sm ${step === "preview" ? "font-semibold" : "text-muted-foreground"}`}>Review</span>
+            <span className={`text-xs sm:text-sm ${step === "preview" ? "font-semibold" : "text-muted-foreground"}`}>Review</span>
             <span className="text-muted-foreground text-sm">—</span>
             <span className={`flex size-6 items-center justify-center rounded-full text-sm font-semibold ${step === "result" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>3</span>
-            <span className={`text-sm ${step === "result" ? "font-semibold" : "text-muted-foreground"}`}>Complete</span>
+            <span className={`text-xs sm:text-sm ${step === "result" ? "font-semibold" : "text-muted-foreground"}`}>Complete</span>
           </div>
           <DialogTitle>Bulk Add Products</DialogTitle>
           <DialogDescription>
-            {step === "input" ? "Add many products at once with a preview before importing." : step === "preview" ? `Review ${rows.length} products before importing.` : "Import complete — review results."}
+            {step === "input" ? "Add many products at once with a preview before importing." : step === "preview" ? `Review ${rows.length} products before importing.` : "Import complete. Review results."}
           </DialogDescription>
         </DialogHeader>
 
         {step === "input" ? (
           <div className="flex flex-col gap-4">
+            {/* NFE-05: ini segmented control, bukan tabs ARIA (tanpa
+                tabpanel/arrow-nav) — role group + pressed. */}
             <div
-              role="tablist"
+              role="group"
               aria-label="Bulk add mode"
-              className="bg-muted flex w-fit items-center gap-0.5 rounded-md p-1"
+              className="bg-muted flex w-fit max-w-full flex-wrap items-center gap-0.5 rounded-lg p-[3px]"
             >
               {modes.map((m) => {
                 const Icon = m.icon;
@@ -259,13 +263,12 @@ export function BulkAddDialog({
                   <button
                     key={m.id}
                     type="button"
-                    role="tab"
-                    aria-selected={active}
+                    aria-pressed={active}
                     onClick={() => setMode(m.id)}
                     className={cn(
-                      "focus-visible:ring-ring flex min-h-11 items-center gap-1.5 rounded-[calc(var(--radius-md)-2px)] px-3 py-2.5 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none",
+                      "focus-visible:ring-ring flex min-h-11 items-center gap-1.5 rounded-md px-3 py-2.5 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none",
                       active
-                        ? "bg-card text-foreground shadow-sm"
+                        ? "bg-card text-foreground shadow-(--shadow-card)"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -297,9 +300,11 @@ export function BulkAddDialog({
                     key={row.id}
                     className="flex flex-col gap-2 rounded-lg border p-3 sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 sm:border-0 sm:p-0"
                   >
+                    {/* NFE-04: label terhubung (ganti span tanpa htmlFor). */}
                     <div className="flex flex-col gap-1 sm:col-span-5">
-                      <span className="text-muted-foreground text-sm font-medium sm:hidden">Product name</span>
+                      <Label htmlFor={`bulk-name-${row.id}`} className="sm:sr-only">Product name</Label>
                       <Input
+                        id={`bulk-name-${row.id}`}
                         value={row.name}
                         onChange={(e) =>
                           updateManualRow(i, "name", e.target.value)
@@ -308,8 +313,9 @@ export function BulkAddDialog({
                       />
                     </div>
                     <div className="flex flex-col gap-1 sm:col-span-3">
-                      <span className="text-muted-foreground text-sm sm:hidden">SKU</span>
+                      <Label htmlFor={`bulk-sku-${row.id}`} className="sm:sr-only">SKU</Label>
                       <Input
+                        id={`bulk-sku-${row.id}`}
                         value={row.sku}
                         onChange={(e) =>
                           updateManualRow(i, "sku", e.target.value)
@@ -318,24 +324,26 @@ export function BulkAddDialog({
                       />
                     </div>
                     <div className="flex flex-col gap-1 sm:col-span-2">
-                      <span className="text-muted-foreground text-sm sm:hidden">Unit</span>
+                      <Label htmlFor={`bulk-unit-${row.id}`} className="sm:sr-only">Unit</Label>
                       <Input
+                        id={`bulk-unit-${row.id}`}
                         value={row.unit}
                         onChange={(e) =>
                           updateManualRow(i, "unit", e.target.value)
                         }
-                        placeholder="pcs"
+                        placeholder="e.g. pcs"
                       />
                     </div>
                     <div className="flex items-center gap-1 sm:col-span-2">
                       <div className="flex-1 flex flex-col gap-1">
-                        <span className="text-muted-foreground text-sm sm:hidden">Category</span>
+                        <Label htmlFor={`bulk-cat-${row.id}`} className="sm:sr-only">Category</Label>
                         <Input
+                          id={`bulk-cat-${row.id}`}
                           value={row.category}
                           onChange={(e) =>
                             updateManualRow(i, "category", e.target.value)
                           }
-                          placeholder="Cat."
+                          placeholder="e.g. Raw Material"
                         />
                       </div>
                       {manualRows.length > 1 ? (
@@ -356,22 +364,27 @@ export function BulkAddDialog({
                     </div>
                   </div>
                 ))}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setManualRows((prev) => [
-                      ...prev,
-                      {
-                        ...MANUAL_EMPTY,
-                        id: `manual-${prev.length + 1}-${Date.now()}`,
-                      },
-                    ])
-                  }
-                >
-                  <Plus aria-hidden="true" />
-                  Add row
-                </Button>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setManualRows((prev) => [
+                        ...prev,
+                        {
+                          ...MANUAL_EMPTY,
+                          id: `manual-${prev.length + 1}-${Date.now()}`,
+                        },
+                      ])
+                    }
+                  >
+                    <Plus aria-hidden="true" />
+                    Add row
+                  </Button>
+                  <span className="text-muted-foreground text-sm tabular-nums">
+                    {manualRows.length} row{manualRows.length === 1 ? "" : "s"}
+                  </span>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col gap-2">
@@ -384,7 +397,9 @@ export function BulkAddDialog({
                     Choose CSV file
                   </Button>
                 ) : null}
+                <Label htmlFor="bulk-paste">CSV data</Label>
                 <Textarea
+                  id="bulk-paste"
                   value={pasteText}
                   onChange={(e) => setPasteText(e.target.value)}
                   rows={8}
@@ -394,26 +409,29 @@ export function BulkAddDialog({
                       : "Paste CSV data, one product per line.\n\nname,sku,unit,initial_qty\nSteel Rod 12mm,SR-12-001,pcs,100"
                   }
                 />
-                <p className="text-muted-foreground text-sm">
-                  Columns: <span className="font-mono">name, sku, unit</span>{" "}
-                  (required) +{" "}
-                  <span className="font-mono">
-                    category, description, low_stock_threshold, initial_qty
+                <div className="border-border bg-muted/40 flex flex-col gap-1.5 rounded-lg border px-3 py-2.5 text-sm">
+                  <span className="text-foreground font-medium">CSV format</span>
+                  <span className="text-muted-foreground leading-relaxed">
+                    Columns: <span className="font-mono">name, sku, unit</span>{" "}
+                    (required) +{" "}
+                    <span className="font-mono">
+                      category, description, low_stock_threshold, initial_qty
+                    </span>
+                    . Header row is detected, column order is free. Max 1.000 rows
+                    / 1 MB.{" "}
+                    <a
+                      className="text-primary hover:text-primary/80 font-medium underline underline-offset-2"
+                      href="/templates/products-import.csv"
+                      download
+                    >
+                      Download template
+                    </a>
                   </span>
-                  . Header row is detected; column order is free. Max 1.000 rows
-                  / 1 MB.{" "}
-                  <a
-                    className="text-primary hover:text-primary/80 underline underline-offset-2"
-                    href="/templates/products-import.csv"
-                    download
-                  >
-                    Download template
-                  </a>
-                </p>
+                </div>
               </div>
             )}
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
@@ -424,7 +442,7 @@ export function BulkAddDialog({
 
         {step === "preview" ? (
           <div className="flex flex-col gap-4">
-            <div className="bg-secondary/40 rounded-lg px-4 py-3">
+            <div className="border-border bg-muted/40 rounded-lg border px-4 py-3">
               <p className="text-foreground text-sm font-medium">
                 Valid rows:{" "}
                 <span className="font-mono tabular-nums">{rows.length}</span> ·
@@ -465,7 +483,7 @@ export function BulkAddDialog({
               </div>
             ) : null}
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
               <Button
                 variant="outline"
                 onClick={() => setStep("input")}
@@ -487,31 +505,21 @@ export function BulkAddDialog({
 
         {step === "result" && results ? (
           <div className="flex flex-col gap-4">
-            <div className={`flex flex-col gap-1 rounded-lg px-4 py-4 ${results.failed === 0 ? "bg-primary/10 border border-primary/20" : results.created === 0 ? "bg-destructive/10 border border-destructive/20" : "bg-warning/10 border border-warning/20"}`}>
+            <div className={`flex flex-col gap-1.5 rounded-lg border px-4 py-4 ${results.failed === 0 ? "bg-primary/10 border-primary/20" : results.created === 0 ? "bg-destructive/10 border-destructive/20" : "bg-warning/10 border-warning/20"}`}>
               <span className="flex items-center gap-2 text-base font-semibold">
-                <CheckCircle2 aria-hidden="true" className={`size-5 ${results.failed === 0 ? "text-primary" : results.created === 0 ? "text-destructive" : "text-warning"}`} />
+                <CheckCircle2 aria-hidden="true" className={`size-5 ${results.failed === 0 ? "text-primary" : results.created === 0 ? "text-destructive" : "text-warning-foreground"}`} />
                 {results.failed === 0
-                  ? `Import complete — ${results.created} products added`
+                  ? `Import complete: ${results.created} products added`
                   : results.created === 0
-                    ? "Import failed — no products added"
-                    : `Import complete — ${results.created} added, ${results.failed} need attention`}
+                    ? "Import failed: no products added"
+                    : `Import complete: ${results.created} added, ${results.failed} need attention`}
               </span>
-              <span className="text-muted-foreground text-sm">
+              <span className="text-muted-foreground text-sm leading-relaxed">
                 {results.failed === 0
                   ? "All products are now in your inventory."
                   : results.created === 0
                     ? "Check errors below and try again."
                     : "Review failed rows below. Successful imports are already saved."}
-              </span>
-              <span className="text-muted-foreground text-sm">
-                <span className="text-foreground font-mono tabular-nums">
-                  {results.created}
-                </span>{" "}
-                created ·{" "}
-                <span className="text-destructive font-mono tabular-nums">
-                  {results.failed}
-                </span>{" "}
-                failed
               </span>
             </div>
 
@@ -528,7 +536,7 @@ export function BulkAddDialog({
                       >
                         <AlertTriangle
                           aria-hidden="true"
-                          className="mt-0.5 size-3.5 shrink-0"
+                          className="size-4 shrink-0"
                         />
                         <span>
                           Row {r.index + 1}: {r.error}
@@ -544,11 +552,15 @@ export function BulkAddDialog({
                     const csv = ["row,error", ...failedRows.map((r) => `${r.index+1},"${(r.error ?? "").replace(/"/g,'""')}"`)].join("\n");
                     const blob = new Blob([csv], { type: "text/csv" });
                     const url = URL.createObjectURL(blob);
+                    // NFE-20: anchor harus di DOM (Firefox) + revoke
+                    // terjadwal (bukan seketika) agar unduhan sempat mulai.
                     const a = document.createElement("a");
                     a.href = url;
                     a.download = "failed-rows.csv";
+                    document.body.appendChild(a);
                     a.click();
-                    URL.revokeObjectURL(url);
+                    a.remove();
+                    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
                   }}
                 >
                   Download failed rows (CSV)
@@ -556,7 +568,7 @@ export function BulkAddDialog({
               </div>
             ) : null}
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
               {results.failed > 0 ? (
                 <Button variant="outline" onClick={() => setStep("input")}>
                   Fix and re-upload
@@ -566,8 +578,11 @@ export function BulkAddDialog({
                   Import more
                 </Button>
               )}
+              {/* APP-09: label jujur — tombol ini MENUTUP dialog (daftar
+                  gagal ikut hilang), jadi jangan suruh "Review errors".
+                  Daftar + unduhan CSV tetap di atas selama dialog terbuka. */}
               <Button onClick={() => onOpenChange(false)}>
-                {results.failed > 0 ? `Review ${results.failed} errors` : "Done"}
+                {results.failed > 0 ? "Close" : "Done"}
               </Button>
             </div>
           </div>

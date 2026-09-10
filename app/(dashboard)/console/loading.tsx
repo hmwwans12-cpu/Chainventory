@@ -10,10 +10,10 @@ export default function ConsoleLoading() {
       />
       {/* Tabs */}
       <Skeleton className="h-11 w-full max-w-xl rounded-lg" />
-      {/* Summary cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Summary cards — mirror SummaryCards grid + card height */}
+      <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="min-h-[120px] rounded-lg" />
+          <Skeleton key={i} className="min-h-[148px] rounded-lg" />
         ))}
       </div>
       {/* Tabel status */}

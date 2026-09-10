@@ -241,7 +241,9 @@ flowchart TB
 
 ### 7.3 Supabase Keep-Alive
 
-Supabase Free dapat pause setelah tidak aktif (~7 hari). Mitigasi: **Vercel Cron harian** (sesuai batas Hobby) memanggil endpoint internal terautentikasi yang menjalankan health check database read-only ringan.
+Supabase Free dapat pause setelah tidak aktif (~7 hari). Mitigasi: **Vercel Cron harian** (sesuai batas Hobby) memanggil endpoint internal terautentikasi yang menjalankan health check database read-only ringan (`keepalive_ping()` RPC, tanpa RLS).
+
+CF-08 batas Hobby: 3 cron daily (`reconcile` 04:00, `lifecycle` 05:00, `keep-alive` 06:00 UTC, presisi ±59 menit) — **urutan eksekusi tidak dijamin**. Semua job wajib idempoten terhadap urutan (reconcile + lifecycle + keep-alive aman dijalankan bersamaan/acak).
 
 Bila tetap pause atau cron gagal, Developer Console menampilkan status **degraded** dan prosedur recovery manual sebelum demo.
 

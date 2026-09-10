@@ -5,7 +5,7 @@ description: Understand what on-chain transactions are, how they link to stock m
 
 ## Overview
 
-In Chainventory, a **transaction** refers to the on-chain submission that anchors a stock movement's proof to the blockchain. Transactions are not payments — they are integrity records. No money moves; only a hash of your movement data is written to your warehouse contract on Base Sepolia.
+In Chainventory, a **transaction** refers to the on-chain submission that anchors a stock movement's proof to the blockchain. Transactions are not payments. They are integrity records. No money moves; only a hash of your movement data is written to your warehouse contract on Base Sepolia.
 
 ## How a Transaction Is Created
 
@@ -31,7 +31,7 @@ You can navigate from a movement directly to its proof, and from the proof to Ba
 | Pending       | Proof created, queued for submission             |
 | Submitted     | Transaction broadcast, awaiting confirmations    |
 | Confirmed     | ≥2 confirmations on Base Sepolia                 |
-| Failed        | Submission error — can be retried from Developer |
+| Failed        | Submission error. Can be retried from Developer |
 | Manual Review | Flagged for operator attention                   |
 
 ## Verifying a Transaction
@@ -42,7 +42,7 @@ You can navigate from a movement directly to its proof, and from the proof to Ba
 4. Confirm the contract address matches your warehouse contract and the block timestamp is reasonable.
 
 <Callout type="tip">
-  Bookmark your warehouse contract address from the Blockchain page — verifying
+  Bookmark your warehouse contract address from the Blockchain page. Verifying
   any future proof is then a one-step search on BaseScan.
 </Callout>
 

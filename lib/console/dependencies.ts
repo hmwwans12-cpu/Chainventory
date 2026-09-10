@@ -32,10 +32,25 @@ async function timed<T>(
 async function probeSupabase(): Promise<DependencyStatus> {
   const supabase = createProofServiceClient();
   try {
-    const { ms } = await timed(async () => {
+    // NBE-13: PostgREST mengembalikan { error } (bukan throw) — versi lama
+    // mengabaikannya sehingga console selalu hijau walau DB down.
+    const { ms, value: probeError } = await timed(async () => {
       const { error } = await supabase.from("users").select("id").limit(1);
-      return { error };
+      return error;
     });
+    if (probeError) {
+      logger.warn(
+        { err: probeError.message },
+        "console probe supabase unhealthy"
+      );
+      return {
+        key: "supabase",
+        label: "Supabase",
+        ok: false,
+        configured: true,
+        error: probeError.message,
+      };
+    }
     return {
       key: "supabase",
       label: "Supabase",

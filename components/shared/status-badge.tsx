@@ -16,37 +16,43 @@ export type StatusTone =
 
 const STATUS_META: Record<
   StatusTone,
-  { label: string; icon: LucideIcon; className: string }
+  { label: string; icon: LucideIcon; variant: "success" | "secondary" | "warning" | "destructive" | "outline"; className: string }
 > = {
   success: {
     label: "Success",
     icon: CheckCircle2,
-    className: "bg-primary/10 text-primary",
+    variant: "success",
+    className: "",
   },
   pending: {
     label: "Pending",
     icon: Clock3,
-    className: "bg-secondary/20 text-secondary-foreground",
+    variant: "secondary",
+    className: "bg-secondary/20 border border-secondary/30",
   },
   warning: {
     label: "Warning",
     icon: AlertTriangle,
-    className: "bg-warning/15 text-warning-foreground border border-warning/20 font-medium",
+    variant: "warning",
+    className: "",
   },
   failed: {
     label: "Failed",
     icon: XCircle,
-    className: "bg-destructive/15 text-destructive border border-destructive/20",
+    variant: "destructive",
+    className: "",
   },
   inactive: {
     label: "Inactive",
     icon: Ban,
-    className: "bg-muted text-muted-foreground border border-border",
+    variant: "outline",
+    className: "bg-muted text-muted-foreground",
   },
   suspended: {
     label: "Suspended",
     icon: PauseCircle,
-    className: "bg-warning/10 text-warning-foreground border border-warning/20",
+    variant: "outline",
+    className: "bg-warning/10 text-warning-foreground border-warning/20",
   },
 };
 
@@ -67,7 +73,7 @@ export function StatusBadge({
   const Icon = meta.icon;
 
   return (
-    <Badge variant="secondary" className={cn(meta.className, className)}>
+    <Badge variant={meta.variant} className={cn(meta.className, className)}>
       <Icon aria-hidden="true" />
       {label ?? meta.label}
     </Badge>

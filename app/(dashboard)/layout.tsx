@@ -64,7 +64,7 @@ export default async function DashboardLayout({
       <SidebarProvider defaultOpen={defaultOpen}>
         <a
           href="#dashboard-main"
-          className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[calc(var(--z-sidebar,10)+1)] focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
+          className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[var(--z-modal)] focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
         >
           Skip to dashboard content
         </a>
@@ -103,12 +103,12 @@ export default async function DashboardLayout({
             {/* Skeleton resmi dashboard-01: container query scope + ritme halaman.
               max-w 1600px: konten dashboard tidak meregang tak terbatas di
               ultrawide (konsistensi visual, temuan audit UI #9). */}
-            <div className="@container/main mx-auto w-full max-w-[1600px] px-4 py-4 md:px-6 md:py-6">
+            <div className="@container/main mx-auto w-full max-w-[1600px] px-4 py-6 md:px-6 md:py-8">
               <PageTransition>{children}</PageTransition>
             </div>
           </main>
         </SidebarInset>
-        <CommandMenu />
+        <CommandMenu isDeveloper={isDeveloper} />
       </SidebarProvider>
     </LocaleProvider>
   );

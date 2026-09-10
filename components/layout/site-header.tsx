@@ -30,6 +30,7 @@ import { useSignOut } from "@/hooks/use-sign-out";
 import { NAV_ITEMS } from "@/lib/navigation";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LocaleToggle } from "@/components/shared/locale-toggle";
+import { OPEN_COMMAND_EVENT } from "@/components/shared/command-menu";
 import { getInitials } from "@/lib/utils";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -94,7 +95,7 @@ export function SiteHeader({
   const title = pageTitle(pathname, t);
 
   return (
-    <header className="bg-background/80 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur-sm transition-[height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+    <header className="bg-background/80 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-3 backdrop-blur-sm transition-[height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:px-4">
       <SidebarTrigger aria-label="Toggle sidebar" className="-ml-1" />
       <Separator
         orientation="vertical"
@@ -106,7 +107,11 @@ export function SiteHeader({
           <BreadcrumbItem className="min-w-0">
             {active ? (
               <BreadcrumbLink
-                render={<Link href={`/dashboard?warehouse=${active.id}`} />}
+                render={
+                  <Link
+                    href={`/dashboard?warehouse=${encodeURIComponent(active.id)}`}
+                  />
+                }
                 className="truncate"
               >
                 {active.name}
@@ -131,45 +136,37 @@ export function SiteHeader({
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="ml-auto flex items-center gap-0.5 sm:gap-1">
-        <span className="hidden xl:flex items-center gap-1">
+      <div className="ml-auto flex items-center gap-1">
+        <span className="hidden items-center gap-1 xl:flex">
           <LocaleToggle />
           <ThemeToggle />
           <Button
             variant="ghost"
             size="sm"
             onClick={() =>
-              window.dispatchEvent(
-                new KeyboardEvent("keydown", {
-                  key: "k",
-                  metaKey: true,
-                  ctrlKey: true,
-                  bubbles: true,
-                })
-              )
+              window.dispatchEvent(new CustomEvent(OPEN_COMMAND_EVENT))
             }
             aria-label={t("common.open_command")}
             className="gap-1.5"
           >
-            <Search aria-hidden="true" className="size-3.5" />
-            <span className="hidden lg:inline">Search</span>
-            <kbd className="hidden font-mono text-sm lg:inline">⌘K</kbd>
+            <Search aria-hidden="true" className="size-4" />
+            <span>Search</span>
+            <kbd className="font-mono text-sm">⌘K</kbd>
           </Button>
         </span>
-        <span className="flex xl:hidden items-center gap-0.5">
+        {/* FE-20: tema & bahasa tetap tersedia di mobile (sebelumnya
+            hidden xl:flex — hilang total di bawah 1280px). */}
+        <span className="flex items-center gap-1 xl:hidden">
+          <span className="hidden sm:flex items-center">
+            <LocaleToggle />
+          </span>
+          <ThemeToggle />
           <Button
             variant="ghost"
             size="icon"
             aria-label={t("common.open_command")}
             onClick={() =>
-              window.dispatchEvent(
-                new KeyboardEvent("keydown", {
-                  key: "k",
-                  metaKey: true,
-                  ctrlKey: true,
-                  bubbles: true,
-                })
-              )
+              window.dispatchEvent(new CustomEvent(OPEN_COMMAND_EVENT))
             }
           >
             <Search aria-hidden="true" />
@@ -193,11 +190,11 @@ export function SiteHeader({
                   {getInitials(user.name, user.email, "U")}
                 </AvatarFallback>
               </Avatar>
-              <div className="hidden flex-col leading-tight md:flex">
-                <span className="text-foreground text-sm font-medium">
+              <div className="hidden min-w-0 flex-col leading-tight md:flex">
+                <span className="text-foreground truncate text-sm font-medium">
                   {user.name ?? "User"}
                 </span>
-                <span className="text-muted-foreground text-sm">
+                <span className="text-muted-foreground max-w-40 truncate text-sm">
                   {user.email}
                 </span>
               </div>
@@ -219,7 +216,9 @@ export function SiteHeader({
                 render={
                   <Link
                     href={
-                      active ? `/settings?warehouse=${active.id}` : "/settings"
+                      active
+                        ? `/settings?warehouse=${encodeURIComponent(active.id)}`
+                        : "/settings"
                     }
                   />
                 }

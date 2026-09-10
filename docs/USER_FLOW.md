@@ -334,12 +334,12 @@ Form dialog dengan field:
 
 ### Tipe mutasi
 
-| Tipe       | Siapa yang bisa       | Approval?                                  |
-| ---------- | --------------------- | ------------------------------------------ |
-| stock_in   | Staff, Manager, Owner | Langsung committed                         |
-| stock_out  | Staff, Manager, Owner | Langsung committed                         |
-| adjustment | Staff, Manager, Owner | **Butuh approval** dari Owner/Manager lain |
-| reversal   | Staff, Manager, Owner | **Butuh approval** dari Owner/Manager lain |
+| Tipe       | Siapa yang bisa   | Approval?                                                   |
+| ---------- | ----------------- | ----------------------------------------------------------- |
+| stock_in   | Staff, Manager, Owner | Langsung committed                                        |
+| stock_out  | Staff, Manager, Owner | Langsung committed                                        |
+| adjustment | Manager, Owner    | **Butuh approval** dari Owner/Manager lain (NCF-07: bukan Staff) |
+| reversal   | Manager, Owner    | Langsung committed, tanpa approval terpisah (NCF-07)        |
 
 ---
 
@@ -399,7 +399,15 @@ Sama seperti warehouse — **treasury yang bayar**, bukan user.
 
 ### Invite lewat kode warehouse
 
-Owner/Manager membagikan kode warehouse `CHV-XXXXXXXX` ke orang yang mau diinvite. Tidak ada fitur invite via email — hanya kode manual.
+Owner/Manager membagikan kode warehouse `CHV-XXXXXXXX` ke orang yang mau diinvite. Penerima memasukkannya di Join Warehouse → request pending → approve.
+
+### Invite lewat email (NCF-06)
+
+Owner/Manager juga bisa mengundang via email dari halaman Members
+(`POST /api/warehouses/members/invite` → RPC `create_invitation`):
+token 24-byte → link `/invite/<token>` (berlaku 7 hari, terikat email
+tujuan). Pengiriman email best-effort via Resend — bila gagal, undangan
+TETAP tercatat dan UI menampilkan link untuk disalin manual.
 
 ### Approve Join Request
 
@@ -444,7 +452,9 @@ Owner/Manager membagikan kode warehouse `CHV-XXXXXXXX` ke orang yang mau diinvit
 
 ### Missing link
 
-**Catatan**: Tidak ada flow "invite via email" atau "link invite". Owner harus share kode warehouse secara manual (WhatsApp, email, dll). Ini bukan bug — desain sengaja manual untuk kontrol akses.
+Catatan lama "tidak ada invite email" sudah basi (NCF-06) — lihat
+"Invite lewat email" di atas. Kode warehouse tetap didukung sebagai jalur
+manual (WhatsApp, dsb.).
 
 ---
 
@@ -492,7 +502,10 @@ Hanya relevan untuk user yang ingin test transaksi di Base Sepolia (testnet). Fa
 
 ### Siapa yang bisa claim
 
-**Hanya developer yang di-allowlist** — user biasa tidak melihat tombol ini. Akses ke Developer Console diatur via `DEVELOPER_ALLOWLIST` env var (email atau wallet address).
+**Owner/Manager/Staff aktif (≥1 warehouse)** — NCF-05: faucet mendanai gas
+untuk member-paid intents, jadi hanya role yang bertransaksi. Bukan
+allowlist developer (allowlist hanya mengatur akses halaman Console,
+bukan faucet). Wallet tujuan wajib verified milik akun + cooldown 12 jam.
 
 ### Dimana tombolnya
 

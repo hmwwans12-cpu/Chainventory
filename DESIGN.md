@@ -787,7 +787,7 @@ Warehouse Code dan Contract Address harus dapat diakses dengan mudah:
 
 ```text
 Warehouse Code
-WH-7K29-XP4
+CHV-7K29XP4
 
 Contract
 0x92A...B31

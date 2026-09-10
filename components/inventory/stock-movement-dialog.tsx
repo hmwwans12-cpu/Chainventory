@@ -42,10 +42,11 @@ import { MOVEMENT_TYPE_META } from "@/lib/inventory/status-meta";
 function ErrorBanner({ message }: { message: string }) {
   return (
     <p
+      id="movement-form-error"
       role="alert"
       className="bg-destructive/15 text-destructive flex items-start gap-1.5 rounded-lg px-3 py-2 text-sm"
     >
-      <AlertTriangle aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+      <AlertTriangle aria-hidden="true" className="size-4 shrink-0" />
       {message}
     </p>
   );
@@ -81,12 +82,29 @@ export function StockMovementDialog({
   const [reversalTargets, setReversalTargets] = React.useState<
     {
       id: string;
-      movementType: MovementType;
+      movementType: string;
       quantity: string;
       created_at: string;
     }[]
   >([]);
   const [targetsLoaded, setTargetsLoaded] = React.useState(false);
+  // APP-11: bedakan gagal vs kosong — tanpa ini error jaringan/RLS
+  // terbaca sebagai "tidak ada yang bisa di-reverse".
+  const [targetsError, setTargetsError] = React.useState(false);
+  // Reset turunan produk saat ganti produk (pola "adjust state during
+  // render" React — bukan setState-in-effect).
+  const [targetsFor, setTargetsFor] = React.useState<string | null>(null);
+  // Focus management (a11y): pindahkan fokus ke field yang gagal validasi.
+  const quantityRef = React.useRef<HTMLInputElement>(null);
+  const reasonRef = React.useRef<HTMLTextAreaElement>(null);
+  if (selectedId !== targetsFor) {
+    setTargetsFor(selectedId);
+    setReversalTargets([]);
+    setTargetsLoaded(false);
+    setTargetsError(false);
+  }
+  // NFE-07: SATU kunci per SATU movement. Reset di semua jalur sukses
+  // dan saat dialog ditutup — komponen bisa tetap mounted antar-submit.
   const idempotencyKey = React.useRef<string | null>(null);
   // Audit v0.3.9 H-15: track mount state so setBusy(false) inside a
   // finally block does not run against an unmounted component. The
@@ -124,16 +142,18 @@ export function StockMovementDialog({
       .then(({ data, error }) => {
         if (cancelled) return;
         setTargetsLoaded(true);
-        if (!error && data) {
-          setReversalTargets(
-            data.map((row) => ({
-              id: row.id,
-              movementType: row.movement_type,
-              quantity: String(row.quantity),
-              created_at: row.created_at,
-            }))
-          );
+        if (error || !data) {
+          setTargetsError(true);
+          return;
         }
+        setReversalTargets(
+          data.map((row) => ({
+            id: row.id,
+            movementType: row.movement_type,
+            quantity: String(row.quantity),
+            created_at: row.created_at,
+          }))
+        );
       });
     return () => {
       cancelled = true;
@@ -151,7 +171,7 @@ export function StockMovementDialog({
       wallets[0];
     if (!wallet?.address) {
       setError(
-        "Connect a Base Sepolia wallet first — your signature pays for this record's on-chain proof."
+        "Connect a Base Sepolia wallet first. Your signature pays for this record's on-chain proof."
       );
       return { handled: true };
     }
@@ -234,6 +254,8 @@ export function StockMovementDialog({
       const direct = await finalizeStockIntent(prep.data.intentId);
       if (direct.ok && direct.data.status === "committed") {
         setPhase(null);
+        // NFE-07: kunci sukses tidak boleh dipakai movement berikutnya.
+        idempotencyKey.current = null;
         onOpenChange(false);
         onSuccess();
         const verb = movementType === "stock_in" ? "added to" : "removed from";
@@ -257,6 +279,7 @@ export function StockMovementDialog({
       const fin = await finalizeStockIntent(prep.data.intentId);
       if (fin.ok && fin.data.status === "committed") {
         setPhase(null);
+        idempotencyKey.current = null;
         onOpenChange(false);
         onSuccess();
         const verb = movementType === "stock_in" ? "added to" : "removed from";
@@ -275,6 +298,7 @@ export function StockMovementDialog({
           setStale(true);
           setError("Stock updated by another user. Refreshing inventory…");
           setTimeout(() => {
+            idempotencyKey.current = null;
             onOpenChange(false);
             onSuccess();
           }, 1200);
@@ -300,7 +324,7 @@ export function StockMovementDialog({
 
     setPhase(null);
     setError(
-      "Still waiting for confirmation. Your inventory updates automatically once the transaction is confirmed — you can safely close this."
+      "Still waiting for confirmation. Your inventory updates automatically once the transaction is confirmed. You can safely close this."
     );
     return { handled: true };
   };
@@ -328,6 +352,7 @@ export function StockMovementDialog({
         setError(
           "Enter a valid quantity greater than 0 (max 3 decimals, within a reasonable range)."
         );
+        quantityRef.current?.focus();
         return;
       }
       qty = candidate;
@@ -339,6 +364,7 @@ export function StockMovementDialog({
       !reason.trim()
     ) {
       setError("Reason is required for this movement type.");
+      reasonRef.current?.focus();
       return;
     }
 
@@ -377,6 +403,7 @@ export function StockMovementDialog({
     safeSetBusy(false);
 
     if (result.ok) {
+      idempotencyKey.current = null;
       onOpenChange(false);
       onSuccess();
       if (movementType === "adjustment") {
@@ -420,6 +447,8 @@ export function StockMovementDialog({
       open={open}
       onOpenChange={(next) => {
         if (busy && !next) return;
+        // NFE-07: tutup dialog = buang kunci (batal maupun sukses).
+        if (!next) idempotencyKey.current = null;
         onOpenChange(next);
       }}
     >
@@ -443,7 +472,7 @@ export function StockMovementDialog({
               : movementType === "stock_out"
                 ? `Remove stock from ${selected?.name ?? "this product"}.`
                 : movementType === "adjustment"
-                  ? "Correct stock count — requires Owner/Manager approval before balance changes."
+                  ? "Correct stock count. Requires Owner/Manager approval before balance changes."
                   : "Reverse a previous movement to restore the balance."}
           </DialogDescription>
         </DialogHeader>
@@ -454,7 +483,7 @@ export function StockMovementDialog({
             className="bg-muted text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
           >
             <Loader2 aria-hidden="true" className="animate-spin" />
-            Stock updated by another user. Refreshing inventory...
+            Stock updated by another user. Refreshing inventory…
           </p>
         ) : null}
         {error && !stale ? <ErrorBanner message={error} /> : null}
@@ -468,7 +497,7 @@ export function StockMovementDialog({
               {phase}
             </span>
             <span className="text-muted-foreground">
-              You can safely leave this page — we&apos;ll notify you when
+              You can safely leave this page. We&apos;ll notify you when
               it&apos;s confirmed.
             </span>
           </p>
@@ -481,19 +510,22 @@ export function StockMovementDialog({
           </p>
         ) : null}
 
-        <div className="mt-2 flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="movement-product">Product</Label>
             {product ? (
-              <div className="ring-foreground/10 flex h-8 items-center rounded-lg px-2.5 text-sm ring-1">
-                {product.name}
-                <span className="text-muted-foreground ml-auto font-mono text-sm">
+              <div className="border-input bg-muted/40 text-muted-foreground flex h-11 items-center gap-2 rounded-lg border px-3 text-sm">
+                <span className="min-w-0 flex-1 truncate" title={product.name}>
+                  {product.name}
+                </span>
+                <span className="shrink-0 font-mono text-sm">
                   {product.sku}
                 </span>
               </div>
             ) : (
               <SearchableProductSelect
                 products={products}
+                id="movement-product"
                 value={selectedId}
                 onChange={(id) => {
                   setSelectedId(id);
@@ -510,7 +542,12 @@ export function StockMovementDialog({
               <>
                 <Label htmlFor="movement-target">Movement to reverse</Label>
                 {targetsLoaded ? (
-                  reversalTargets.length === 0 ? (
+                  targetsError ? (
+                    <p role="alert" className="text-destructive text-sm">
+                      Could not load movements. Check your connection and
+                      reopen this dialog to retry.
+                    </p>
+                  ) : reversalTargets.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
                       No committed movements to reverse for this product.
                     </p>
@@ -521,14 +558,23 @@ export function StockMovementDialog({
                         if (value !== null) setReversalTarget(value);
                       }}
                     >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a movement" />
+                      <SelectTrigger id="movement-target" className="w-full">
+                        <SelectValue
+                          placeholder="Select a movement"
+                          getLabel={(v) => {
+                            const t = reversalTargets.find((x) => x.id === v);
+                            if (!t) return v;
+                            return `${MOVEMENT_TYPE_META[t.movementType as keyof typeof MOVEMENT_TYPE_META]?.label ?? t.movementType} · ${t.quantity}`;
+                          }}
+                        />
                       </SelectTrigger>
-                      <SelectContent className="z-[var(--z-select)]">
+                      <SelectContent layer="modal">
                         {reversalTargets.map((t) => (
                           <SelectItem key={t.id} value={t.id}>
-                            {MOVEMENT_TYPE_META[t.movementType].label} ·{" "}
-                            {t.quantity} · {formatDate(t.created_at)}
+                            {(MOVEMENT_TYPE_META[
+                              t.movementType as keyof typeof MOVEMENT_TYPE_META
+                            ]?.label ?? t.movementType)}{" "}
+                            · {t.quantity} · {formatDate(t.created_at)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -537,7 +583,7 @@ export function StockMovementDialog({
                 ) : (
                   <p className="text-muted-foreground flex items-center gap-2 text-sm">
                     <Loader2 aria-hidden="true" className="animate-spin" />
-                    Loading recent movements...
+                    Loading recent movements…
                   </p>
                 )}
                 {selectedTarget ? (
@@ -555,6 +601,7 @@ export function StockMovementDialog({
                 <Label htmlFor="movement-quantity">Quantity</Label>
                 <Input
                   id="movement-quantity"
+                  ref={quantityRef}
                   type="text"
                   inputMode="decimal"
                   value={quantity}
@@ -562,6 +609,8 @@ export function StockMovementDialog({
                   placeholder={
                     movementType === "stock_in" ? "e.g. 100" : "e.g. 25.5"
                   }
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? "movement-form-error" : undefined}
                 />
                 {selected ? (
                   <div className="flex flex-col gap-1.5 rounded-lg border bg-muted/20 px-3 py-2.5">
@@ -594,7 +643,10 @@ export function StockMovementDialog({
                           </span>
                         </div>
                         {movementType === "stock_out" && Number(quantity.trim()) > Number(selected.quantity ?? 0) ? (
-                          <p className="text-destructive text-sm font-medium">⚠ Quantity exceeds current stock</p>
+                          <p className="text-destructive flex items-center gap-1.5 text-sm font-medium">
+                            <AlertTriangle aria-hidden="true" className="size-4 shrink-0" />
+                            Quantity exceeds current stock
+                          </p>
                         ) : null}
                       </>
                     ) : null}
@@ -613,13 +665,16 @@ export function StockMovementDialog({
             </Label>
             <Textarea
               id="movement-reason"
+              ref={reasonRef}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "movement-form-error" : undefined}
               placeholder={
                 movementType === "adjustment"
-                  ? "Explain why the stock balance must be adjusted (e.g. damaged, miscounted)..."
+                  ? "Explain why the stock balance must be adjusted (e.g. damaged, miscounted)…"
                   : movementType === "reversal"
-                    ? "Explain why this movement must be reversed..."
+                    ? "Explain why this movement must be reversed…"
                     : movementType === "stock_out"
                       ? "Why is this stock being removed? (optional)"
                       : "Why is this stock being added? (optional)"
@@ -628,7 +683,7 @@ export function StockMovementDialog({
             />
           </div>
 
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}

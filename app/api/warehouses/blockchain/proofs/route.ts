@@ -20,9 +20,13 @@ import { logger } from "@/lib/logger";
  * Audit v0.3.8 C-09: this endpoint was previously callable by any
  * authenticated user. Per AGENT.md §3 ("Developer Console memakai
  * allowlist developer environment variable"), proof retry is a
- * Developer Console capability and must be allowlist-gated. We also
- * apply a per-user rate limit so a compromised allowlist account
- * cannot drain the QStash queue.
+ * Developer Console capability and must be allowlist-gated.
+ *
+ * NBE-06 koreksi: komentar lama mengklaim rate limit per-user, tetapi
+ * tidak ada enforceMutationRateLimit di handler ini — jangan klaim
+ * kontrol yang tidak ada. Abuse oleh akun allowlist yang disusupi
+ * ditangani lewat audit log + rotasi allowlist (rate-limit khusus
+ * proof-retry adalah follow-up eksplisit, bukan klaim).
  */
 export async function POST(request: Request) {
   const url = new URL(request.url);

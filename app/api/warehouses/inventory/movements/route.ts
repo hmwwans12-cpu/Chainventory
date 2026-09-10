@@ -187,9 +187,11 @@ export async function POST(request: Request) {
       }
 
       // Data untuk payload proof (hanya bila warehouse sudah di-deploy).
+      // NBE-12: via warehouse_summaries (member-visible); tabel dasar
+      // owner-only membuat proof diam-diam hilang untuk non-owner.
       const [warehouse, product] = await Promise.all([
         supabase
-          .from("warehouses")
+          .from("warehouse_summaries")
           .select("contract_address")
           .eq("id", parsed.data.warehouseId)
           .maybeSingle(),
@@ -268,6 +270,20 @@ export async function POST(request: Request) {
       }
 
       const row = Array.isArray(data) ? data[0] : data;
+      // Fix BE-05 (PRD §32): replay key sama + payload sama = 200 idempoten,
+      // bukan 500. Tanpa ini retry sah (double-click / network retry) dibalas
+      // RPC_FAILED dan memicu retry berulang.
+      if (row?.error_code === "IDEMPOTENT") {
+        return ok(
+          {
+            movementId: row.movement_id,
+            balanceVersion: row.balance_version,
+            proofPending: row.proof_pending === true,
+            deduplicated: true,
+          },
+          200
+        );
+      }
       if (row?.error_code) {
         const status = rpcErrorStatus(row.error_code);
         return json(
@@ -331,7 +347,7 @@ export async function POST(request: Request) {
 
       const [warehouse, product] = await Promise.all([
         supabase
-          .from("warehouses")
+          .from("warehouse_summaries")
           .select("contract_address")
           .eq("id", movement.data.warehouse_id)
           .maybeSingle(),

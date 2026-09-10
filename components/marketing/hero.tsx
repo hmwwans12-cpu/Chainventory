@@ -43,6 +43,10 @@ const STATS: { valueKey: string; labelKey: string }[] = [
 ];
 
 const CHART = [35, 48, 30, 58, 45, 70, 62];
+// NFE-12: normalisasi ke viewBox (0..40) — nilai mentah >40 terpotong dan
+// menipu (70 vs 58 tampil sama tinggi).
+const CHART_MAX = Math.max(...CHART);
+const chartHeight = (v: number) => Math.max(4, Math.round((v / CHART_MAX) * 34));
 
 /**
  * Hero (DESIGN §23).
@@ -91,7 +95,7 @@ export function Hero() {
 
           <motion.h1
             variants={item}
-            className="font-display text-foreground text-[2.75rem] leading-[1.05] font-semibold tracking-tight text-balance sm:text-6xl"
+            className="font-display text-foreground text-4xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-6xl"
           >
             {t("landing.hero.title_main")}{" "}
             <span className="text-primary">
@@ -112,7 +116,7 @@ export function Hero() {
           >
             <Button
               size="lg"
-              className="group px-7 text-base shadow-sm transition-all duration-150 hover:shadow-md hover:brightness-[1.02] active:brightness-[0.98]"
+              className="group px-7 text-base shadow-(--shadow-card) transition-all duration-150 hover:shadow-(--shadow-elevated) hover:brightness-[1.02] active:brightness-[0.98]"
               render={<Link href="/signup" />}
             >
               {t("landing.hero.cta_primary")}
@@ -133,15 +137,15 @@ export function Hero() {
 
           <motion.dl
             variants={item}
-            className="border-border mt-2 flex max-w-md divide-x border-t pt-6"
+            className="border-border mt-2 flex max-w-md flex-col gap-4 border-t pt-6 sm:flex-row sm:gap-0 sm:divide-x sm:pt-6"
           >
             {STATS.map((stat) => (
               <div
                 key={stat.labelKey}
-                className="flex min-w-0 flex-1 flex-col px-4 first:pl-0"
+                className="flex min-w-0 flex-1 flex-col px-0 sm:px-4 sm:first:pl-0"
               >
                 <dt className="sr-only">{t(stat.labelKey)}</dt>
-                <dd className="font-display text-foreground text-xl font-semibold">
+                <dd className="font-display text-foreground text-xl font-semibold text-balance">
                   {t(stat.valueKey)}
                 </dd>
                 <dd className="text-muted-foreground mt-0.5 text-sm">
@@ -157,7 +161,7 @@ export function Hero() {
           className="relative mx-auto w-full max-w-md lg:max-w-none"
           aria-label="Chainventory dashboard preview"
         >
-          <div className="bg-card shadow-elevated ring-foreground/10 rounded-lg p-6 ring-1">
+          <div className="bg-card shadow-(--shadow-elevated) ring-foreground/10 rounded-lg p-6 ring-1">
                 <div className="border-border flex items-center justify-between border-b pb-4">
                   <div className="flex items-center gap-3">
                     <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
@@ -168,7 +172,7 @@ export function Hero() {
                         {t("landing.hero.preview_name")}
                       </span>
                       <span className="text-muted-foreground text-sm">
-                        WH-7K29-XP4 · Base Sepolia
+                        CHV-7K29XP4 · Base Sepolia
                       </span>
                     </div>
                   </div>
@@ -179,10 +183,10 @@ export function Hero() {
                 </div>
 
                 <div className="pt-6">
-                  <span className="text-muted-foreground text-sm">Total stock</span>
+                  <span className="text-muted-foreground text-sm">Total Stock</span>
                   <div className="mt-1 flex items-baseline gap-2">
                     <span className="text-foreground text-3xl font-semibold tabular-nums">1,284</span>
-                    <span className="text-muted-foreground text-sm">units</span>
+                    <span className="text-muted-foreground text-sm">Units</span>
                     <span className="bg-primary/10 text-primary ml-auto inline-flex items-center gap-1 rounded-full px-2 py-1 text-sm font-medium">
                       <BadgeCheck aria-hidden="true" className="size-3.5" /> Verified
                     </span>
@@ -200,25 +204,28 @@ export function Hero() {
                     aria-label={t("landing.hero.chart_label")}
                   >
                     <title>{t("landing.hero.chart_label")}</title>
-                    {CHART.map((height, i) => (
-                      <rect
-                        key={i}
-                        x={i * 13 + 3}
-                        y={40 - height}
-                        width={8}
-                        height={height}
-                        rx={2}
-                        fill={i === 5 ? "var(--primary)" : "var(--secondary)"}
-                        opacity={i === 5 ? 1 : 0.45}
-                      />
-                    ))}
+                    {CHART.map((v, i) => {
+                      const height = chartHeight(v);
+                      return (
+                        <rect
+                          key={i}
+                          x={i * 13 + 3}
+                          y={40 - height}
+                          width={8}
+                          height={height}
+                          rx={2}
+                          fill={i === 5 ? "var(--primary)" : "var(--secondary)"}
+                          opacity={i === 5 ? 1 : 0.45}
+                        />
+                      );
+                    })}
                   </svg>
                 </div>
               </div>
 
           <motion.div
             variants={item}
-            className="bg-popover text-popover-foreground shadow-elevated absolute bottom-4 left-4 flex items-center gap-2 rounded-lg border px-3 py-2"
+            className="bg-popover text-popover-foreground shadow-(--shadow-elevated) absolute bottom-4 left-4 flex items-center gap-2 rounded-lg border px-3 py-2"
           >
             <Wifi aria-hidden="true" className="text-primary size-4" />
             <span className="text-foreground text-sm font-medium">{t("landing.hero.live_sync")}</span>

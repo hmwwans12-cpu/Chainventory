@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 
 /** Export DB/audit → CSV. Download memakai sesi browser (cookie) yang sama. */
 export function ExportCard() {
@@ -21,6 +22,11 @@ export function ExportCard() {
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
+    toast.add({
+      type: "info",
+      title: "Export started",
+      description: "Your CSV download will begin shortly.",
+    });
   };
 
   return (
@@ -28,7 +34,7 @@ export function ExportCard() {
       <CardHeader>
         <CardTitle>Export</CardTitle>
         <CardDescription>
-          Manual database export — proofs ledger or audit trail as CSV.
+          Manual database export: proofs ledger or audit trail as CSV.
           Sensitive fields are never included.
         </CardDescription>
       </CardHeader>

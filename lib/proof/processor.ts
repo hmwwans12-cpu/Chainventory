@@ -18,9 +18,11 @@ import type { ProofRecord } from "@/lib/proof/types";
  *   2. HITUNG ULANG hash dari payload immutable → bandingkan dengan
  *      `payload_hash` tersimpan. Mismatch → manual_review + audit log,
  *      JANGAN submit ke chain.
- *   3. submit via treasury signer (Warehouse.recordProof) — hanya kirim tx,
- *      simpan tx hash + status submitted.
- *   4. failure → retry exponential backoff (≤ 5x) lalu manual_review.
+ *   3. submit via treasury signer (Warehouse.recordProof): hanya untuk
+ *      warehouse kontrak v1. Kontrak v2 mensyaratkan actor == msg.sender
+ *      (member-paid intents, lihat stock_intents) sehingga submit treasury
+ *      PASTI revert → langsung manual_review tanpa retry (fix A1).
+ *   4. failure lain → retry exponential backoff (≤ 5x) lalu manual_review.
  *   5. success → schedule job konfirmasi terpisah (bukan sinkron).
  */
 
@@ -63,7 +65,7 @@ export async function processProof(
 
   const payload = row.payload as Record<string, unknown>;
 
-  // Re-hash verification — mismatch = manual_review, JANGAN submit.
+  // Re-hash verification: mismatch = manual_review, JANGAN submit.
   const recomputed = hashProofPayload(payload);
   if (recomputed.toLowerCase() !== row.payload_hash.toLowerCase()) {
     logger.error(
@@ -132,6 +134,23 @@ export async function processProof(
   const treasury = createTreasuryAdapter();
   const outcome = await treasury.submit(record);
   if (!outcome.ok) {
+    // Fix A1: kontrak Warehouse v2 (actor == msg.sender) tidak mengizinkan
+    // treasury mensubmit proof member: retry 5x hanya buang gas/RPC.
+    // Langsung manual_review dengan pesan jelas; jalur member-paid
+    // (stock_intents prepare/submit/finalize) adalah penggantinya.
+    const errMsg = outcome.error ?? "treasury submit failed";
+    if (/actor must be caller/i.test(errMsg)) {
+      await supabase.rpc("proof_mark_manual", {
+        p_proof_id: proofId,
+        p_error:
+          "treasury path deprecated for v2 warehouses (actor must be caller): use member-paid stock intents",
+      });
+      logger.error(
+        { proofId, error: errMsg },
+        "treasury submit rejected by v2 contract → manual_review (no retry)"
+      );
+      return { ok: false, processed: 1, error: errMsg };
+    }
     const attempts = row.attempt_count;
     if (attempts >= PROOF_MAX_ATTEMPTS) {
       await supabase.rpc("proof_requeue", {

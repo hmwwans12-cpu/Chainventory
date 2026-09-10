@@ -1,5 +1,6 @@
 "use client";
 
+/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -15,6 +16,7 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   Download,
+  TriangleAlert,
   X,
 } from "lucide-react";
 
@@ -50,11 +52,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { EntityName } from "@/components/shared/entity-name";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Pagination } from "@/components/shared/pagination";
 import { PanelCard } from "@/components/shared/panel-card";
 import { hasPermission, PERMISSIONS, type Role } from "@/lib/auth/permissions";
-import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
+import { useSwitchWarehouse } from "@/lib/warehouses/use-switch-warehouse";
 import type { ProductRow } from "@/lib/inventory/types";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import {
@@ -66,6 +69,7 @@ import {
 } from "@/components/inventory/product-dialogs";
 import { BulkAddDialog } from "@/components/inventory/bulk-add-dialog";
 import { archiveProduct } from "@/lib/inventory/products-client";
+import { isLowStock } from "@/lib/inventory/low-stock";
 import { toast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/utils";
 
@@ -115,6 +119,11 @@ export function ProductsPage({
       else params.delete("status");
       params.delete("page");
       const qs = params.toString();
+      // Guard anti-loop: jangan replace ke query string identik. Tanpa ini,
+      // effect debounce di bawah menembak ulang setiap kali searchParams
+      // berganti identitas object (walau URL sama) → replace berulang →
+      // isPending/spinner permanen + fetch server berulang.
+      if (qs === searchParams.toString()) return;
       // Tampilkan spinner pencarian: navigasi server dijalankan sebagai
       // transition agar isPending mencerminkan loading (audit UX).
       startTransition(() => {
@@ -129,6 +138,12 @@ export function ProductsPage({
   };
 
   const [searchInput, setSearchInput] = React.useState(query);
+  // Sinkronkan input bila `q` URL berubah dari luar (back/forward button).
+  // Aman dari clobber saat mengetik: hanya berjalan saat prop query berubah,
+  // dan setelah commit nilainya selalu sama dengan input.
+  React.useEffect(() => {
+    setSearchInput(query);
+  }, [query]);
   const [createOpen, setCreateOpen] = React.useState(false);
   const [bulkOpen, setBulkOpen] = React.useState(false);
   const [editTarget, setEditTarget] = React.useState<ProductRow | null>(null);
@@ -211,11 +226,16 @@ export function ProductsPage({
 
   const exportSelected = () => {
     if (!canExport || selected.size === 0) return;
-    const ids = [...selected].join(",");
+    const ids = [...selected];
     const url = `/api/warehouses/export?type=products&warehouseId=${encodeURIComponent(
       warehouseId
-    )}&ids=${encodeURIComponent(ids)}`;
+    )}&ids=${encodeURIComponent(ids.join(","))}`;
     window.open(url, "_blank");
+    toast.add({
+      type: "info",
+      title: "Export started",
+      description: `${ids.length} product${ids.length === 1 ? "" : "s"} exporting. If no download begins, allow popups for this site and retry.`,
+    });
   };
 
   const bulkChangeCategory = async () => {
@@ -405,12 +425,26 @@ export function ProductsPage({
 
   // Search — debounced, diteruskan ke URL (?q=) sehingga pencarian tetap
   // berjalan di server (Supabase ilike), bukan filter frontend.
+  // FE-26: effect HANYA menonton searchInput — statusFilter dibaca via ref.
+  // Sebelumnya setStatus() memanggil applyFilters LANGSUNG lalu effect ikut
+  // menembak replace kedua dengan nilai sama (navigasi ganda).
+  // Anti-loop: applyFilters dibaca via ref (identitasnya ikut searchParams
+  // yang bisa berganti tiap render) + guard query-identik di dalamnya.
+  // Tanpa ini effect menembak replace tiap 350ms walau user diam.
+  const statusFilterRef = React.useRef(statusFilter);
+  React.useEffect(() => {
+    statusFilterRef.current = statusFilter;
+  }, [statusFilter]);
+  const applyFiltersRef = React.useRef(applyFilters);
+  React.useEffect(() => {
+    applyFiltersRef.current = applyFilters;
+  });
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      applyFilters(searchInput, statusFilter ?? "active");
+      applyFiltersRef.current(searchInput, statusFilterRef.current ?? "active");
     }, 350);
     return () => clearTimeout(timer);
-  }, [searchInput, statusFilter, applyFilters]);
+  }, [searchInput]);
 
   const SAVED_VIEWS_KEY = `chainventory:savedViews:${warehouseId}`;
   type SavedView = { id: string; name: string; q: string; status: "active" | "archived" | "all" };
@@ -430,7 +464,9 @@ export function ProductsPage({
   };
   const saveCurrentView = () => {
     const name = saveName.trim() || `${query || "All"} · ${statusFilter}`;
-    const next: SavedView = { id: `${Date.now()}`, name, q: query, status: statusFilter };
+    // FE-18: randomUUID (bukan Date.now) — dua klik simpan dalam 1ms
+    // tidak boleh menghasilkan id kembar.
+    const next: SavedView = { id: crypto.randomUUID(), name, q: query, status: statusFilter };
     persistViews([...savedViews, next]);
     setSaveName("");
     setShowSave(false);
@@ -444,11 +480,7 @@ export function ProductsPage({
 
   const refresh = () => router.refresh();
 
-  const switchWarehouse = (id: string) => {
-    if (id === warehouseId) return;
-    // P2-01: helper terpusat — preserve q/status, reset param warehouse-dependent.
-    router.replace(switchWarehouseUrl(pathname, searchParams, id));
-  };
+  const switchWarehouse = useSwitchWarehouse(warehouseId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -489,8 +521,10 @@ export function ProductsPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger aria-label="Warehouse">
-                <SelectValue />
+              <SelectTrigger aria-label="Warehouse" className="min-w-36">
+                <SelectValue
+                  getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
+                />
               </SelectTrigger>
               <SelectContent>
                 {warehouses.map((w) => (
@@ -508,11 +542,21 @@ export function ProductsPage({
                 setStatus(value as "active" | "archived" | "all");
             }}
           >
-            <SelectTrigger aria-label="Product status filter">
+            <SelectTrigger aria-label="Product status filter" className="min-w-32">
               <span className="text-muted-foreground mr-1 hidden sm:inline">
                 Status:
               </span>
-              <SelectValue />
+              <SelectValue
+                getLabel={(v) =>
+                  v === "active"
+                    ? "Active"
+                    : v === "archived"
+                      ? "Archived"
+                      : v === "all"
+                        ? "All"
+                        : v
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="active">Active</SelectItem>
@@ -529,7 +573,7 @@ export function ProductsPage({
               className="hidden sm:inline-flex"
               render={
                 <a
-                  href={`/api/warehouses/export?type=products&warehouseId=${warehouseId}`}
+                  href={`/api/warehouses/export?type=products&warehouseId=${encodeURIComponent(warehouseId)}`}
                   download
                 />
               }
@@ -568,7 +612,7 @@ export function ProductsPage({
                   <DropdownMenuItem
                     render={
                       <a
-                        href={`/api/warehouses/export?type=products&warehouseId=${warehouseId}`}
+                        href={`/api/warehouses/export?type=products&warehouseId=${encodeURIComponent(warehouseId)}`}
                         download
                       />
                     }
@@ -604,7 +648,7 @@ export function ProductsPage({
                 type="button"
                 aria-label="Clear search filter"
                 onClick={() => setSearchInput("")}
-                className="hover:bg-primary/20 -mr-1 rounded-full p-0.5 transition-colors"
+                className="hover:bg-primary/20 relative -mr-1 rounded-full p-1 transition-colors before:absolute before:-inset-[8px] before:content-['']"
               >
                 <X aria-hidden="true" className="size-3.5" />
               </button>
@@ -612,12 +656,12 @@ export function ProductsPage({
           )}
           {statusFilter !== "active" && (
             <span className="bg-secondary/20 text-secondary-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
-              Status: {statusFilter}
+              Status: {statusFilter === "archived" ? "Archived" : "All"}
               <button
                 type="button"
                 aria-label="Clear status filter"
                 onClick={() => setStatus("active")}
-                className="hover:bg-secondary/30 -mr-1 rounded-full p-0.5 transition-colors"
+                className="hover:bg-secondary/30 relative -mr-1 rounded-full p-1 transition-colors before:absolute before:-inset-[8px] before:content-['']"
               >
                 <X aria-hidden="true" className="size-3.5" />
               </button>
@@ -631,14 +675,14 @@ export function ProductsPage({
             }}
             className="text-muted-foreground hover:text-foreground text-sm font-medium underline-offset-4 hover:underline"
           >
-            Clear all
+            Clear All
           </button>
           <span className="text-border hidden sm:inline">|</span>
           {!showSave ? (
-            <Button variant="outline" size="sm" onClick={() => setShowSave(true)}>Save view</Button>
+            <Button variant="outline" size="sm" onClick={() => setShowSave(true)}>Save View</Button>
           ) : (
             <span className="flex items-center gap-1.5">
-              <Input value={saveName} onChange={(e) => setSaveName(e.target.value)} placeholder="My low-stock view" className="h-8 w-40" aria-label="Saved view name" />
+              <Input value={saveName} onChange={(e) => setSaveName(e.target.value)} placeholder="e.g. Low-stock items" className="h-11 w-40" aria-label="Saved view name" />
               <Button size="sm" onClick={saveCurrentView}>Save</Button>
               <Button variant="ghost" size="sm" onClick={() => setShowSave(false)}>Discard</Button>
             </span>
@@ -650,10 +694,10 @@ export function ProductsPage({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-muted-foreground text-sm">Saved views:</span>
           {savedViews.map((v) => (
-            <span key={v.id} className="bg-card border-border inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-sm">
+            <span key={v.id} className="bg-card border-border inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm">
               <button type="button" onClick={() => applySavedView(v)} className="hover:text-primary font-medium">{v.name}</button>
-              <span className="text-muted-foreground text-sm">· {v.q || "all"} · {v.status}</span>
-              <button type="button" aria-label={`Delete ${v.name}`} onClick={() => deleteView(v.id)} className="hover:text-destructive -mr-1 rounded-full p-0.5"><X aria-hidden="true" className="size-3" /></button>
+              <span className="text-muted-foreground text-sm">· {v.q || "All"} · {v.status === "active" ? "Active" : v.status === "archived" ? "Archived" : "All"}</span>
+              <button type="button" aria-label={`Delete ${v.name}`} onClick={() => deleteView(v.id)} className="hover:text-destructive hover:bg-destructive/10 -mr-1 rounded-full p-1 transition-colors"><X aria-hidden="true" className="size-3.5" /></button>
             </span>
           ))}
           {savedViews.length > 0 && (query.trim() || statusFilter !== "active") && (
@@ -665,29 +709,39 @@ export function ProductsPage({
       {products.length === 0 ? (
         <EmptyState
           icon={Package}
-          title={query ? "No products found" : "Your inventory is empty"}
+          title={
+            query
+              ? "No products found"
+              : statusFilter === "archived"
+                ? "No archived products"
+                : "Your inventory is empty"
+          }
           description={
             query
               ? `Nothing matches "${query}". Try a different search or clear filters.`
-              : "Add your first product to start tracking stock for this warehouse."
+              : statusFilter === "archived"
+                ? "Nothing here with this filter. Clear it to see everything."
+                : "Add your first product to start tracking stock for this warehouse."
           }
           primaryAction={
             query
-              ? { label: "Clear search", onClick: () => setSearchInput("") }
-              : canCreate
-                ? { label: "Add Product", onClick: () => setCreateOpen(true) }
-                : undefined
+              ? { label: "Clear Search", onClick: () => setSearchInput("") }
+              : statusFilter === "archived"
+                ? { label: "Clear Filter", onClick: () => setStatus("active") }
+                : canCreate
+                  ? { label: "Add Product", onClick: () => setCreateOpen(true) }
+                  : undefined
           }
           secondaryAction={
-            !query && canBulk
-              ? { label: "Import products", onClick: () => setBulkOpen(true) }
+            !query && statusFilter !== "archived" && canBulk
+              ? { label: "Import Products", onClick: () => setBulkOpen(true) }
               : undefined
           }
         />
       ) : (
         <>
           {selected.size > 0 && (canArchive || canExport || canEdit) ? (
-            <div className="bg-card sticky bottom-4 z-10 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 shadow-elevated">
+            <div className="bg-card sticky bottom-4 z-10 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 shadow-(--shadow-elevated)">
               <span className="text-sm font-medium tabular-nums">
                 {selected.size} selected
               </span>
@@ -727,7 +781,7 @@ export function ProductsPage({
             </div>
           ) : null}
 
-          <PanelCard padding="none">
+          <PanelCard padding="none" className="bg-card">
             {/* Desktop: tabel (scroll horizontal terbatas) */}
             <div className="hidden overflow-x-auto lg:block">
               <Table className="lg:min-w-[860px]">
@@ -738,7 +792,7 @@ export function ProductsPage({
                         type="checkbox"
                         checked={allVisibleSelected}
                         onChange={toggleSelectAll}
-                        aria-label="Select all products on this page"
+                            aria-label="Toggle selection for all products on this page"
                         className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:-inset-[12px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
                       />
                     </TableHead>
@@ -749,7 +803,7 @@ export function ProductsPage({
                     <TableHead className="hidden lg:table-cell">Unit</TableHead>
                     <TableHead className="text-right">Current Stock</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="hidden md:table-cell">
+                    <TableHead className="hidden lg:table-cell">
                       Updated
                     </TableHead>
                     <TableHead className="w-12">
@@ -760,12 +814,12 @@ export function ProductsPage({
                 <TableBody>
                   {products.map((product) => {
                     const archived = product.status === "archived";
-                    const low =
-                      !archived &&
-                      product.quantity != null &&
-                      Number(product.lowStockThreshold) > 0 &&
-                      Number(product.quantity) <=
-                        Number(product.lowStockThreshold);
+                    // FE-23: satu aturan dengan dashboard (lib/inventory/low-stock).
+                    const low = isLowStock({
+                      status: product.status,
+                      quantity: product.quantity,
+                      threshold: product.lowStockThreshold,
+                    });
                     return (
                       <TableRow
                         key={product.id}
@@ -783,9 +837,9 @@ export function ProductsPage({
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-foreground font-medium">
+                            <EntityName title={product.name}>
                               {product.name}
-                            </span>
+                            </EntityName>
                             <span className="text-muted-foreground font-mono text-sm">
                               {product.sku}
                             </span>
@@ -810,8 +864,9 @@ export function ProductsPage({
                               ) : null}
                             </span>
                             {low ? (
-                              <span className="text-warning flex items-center gap-1 text-sm font-medium">
-                                ⚠ Low stock
+                              <span className="text-warning flex items-center gap-1.5 text-sm font-medium">
+                                <TriangleAlert aria-hidden="true" className="size-3.5 shrink-0" />
+                                Low stock
                               </span>
                             ) : null}
                           </div>
@@ -822,7 +877,7 @@ export function ProductsPage({
                             label={archived ? "Archived" : "Active"}
                           />
                         </TableCell>
-                        <TableCell className="text-muted-foreground hidden text-sm tabular-nums md:table-cell">
+                        <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
                           {formatDate(product.updatedAt)}
                         </TableCell>
                         <TableCell>
@@ -858,9 +913,9 @@ export function ProductsPage({
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-foreground truncate font-medium">
+                        <EntityName title={product.name} className="min-w-0">
                           {product.name}
-                        </span>
+                        </EntityName>
                         <StatusBadge
                           tone={archived ? "inactive" : "success"}
                           label={archived ? "Archived" : "Active"}
@@ -909,6 +964,10 @@ export function ProductsPage({
               })}
             </ul>
           </PanelCard>
+          {/* FE-20: spacer saat bulk bar sticky aktif agar tidak menutupi pagination di layar kecil. */}
+          {selected.size > 0 && (canArchive || canExport || canEdit) ? (
+            <div aria-hidden="true" className="h-16" />
+          ) : null}
           {!paginationDisabled ? (
             <Pagination
               page={page}
@@ -944,6 +1003,7 @@ export function ProductsPage({
       ) : null}
       {editTarget ? (
         <EditProductDialog
+          key={editTarget.id}
           product={editTarget}
           open
           onOpenChange={(open) => {
@@ -977,7 +1037,10 @@ export function ProductsPage({
         />
       ) : null}
       {detailTarget ? (
+        // NFE-15: key per produk — ganti produk = remount = state
+        // loading/movements/error segar (tanpa setState-in-effect).
         <ProductDetailSheet
+          key={detailTarget.id}
           warehouseId={warehouseId}
           product={detailTarget}
           open
@@ -1021,7 +1084,7 @@ export function ProductsPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={bulkCategoryOpen} onOpenChange={setBulkCategoryOpen}>
+      <Dialog open={bulkCategoryOpen} onOpenChange={(open) => { setBulkCategoryOpen(open); if (!open) setBulkCategoryValue(""); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Change category for {selected.size} products?</DialogTitle>
@@ -1029,7 +1092,10 @@ export function ProductsPage({
           </DialogHeader>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="bulk-cat" className="text-sm font-medium">Category</label>
-            <Input id="bulk-cat" value={bulkCategoryValue} onChange={(e) => setBulkCategoryValue(e.target.value)} placeholder="e.g. Packaging" />
+            <Input id="bulk-cat" value={bulkCategoryValue} onChange={(e) => setBulkCategoryValue(e.target.value)} placeholder="e.g. Packaging" aria-invalid={Boolean(bulkCategoryValue && !bulkCategoryValue.trim())} aria-describedby={bulkCategoryValue && !bulkCategoryValue.trim() ? "err-bulk-cat" : undefined} />
+            {bulkCategoryValue && !bulkCategoryValue.trim() ? (
+              <p id="err-bulk-cat" className="text-destructive text-sm">Category cannot be empty.</p>
+            ) : null}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBulkCategoryOpen(false)}>Keep current</Button>

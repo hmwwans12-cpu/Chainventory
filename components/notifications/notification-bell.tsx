@@ -30,9 +30,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { unreadStore } from "@/lib/notifications/unread-store";
+import { openChannel } from "@/lib/realtime/channel";
 import { cn } from "@/lib/utils";
+import {
+  FLASH_MESSAGE_MS,
+  NOTIFICATION_PANEL_LIMIT,
+} from "@/lib/constants";
 
-const PANEL_LIMIT = 12;
+const PANEL_LIMIT = NOTIFICATION_PANEL_LIMIT;
 
 /**
  * Notification Bell + dropdown panel (DESIGN §15, PRD §21).
@@ -122,8 +127,9 @@ export function NotificationBell() {
       );
       setLoading(false);
 
-      channel = supabase
-        .channel(`notifications:${user.id}`)
+      // Topik unik per attempt — cegah "cannot add callbacks after
+      // subscribe()" saat remount cepat/StrictMode (lihat channel.ts).
+      channel = openChannel(supabase, `notifications:${user.id}`)
         .on(
           "postgres_changes",
           {
@@ -150,7 +156,7 @@ export function NotificationBell() {
               popTimer.current = setTimeout(() => {
                 setFlashId(null);
                 setBadgePop(false);
-              }, 1800);
+              }, FLASH_MESSAGE_MS);
             }
           }
         )
@@ -178,7 +184,7 @@ export function NotificationBell() {
     void init();
     return () => {
       cancelled = true;
-      if (channel) void supabase.removeChannel(channel);
+      if (channel) void supabase.removeChannel(channel).catch(() => {});
       if (popTimer.current) clearTimeout(popTimer.current);
     };
     // setUnreadCount stabil (useCallback []).
@@ -279,7 +285,7 @@ export function NotificationBell() {
           <Popover.Positioner align="end" sideOffset={8}>
             <Popover.Popup
               aria-labelledby="notif-heading"
-              className="border-border bg-popover text-popover-foreground shadow-elevated w-[min(calc(100vw-1.5rem),24rem)] rounded-lg border outline-none"
+              className="border-border bg-popover text-popover-foreground shadow-(--shadow-elevated) w-[min(calc(100vw-1.5rem),24rem)] rounded-lg border outline-none"
             >
               <div className="border-b-border/60 flex items-center justify-between gap-2 border-b px-3 py-2.5">
                 <div className="flex items-center gap-2">
@@ -301,7 +307,7 @@ export function NotificationBell() {
                   className="text-muted-foreground"
                 >
                   <CheckCheck aria-hidden="true" />
-                  Mark all read
+                  Mark All Read
                 </Button>
               </div>
 
@@ -319,11 +325,11 @@ export function NotificationBell() {
                     ))}
                   </div>
                 ) : notifications.length === 0 ? (
-                  <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+                  <div className="m-3 flex flex-col items-center gap-2 rounded-lg border border-dashed px-6 py-8 text-center">
                     <span className="bg-muted text-muted-foreground flex size-10 items-center justify-center rounded-full">
                       <Inbox aria-hidden="true" className="size-5" />
                     </span>
-                    <p className="text-foreground text-sm font-medium">
+                    <p className="text-foreground mt-2 text-sm font-semibold">
                       You&apos;re all caught up
                     </p>
                     <p className="text-muted-foreground max-w-52 text-sm text-pretty">
@@ -350,13 +356,13 @@ export function NotificationBell() {
                           >
                             <span
                               className={cn(
-                                "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg",
+                                "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-transparent",
                                 meta?.tone === "success" &&
                                   "bg-muted text-muted-foreground",
                                 meta?.tone === "warning" &&
-                                  "bg-warning/15 text-warning",
+                                  "bg-warning/15 text-warning-foreground border-warning/20",
                                 meta?.tone === "danger" &&
-                                  "bg-destructive/15 text-destructive",
+                                  "bg-destructive/15 text-destructive border-destructive/20",
                                 (!meta || meta.tone === "default") &&
                                   "bg-muted text-muted-foreground"
                               )}

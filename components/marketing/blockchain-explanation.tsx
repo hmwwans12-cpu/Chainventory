@@ -40,10 +40,15 @@ export function BlockchainExplanation() {
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <Reveal>
           <div className="bg-primary/10 ring-primary/10 rounded-lg p-2 ring-1">
-            <DoubleBezelCard className="bg-primary rounded-lg px-6 py-12 md:px-12 md:py-16">
+            <DoubleBezelCard
+              radius="2rem"
+              outerClassName="bg-primary"
+              innerClassName="bg-primary text-primary-foreground"
+              className="px-6 py-12 md:px-12 md:py-16"
+            >
               <DoubleBezelCardContent className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
                 <div className="flex flex-col gap-5">
-                  <span className="text-primary-foreground inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-sm font-medium">
+                  <span className="text-primary-foreground inline-flex w-fit items-center gap-1.5 rounded-full bg-primary-foreground/10 px-3 py-1 text-sm font-medium">
                     <Blocks
                       aria-hidden="true"
                       className="text-primary-foreground size-3.5"
@@ -72,7 +77,12 @@ export function BlockchainExplanation() {
                   </ul>
                 </div>
 
-                <DoubleBezelCard className="bg-white/5 p-6 ring-1 ring-white/10">
+                <DoubleBezelCard
+                  radius="1rem"
+                  outerClassName="bg-primary-foreground/[0.07] ring-1 ring-primary-foreground/15"
+                  innerClassName="bg-transparent p-0 shadow-none"
+                  className="p-5 sm:p-6"
+                >
                   <DoubleBezelCardContent className="space-y-4">
                     <span className="text-primary-foreground text-sm font-semibold">
                       {t("landing.blockchain.typical_record")}
@@ -81,7 +91,7 @@ export function BlockchainExplanation() {
                       {RECORD_ROWS.map((row) => (
                         <div
                           key={row.labelKey}
-                          className="flex items-center justify-between gap-4 border-b border-white/10 py-3"
+                          className="flex items-center justify-between gap-4 border-b border-primary-foreground/10 py-3"
                         >
                           <span className="text-primary-foreground/90 text-sm">
                             {t(row.labelKey)}
@@ -101,7 +111,7 @@ export function BlockchainExplanation() {
                         </span>
                       </div>
                     </div>
-                    <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
+                    <div className="mt-5 flex items-center justify-between border-t border-primary-foreground/10 pt-4">
                       <span className="text-primary-foreground/90 text-sm">
                         {t("landing.blockchain.anchored_on")}
                       </span>

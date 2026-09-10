@@ -13,6 +13,7 @@ import {
   forbidden,
   fromPostgrestError,
   invalid,
+  json,
   ok,
   readJson,
   requirePermission,
@@ -224,6 +225,28 @@ export async function POST(request: Request) {
         .maybeSingle();
       if (me?.role !== "OWNER") {
         return forbidden("Only the owner can transfer ownership.");
+      }
+      // Fix A5: warehouse yang sudah deployed punya owner on-chain
+      // (Warehouse.owner + Factory.activeWarehouse). Transfer off-chain
+      // murni bikin divergen permanen off-chain ≠ on-chain (ARSITEKTUR
+      // §4.4/§5). Blokir di sini; pemilik harus transferOwnership on-chain
+      // dari wallet owner lama → processor confirm → sinkron DB atomik.
+      // Full async migration flow adalah P1; blokir ini adalah P0 safety.
+      const { data: wh } = await supabase
+        .from("warehouses")
+        .select("contract_address")
+        .eq("id", parsed.data.warehouseId)
+        .maybeSingle();
+      if (wh?.contract_address) {
+        return json(
+          {
+            ok: false,
+            error:
+              "This warehouse is deployed on-chain. Transfer ownership from your owner wallet on Base Sepolia first, then sync. Off-chain-only transfer is blocked to prevent on-chain divergence.",
+            errorCode: "CONFLICT",
+          },
+          409
+        );
       }
       rpcArgs.transfer = {
         p_warehouse_id: parsed.data.warehouseId,

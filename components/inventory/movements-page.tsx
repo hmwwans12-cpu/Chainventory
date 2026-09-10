@@ -1,5 +1,6 @@
 "use client";
 
+/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import * as React from "react";
 import { useOptimistic } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -30,13 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +47,7 @@ import {
 } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { EntityName } from "@/components/shared/entity-name";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { LoadMore } from "@/components/shared/load-more";
@@ -79,13 +75,16 @@ import {
   BASESCAN_URL,
 } from "@/components/inventory/movement-detail-sheet";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
-import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
+import { useSwitchWarehouse } from "@/lib/warehouses/use-switch-warehouse";
+import { useLiveStatus } from "@/hooks/use-live-status";
 import { debounce } from "@/lib/realtime/debounce";
+import { openChannel } from "@/lib/realtime/channel";
 import { PanelCard } from "@/components/shared/panel-card";
 import { BaseScanLink } from "@/components/shared/basescan-link";
 import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils";
+import { MOVEMENTS_PAGE_SIZE, REALTIME_DEBOUNCE_MS } from "@/lib/constants";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = MOVEMENTS_PAGE_SIZE;
 
 type FetchResult = { items: MovementListItem[]; error: boolean };
 
@@ -170,9 +169,16 @@ export function MovementsPage({
   );
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [loadError, setLoadError] = React.useState(false);
-  const [liveStatus, setLiveStatus] = React.useState<"live" | "reconnecting">(
-    "reconnecting"
-  );
+  // Sinkronisasi warehouse: tanpa ini, pindah warehouse A→B via
+  // router.replace membuat props baru tapi list/offset lokal tetap milik A
+  // (loadMore pakai movements.length yang salah). Ikuti pola members-page.
+  React.useEffect(() => {
+    setMovements(initialMovements);
+    setHasMore(initialMovements.length === PAGE_SIZE);
+    setLoadingMore(false);
+    setLoadError(false);
+  }, [warehouseId, initialMovements]);
+  const [liveStatus, reportLive] = useLiveStatus();
 
   const [movementDialog, setMovementDialog] = React.useState<{
     type: MovementType;
@@ -227,29 +233,33 @@ export function MovementsPage({
   // wiping the list to an empty state (UI/UX audit #8).
   const refreshMovements = React.useCallback(async () => {
     try {
-      const { items } = await fetchPage(
+      // APP-03: hormati flag error — fetchPage mengembalikan items=[] saat
+      // gagal; tanpa cek ini list terhapus di depan mata user.
+      const { items, error } = await fetchPage(
         supabase,
         warehouseId,
         0,
         PAGE_SIZE - 1
       );
+      if (error) throw new Error("refresh failed");
       setMovements(items);
       setHasMore(items.length === PAGE_SIZE);
       setRealtimeError(null);
     } catch {
       setRealtimeError(
-        "Live update failed — showing the last known movements."
+        "Live update failed. Showing the last known movements."
       );
     }
   }, [supabase, warehouseId]);
 
-  // P2-05: event beruntun di-debounce 400ms — N realtime event → 1 fetch.
+  // P2-05: event beruntun di-debounce — N realtime event → 1 fetch.
   React.useEffect(() => {
     const refreshFirst = debounce(() => {
       void refreshMovements();
-    }, 400);
-    const channel = supabase
-      .channel(`movements-${warehouseId}`)
+    }, REALTIME_DEBOUNCE_MS);
+    // Topik unik per mount — cegah "cannot add callbacks after
+    // subscribe()" saat StrictMode/remount cepat (lihat channel.ts).
+    const channel = openChannel(supabase, `movements-${warehouseId}`)
       .on(
         "postgres_changes",
         {
@@ -271,13 +281,13 @@ export function MovementsPage({
         refreshFirst
       )
       .subscribe((status) => {
-        setLiveStatus(status === "SUBSCRIBED" ? "live" : "reconnecting");
+        reportLive(status === "SUBSCRIBED");
       });
     return () => {
       refreshFirst.cancel();
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel).catch(() => {});
     };
-  }, [warehouseId, supabase, refreshMovements]);
+  }, [warehouseId, supabase, refreshMovements, reportLive]);
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
@@ -301,11 +311,7 @@ export function MovementsPage({
     setLoadingMore(false);
   };
 
-  const switchWarehouse = (id: string) => {
-    if (id === warehouseId) return;
-    // P2-03: helper terpusat — preserve filter, reset param warehouse-dependent.
-    router.replace(switchWarehouseUrl(pathname, searchParams, id));
-  };
+  const switchWarehouse = useSwitchWarehouse(warehouseId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -313,10 +319,10 @@ export function MovementsPage({
         <div className="flex min-w-0 items-center gap-2">
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm",
+              "inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-sm font-medium whitespace-nowrap",
               liveStatus === "live"
-                ? "bg-primary/10 text-primary"
-                : "bg-warning/15 text-warning"
+                ? "bg-primary/10 text-primary border-primary/20"
+                : "bg-warning/15 text-warning-foreground border-warning/20"
             )}
             role="status"
             aria-live="polite"
@@ -339,8 +345,10 @@ export function MovementsPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger aria-label="Warehouse">
-                <SelectValue />
+              <SelectTrigger aria-label="Warehouse" className="min-w-36">
+                <SelectValue
+                  getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
+                />
               </SelectTrigger>
               <SelectContent>
                 {warehouses.map((w) => (
@@ -352,17 +360,16 @@ export function MovementsPage({
             </Select>
           ) : null}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {canAdjust || canReversal ? (
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button variant="outline" aria-label="More movement types">
-                    <MoreHorizontal aria-hidden="true" />
-                    <span className="hidden sm:inline">More</span>
-                    <ChevronDown aria-hidden="true" className="size-3.5 opacity-60" />
-                    <span className="sr-only"> movement types</span>
-                  </Button>
+                    <Button variant="outline" aria-label="More movement types">
+                      <MoreHorizontal aria-hidden="true" />
+                      <span className="hidden sm:inline">More</span>
+                      <ChevronDown aria-hidden="true" className="size-3.5 opacity-60" />
+                    </Button>
                 }
               >
                 <span className="sr-only">More movement types</span>
@@ -396,7 +403,7 @@ export function MovementsPage({
               className="hidden sm:inline-flex"
               render={
                 <a
-                  href={`/api/warehouses/export?type=movements&warehouseId=${warehouseId}`}
+                  href={`/api/warehouses/export?type=movements&warehouseId=${encodeURIComponent(warehouseId)}`}
                   download
                 />
               }
@@ -433,10 +440,10 @@ export function MovementsPage({
           padding="none"
           role="status"
           aria-live="polite"
-          className="border-warning/40 bg-warning/15 text-warning flex items-center gap-2 px-4 py-3 text-sm"
+          className="border-warning/40 bg-warning/15 text-warning-foreground flex items-center gap-2 px-4 py-3 text-sm"
         >
           <TriangleAlert aria-hidden="true" className="size-4 shrink-0" />
-          Warehouse suspended — inventory mutations are temporarily unavailable.
+          Warehouse suspended. Inventory mutations are temporarily unavailable.
         </PanelCard>
       ) : null}
 
@@ -463,7 +470,7 @@ export function MovementsPage({
           }
         />
       ) : (
-        <PanelCard padding="none">
+        <PanelCard padding="none" className="bg-card">
           {realtimeError ? (
             movements.length === 0 ? (
               <ErrorState
@@ -486,7 +493,7 @@ export function MovementsPage({
                   <TableHead className="text-right">Quantity</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden lg:table-cell">Actor</TableHead>
-                  <TableHead className="hidden md:table-cell">Proof</TableHead>
+                      <TableHead className="hidden lg:table-cell">Proof</TableHead>
                   <TableHead className="hidden lg:table-cell">
                     Created
                   </TableHead>
@@ -509,9 +516,9 @@ export function MovementsPage({
                     <TableRow key={m.id}>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-foreground font-medium">
+                          <EntityName title={m.productName}>
                             {m.productName}
-                          </span>
+                          </EntityName>
                           <span className="text-muted-foreground font-mono text-sm">
                             {m.productSku}
                           </span>
@@ -547,7 +554,7 @@ export function MovementsPage({
                       <TableCell className="text-muted-foreground hidden font-mono text-sm lg:table-cell">
                         {shortWallet(m.actorWallet)}
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell className="hidden lg:table-cell">
                         {m.proofTxHash && m.proofStatus === "confirmed" ? (
                           <BaseScanLink
                             href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
@@ -647,9 +654,9 @@ export function MovementsPage({
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-foreground truncate font-medium">
+                      <EntityName title={m.productName} className="min-w-0">
                         {m.productName}
-                      </span>
+                      </EntityName>
                       <StatusBadge
                         tone={statusMeta.tone}
                         label={statusMeta.label}
@@ -663,8 +670,8 @@ export function MovementsPage({
                       <span
                         className={
                           negative
-                            ? "text-destructive font-mono"
-                            : "text-foreground font-mono"
+                            ? "text-destructive font-mono tabular-nums"
+                            : "text-foreground font-mono tabular-nums"
                         }
                       >
                         {negative ? "−" : "+"}
@@ -757,6 +764,7 @@ export function MovementsPage({
 
       {movementDialog ? (
         <StockMovementDialog
+          key={movementDialog.type}
           warehouseId={warehouseId}
           products={products}
           movementType={movementDialog.type}
@@ -781,6 +789,7 @@ export function MovementsPage({
       ) : null}
       {approveTarget ? (
         <ApproveDialog
+          key={approveTarget.id}
           movement={approveTarget}
           open
           onOptimisticStatus={(status) =>
@@ -800,6 +809,7 @@ export function MovementsPage({
       ) : null}
       {rejectTarget ? (
         <RejectDialog
+          key={rejectTarget.id}
           movement={rejectTarget}
           open
           onOptimisticStatus={(status) =>
@@ -860,53 +870,30 @@ function ApproveDialog({
       onOpenChange(false);
       onDone();
     } else {
+      setBusy(false);
       setError(result.error);
     }
   };
 
   return (
-    <Dialog
+    <ConfirmDialog
       open={open}
-      onOpenChange={(next) => {
-        if (busy && !next) return;
-        onOpenChange(next);
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Approve {meta.label}?</DialogTitle>
-          <DialogDescription>
-            This will change the stock balance of {movement.productName} by{" "}
-            {movement.quantity} {movement.unit}.
-          </DialogDescription>
-        </DialogHeader>
-        {error ? (
-          <p
-            role="alert"
-            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-sm"
-          >
-            {error}
-          </p>
-        ) : null}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={busy}
-          >
-            Cancel
-          </Button>
-          <Button onClick={approve} disabled={busy}>
-            {busy ? (
-              <Loader2 aria-hidden="true" className="animate-spin" />
-            ) : (
-              <Check aria-hidden="true" />
-            )}
-            Approve
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      onOpenChange={onOpenChange}
+      busy={busy}
+      title={`Approve ${meta.label}?`}
+      description={`This will change the stock balance of ${movement.productName} by ${movement.quantity} ${movement.unit}.`}
+      error={error}
+      cancelLabel="Cancel"
+      primaryLabel="Approve"
+      primaryIcon={
+        busy ? (
+          <Loader2 aria-hidden="true" className="animate-spin" />
+        ) : (
+          <Check aria-hidden="true" />
+        )
+      }
+      onConfirm={approve}
+    />
   );
 }
 
@@ -926,12 +913,14 @@ function RejectDialog({
   const [reason, setReason] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const reasonRef = React.useRef<HTMLTextAreaElement>(null);
   const [, startTransition] = React.useTransition();
   const meta = MOVEMENT_TYPE_META[movement.movementType];
 
   const reject = async () => {
     if (!reason.trim()) {
       setError("Reason is required to reject.");
+      reasonRef.current?.focus();
       return;
     }
     setBusy(true);
@@ -957,56 +946,37 @@ function RejectDialog({
   };
 
   return (
-    <Dialog
+    <ConfirmDialog
       open={open}
-      onOpenChange={(next) => {
-        if (busy && !next) return;
-        onOpenChange(next);
-      }}
+      onOpenChange={onOpenChange}
+      busy={busy}
+      title={`Reject ${meta.label}?`}
+      description={`The movement will not be applied to ${movement.productName} stock.`}
+      error={error}
+      cancelLabel="Cancel"
+      primaryLabel="Reject"
+      primaryVariant="destructive"
+      primaryIcon={
+        busy ? (
+          <Loader2 aria-hidden="true" className="animate-spin" />
+        ) : (
+          <X aria-hidden="true" />
+        )
+      }
+      onConfirm={reject}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Reject {meta.label}?</DialogTitle>
-          <DialogDescription>
-            The movement will not be applied to {movement.productName} stock.
-          </DialogDescription>
-        </DialogHeader>
-        {error ? (
-          <p
-            role="alert"
-            className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-sm"
-          >
-            {error}
-          </p>
-        ) : null}
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="reject-reason">Reason (required)</Label>
-          <Textarea
-            id="reject-reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Why is this movement being rejected?"
-            rows={2}
-          />
-        </div>
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={busy}
-          >
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={reject} disabled={busy}>
-            {busy ? (
-              <Loader2 aria-hidden="true" className="animate-spin" />
-            ) : (
-              <X aria-hidden="true" />
-            )}
-            Reject
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="reject-reason">Reason (required)</Label>
+        <Textarea
+          id="reject-reason"
+          ref={reasonRef}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Why is this movement being rejected?"
+          rows={2}
+          aria-invalid={Boolean(error)}
+        />
+      </div>
+    </ConfirmDialog>
   );
 }

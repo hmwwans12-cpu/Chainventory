@@ -27,6 +27,8 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NotificationPreferencesPanel } from "@/components/shared/notification-preferences";
 import { normalizePreferences } from "@/lib/users/notification-preferences";
+import { basescanAddressUrl } from "@/lib/constants";
+import { roleLabel } from "@/lib/auth/permissions";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md §6); cegah percobaan prerender saat env build minim.
@@ -124,15 +126,7 @@ export default async function SettingsPage({
                 <span className="text-muted-foreground text-sm">
                   {t("settings.role")}
                 </span>
-                <Badge variant="outline">
-                  {{
-                    OWNER: "Owner",
-                    MANAGER: "Manager",
-                    STAFF: "Staff",
-                    AUDITOR: "Auditor",
-                    VIEWER: "Viewer",
-                  }[active.role] ?? active.role}
-                </Badge>
+                <Badge variant="outline">{roleLabel(active.role)}</Badge>
               </div>
             ) : null}
           </CardContent>
@@ -154,10 +148,10 @@ export default async function SettingsPage({
               <>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-muted-foreground text-sm">Wallet address</p>
+                    <p className="text-muted-foreground text-sm">{t("settings.wallet_address")}</p>
                     <CopyButton
                       text={walletAddress}
-                      label="Copy wallet address"
+                      label={t("settings.copy_wallet")}
                     />
                   </div>
                   <p className="bg-muted/50 text-foreground rounded-lg border px-3 py-2 font-mono text-sm break-all">
@@ -181,9 +175,9 @@ export default async function SettingsPage({
                     size="sm"
                     render={
                       <a
-                        href={`https://sepolia.basescan.org/address/${walletAddress}`}
+                        href={basescanAddressUrl(walletAddress)}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                       />
                     }
                   >
@@ -220,15 +214,15 @@ export default async function SettingsPage({
                 </p>
                 <p className="text-muted-foreground text-sm">{active.code}</p>
               </div>
-              <Badge variant={active.status === "active" ? "default" : "destructive"}>{active.status}</Badge>
+              <Badge variant={active.status === "active" ? "default" : "destructive"}>{active.status === "active" ? "Active" : "Suspended"}</Badge>
             </div>
             {active.contractAddress ? (
               <div className="flex flex-col gap-2 border-t pt-4">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-muted-foreground text-sm">Contract address</p>
+                  <p className="text-muted-foreground text-sm">{t("settings.contract_address")}</p>
                   <CopyButton
                     text={active.contractAddress}
-                    label="Copy contract address"
+                    label={t("settings.copy_contract")}
                   />
                 </div>
                 <p className="bg-muted/50 text-foreground rounded-lg border px-3 py-2 font-mono text-sm break-all">
@@ -246,9 +240,9 @@ export default async function SettingsPage({
                 size="sm"
                 render={
                   <a
-                    href={`https://sepolia.basescan.org/address/${active.contractAddress}`}
+                    href={basescanAddressUrl(active.contractAddress)}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                   />
                 }
               >

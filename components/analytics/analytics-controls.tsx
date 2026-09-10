@@ -42,8 +42,10 @@ export function AnalyticsControls({
             }
           }}
         >
-          <SelectTrigger aria-label="Warehouse">
-            <SelectValue />
+          <SelectTrigger aria-label="Warehouse" className="min-w-36">
+            <SelectValue
+              getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
+            />
           </SelectTrigger>
           <SelectContent>
             {warehouses.map((w) => (

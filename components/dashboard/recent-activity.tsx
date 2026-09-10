@@ -1,5 +1,6 @@
 "use client";
 
+/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import Link from "next/link";
 import * as React from "react";
 
@@ -66,7 +67,7 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
                     onClick={() => setTab(t)}
                     className={cn(
                       "rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2",
-                      tab === t ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+                      tab === t ? "bg-card shadow-(--shadow-card) text-foreground" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {t}
@@ -78,10 +79,9 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
               <Button
                 variant="outline"
                 size="sm"
-                className="min-h-11"
                 render={<Link href="/notifications" />}
               >
-                View all
+                View All
               </Button>
             </CardAction>
           </div>
@@ -95,14 +95,14 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
               href="/notifications"
               className="text-primary underline-offset-4 hover:underline"
             >
-              Open notifications
+              Open Notifications
             </Link>{" "}
             to see join requests and blockchain events.
           </p>
         ) : filtered.length === 0 ? (
           <p className="text-muted-foreground py-4 text-sm">
-            No {tab.toLowerCase()} activity.{" "}
-            <button onClick={() => setTab("All")} className="text-primary underline-offset-4 hover:underline">Show all</button>
+            No {tab} activity.{" "}
+            <button onClick={() => setTab("All")} className="text-primary underline-offset-4 hover:underline">Show All</button>
           </p>
         ) : (
           <ul className="divide-border/60 -my-1 divide-y">

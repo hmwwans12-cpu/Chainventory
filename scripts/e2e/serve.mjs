@@ -2,6 +2,8 @@ import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { parseEnvFile } from "./parse-env.mjs";
+
 /**
  * E2E app server (P3 item 1) — jalankan build production dengan env E2E.
  *
@@ -25,25 +27,20 @@ import { resolve } from "node:path";
 
 const args = process.argv.slice(2);
 const portArg = args.indexOf("--port");
-const port = portArg !== -1 ? Number(args[portArg + 1]) : 3100;
+const rawPort = portArg !== -1 ? args[portArg + 1] : "3100";
+// NCF-20: validasi — Number("abc") = NaN sebelumnya lolos ke
+// `http://localhost:NaN` dan gagal misterius belakangan.
+const port = Number(rawPort);
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  console.error(`[serve] invalid --port: ${JSON.stringify(rawPort)}`);
+  process.exit(1);
+}
 const skipBuild = args.includes("--skip-build");
 const useTunnel = args.includes("--tunnel");
 const root = resolve(import.meta.dirname, "..", "..");
 
-function parseEnv(file) {
-  const out = {};
-  try {
-    const text = readFileSync(resolve(root, file), "utf8");
-    for (const line of text.split(/\r?\n/)) {
-      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-      if (!m) continue;
-      out[m[1]] = m[2].replace(/^["']|["']$/g, "");
-    }
-  } catch {
-    /* file optional */
-  }
-  return out;
-}
+// NCF-17: parser bersama (dulu regex naif — nilai ber-`#`/`=`/quote rusak).
+const parseEnv = (file) => parseEnvFile(resolve(root, file), readFileSync);
 
 const baseEnv = { ...process.env, ...parseEnv(".env.local") };
 const e2eEnv = parseEnv(".env.e2e.local");
@@ -62,6 +59,12 @@ const env = {
     ? { DEVELOPER_ALLOWLIST: e2eEnv.DEVELOPER_ALLOWLIST }
     : {}),
 };
+
+// Nilai undefined (dari KEY= kosong, dinormalisasi parser bersama) wajib
+// dibuang sebelum spawn — child_process menolak env non-string.
+for (const k of Object.keys(env)) {
+  if (env[k] === undefined) delete env[k];
+}
 
 // WAREHOUSE_FACTORY_ADDRESS untuk E2E diambil dari registry test bila belum
 // di-set di .env.e2e.local (biar satu sumber kebenaran).

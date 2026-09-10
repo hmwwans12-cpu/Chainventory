@@ -5,7 +5,7 @@ description: Understanding warehouse codes, stock movement types, and the invent
 
 ## Warehouse Code
 
-Every warehouse has a unique **warehouse code** — a short identifier used to invite team members. When you create a warehouse, a code is generated automatically. Share this code with team members who need to join.
+Every warehouse has a unique **warehouse code**, a short identifier used to invite team members. When you create a warehouse, a code is generated automatically. Share this code with team members who need to join.
 
 ## Stock Movement Types
 
@@ -38,13 +38,13 @@ Corrects a stock count to match a physical audit. Can be positive or negative.
 
 Reverses a previous stock movement (partial or full). Used to correct mistakes.
 
-- **Permission required:** `stock:reversal`
-- **Requires approval:** Owner or Manager must approve reversals
+- **Permission required:** `stock:reversal` (Owner/Manager only)
+- **Requires approval:** none. Reversals commit immediately
 - **Validation:** Cannot reverse more than the original movement quantity
 
 ## Blockchain Verification
 
-Every important stock movement (Stock In, Stock Out, Adjustment, Reversal) creates a **proof** — a cryptographic record anchored to the blockchain. This provides:
+Every important stock movement (Stock In, Stock Out, Adjustment, Reversal) creates a **proof**: a cryptographic record anchored to the blockchain. This provides:
 
 - **Integrity:** Records cannot be silently altered after the fact.
 - **Audit trail:** Every change is traceable and verifiable.
@@ -54,14 +54,14 @@ Learn more at [Blockchain & Verification](/docs/getting-started/blockchain).
 
 ## Real-Time Updates
 
-Stock balances update in real-time across all connected clients. When a team member performs a stock movement, everyone sees the updated balance immediately — no refresh needed.
+Stock balances update in real-time across all connected clients. When a team member performs a stock movement, everyone sees the updated balance immediately. No refresh needed.
 
 ## Inactivity Policy
 
-To keep the system healthy, warehouses that have no stock movements for 27 days are **suspended**. Suspended warehouses:
+To keep the system healthy, warehouses with no activity for 30 days are **suspended** (warning at 23 days, critical at 27). Suspended warehouses:
 
 - Cannot process new stock movements
 - Members cannot be added or removed
-- The warehouse can be reactivated by performing any stock movement
+- Reactivation is via Chainventory support. Suspended warehouses reject all mutations, so a stock movement cannot reactivate them
 
 This policy ensures inactive warehouses don't consume resources unnecessarily.

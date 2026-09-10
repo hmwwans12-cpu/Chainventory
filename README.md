@@ -112,7 +112,7 @@ corepack pnpm e2e:test
 
 | Layer              | Tool                | Jumlah     |
 | ------------------ | ------------------- | ---------- |
-| Unit + Integration | Vitest              | 211+ tests |
+| Unit + Integration | Vitest              | 250 passed / 31 skipped (live-gated) |
 | Contract (DB)      | Vitest (live-gated) | 25+ tests  |
 | Smart Contract     | Forge               | 26 tests   |
 | E2E                | Playwright          | 18 tests   |

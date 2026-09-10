@@ -44,11 +44,14 @@ jobs:
         run: pnpm build
 
       - name: Secret scan
-        run: |
-          if rg -n "(TREASURY_PRIVATE_KEY|QSTASH_CURRENT_SIGNING_KEY|QSTASH_NEXT_SIGNING_KEY|SUPABASE_SERVICE_ROLE_KEY|SUPABASE_SECRET_KEY|UPSTASH_REDIS_REST_TOKEN|PRIVY_APP_SECRET)\s*=\s*(0x|eyJ[A-Za-z0-9_-]{20,}|sk_[A-Za-z0-9]{20,}|sb_secret_[A-Za-z0-9]{20,}|[A-Za-z0-9+/]{40,})" --glob '!node_modules/**' --glob '!.git/**' --glob '!contracts/**' .; then
-            echo "::error::Secret value committed (env var = real value)"
-            exit 1
-          fi
+        run: pnpm secret:scan
+        shell: bash
+
+      # NCF-16: kontras WCAG cepat + deterministik — regresi a11y
+      # ketahuan di CI, bukan saat ingat manual. (preflight penuh tidak
+      # di-wire: ia menjalankan next build sehingga menggandakan CI.)
+      - name: Contrast check
+        run: pnpm check:contrast
         shell: bash
 
   # E2E penuh (P3 item 1+2): build production lokal + tunnel cloudflared +
@@ -63,12 +66,15 @@ jobs:
     steps:
       - name: Evaluate E2E secret availability
         id: gate
+        # NCF-01: tanpa backtick — "`$GITHUB_OUTPUT" mengeksekusi path
+        # sebagai perintah (command substitution) dan selalu gagal,
+        # sehingga job e2e tak pernah jalan walau secret ada.
         run: |
           if [ -z "${{ secrets.E2E_SUPABASE_URL }}" ]; then
             echo "::notice::E2E secrets not configured - e2e job will be skipped."
-            echo "enabled=false" >> "`$GITHUB_OUTPUT"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
           else
-            echo "enabled=true" >> "`$GITHUB_OUTPUT"
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
           fi
 
   e2e:

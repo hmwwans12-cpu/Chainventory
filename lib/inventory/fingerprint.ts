@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+import { toCanonicalDecimal } from "@/lib/proof/payload";
+
 /**
  * Request fingerprint untuk idempotency (audit 0.1.5 P1-01).
  *
@@ -7,8 +9,11 @@ import { createHash } from "node:crypto";
  * Key yang sama + payload beda = IDEMPOTENCY_CONFLICT.
  *
  * Fingerprint dihitung dari field bisnis movement (bukan seluruh body)
- * secara canonical: lowercase address, delimiter NUL agar tidak ada
- * ambiguity antar-field. Dihitung di BFF dan diverifikasi ulang di RPC.
+ * secara canonical: quantity dinormalisasi via toCanonicalDecimal (fix
+ * BE-09: "10" vs "10.0"/"010.0" sebelumnya hasilkan fingerprint beda →
+ * CONFLICT palsu), reason/reference di-trim, address lowercase + trim,
+ * delimiter NUL agar tidak ada ambiguity antar-field. Dihitung di BFF dan
+ * diverifikasi ulang di RPC.
  */
 export function computeRequestFingerprint(input: {
   warehouseId: string;
@@ -25,12 +30,12 @@ export function computeRequestFingerprint(input: {
     input.warehouseId,
     input.productId,
     input.movementType,
-    input.quantity,
+    toCanonicalDecimal(input.quantity),
     input.expectedBalanceVersion ?? "",
-    input.reason ?? "",
-    input.reference ?? "",
+    (input.reason ?? "").trim(),
+    (input.reference ?? "").trim(),
     input.reversalOf ?? "",
-    (input.actorWallet ?? "").toLowerCase(),
+    (input.actorWallet ?? "").trim().toLowerCase(),
   ].join("\u0000");
   return createHash("sha256").update(canonical, "utf8").digest("hex");
 }

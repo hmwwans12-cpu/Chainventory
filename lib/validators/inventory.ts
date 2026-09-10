@@ -20,7 +20,7 @@ export const MOVEMENT_TYPES = [
 export type MovementType = (typeof MOVEMENT_TYPES)[number];
 
 /** Batas atas nilai numerik — hindari Infinity/overflow pada Number() & DB numeric. */
-const MAX_QUANTITY = 1_000_000_000_000; // 1e12
+export const MAX_QUANTITY = 1_000_000_000_000; // 1e12
 
 const decimal3 = z
   .string()
@@ -98,6 +98,41 @@ export const updateProductSchema = createProductSchema
   .extend({
     productId: z.string().uuid("Invalid product id."),
   });
+
+/**
+ * Skema form produk client (FE-03): field yang sama dengan
+ * createProductSchema/updateProductSchema TANPA warehouseId/productId, agar
+ * ProductForm (RHF + zodResolver) memvalidasi batas yang IDENTIK dengan
+ * server (single source of truth — bukan duplikat manual).
+ * initialQuantity "" = tidak ada stok awal (create saja).
+ */
+const emptyOrDecimal3 = z
+  .string()
+  .trim()
+  .max(32, "Value is too long.")
+  .refine(
+    (v) => v === "" || /^\d+(\.\d{1,3})?$/.test(v),
+    "Enter a valid non-negative number (max 3 decimals)."
+  )
+  .refine((v) => v === "" || Number(v) <= MAX_QUANTITY, "Value is too large.");
+
+export const productFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Enter a product name.")
+    .max(200, "Name is too long."),
+  sku: z.string().trim().min(1, "Enter a SKU.").max(64, "SKU is too long."),
+  // Tanpa .default(): RHF selalu memasok string via defaultValues, sehingga
+  // tipe input = output (tidak ada mismatch Resolver). Nilai "" = kosong.
+  category: z.string().trim().max(100, "Category is too long."),
+  unit: z.string().trim().min(1, "Enter a unit.").max(20, "Unit is too long."),
+  lowStockThreshold: decimal3,
+  description: z.string().trim().max(500, "Description is too long."),
+  initialQuantity: emptyOrDecimal3,
+});
+
+export type ProductFormInput = z.infer<typeof productFormSchema>;
 
 export const archiveProductSchema = z.object({
   warehouseId: z.string().uuid("Invalid warehouse id."),

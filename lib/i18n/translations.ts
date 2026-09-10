@@ -11,7 +11,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "group.operations": "Operations",
     "group.governance": "Governance",
     "group.system": "System",
-    "group.developer": "Developer",
+    "group.developer": "Pengembang",
     // Nav items (keyed by href)
     "nav./dashboard": "Overview",
     "nav./inventory/products": "Inventory",
@@ -61,25 +61,25 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.hero.title_main": "Inventory management with",
     "landing.hero.title_accent": "blockchain verification",
     "landing.hero.subtitle":
-      "Real-time stock for your whole team, with a verifiable proof on every important record — no crypto knowledge needed.",
+      "Real-time stock for your whole team, with a verifiable proof on every important record. No crypto knowledge needed.",
     "landing.hero.cta_primary": "Create Warehouse",
     "landing.hero.cta_secondary": "Login",
-    "landing.hero.stat_stock_updates": "stock updates",
-    "landing.hero.stat_fine_access": "fine-grained access",
-    "landing.hero.stat_every_movement": "on every movement",
-    "landing.hero.stat_real_time": "Real-time",
+    "landing.hero.stat_stock_updates": "Stock Updates",
+    "landing.hero.stat_fine_access": "Fine-Grained Access",
+    "landing.hero.stat_every_movement": "On Every Movement",
+    "landing.hero.stat_real_time": "Waktu nyata",
     "landing.hero.stat_5_roles": "5 roles",
     "landing.hero.stat_proof": "Proof",
     "landing.hero.preview_name": "Warehouse · Jakarta",
     "landing.hero.live": "Live",
     "landing.hero.total_products": "Total products",
-    "landing.hero.stock_in_30": "Stock in (30d)",
-    "landing.hero.stock_out_30": "Stock out (30d)",
-    "landing.hero.chart_label": "Stock in - last 7 days",
+    "landing.hero.stock_in_30": "Stock In (30d)",
+    "landing.hero.stock_out_30": "Stock Out (30d)",
+    "landing.hero.chart_label": "Stock In / Last 7 Days",
     "landing.hero.blockchain_verified": "Blockchain verified",
     "landing.hero.base_sepolia": "Base Sepolia",
     "landing.hero.proof_verified": "Proof verified",
-    "landing.hero.tamper_evident": "tamper-evident record",
+    "landing.hero.tamper_evident": "Tamper-Evident Record",
     "landing.hero.live_sync": "Live sync",
     "landing.hero.updates_reach": "updates reach the team",
     // Landing - Problem
@@ -98,13 +98,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Landing - Features
     "landing.features.title": "Everything a modern warehouse needs",
     "landing.features.subtitle":
-      "Manage inventory the way a modern SaaS should feel- with trust and verification layered underneath.",
+      "Manage inventory the way a modern SaaS should feel, with trust and verification layered underneath.",
     "landing.features.f1_title": "Centralized inventory",
     "landing.features.f1_desc":
       "Products, stock levels, and units in one place. Add individually or import in bulk from CSV.",
-    "landing.features.f2_title": "Stock in / stock out",
+    "landing.features.f2_title": "Stock In / Stock Out",
     "landing.features.f2_desc":
-      "Every movement is recorded atomically- no lost updates or negative stock from concurrent edits.",
+      "Every movement is recorded atomically. No lost updates or negative stock from concurrent edits.",
     "landing.features.f3_title": "Real-time sync",
     "landing.features.f3_desc":
       "Changes propagate to every connected team member instantly. No manual refresh required.",
@@ -113,7 +113,7 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Owners, managers, staff, auditors, and viewers each get exactly the access they need.",
     "landing.features.f5_title": "Verifiable records",
     "landing.features.f5_desc":
-      "Important movements get a cryptographic proof you can verify anytime- without touching crypto yourself.",
+      "Important movements get a cryptographic proof you can verify anytime, without touching crypto yourself.",
     "landing.features.f6_title": "Built-in security",
     "landing.features.f6_desc":
       "Server-side authorization, audited history, and an append-only trail of who did what.",
@@ -130,17 +130,17 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Share the code or a link. New members request access and get assigned an appropriate role.",
     "landing.how.s3_title": "Manage stock in real time",
     "landing.how.s3_desc":
-      "Add products, record stock in and out, and watch updates reach the whole team instantly.",
+      "Add products, record Stock In and Out, and watch updates reach the whole team instantly.",
     "landing.how.s4_title": "Verify when you need to",
     "landing.how.s4_desc":
-      "Every movement gets a proof record. Open the history to see exactly who did what- anytime.",
+      "Every movement gets a proof record. Open the history to see exactly who did what, anytime.",
     // Landing - Blockchain
     "landing.blockchain.badge": "Why blockchain?",
     "landing.blockchain.title": "Verification, without the complexity",
     "landing.blockchain.subtitle":
-      "We use blockchain as an additional verification layer for important records. It provides proof of integrity and a tamper-evident history- while staying completely out of your way.",
+      "We use blockchain as an additional verification layer for important records. It provides proof of integrity and a tamper-evident history, while staying completely out of your way.",
     "landing.blockchain.point1":
-      "Your inventory is managed normally- nothing about daily work changes.",
+      "Your inventory is managed normally. Nothing about daily work changes.",
     "landing.blockchain.point2":
       "Important records get an additional, verifiable proof of authenticity.",
     "landing.blockchain.point3":
@@ -154,7 +154,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.blockchain.proof": "Proof",
     "landing.blockchain.verified": "Verified",
     "landing.blockchain.anchored_on": "Anchored on",
-    "landing.blockchain.block": "Base Sepolia- block 12,845,201",
+    "landing.blockchain.block": "Base Sepolia, block 12,845,201",
     // Landing - Security
     "landing.security.title": "Trustworthy records, clear accountability",
     "landing.security.subtitle":
@@ -164,7 +164,7 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Database-level security backs up application-level checks so no single bug can expose your data.",
     "landing.security.s2_title": "Access you control",
     "landing.security.s2_desc":
-      "Fine-grained roles decide who can view, edit, or approve- enforced server-side, not just in the UI.",
+      "Fine-grained roles decide who can view, edit, or approve, enforced server-side, not just in the UI.",
     "landing.security.s3_title": "Append-only audit history",
     "landing.security.s3_desc":
       "Every meaningful action is recorded. History can be reviewed but never silently edited.",
@@ -182,7 +182,7 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Onboarding the team took an afternoon. Role-based access let us give auditors read-only proof without handing over the keys.",
     "landing.testimonials.a2": "Warehouse Manager, Distribution",
     "landing.testimonials.q3":
-      "The blockchain proof is the part customers ask about. They don't care about crypto — they care that a movement is verifiable after the fact.",
+      "The blockchain proof is the part customers ask about. They don't care about crypto. They care that a movement is verifiable after the fact.",
     "landing.testimonials.a3": "Founder, Hardware Startup",
     // Landing - TrustedBy
     "landing.trustedby.label":
@@ -197,7 +197,7 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Every stock movement leaves a verifiable on-chain anchor you can inspect later.",
     "landing.peak_proof.stat2_value": "5 roles",
     "landing.peak_proof.stat2_label":
-      "Owner, Manager, Staff, Auditor, Viewer- enforced server-side, not just in the UI.",
+      "Owner, Manager, Staff, Auditor, Viewer, enforced server-side, not just in the UI.",
     "landing.peak_proof.stat3_value": "< 1 day",
     "landing.peak_proof.stat3_label":
       "Average time for a new team to onboard and start recording stock with confidence.",
@@ -208,9 +208,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.cta.primary": "Create Warehouse",
     "landing.cta.secondary": "Login",
     "landing.cta.footnote":
-      "No crypto knowledge needed- Free on the Base Sepolia test network",
+      "No crypto knowledge needed. Free on the Base Sepolia test network",
     "landing.faq.title": "Frequently asked questions",
-    "landing.faq.subtitle": "The quick answers- no blockchain vocabulary required.",
+    "landing.faq.subtitle": "The quick answers. No blockchain vocabulary required.",
     "landing.faq.q1": "Do I need to understand blockchain to use Chainventory?",
     "landing.faq.a1": "No. You manage inventory the same way you would with any modern tool. Blockchain works quietly in the background as a verification layer for important records.",
     "landing.faq.q2": "How does blockchain verification help me?",
@@ -250,6 +250,33 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.deployed_on_chain": "deployed on-chain",
     "dashboard.not_deployed": "not deployed",
     "dashboard.vs_previous": "vs previous {n} days",
+    // FE-16: dashboard memakai kunci ini (bukan hardcode EN).
+    "dashboard.needs_attention_one": "Needs attention: 1 item",
+    "dashboard.needs_attention_other": "Needs attention: {n} items",
+    "dashboard.below_minimum_one": "1 product below minimum stock",
+    "dashboard.below_minimum_other": "{n} products below minimum stock",
+    "dashboard.join_requests_one": "1 join request awaiting approval",
+    "dashboard.join_requests_other": "{n} join requests awaiting approval",
+    "dashboard.review": "Review",
+    "dashboard.setup_title": "Set up your warehouse",
+    "dashboard.setup_progress": "{done}/4 completed",
+    "dashboard.step_create": "Create warehouse",
+    "dashboard.step_ready": "{name} is ready",
+    "dashboard.step_products_add": "Add first product",
+    "dashboard.step_products_manage": "Manage products",
+    "dashboard.step_products_empty": "No products yet",
+    "dashboard.step_products_count": "{n} products",
+    "dashboard.step_invite": "Invite team",
+    "dashboard.step_invite_desc": "Share warehouse code",
+    "dashboard.step_movement": "Record stock movement",
+    "dashboard.step_movement_desc": "Stock In / Out",
+    "dashboard.setup_hint":
+      "Your warehouse is ready. Add your first product to start the checklist.",
+    "dashboard.health_title": "Warehouse health",
+    "dashboard.health_inventory": "Inventory",
+    "dashboard.health_members": "Members",
+    "dashboard.health_stable": "Stable",
+    "dashboard.health_pending": "{n} pending",
     "settings.title": "Settings",
     "settings.description":
       "Your profile, wallet, and active warehouse details.",
@@ -260,6 +287,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.role": "Role",
     "settings.balance": "Balance",
     "settings.no_wallet": "No primary wallet connected yet.",
+    "settings.wallet_address": "Wallet address",
+    "settings.copy_wallet": "Copy wallet address",
+    "settings.contract_address": "Contract address",
+    "settings.copy_contract": "Copy contract address",
     "settings.warehouse": "Warehouse",
     "settings.warehouse_desc": "Active warehouse and on-chain contract.",
     "settings.no_contract": "No contract deployed yet.",
@@ -276,15 +307,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     "inactivity.warning_title_critical":
       "{name} will be suspended in {days} day(s)",
     "inactivity.warning_title": "{name} will be suspended",
-    "inactivity.warning_desc":
-      "This warehouse has had no activity for {inactive} days. Record any stock movement within the next {days} day(s) to keep it active.",
+    "inactivity.warning_desc_one":
+      "This warehouse has had no activity for {inactive} days. Record any stock movement within the next day to keep it active.",
+    "inactivity.warning_desc_other":
+      "This warehouse has had no activity for {inactive} days. Record any stock movement within the next {days} days to keep it active.",
     "inactivity.cta": "Record stock movement",
   },
   id: {
     "group.operations": "Operasional",
     "group.governance": "Tata Kelola",
     "group.system": "Sistem",
-    "group.developer": "Developer",
+    "group.developer": "Pengembang",
     "nav./dashboard": "Ikhtisar",
     "nav./inventory/products": "Inventaris",
     "nav./transactions": "Transaksi",
@@ -309,7 +342,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cmd.settings": "Pengaturan",
     "cmd.create_warehouse": "Buat Gudang",
     "cmd.join_warehouse": "Gabung Gudang",
-    "cmd.developer_console": "Konsol Developer",
+    "cmd.developer_console": "Konsol Pengembang",
     "cmd.no_results": "Tidak ada hasil untuk “{query}”.",
     "common.account_menu": "Menu akun",
     "common.switch_warehouse": "Ganti gudang aktif",
@@ -330,21 +363,21 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.hero.title_main": "Manajemen inventaris dengan",
     "landing.hero.title_accent": "verifikasi blockchain",
     "landing.hero.subtitle":
-      "Stok real-time untuk seluruh tim, dengan bukti terverifikasi pada setiap catatan penting — tanpa perlu tahu kripto.",
+      "Stok real-time untuk seluruh tim, dengan bukti terverifikasi pada setiap catatan penting. Tanpa perlu tahu kripto.",
     "landing.hero.cta_primary": "Buat Gudang",
     "landing.hero.cta_secondary": "Masuk",
     "landing.hero.stat_stock_updates": "pembaruan stok",
     "landing.hero.stat_fine_access": "akses terperinci",
     "landing.hero.stat_every_movement": "pada setiap pergerakan",
-    "landing.hero.stat_real_time": "Real-time",
+    "landing.hero.stat_real_time": "Waktu nyata",
     "landing.hero.stat_5_roles": "5 peran",
     "landing.hero.stat_proof": "Bukti",
     "landing.hero.preview_name": "Gudang · Jakarta",
     "landing.hero.live": "Aktif",
     "landing.hero.total_products": "Total produk",
-    "landing.hero.stock_in_30": "Stok masuk (30h)",
-    "landing.hero.stock_out_30": "Stok keluar (30h)",
-    "landing.hero.chart_label": "Stok masuk - 7 hari terakhir",
+    "landing.hero.stock_in_30": "Stok Masuk (30h)",
+    "landing.hero.stock_out_30": "Stok Keluar (30h)",
+    "landing.hero.chart_label": "Stok Masuk / 7 Hari Terakhir",
     "landing.hero.blockchain_verified": "Terverifikasi blockchain",
     "landing.hero.base_sepolia": "Base Sepolia",
     "landing.hero.proof_verified": "Bukti terverifikasi",
@@ -367,22 +400,22 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Landing - Features
     "landing.features.title": "Semua yang gudang modern butuhkan",
     "landing.features.subtitle":
-      "Kelola inventaris seperti SaaS modern seharusnya terasa- dengan kepercayaan dan verifikasi menyatu di bawahnya.",
+      "Kelola inventaris seperti SaaS modern seharusnya terasa, dengan kepercayaan dan verifikasi menyatu di bawahnya.",
     "landing.features.f1_title": "Inventaris terpusat",
     "landing.features.f1_desc":
       "Produk, level stok, dan unit di satu tempat. Tambah satu per satu atau impor massal dari CSV.",
     "landing.features.f2_title": "Stok masuk / stok keluar",
     "landing.features.f2_desc":
-      "Setiap pergerakan dicatat atomik- tanpa pembaruan hilang atau stok negatif dari edit bersamaan.",
+      "Setiap pergerakan dicatat atomik. Tanpa pembaruan hilang atau stok negatif dari edit bersamaan.",
     "landing.features.f3_title": "Sinkronisasi real-time",
     "landing.features.f3_desc":
       "Perubahan langsung menyebar ke setiap anggota tim. Tanpa penyegaran manual.",
     "landing.features.f4_title": "Akses berbasis peran",
     "landing.features.f4_desc":
-      "Owner, manajer, staf, auditor, dan penonton masing-masing mendapat akses persis yang mereka butuhkan.",
+      "owner, manajer, staf, auditor, dan penonton masing-masing mendapat akses persis yang mereka butuhkan.",
     "landing.features.f5_title": "Catatan terverifikasi",
     "landing.features.f5_desc":
-      "Pergerakan penting mendapat bukti kriptografis yang bisa Anda verifikasi kapan saja- tanpa menyentuh kripto sendiri.",
+      "Pergerakan penting mendapat bukti kriptografis yang bisa Anda verifikasi kapan saja, tanpa menyentuh kripto sendiri.",
     "landing.features.f6_title": "Keamanan bawaan",
     "landing.features.f6_desc":
       "Otorisasi server-side, riwayat diaudit, dan jejak siapa melakukan apa yang hanya bisa ditambah.",
@@ -402,14 +435,14 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Tambah produk, catat stok masuk dan keluar, dan lihat pembaruan sampai ke seluruh tim instan.",
     "landing.how.s4_title": "Verifikasi saat Anda butuh",
     "landing.how.s4_desc":
-      "Setiap pergerakan mendapat catatan bukti. Buka riwayat untuk melihat persis siapa yang lakukan apa- kapan saja.",
+      "Setiap pergerakan mendapat catatan bukti. Buka riwayat untuk melihat persis siapa yang lakukan apa, kapan saja.",
     // Landing - Blockchain
     "landing.blockchain.badge": "Mengapa blockchain?",
     "landing.blockchain.title": "Verifikasi, tanpa kerumitan",
     "landing.blockchain.subtitle":
-      "Kami menggunakan blockchain sebagai lapisan verifikasi tambahan untuk catatan penting. Memberi bukti integritas dan riwayat anti-rusak- sambil benar-benar tak mengganggu.",
+      "Kami menggunakan blockchain sebagai lapisan verifikasi tambahan untuk catatan penting. Memberi bukti integritas dan riwayat anti-rusak, sambil benar-benar tak mengganggu.",
     "landing.blockchain.point1":
-      "Inventaris Anda dikelola seperti biasa- tak ada yang berubah dalam kerja harian.",
+      "Inventaris Anda dikelola seperti biasa. Tak ada yang berubah dalam kerja harian.",
     "landing.blockchain.point2":
       "Catatan penting mendapat bukti keaslian tambahan yang terverifikasi.",
     "landing.blockchain.point3":
@@ -423,7 +456,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.blockchain.proof": "Bukti",
     "landing.blockchain.verified": "Terverifikasi",
     "landing.blockchain.anchored_on": "Ditambatkan pada",
-    "landing.blockchain.block": "Base Sepolia- blok 12.845.201",
+    "landing.blockchain.block": "Base Sepolia, blok 12.845.201",
     // Landing - Security
     "landing.security.title": "Catatan terpercaya, akuntabilitas jelas",
     "landing.security.subtitle":
@@ -433,7 +466,7 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Keamanan level database menopang cek level aplikasi sehingga tak ada bug tunggal yang membocorkan data Anda.",
     "landing.security.s2_title": "Akses yang Anda kendalikan",
     "landing.security.s2_desc":
-      "Peran terperinci menentukan siapa yang bisa lihat, edit, atau setuju- ditegakkan server-side, bukan hanya di UI.",
+      "Peran terperinci menentukan siapa yang bisa lihat, edit, atau setuju, ditegakkan di sisi server, bukan hanya di UI.",
     "landing.security.s3_title": "Riwayat audit hanya-tambah",
     "landing.security.s3_desc":
       "Setiap tindakan bermakna dicatat. Riwayat bisa ditinjau tapi tak pernah diam-diam diedit.",
@@ -451,7 +484,7 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Onboarding tim cuma butuh satu sore. Akses berbasis peran memberi auditor bukti read-only tanpa menyerahkan kunci.",
     "landing.testimonials.a2": "Manajer Gudang, Distribusi",
     "landing.testimonials.q3":
-      "Bukti blockchain adalah bagian yang ditanya pelanggan. Mereka tak peduli kripto- mereka peduli pergerakan terverifikasi setelahnya.",
+      "Bukti blockchain adalah bagian yang ditanya pelanggan. Mereka tak peduli kripto. Mereka peduli pergerakan terverifikasi setelahnya.",
     "landing.testimonials.a3": "Founder, Startup Hardware",
     // Landing - TrustedBy
     "landing.trustedby.label":
@@ -467,7 +500,7 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Setiap pergerakan stok meninggalkan jangkar on-chain terverifikasi yang bisa Anda periksa kembali.",
     "landing.peak_proof.stat2_value": "5 peran",
     "landing.peak_proof.stat2_label":
-      "Owner, Manager, Staff, Auditor, Viewer- ditegakkan server-side, bukan hanya di UI.",
+      "Owner, Manager, Staff, Auditor, Viewer, ditegakkan di sisi server, bukan hanya di UI.",
     "landing.peak_proof.stat3_value": "< 1 hari",
     "landing.peak_proof.stat3_label":
       "Rata-rata waktu bagi tim baru untuk onboard dan mulai mencatat stok dengan percaya diri.",
@@ -478,9 +511,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.cta.primary": "Buat Gudang",
     "landing.cta.secondary": "Masuk",
     "landing.cta.footnote":
-      "Tanpa perlu tahu kripto- Gratis di jaringan uji Base Sepolia",
+      "Tanpa perlu tahu kripto. Gratis di jaringan uji Base Sepolia",
     "landing.faq.title": "Pertanyaan yang sering diajukan",
-    "landing.faq.subtitle": "Jawaban cepat- tanpa kosakata blockchain.",
+    "landing.faq.subtitle": "Jawaban cepat. Tanpa kosakata blockchain.",
     "landing.faq.q1": "Apakah saya perlu paham blockchain untuk memakai Chainventory?",
     "landing.faq.a1": "Tidak. Anda mengelola inventaris seperti tool modern biasa. Blockchain bekerja diam-diam di latar sebagai lapisan verifikasi.",
     "landing.faq.q2": "Bagaimana verifikasi blockchain membantu saya?",
@@ -519,6 +552,33 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.deployed_on_chain": "dideploy on-chain",
     "dashboard.not_deployed": "belum dideploy",
     "dashboard.vs_previous": "vs {n} hari sebelumnya",
+    "dashboard.needs_attention_one": "Perlu perhatian: 1 hal",
+    "dashboard.needs_attention_other": "Perlu perhatian: {n} hal",
+    "dashboard.below_minimum_one": "1 produk di bawah stok minimum",
+    "dashboard.below_minimum_other": "{n} produk di bawah stok minimum",
+    "dashboard.join_requests_one": "1 permintaan gabung menunggu persetujuan",
+    "dashboard.join_requests_other":
+      "{n} permintaan gabung menunggu persetujuan",
+    "dashboard.review": "Tinjau",
+    "dashboard.setup_title": "Siapkan gudang Anda",
+    "dashboard.setup_progress": "{done}/4 selesai",
+    "dashboard.step_create": "Buat gudang",
+    "dashboard.step_ready": "{name} siap",
+    "dashboard.step_products_add": "Tambah produk pertama",
+    "dashboard.step_products_manage": "Kelola produk",
+    "dashboard.step_products_empty": "Belum ada produk",
+    "dashboard.step_products_count": "{n} produk",
+    "dashboard.step_invite": "Undang tim",
+    "dashboard.step_invite_desc": "Bagikan kode gudang",
+    "dashboard.step_movement": "Catat pergerakan stok",
+    "dashboard.step_movement_desc": "Stok Masuk / Keluar",
+    "dashboard.setup_hint":
+      "Gudang Anda siap. Tambah produk pertama untuk memulai checklist.",
+    "dashboard.health_title": "Kesehatan gudang",
+    "dashboard.health_inventory": "Inventaris",
+    "dashboard.health_members": "Anggota",
+    "dashboard.health_stable": "Stabil",
+    "dashboard.health_pending": "{n} menunggu",
     "settings.title": "Pengaturan",
     "settings.description": "Profil, dompet, dan detail gudang aktif Anda.",
     "settings.profile": "Profil",
@@ -528,6 +588,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.role": "Peran",
     "settings.balance": "Saldo",
     "settings.no_wallet": "Belum ada dompet utama yang terhubung.",
+    "settings.wallet_address": "Alamat dompet",
+    "settings.copy_wallet": "Salin alamat dompet",
+    "settings.contract_address": "Alamat kontrak",
+    "settings.copy_contract": "Salin alamat kontrak",
     "settings.warehouse": "Gudang",
     "settings.warehouse_desc": "Gudang aktif dan kontrak on-chain.",
     "settings.no_contract": "Belum ada kontrak yang dideploy.",
@@ -537,16 +601,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.no_warehouse_desc":
       "Buat atau gabung gudang untuk melihat detailnya di sini.",
     // Inactivity banner
-    "inactivity.suspended_title": "{name} disuspend karena tidak aktif",
+    "inactivity.suspended_title": "{name} ditangguhkan karena tidak aktif",
     "inactivity.suspended_desc":
-      "Gudang ini disuspend setelah {days} hari tanpa aktivitas. Mutasi stok dan keanggotaan dijeda. Hubungi dukungan Chainventory untuk mengaktifkannya kembali.",
+      "Gudang ini ditangguhkan setelah {days} hari tanpa aktivitas. Mutasi stok dan keanggotaan dijeda. Hubungi dukungan Chainventory untuk mengaktifkannya kembali.",
     "inactivity.support_cta": "Email dukungan",
     "inactivity.warning_title_critical":
-      "{name} akan disuspend dalam {days} hari",
-    "inactivity.warning_title": "{name} akan disuspend",
-    "inactivity.warning_desc":
-      "Gudang ini belum ada aktivitas selama {inactive} hari. Lakukan stock movement dalam {days} hari ke depan untuk menjaganya tetap aktif.",
-    "inactivity.cta": "Buat Stock Movement",
+      "{name} akan ditangguhkan dalam {days} hari",
+    "inactivity.warning_title": "{name} akan ditangguhkan",
+    "inactivity.warning_desc_one":
+      "Gudang ini belum ada aktivitas selama {inactive} hari. Lakukan pergerakan stok dalam 1 hari ke depan untuk menjaganya tetap aktif.",
+    "inactivity.warning_desc_other":
+      "Gudang ini belum ada aktivitas selama {inactive} hari. Lakukan pergerakan stok dalam {days} hari ke depan untuk menjaganya tetap aktif.",
+    "inactivity.cta": "Buat Pergerakan Stok",
   },
 };
 

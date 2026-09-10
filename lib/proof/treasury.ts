@@ -22,10 +22,16 @@ import type {
 } from "@/lib/proof/types";
 
 /**
- * Treasury adapter (P1 Step 5): submit proof ke kontrak Warehouse di Base
- * Sepolia memakai treasury signer (TREASURY_PRIVATE_KEY) dan baca konfirmasi
- * on-chain. Treasury = proofRecorder warehouse (immutable v1) — address
- * diverifikasi = registry `proofRecorder` sebelum deploy.
+ * Treasury adapter (P1 Step 5, LEGACY v1): submit proof ke kontrak Warehouse
+ * v1 di Base Sepolia memakai treasury signer (TREASURY_PRIVATE_KEY).
+ * Treasury = proofRecorder warehouse (immutable v1).
+ *
+ * DEPRECATED untuk warehouse kontrak v2: Warehouse.recordProof(v2)
+ * mensyaratkan `actor == msg.sender` (member membayar gas sendiri via
+ * stock_intents), sehingga submit treasury PASTI revert. Processor
+ * (lib/proof/processor.ts) mendeteksi revert ini dan langsung
+ * manual_review tanpa retry. Jangan memakai adapter ini untuk proof baru
+ * di warehouse v2 — gunakan flow member-paid intents.
  *
  * `submit` HANYA mengirim tx dan mengembalikan tx hash (tidak menunggu
  * mined). Konfirmasi (≥2) dilakukan job terpisah (`confirmation.ts`).
@@ -33,7 +39,12 @@ import type {
 
 const WAREHOUSE_ABI_PATH = "contracts/out/Warehouse.sol/Warehouse.json";
 
+// Fix BE-24: cache ABI di level modul (sebelumnya readFileSync + parse
+// setiap submit = block event-loop per request).
+let warehouseAbiCache: Abi | null = null;
+
 function loadWarehouseAbi(): Abi {
+  if (warehouseAbiCache) return warehouseAbiCache;
   const artifactPath = path.join(process.cwd(), WAREHOUSE_ABI_PATH);
   const artifact = JSON.parse(readFileSync(artifactPath, "utf8")) as {
     abi?: Abi;
@@ -41,6 +52,7 @@ function loadWarehouseAbi(): Abi {
   if (!artifact.abi) {
     throw new Error("Warehouse ABI not found. Build contracts (forge build).");
   }
+  warehouseAbiCache = artifact.abi;
   return artifact.abi;
 }
 

@@ -1,7 +1,7 @@
 # TODO.md
 
 **Status:** Sebagian besar tercapai - disinkronkan dari audit kode
-**Last Updated:** 2026-08-23
+**Last Updated:** 2026-09-06 (NCF-18: header basi 2026-08-23 diselaraskan)
 **Companion to:** `PRD.md`, `ARSITEKTUR.md`, `TECHSTACK.md`, `WORKFLOW.md`
 
 Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet → RBAC → Inventory → Proof pipeline**, lalu **P2**, lalu **P3**.
@@ -19,13 +19,11 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 > hijau (prettier/tsc/eslint/Vitest/contrast/build). Detail: bukti per item
 > di bawah + spesifikasi `docs/superpowers/specs/2026-08-23-oauth-realtime-csv-design.md`.
 >
-> **Last verified — 2026-08-24 (run nyata, bukan angka manual):**
-> Vitest **223 passed / 30 skipped** · Forge **26 passed** · Playwright E2E lokal
-> **18 passed** (termasuk proof on-chain via tunnel) · `tsc` PASS · `eslint` PASS ·
-> `build` PASS · `format:check` PASS · `check-contrast` PASS ·
-> `pnpm audit --prod --audit-level high` PASS (axios/ws di-patch via overrides).
-> (Batch audit 0.1.5 P0/P1 menambah 12 test unit baru; live-env contract tests
-> auto-skip tanpa env server — jalankan dengan env penuh untuk bukti live.)
+> **Last verified — 2026-09-06 (run nyata, bukan angka manual):**
+> Vitest **250 passed / 31 skipped** · `tsc` PASS · `eslint` PASS ·
+> (live-env contract tests auto-skip tanpa env server — jalankan dengan env
+> penuh untuk bukti live. Angka lama 2026-08-24: 223/30 — lihat AGENT.md §9
+> untuk changelog v0.4.x.)
 
 ---
 
@@ -45,12 +43,12 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 
 - [x] Buat project Supabase Free.
 - [x] Migrasikan JWT signing key menjadi asymmetric/JWKS. (✅ terverifikasi live 2026-08-24: /.well-known/jwks.json mengekspos ES256)
-- [ ] Konfigurasi Supabase Auth: email dan Google. (✅✅ keduanya live & terverifikasi 2026-08-24)
+- [x] Konfigurasi Supabase Auth: email dan Google. (✅✅ keduanya live & terverifikasi 2026-08-24)
 - [x] Buat tabel `users`, relasi ke `auth.users`, serta profile bootstrap.
 - [x] Aktifkan RLS pada seluruh tabel aplikasi.
 - [x] Buat helper database untuk membership/permission.
 - [x] Buat migration framework dan aturan expand–migrate–contract.
-- [ ] Konfigurasi Realtime hanya untuk tabel yang dibutuhkan.
+- [x] Konfigurasi Realtime hanya untuk tabel yang dibutuhkan. (whitelist publication per migrasi: 0002 users, 0003 wallets/warehouses, 0004 memberships/join_requests, 0006 products/balances/movements, 0010 deployments, 0017 proofs/notifications)
 - [x] Buat endpoint health check read-only dan Vercel Cron keep-alive harian.
 - [x] Buat prosedur export manual database/audit sebelum demo.
 
@@ -152,7 +150,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 - [x] Implement faucet: Owner/Manager/Staff saja, `0.001` Base Sepolia ETH per 12 jam.
 - [x] Tambahkan anti-abuse faucet dan observability klaim.
 - [x] Pastikan browser tidak dapat menjalankan direct mutation pada ledger/balance/proof.
-- [ ] Uji RLS bypass, role escalation, rate-limit outage, dan secret leakage. (escalation + secret leakage ✅; RLS bypass ✅ `rls-bypass.contract.test.ts` live-env; rate-limit outage ✅ `rate-limit.outage.test.ts` + `.unconfigured.test.ts`)
+- [x] Uji RLS bypass, role escalation, rate-limit outage, dan secret leakage. (semua ✅: escalation + secret leakage; RLS bypass `rls-bypass.contract.test.ts` live-env; rate-limit outage `rate-limit.outage.test.ts` + `.unconfigured.test.ts`)
 
 ## P2 — UI, Realtime, dan Data Access
 

@@ -33,14 +33,15 @@ export function AuditTrail({ entries }: { entries: AuditEntry[] }) {
       <CardHeader>
         <CardTitle>Audit trail</CardTitle>
         <CardDescription>
-          Append-only ledger — who did what, when (incl. manual proof retries).
+          Append-only ledger: who did what, when (incl. manual proof retries).
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         {entries.length === 0 ? (
           <EmptyState
             icon={ScrollText}
-            title="No audit entries yet."
+            bare
+            title="No audit entries yet"
             description="Actions will be recorded here as they happen."
           />
         ) : (

@@ -202,7 +202,7 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
         </Badge>
         <span aria-hidden="true">·</span>
         <span>
-          Developer Console is platform-scoped — data from all warehouses.
+          Developer Console is platform-scoped: data from all warehouses.
         </span>
       </div>
 

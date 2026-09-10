@@ -3,11 +3,10 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Double-Bezel Card (High-end Visual Design §4.A).
+ * Double-Bezel Card (High-end Visual Design §4.A) — marketing only.
  * Nested architecture: outer shell + inner core for "machined hardware" depth.
- *
- * Outer: subtle bg, hairline border, large radius (2rem), padding for bezel
- * Inner: distinct bg, inner highlight shadow, concentric smaller radius
+ * Default radius follows unified system (rounded-lg = 12px). Pass explicit
+ * radius="2rem" only for marketing hero moments.
  *
  * Usage:
  *   <DoubleBezelCard className="p-6">
@@ -20,7 +19,7 @@ export function DoubleBezelCard({
   className,
   outerClassName,
   innerClassName,
-  radius = "2rem",
+  radius = "var(--radius-lg)",
   innerRadiusOffset = "0.375rem", // 6px offset for concentric curves
   ...props
 }: React.ComponentProps<"div"> & {
@@ -36,8 +35,8 @@ export function DoubleBezelCard({
       style={{ borderRadius: radius }}
       className={cn(
         "relative",
-        "bg-black/5 dark:bg-white/5",
-        "ring-1 ring-black/5 dark:ring-white/10",
+        "bg-muted/50",
+        "ring-1 ring-foreground/10",
         "p-1.5", // bezel width
         outerClassName,
         className
@@ -48,7 +47,7 @@ export function DoubleBezelCard({
         style={{ borderRadius: innerRadius }}
         className={cn(
           "bg-card",
-          "shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]",
+          "shadow-[inset_0_1px_0_rgb(255_255_255/0.12)] dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.05)]",
           "p-6",
           innerClassName
         )}

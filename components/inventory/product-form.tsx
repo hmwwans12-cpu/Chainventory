@@ -1,12 +1,18 @@
 "use client";
 
-import * as React from "react";
-import { InfoIcon, Loader2Icon, LockIcon } from "lucide-react";
+/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Info, Loader2, Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  productFormSchema,
+  type ProductFormInput,
+} from "@/lib/validators/inventory";
 
 /**
  * Form Product Creation/Edit (DESIGN §35).
@@ -29,7 +35,14 @@ export type ProductFormValues = {
   initialQuantity: string;
 };
 
-const DECIMAL_RE = /^\d+(\.\d{1,3})?$/;
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return (
+    <p id={id} role="alert" className="text-destructive text-sm">
+      {message}
+    </p>
+  );
+}
 
 export function ProductForm({
   mode,
@@ -48,212 +61,169 @@ export function ProductForm({
   onSubmit: (values: ProductFormValues) => void;
   onCancel?: () => void;
 }) {
-  const [values, setValues] = React.useState<ProductFormValues>({
-    name: initialValues?.name ?? "",
-    sku: initialValues?.sku ?? "",
-    category: initialValues?.category ?? "",
-    unit: initialValues?.unit ?? "",
-    description: initialValues?.description ?? "",
-    lowStockThreshold: initialValues?.lowStockThreshold ?? "0",
-    initialQuantity: initialValues?.initialQuantity ?? "",
+  // FE-03: RHF + zodResolver(productFormSchema) — batas validasi client
+  // IDENTIK dengan server (single source of truth di lib/validators).
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProductFormInput>({
+    resolver: zodResolver(productFormSchema),
+    defaultValues: {
+      name: initialValues?.name ?? "",
+      sku: initialValues?.sku ?? "",
+      category: initialValues?.category ?? "",
+      unit: initialValues?.unit ?? "",
+      description: initialValues?.description ?? "",
+      lowStockThreshold: initialValues?.lowStockThreshold ?? "0",
+      initialQuantity: initialValues?.initialQuantity ?? "",
+    },
   });
-  const [errors, setErrors] = React.useState<Record<string, string>>({});
 
-  const set = (field: keyof ProductFormValues) => (value: string) =>
-    setValues((prev) => ({ ...prev, [field]: value }));
-
-  const submit = () => {
-    const next: Record<string, string> = {};
-    if (!values.name.trim()) next.name = "Enter a product name.";
-    if (!values.sku.trim()) next.sku = "Enter a SKU.";
-    if (!values.unit.trim()) next.unit = "Enter a unit.";
-    if (!DECIMAL_RE.test(values.lowStockThreshold)) {
-      next.lowStockThreshold =
-        "Enter a valid non-negative number (max 3 decimals).";
-    }
-    if (
-      mode === "create" &&
-      values.initialQuantity !== "" &&
-      !DECIMAL_RE.test(values.initialQuantity)
-    ) {
-      next.initialQuantity =
-        "Enter a valid non-negative number (max 3 decimals).";
-    }
-    setErrors(next);
-    if (Object.keys(next).length > 0) return;
+  const submit = handleSubmit((values) => {
     onSubmit({
-      ...values,
-      name: values.name.trim(),
-      sku: values.sku.trim(),
-      category: values.category.trim(),
-      unit: values.unit.trim(),
-      description: values.description.trim(),
+      name: values.name,
+      sku: values.sku,
+      category: values.category,
+      unit: values.unit,
+      description: values.description,
+      lowStockThreshold: values.lowStockThreshold,
+      // Mode edit tidak mengenal stok awal — selalu kosong.
+      initialQuantity: mode === "create" ? values.initialQuantity : "",
     });
-  };
+  });
 
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        submit();
-      }}
-    >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="product-name">Product Name</Label>
-          <Input
-            id="product-name"
-            autoFocus
-            value={values.name}
-            onChange={(e) => set("name")(e.target.value)}
-            placeholder="e.g. Steel Rod 12mm"
-            aria-invalid={Boolean(errors.name)}
-            aria-describedby={errors.name ? "err-product-name" : undefined}
-          />
-          {errors.name ? (
-            <p
-              id="err-product-name"
-              role="alert"
-              className="text-destructive text-sm"
-            >
-              {errors.name}
-            </p>
-          ) : null}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="product-sku">SKU / Code</Label>
-          <Input
-            id="product-sku"
-            value={values.sku}
-            onChange={(e) => set("sku")(e.target.value)}
-            placeholder="e.g. SR-12-001"
-            aria-invalid={Boolean(errors.sku)}
-            aria-describedby={errors.sku ? "err-product-sku" : undefined}
-          />
-          {errors.sku ? (
-            <p
-              id="err-product-sku"
-              role="alert"
-              className="text-destructive text-sm"
-            >
-              {errors.sku}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="product-category">Category</Label>
-          <Input
-            id="product-category"
-            value={values.category}
-            onChange={(e) => set("category")(e.target.value)}
-            placeholder="e.g. Raw Material"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="product-unit">Unit</Label>
-          <Input
-            id="product-unit"
-            value={values.unit}
-            onChange={(e) => set("unit")(e.target.value)}
-            placeholder="e.g. pcs, kg, m"
-            disabled={unitLocked}
-            aria-invalid={Boolean(errors.unit)}
-            aria-describedby={errors.unit ? "err-product-unit" : undefined}
-          />
-          {unitLocked ? (
-            <p className="text-muted-foreground flex items-center gap-1 text-sm">
-              <LockIcon aria-hidden="true" className="size-3" />
-              Unit is locked after the first stock movement to keep inventory
-              records consistent.
-            </p>
-          ) : errors.unit ? (
-            <p
-              id="err-product-unit"
-              role="alert"
-              className="text-destructive text-sm"
-            >
-              {errors.unit}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="product-description">Description</Label>
-        <Textarea
-          id="product-description"
-          value={values.description}
-          onChange={(e) => set("description")(e.target.value)}
-          placeholder="Optional note about this product."
-          rows={3}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="product-threshold">Low Stock Threshold</Label>
-          <Input
-            id="product-threshold"
-            inputMode="decimal"
-            value={values.lowStockThreshold}
-            onChange={(e) => set("lowStockThreshold")(e.target.value)}
-            placeholder="0"
-            aria-invalid={Boolean(errors.lowStockThreshold)}
-            aria-describedby={
-              errors.lowStockThreshold ? "err-product-threshold" : undefined
-            }
-          />
-          {errors.lowStockThreshold ? (
-            <p
-              id="err-product-threshold"
-              role="alert"
-              className="text-destructive text-sm"
-            >
-              {errors.lowStockThreshold}
-            </p>
-          ) : null}
-        </div>
-        {mode === "create" ? (
+    <form className="flex flex-col gap-6" onSubmit={submit} noValidate>
+      <section aria-label="Product details" className="flex flex-col gap-4">
+        <h3 className="text-foreground text-sm font-semibold">Product details</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="product-initial">Initial Quantity</Label>
+            <Label htmlFor="product-name">Product Name</Label>
             <Input
-              id="product-initial"
-              inputMode="decimal"
-              value={values.initialQuantity}
-              onChange={(e) => set("initialQuantity")(e.target.value)}
-              placeholder="0"
-              aria-invalid={Boolean(errors.initialQuantity)}
-              aria-describedby={
-                errors.initialQuantity ? "err-product-initial" : undefined
-              }
+              id="product-name"
+              autoFocus
+              {...register("name")}
+              placeholder="e.g. Steel Rod 12mm"
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? "err-product-name" : undefined}
             />
-            {errors.initialQuantity ? (
-              <p
-                id="err-product-initial"
-                role="alert"
-                className="text-destructive text-sm"
-              >
-                {errors.initialQuantity}
+            <FieldError id="err-product-name" message={errors.name?.message} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="product-sku">SKU / Code</Label>
+            <Input
+              id="product-sku"
+              {...register("sku")}
+              placeholder="e.g. SR-12-001"
+              aria-invalid={Boolean(errors.sku)}
+              aria-describedby={errors.sku ? "err-product-sku" : undefined}
+            />
+            <FieldError id="err-product-sku" message={errors.sku?.message} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="product-category">Category</Label>
+            <Input
+              id="product-category"
+              {...register("category")}
+              placeholder="e.g. Raw Material"
+            />
+            <FieldError message={errors.category?.message} id="err-product-category" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="product-unit">Unit</Label>
+            <Input
+              id="product-unit"
+              {...register("unit")}
+              placeholder="e.g. pcs, kg, m"
+              disabled={unitLocked}
+              aria-invalid={Boolean(errors.unit)}
+              aria-describedby={errors.unit ? "err-product-unit" : undefined}
+            />
+            {unitLocked ? (
+              <p className="text-muted-foreground flex items-center gap-1.5 text-sm leading-relaxed">
+                <Lock aria-hidden="true" className="size-4 shrink-0" />
+                Unit is locked after the first stock movement to keep inventory
+                records consistent.
               </p>
             ) : (
-              <p className="text-muted-foreground flex items-start gap-1 text-sm">
-                <InfoIcon
-                  aria-hidden="true"
-                  className="mt-0.5 size-3 shrink-0"
-                />
-                Applied atomically with product creation — if either fails,
-                nothing is saved.
-              </p>
+              <FieldError id="err-product-unit" message={errors.unit?.message} />
             )}
           </div>
-        ) : null}
-      </div>
+        </div>
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="product-description">Description</Label>
+          <Textarea
+            id="product-description"
+            {...register("description")}
+            placeholder="Optional note about this product."
+            rows={3}
+          />
+          <FieldError
+            id="err-product-description"
+            message={errors.description?.message}
+          />
+        </div>
+      </section>
+
+      <section aria-label="Stock settings" className="flex flex-col gap-4">
+        <h3 className="text-foreground text-sm font-semibold">Stock settings</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="product-threshold">Low Stock Threshold</Label>
+            <Input
+              id="product-threshold"
+              inputMode="decimal"
+              {...register("lowStockThreshold")}
+              placeholder="0"
+              aria-invalid={Boolean(errors.lowStockThreshold)}
+              aria-describedby={
+                errors.lowStockThreshold ? "err-product-threshold" : undefined
+              }
+            />
+            <FieldError
+              id="err-product-threshold"
+              message={errors.lowStockThreshold?.message}
+            />
+          </div>
+          {mode === "create" ? (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="product-initial">Initial Quantity</Label>
+              <Input
+                id="product-initial"
+                inputMode="decimal"
+                {...register("initialQuantity")}
+                placeholder="0"
+                aria-invalid={Boolean(errors.initialQuantity)}
+                aria-describedby={
+                  errors.initialQuantity ? "err-product-initial" : undefined
+                }
+              />
+              {errors.initialQuantity ? (
+                <FieldError
+                  id="err-product-initial"
+                  message={errors.initialQuantity.message}
+                />
+              ) : (
+                <p className="text-muted-foreground flex items-start gap-1.5 text-sm leading-relaxed">
+                  <Info
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0"
+                  />
+                  Applied atomically with product creation. If either fails,
+                  nothing is saved.
+                </p>
+              )}
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
         {onCancel ? (
           <Button
             type="button"
@@ -266,7 +236,7 @@ export function ProductForm({
         ) : null}
         <Button type="submit" disabled={busy}>
           {busy ? (
-            <Loader2Icon aria-hidden="true" className="animate-spin" />
+            <Loader2 aria-hidden="true" className="animate-spin" />
           ) : null}
           {submitLabel}
         </Button>

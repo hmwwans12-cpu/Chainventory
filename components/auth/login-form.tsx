@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +10,7 @@ import { FormField } from "@/components/auth/form-field";
 import { GoogleButton, OAuthDivider } from "@/components/auth/google-button";
 import { ErrorAlert } from "@/components/shared/error-alert";
 import { loginAction } from "@/app/actions/auth";
+import { loginSchema, type LoginValues } from "@/lib/validators/auth";
 import { Loader2 } from "lucide-react";
 
 export function LoginForm({
@@ -17,51 +20,64 @@ export function LoginForm({
   initialError?: string;
   next?: string;
 }) {
-  const [error, setError] = useState<string | null>(initialError ?? null);
+  const [serverError, setServerError] = useState<string | null>(
+    initialError ?? null
+  );
   const [pending, startTransition] = useTransition();
+  // FE-03: validasi client memakai loginSchema yang SAMA dengan server
+  // action — tidak ada round-trip untuk typo email/password pendek.
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
 
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-
-    const formData = new FormData(event.currentTarget);
+  const onSubmit = handleSubmit((values) => {
+    setServerError(null);
+    const formData = new FormData();
+    formData.set("email", values.email);
+    formData.set("password", values.password);
+    if (next) formData.set("next", next);
     startTransition(async () => {
       const result = await loginAction(null, formData);
-      if (result?.error) setError(result.error);
+      if (result?.error) setServerError(result.error);
     });
-  }
+  });
 
   return (
     <>
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-        {next ? <input type="hidden" name="next" value={next} /> : null}
-        {error ? (
+        {serverError ? (
           <ErrorAlert id="login-error" className="m-0">
-            {error}
+            {serverError}
           </ErrorAlert>
         ) : null}
 
-        <FormField id="email" label="Email">
+        <FormField
+          id="email"
+          label="Email"
+          error={errors.email?.message}
+          describedBy={serverError ? "login-error" : undefined}
+        >
           <Input
             id="email"
-            name="email"
             type="email"
             autoComplete="email"
-            required
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? "login-error" : undefined}
+            {...register("email")}
           />
         </FormField>
 
-        <FormField id="password" label="Password">
+        <FormField
+          id="password"
+          label="Password"
+          error={errors.password?.message}
+          describedBy={serverError ? "login-error" : undefined}
+        >
           <Input
             id="password"
-            name="password"
             type="password"
             autoComplete="current-password"
-            required
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? "login-error" : undefined}
+            {...register("password")}
           />
         </FormField>
 

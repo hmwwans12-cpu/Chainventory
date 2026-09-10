@@ -15,8 +15,12 @@ export const requestJoinSchema = z.object({
     .max(64, "Warehouse code is too long."),
 });
 
-/** Role yang boleh diundang via email (tidak boleh OWNER). */
-const INVITABLE_ROLES = ROLES.filter((r) => r !== "OWNER") as Exclude<
+/**
+ * Role yang boleh diberikan via join/invite (tidak boleh OWNER).
+ * PRD §9.2: OWNER tidak bisa diberikan lewat join normal — RPC
+ * menolaknya, dan skema menolak lebih awal dengan 400 yang jelas.
+ */
+export const INVITABLE_ROLES = ROLES.filter((r) => r !== "OWNER") as Exclude<
   (typeof ROLES)[number],
   "OWNER"
 >[];
@@ -29,7 +33,8 @@ export const createInvitationSchema = z.object({
 
 export const approveJoinSchema = z.object({
   requestId: z.string().uuid("Invalid request id."),
-  role: z.enum(ROLES, { message: "Invalid role." }),
+  // NBE-08: OWNER tidak valid di sini (dulu lolos ke RPC lalu 403 generik).
+  role: z.enum(INVITABLE_ROLES, { message: "Invalid role." }),
 });
 
 export const rejectJoinSchema = z.object({

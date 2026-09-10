@@ -56,10 +56,10 @@ export function HowItWorks() {
                 key={step.step}
                 className="relative flex flex-col items-start gap-3 md:items-center md:text-center"
               >
-                <span className="shadow-elevated bg-card border-border font-display text-primary relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-semibold tabular-nums">
+                <span className="shadow-(--shadow-elevated) bg-card border-border text-primary relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-semibold tabular-nums">
                   {step.step}
                 </span>
-                <h3 className="font-display text-foreground text-base font-semibold">
+                <h3 className="text-foreground text-base font-semibold">
                   {t(step.titleKey)}
                 </h3>
                 <p className="text-muted-foreground max-w-[26ch] text-sm leading-relaxed text-pretty">

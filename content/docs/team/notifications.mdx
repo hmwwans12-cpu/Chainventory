@@ -9,13 +9,13 @@ Chainventory keeps you informed about inventory events through in-app notificati
 
 ## Notification Types
 
-- **Low-Stock Alert** — a product dropped to or below its threshold.
-- **Join Request** — someone requested to join your warehouse (Owners/Managers).
-- **Join Approved/Rejected** — the outcome of your own request.
-- **Approval Required** — an Adjustment or Reversal is waiting for your approval.
-- **Movement Recorded** — a team member performed a stock movement (configurable).
-- **Proof Confirmed** — a movement's blockchain proof reached Confirmed status.
-- **Warehouse Suspended** — your warehouse hit the 27-day inactivity limit.
+- **Low-Stock Alert**: a product dropped to or below its threshold.
+- **Join Request**: someone requested to join your warehouse (Owners/Managers).
+- **Join Approved/Rejected**: the outcome of your own request.
+- **Approval Required**: an Adjustment or Reversal is waiting for your approval.
+- **Movement Recorded**: a team member performed a stock movement (configurable).
+- **Proof Confirmed**: a movement's blockchain proof reached Confirmed status.
+- **Warehouse Suspended**: your warehouse hit the 27-day inactivity limit.
 
 ## Read / Unread State
 
@@ -23,7 +23,7 @@ Notifications start as **unread** and show a badge count on the bell icon. Click
 
 ## Real-Time Delivery
 
-Notifications use Supabase Realtime. When an event happens, connected clients receive it within seconds — no polling or refresh required. If your tab was backgrounded or disconnected, missed notifications are delivered on reconnect and reconciled against the server's record.
+Notifications use Supabase Realtime. When an event happens, connected clients receive it within seconds. No polling or refresh required. If your tab was backgrounded or disconnected, missed notifications are delivered on reconnect and reconciled against the server's record.
 
 <Callout type="info">
   If real-time updates stop appearing, refresh the page to re-establish the

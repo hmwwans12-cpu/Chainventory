@@ -68,16 +68,48 @@ function resolve(value, vars, depth = 0) {
   return hex ? hex[0] : null;
 }
 
+function mixHex(fgHex, bgHex, t) {
+  const f = hexToRgb(fgHex);
+  const b = hexToRgb(bgHex);
+  const m = f.map((v, i) => Math.round(v * t + b[i] * (1 - t)));
+  return "#" + m.map((v) => v.toString(16).padStart(2, "0")).join("");
+}
+
+// Resolve a background spec: either a token name or `mix(fg,bg,alpha)`
+// for tinted surfaces like `bg-destructive/15` over `--card`.
+function resolveBg(spec, vars) {
+  const mix = spec.match(/^mix\((--[\w-]+),\s*(--[\w-]+),\s*([\d.]+)\)$/);
+  if (mix) {
+    const fg = resolve(vars[mix[1].replace(/^--/, "")] ?? "", vars);
+    const bg = resolve(vars[mix[2].replace(/^--/, "")] ?? "", vars);
+    if (!fg || !bg) return null;
+    return { hex: mixHex(fg, bg, Number(mix[3])), label: spec };
+  }
+  const hex = resolve(vars[spec.replace(/^--/, "")] ?? "", vars);
+  return hex ? { hex, label: spec } : null;
+}
+
 const css = readFileSync(GLOBALS, "utf-8");
 const light = parseVars(css, ":root");
 const dark = parseVars(css, ".dark");
 
-// [fgToken, bgToken, minRatio, label]
+// [fgToken, bgSpec, minRatio, label] — bgSpec is a token or mix(fg,bg,alpha)
 const PAIRS = [
   ["--warning", "--card", 4.5, "warning text on card"],
   ["--warning", "--background", 4.5, "warning text on background"],
-  ["--warning-foreground", "--warning", 3, "warning-foreground on warning"],
+  [
+    "--warning-foreground",
+    "mix(--warning,--card,0.15)",
+    4.5,
+    "warning-foreground on warning tint",
+  ],
   ["--destructive", "--card", 4.5, "destructive text on card"],
+  ["--destructive", "--background", 4.5, "destructive text on background"],
+  [
+    "--destructive",
+    "mix(--destructive,--card,0.15)",
+    4.5,
+    "destructive text on destructive tint"],
   ["--muted-foreground", "--card", 4.5, "muted-foreground on card"],
   ["--muted-foreground", "--background", 4.5, "muted-foreground on background"],
   ["--foreground", "--card", 7, "foreground on card"],
@@ -98,16 +130,15 @@ for (const [themeName, vars] of [
   ["dark", dark],
 ]) {
   for (const [fg, bg, min, label] of PAIRS) {
-    const fgHex = resolve(vars[fg], vars);
-    const bgHex = resolve(vars[bg], vars);
-    if (!fgHex || !bgHex) continue;
-    const r = ratio(hexToRgb(fgHex), hexToRgb(bgHex));
+    // parseVars stores keys WITHOUT the `--` prefix — strip it here.
+    const fgHex = resolve(vars[fg.replace(/^--/, "")] ?? "", vars);
+    const bgResolved = resolveBg(bg, vars);
+    if (!fgHex || !bgResolved) continue;
+    const r = ratio(hexToRgb(fgHex), hexToRgb(bgResolved.hex));
     if (r < min) {
       failures += 1;
       console.error(
-        `❌ [${themeName}] ${label}: ${fg}/${
-          vars[fg]
-        } on ${bg}/${vars[bg]} = ${r.toFixed(2)}:1 (need ${min}:1)`
+        `❌ [${themeName}] ${label}: ${fg}/${fgHex} on ${bgResolved.label}/${bgResolved.hex} = ${r.toFixed(2)}:1 (need ${min}:1)`
       );
     }
   }

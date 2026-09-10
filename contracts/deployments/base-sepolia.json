@@ -14,7 +14,7 @@
       "version": "2.0.0",
       "address": "0x3811b69b5eBC07DDA11DB72412cCd8Ec68a8Bf48",
       "deploymentBlock": null,
-      "deployedAt": "2026-08-24T00.47.49Z",
+      "deployedAt": "2026-08-24T00:47:49Z",
       "abiPath": "out/WarehouseFactory.sol/WarehouseFactory.json",
       "proofRecorder": "0x463841123df8f45F2d58bBFCD276493750Bbf004",
       "compiler": "solc 0.8.36 (cancun, optimizer 200)",

@@ -41,15 +41,20 @@ export function MarketingHeader({
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  // /docs owns its full-viewport chrome (fumadocs nav + collapsible
+  // sidebar). Rendering the floating pill above it buries the sidebar's
+  // collapsed expand-trigger (header z-40 over fumadocs panel z-10), making
+  // expand-after-collapse impossible. Docs nav already links Dashboard.
+  if (pathname === "/docs" || pathname.startsWith("/docs/")) return null;
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <header className="sticky top-3 z-40 px-4">
-      <div className="border-border/80 bg-background/80 shadow-elevated mx-auto flex h-12 w-full max-w-6xl items-center gap-6 rounded-full border px-4 backdrop-blur-md sm:px-5">
+      <div className="border-border/80 bg-background/80 shadow-(--shadow-elevated) mx-auto flex h-12 w-full max-w-6xl items-center gap-2 rounded-full border px-3 backdrop-blur-md sm:gap-6 sm:px-5">
         <Logo />
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
           {NAV_LINKS.map((link) => {
             const active = isActive(link.href);
             return (
@@ -58,7 +63,7 @@ export function MarketingHeader({
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ease-out before:absolute before:-inset-[6px] before:content-['']",
+                  "relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ease-out before:absolute before:-inset-y-[6px] before:-inset-x-[2px] before:content-['']",
                   active
                     ? "text-foreground bg-muted font-medium"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -77,9 +82,16 @@ export function MarketingHeader({
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
-          <LocaleToggle />
-          <ThemeToggle />
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          {/* Locale + theme penuh di md+; di bawah md hanya locale agar
+              muat 360px (logo + signup + burger). Theme tetap ada di sheet. */}
+          <span className="hidden md:contents">
+            <LocaleToggle />
+            <ThemeToggle />
+          </span>
+          <span className="contents md:hidden">
+            <LocaleToggle />
+          </span>
           {authenticated ? (
             <Button size="sm" render={<Link href="/dashboard" />}>
               Dashboard
@@ -89,7 +101,7 @@ export function MarketingHeader({
               <Button
                 variant="ghost"
                 size="default"
-                className="hidden md:inline-flex"
+                className="hidden lg:inline-flex"
                 render={<Link href="/login" />}
               >
                 Login
@@ -106,7 +118,7 @@ export function MarketingHeader({
                 <Button
                   variant="outline"
                   size="icon"
-                  className="md:hidden"
+                  className="lg:hidden"
                   aria-label="Open menu"
                 />
               }
@@ -151,6 +163,10 @@ export function MarketingHeader({
                   );
                 })}
               </nav>
+              <div className="flex items-center gap-1 px-4 lg:hidden">
+                <LocaleToggle />
+                <ThemeToggle />
+              </div>
               <div className="mt-auto flex flex-col gap-2 p-4">
                 {authenticated ? (
                   <Button

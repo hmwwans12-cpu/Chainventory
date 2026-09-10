@@ -27,7 +27,7 @@
 | Proof                  | JCS RFC 8785 + Keccak-256; outbox table + retry                             |
 | Async job delivery     | Upstash QStash (signed async delivery)                                      |
 | RPC                    | Primary RPC (Infura preferred candidate) + fallback melalui adapter tunggal |
-| CSV import/export      | Papa Parse untuk parsing; generator CSV di server                           |
+| CSV import/export      | Parser CSV RFC-4180 hand-rolled (`lib/inventory/csv.ts`, tanpa dep baru); generator CSV di server |
 | Charts                 | Recharts                                                                    |
 | Testing web            | Vitest + Testing Library + Playwright                                       |
 | Testing contract       | Forge tests + Base Sepolia smoke test                                       |
@@ -36,7 +36,7 @@
 | Monitoring             | Pino structured logs + Vercel/Supabase status + Developer Console           |
 | Caching                | Next.js cache untuk read-only/public; data warehouse sensitif tetap dynamic |
 | Environment validation | `@t3-oss/env-nextjs` + Zod                                                  |
-| Rate limiting          | Upstash Redis + `@upstash/ratelimit`                                        |
+| Rate limiting          | Upstash Redis + Redis command langsung (`INCR`/`EXPIRE` via Lua, tanpa dep `@upstash/ratelimit`) |
 | Package manager        | pnpm                                                                        |
 
 ---
@@ -80,11 +80,19 @@ Urutan wajib untuk setiap Route Handler:
 
 ```text
 1. Verifikasi JWT Supabase
-2. Verifikasi membership warehouse
-3. Verifikasi permission role
-4. Rate limit (Upstash)
-5. Business logic / operasi database
+2. Rate limit mutasi sensitif (Upstash, fail-closed) — dini agar request
+   forbidden/unauth tidak menyentuh DB sama sekali (BE-06)
+3. Validasi skema payload (Zod)
+4. Verifikasi membership warehouse + permission role
+5. Guard lifecycle warehouse (active/suspended)
+6. Business logic / operasi database (RPC SECURITY DEFINER)
 ```
+
+Catatan BE-06: urutan ini sengaja menempatkan rate-limit SEBELUM
+membership/permission (berbeda dari revisi awal yang menaruhnya sesudah).
+Alasannya: fail-closed tanpa sentuh DB lebih melindungi database daripada
+menghemat bucket untuk request forbidden. Permission tetap wajib sebelum
+RPC/write apa pun.
 
 **RLS adalah defense-in-depth/safety net** untuk mencegah kebocoran atau bypass jika ada bug application layer — **bukan primary authorization check**. Route Handler wajib memverifikasi JWT, membership, dan role sebelum menjalankan business logic atau operasi berprivilege, sesuai prinsip Next.js: selalu verifikasi kredensial sebelum memberi akses ke resource yang dilindungi, jangan mengandalkan satu layer saja.
 
@@ -108,7 +116,7 @@ Urutan wajib untuk setiap Route Handler:
 
 ## 6. Rate Limiting
 
-**Provider:** Upstash Redis + `@upstash/ratelimit`, memakai identifier user dan IP.
+**Provider:** Upstash Redis (Redis command langsung + Lua `INCR`/`EXPIRE` atomik — sengaja tanpa dep `@upstash/ratelimit`), memakai identifier user dan IP. Read-only (export, wallet balance) memakai bucket terpisah yang fail-open.
 
 **Kapasitas:** Free tier mencakup 500.000 command/bulan — cukup untuk demo; penggunaan dipantau di Developer Console.
 

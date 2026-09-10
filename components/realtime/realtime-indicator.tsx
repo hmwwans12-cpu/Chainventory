@@ -32,17 +32,18 @@ export function RealtimeIndicator({
   // F22 offline/recovery: jangan pakai modal blocking — banner ringan + tooltip jam
   const detail =
     effective === "offline"
-      ? "Offline — last data 2m ago, changes paused. Will sync on reconnect."
+      ? "Offline. Last data 2m ago, changes paused. Will sync on reconnect."
       : effective === "reconnecting"
-        ? "Reconnecting… live updates paused."
+        ? "Reconnecting. Live updates paused."
         : effective === "outdated"
-          ? "Data may be outdated — retrying connection."
-          : "Live — updates sync instantly.";
+          ? "Data may be outdated. Retrying connection."
+          : "Live. Updates sync instantly.";
   return (
+    // FE-19: tanpa aria-label (aria-label menimpa descendants sehingga
+    // sr-only detail mati + label terumumkan ganda). Nama aksesibel = satu
+    // sr-only "Label. Detail", divisual aria-hidden.
     <span
       role="status"
-      aria-live="polite"
-      aria-label={`Realtime: ${LABELS[effective]}. ${detail}`}
       title={detail}
       className={cn(
         "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium transition-colors",
@@ -65,7 +66,9 @@ export function RealtimeIndicator({
       <span className="hidden sm:inline" aria-hidden="true">
         {LABELS[effective]}
       </span>
-      <span className="sr-only">{detail}</span>
+      <span className="sr-only">
+        Realtime: {LABELS[effective]}. {detail}
+      </span>
     </span>
   );
 }

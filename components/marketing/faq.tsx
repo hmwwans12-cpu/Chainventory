@@ -73,7 +73,7 @@ export function Faq() {
             {useKeys ? t("landing.faq.title") : "Frequently asked questions"}
           </h2>
           <p className="text-muted-foreground max-w-xl text-base leading-relaxed text-pretty">
-            {useKeys ? t("landing.faq.subtitle") : "The quick answers- no blockchain vocabulary required."}
+            {useKeys ? t("landing.faq.subtitle") : "The quick answers. No blockchain vocabulary required."}
           </p>
         </Reveal>
 

@@ -1,5 +1,5 @@
 /**
- * Rate limiter mutasi sensitif — Upstash Redis fixed window (TECHSTACK §6).
+ * Rate limiter mutasi sensitif: Upstash Redis fixed window (TECHSTACK §6).
  *
  * Cakupan wajib fail-closed (§6.1): Stock In/Out, Adjustment, Reversal,
  * Deployment, Ownership Transfer, Join/Member Management, Wallet sync.
@@ -21,7 +21,7 @@ import { logger } from "@/lib/logger";
 /** Interface minimal agar core mudah di-unit-test tanpa network. */
 export interface RateLimitStore {
   /** Atomic INCR + (EXPIRE on first hit). Returns post-incr count.
-   *  Implementasi wajib atomic — pipeline (INCR, EXPIRE) saja TIDAK
+   *  Implementasi wajib atomic: pipeline (INCR, EXPIRE) saja TIDAK
    *  cukup karena key yang baru dibuat tanpa TTL dapat di-INCR ulang
    *  sebelum EXPIRE tiba (audit v0.3.0 §1.10). */
   incrWithExpiry(key: string, seconds: number): Promise<number>;
@@ -44,6 +44,12 @@ export const MUTATION_RATE_LIMITS = {
   /** join/approve/reject/remove/change_role. Looser than ownership transfer. */
   membership: { user: 20, ip: 60 },
   /**
+   * CF-20: undangan email punya bucket sendiri (lebih ketat dari membership
+   * umum) agar burst join-approval tidak menguras budget anti email-bomb
+   * dan sebaliknya (sebelumnya invite menumpang bucket membership).
+   */
+  invite: { user: 10, ip: 30 },
+  /**
    * Audit v0.3.10 H-10: ownership transfer gets its own tighter bucket
    * so a compromise of "membership" (e.g. mass join-approval abuse)
    * cannot drain the ownership-transfer budget.
@@ -55,7 +61,20 @@ export const MUTATION_RATE_LIMITS = {
   export: { user: 30, ip: 120 },
 } as const;
 
+/**
+ * Fix BE-07 (TECHSTACK §6.2): read/dashboard/search/refresh proof adalah
+ * fail-OPEN: outage Redis tidak boleh memblokir operasi non-mutating.
+ * Bucket terpisah dari mutasi agar budget sensitif tidak terkuras read.
+ */
+export const READ_RATE_LIMITS = {
+  /** export CSV read-only (fail-open). */
+  export: { user: 30, ip: 120 },
+  /** cek saldo wallet publik (fail-open; sebelumnya salah pakai bucket export). */
+  "wallet-balance": { user: 30, ip: 120 },
+} as const;
+
 export type MutationAction = keyof typeof MUTATION_RATE_LIMITS;
+export type ReadAction = keyof typeof READ_RATE_LIMITS;
 
 export interface RateLimitDecision {
   allowed: boolean;
@@ -86,7 +105,7 @@ export async function checkMutationRateLimit(input: {
   if (!store) {
     logger.warn(
       { action },
-      "rate limiter unavailable — mutation rejected (fail-closed)"
+      "rate limiter unavailable: mutation rejected (fail-closed)"
     );
     return FAIL_CLOSED;
   }
@@ -120,7 +139,7 @@ export async function checkMutationRateLimit(input: {
   } catch (err) {
     logger.warn(
       { err, action },
-      "rate limiter error — mutation rejected (fail-closed)"
+      "rate limiter error: mutation rejected (fail-closed)"
     );
     return FAIL_CLOSED;
   }
@@ -141,7 +160,7 @@ function getRedisStore(): RateLimitStore | null {
 
   if (!url || !token) {
     logger.warn(
-      "Upstash Redis not configured — mutation rate limiter disabled (fail-closed)"
+      "Upstash Redis not configured: mutation rate limiter disabled (fail-closed)"
     );
     redisClient = null;
     redisAdapter = null;
@@ -169,14 +188,22 @@ function getRedisStore(): RateLimitStore | null {
   return redisAdapter;
 }
 
-/** IP klien dari header proxy standar (Vercel mengisi x-forwarded-for). */
+/**
+ * IP klien (fix BE-19): x-forwarded-for[0] dapat di-spoof client sehingga
+ * bucket `ip:` mudah dirotasi. Prioritaskan x-real-ip yang ditulis platform
+ * (Vercel menimpa dari koneksi TCP, bukan dari input client), fallback ke
+ * entri pertama x-forwarded-for. IP hanya sinyal lunak: mutasi terautentikasi
+ * tetap mengandalkan dimensi `user:` yang tidak dapat di-spoof.
+ */
 export function getClientIp(request: Request): string | null {
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
     const first = forwarded.split(",")[0]?.trim();
     if (first) return first;
   }
-  return request.headers.get("x-real-ip");
+  return null;
 }
 
 /**
@@ -194,4 +221,62 @@ export async function enforceMutationRateLimit(
     userId,
     ip: getClientIp(request),
   });
+}
+
+/**
+ * Rate limit read-only fail-OPEN (TECHSTACK §6.2, fix BE-07): Redis down/
+ * error → request DIIZINKAN + warning terstruktur. Tidak ada mutation yang
+ * lolos: helper ini HANYA untuk GET non-mutating.
+ */
+export async function enforceReadRateLimit(
+  action: ReadAction,
+  userId: string,
+  request: Request
+): Promise<RateLimitDecision & { degraded?: boolean }> {
+  const store = getRedisStore();
+  const now = Date.now();
+  if (!store) {
+    logger.warn(
+      { action },
+      "read rate limiter unavailable: allowing (fail-open, degraded)"
+    );
+    return {
+      allowed: true,
+      remaining: 0,
+      resetMs: RATE_LIMIT_WINDOW_MS,
+      degraded: true,
+    };
+  }
+  const limits = READ_RATE_LIMITS[action];
+  const bucket = Math.floor(now / RATE_LIMIT_WINDOW_MS);
+  const resetMs = (bucket + 1) * RATE_LIMIT_WINDOW_MS - now;
+  try {
+    let minRemaining = Number.POSITIVE_INFINITY;
+    for (const [dim, id, limit] of [
+      ["user", userId, limits.user],
+      ...(() => {
+        const ip = getClientIp(request);
+        return ip ? ([["ip", ip, limits.ip]] as const) : [];
+      })(),
+    ] as Array<["user" | "ip", string, number]>) {
+      const key = `rl-read:${action}:${dim}:${id}:${bucket}`;
+      const count = await store.incrWithExpiry(key, RATE_LIMIT_WINDOW_SEC);
+      minRemaining = Math.min(minRemaining, Math.max(limit - count, 0));
+      if (count > limit) {
+        return { allowed: false, remaining: 0, resetMs };
+      }
+    }
+    return { allowed: true, remaining: minRemaining, resetMs };
+  } catch (err) {
+    logger.warn(
+      { err, action },
+      "read rate limiter error: allowing (fail-open, degraded)"
+    );
+    return {
+      allowed: true,
+      remaining: 0,
+      resetMs,
+      degraded: true,
+    };
+  }
 }

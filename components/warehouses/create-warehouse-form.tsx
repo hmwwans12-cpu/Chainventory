@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   Blocks,
   Check,
-  Copy,
   ExternalLink,
   Loader2,
   ShieldCheck,
@@ -17,6 +16,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { PanelCard } from "@/components/shared/panel-card";
+import { CopyButton } from "@/components/shared/copy-button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -42,18 +42,21 @@ import {
   type SubmitPayload,
   type SubmitResult,
 } from "@/lib/warehouses/create-client";
-import { BASE_SEPOLIA_CHAIN_ID } from "@/lib/constants";
+import {
+  BASESCAN_URL,
+  BASE_SEPOLIA_CHAIN_ID,
+  DEPLOY_COMPLETE_DELAY_MS,
+} from "@/lib/constants";
+import { shortenAddress } from "@/lib/utils";
 
 const WAREHOUSE_TYPES = [
-  "General storage",
-  "Cold storage",
-  "Distribution center",
-  "Fulfillment center",
-  "Retail backroom",
+  "General Storage",
+  "Cold Storage",
+  "Distribution Center",
+  "Fulfillment Center",
+  "Retail Backroom",
   "Other",
 ] as const;
-
-const BASESCAN_URL = "https://sepolia.basescan.org";
 
 type Phase =
   | "form"
@@ -106,39 +109,8 @@ const STEP_CONTENT: Record<StepKey, { label: string; hint: string }> = {
   },
 };
 
-function shortenAddress(address: string): string {
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
-
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = React.useState(false);
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      aria-label={label}
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(text);
-        } catch {
-          // clipboard tidak tersedia — abaikan
-        }
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 1500);
-      }}
-    >
-      {copied ? (
-        <Check aria-hidden="true" className="text-primary" />
-      ) : (
-        <Copy aria-hidden="true" />
-      )}
-    </Button>
-  );
 }
 
 /**
@@ -301,7 +273,7 @@ export function CreateWarehouseForm() {
     completeTimerRef.current = window.setTimeout(() => {
       setResult(data);
       setPhase("success");
-    }, 700);
+    }, DEPLOY_COMPLETE_DELAY_MS);
   }
 
   function handlePrepareFailure(
@@ -317,7 +289,7 @@ export function CreateWarehouseForm() {
       fail({
         title: "You already have an active warehouse",
         detail:
-          "Each wallet can own one warehouse, and yours is already live on Base Sepolia — no new warehouse was created.",
+          "Each wallet can own one warehouse, and yours is already live on Base Sepolia. No new warehouse was created.",
         action: "dashboard",
       });
       return;
@@ -433,7 +405,7 @@ export function CreateWarehouseForm() {
       fail({
         title: "Authorization not signed",
         detail:
-          "The deployment was cancelled because the signature was not completed. Nothing was created — you can try again.",
+          "The deployment was cancelled because the signature was not completed. Nothing was created. You can try again.",
         action: "retry",
       });
       return;
@@ -467,7 +439,7 @@ export function CreateWarehouseForm() {
           fail({
             title: "Deployment is still confirming",
             detail:
-              "Your warehouse was submitted and is confirming on-chain. Check your dashboard shortly — it will appear once confirmed.",
+              "Your warehouse was submitted and is confirming on-chain. Check your dashboard shortly. It will appear once confirmed.",
             action: "dashboard",
           });
           return;
@@ -505,7 +477,7 @@ export function CreateWarehouseForm() {
       ok: false,
       status: 202,
       error:
-        "Deployment is still confirming on-chain. Your warehouse is safe — check the dashboard shortly.",
+        "Deployment is still confirming on-chain. Your warehouse is safe. Check the dashboard shortly.",
     };
     return failure;
   }
@@ -549,7 +521,7 @@ export function CreateWarehouseForm() {
               <Check aria-hidden="true" className="size-6" />
             </span>
             <div className="flex flex-col gap-1">
-              <h1 className="font-display text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
+              <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
                 Warehouse created
               </h1>
               <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
@@ -596,7 +568,7 @@ export function CreateWarehouseForm() {
                   <a
                     href={`${BASESCAN_URL}/address/${result.contractAddress}`}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     aria-label="View contract on BaseScan"
                     className="text-muted-foreground hover:text-primary focus-visible:ring-ring relative flex size-7 shrink-0 items-center justify-center rounded-lg outline-none before:absolute before:-inset-[8px] before:content-[''] focus-visible:ring-3"
                   >
@@ -634,10 +606,10 @@ export function CreateWarehouseForm() {
               className="-ml-2 w-fit"
               render={<Link href="/onboarding" />}
             >
-              <ArrowLeft aria-hidden="true" className="size-3" />
+              <ArrowLeft aria-hidden="true" />
               Back to onboarding
             </Button>
-            <h1 className="font-display text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
+            <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
               Create Warehouse
             </h1>
           </div>
@@ -666,11 +638,19 @@ export function CreateWarehouseForm() {
               className="h-11 w-full text-base"
               onClick={startCreate}
               disabled={!ready || !authenticated}
+              title={!authenticated ? "Sign in first, then retry" : undefined}
             >
               <Blocks aria-hidden="true" />
               Try Again
             </Button>
           )}
+          {!ready || !authenticated ? (
+            <p className="text-muted-foreground text-center text-sm">
+              {!authenticated
+                ? "Sign in first, then try again."
+                : "Still preparing. Wait a moment, then try again."}
+            </p>
+          ) : null}
           {error.action === "connect-wallet" ? (
             <p className="text-muted-foreground text-sm">
               Wallet sync:{" "}
@@ -697,11 +677,11 @@ export function CreateWarehouseForm() {
               className="-ml-2 w-fit"
               render={<Link href="/onboarding" />}
             >
-              <ArrowLeft aria-hidden="true" className="size-3" />
+              <ArrowLeft aria-hidden="true" />
               Back to onboarding
             </Button>
             <div className="flex flex-col gap-1">
-              <h1 className="font-display text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
+              <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
                 Deploying Warehouse
               </h1>
               <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
@@ -735,7 +715,7 @@ export function CreateWarehouseForm() {
           ) : null}
           {refreshed ? (
             <p className="text-muted-foreground text-sm">
-              Your previous authorization expired — a fresh one was requested.
+              Your previous authorization expired. A fresh one was requested.
             </p>
           ) : null}
 
@@ -753,7 +733,7 @@ export function CreateWarehouseForm() {
             <Blocks aria-hidden="true" className="size-5" />
           </span>
           <div className="flex flex-col gap-1">
-            <h1 className="font-display text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
+            <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
               Create Warehouse
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
@@ -766,7 +746,7 @@ export function CreateWarehouseForm() {
         {!ready || !authenticated ? (
           <PanelCard
             variant="dashed"
-            className="flex flex-col items-start gap-3"
+            className="bg-card/50 flex flex-col items-start gap-3"
           >
             <p className="text-foreground text-sm">
               Please sign in to continue.
@@ -812,7 +792,7 @@ export function CreateWarehouseForm() {
                 name="companyName"
                 value={companyName}
                 onChange={(event) => setCompanyName(event.target.value)}
-                placeholder="e.g. PT Contoh Logistik…"
+                placeholder="e.g. Bandung Distribution Center…"
                 maxLength={200}
                 autoComplete="organization"
                 aria-invalid={fieldErrors.companyName ? true : undefined}
@@ -846,7 +826,7 @@ export function CreateWarehouseForm() {
               </Select>
             </FormField>
 
-            <div className="border-border flex flex-col gap-2 border-t pt-5">
+            <div className="flex flex-col gap-2 border-t pt-4">
             <Button
               type="submit"
               size="lg"

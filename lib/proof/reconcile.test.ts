@@ -5,11 +5,13 @@ vi.mock("@/lib/proof/supabase", () => ({
 }));
 vi.mock("@/lib/proof/qstash", () => ({
   publishProofJob: vi.fn(),
+  republishProofJob: vi.fn(),
   scheduleProofConfirmationFromReconcile: vi.fn(),
 }));
 
 import {
   publishProofJob,
+  republishProofJob,
   scheduleProofConfirmationFromReconcile,
 } from "@/lib/proof/qstash";
 import { reconcileProofs, type ReconcileResult } from "@/lib/proof/reconcile";
@@ -17,6 +19,7 @@ import { createProofServiceClient } from "@/lib/proof/supabase";
 
 const mockCreateClient = vi.mocked(createProofServiceClient);
 const mockPublish = vi.mocked(publishProofJob);
+const mockRepublish = vi.mocked(republishProofJob);
 const mockScheduleFromReconcile = vi.mocked(
   scheduleProofConfirmationFromReconcile
 );
@@ -26,9 +29,10 @@ function makeSupabase(candidates: unknown[]) {
     fn === "proof_reconcile_candidates" ? { data: candidates } : { data: null }
   );
   const insert = vi.fn(async () => ({ data: null }));
-  const from = vi.fn(() => ({ insert }));
+  const upsert = vi.fn(async () => ({ data: null, error: null }));
+  const from = vi.fn(() => ({ insert, upsert }));
   mockCreateClient.mockReturnValue({ rpc, from } as never);
-  return { rpc, from, insert };
+  return { rpc, from, insert, upsert };
 }
 
 function expectOk(
@@ -51,7 +55,7 @@ describe("reconcileProofs", () => {
     expect(result.republished).toEqual(["p1"]);
     expect(result.scheduledConfirms).toEqual([]);
     expect(rpc).toHaveBeenCalledWith("proof_republish", { p_proof_id: "p1" });
-    expect(mockPublish).toHaveBeenCalledWith("p1");
+    expect(mockRepublish).toHaveBeenCalledWith("p1");
   });
 
   it("orphan: recreate outbox + publish job", async () => {
@@ -60,14 +64,17 @@ describe("reconcileProofs", () => {
     await reconcileProofs();
 
     expect(from).toHaveBeenCalledWith("proof_outbox");
-    expect(from.mock.results[0].value.insert).toHaveBeenCalledWith(
+    // BE-26: orphan memakai upsert idempoten (ON CONFLICT DO NOTHING),
+    // bukan insert mentah — aman terhadap cron konkuren ganda.
+    expect(from.mock.results[0].value.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         proof_id: "p2",
         status: "pending",
         attempt_count: 0,
-      })
+      }),
+      expect.objectContaining({ ignoreDuplicates: true })
     );
-    expect(mockPublish).toHaveBeenCalledWith("p2");
+    expect(mockRepublish).toHaveBeenCalledWith("p2");
   });
 
   it("confirm: schedule a fresh confirmation job", async () => {
@@ -113,7 +120,7 @@ describe("reconcileProofs", () => {
       { kind: "republish", proof_id: "p1" },
       { kind: "confirm", proof_id: "p2" },
     ]);
-    mockPublish.mockRejectedValueOnce(new Error("qstash down"));
+    mockRepublish.mockRejectedValueOnce(new Error("qstash down"));
 
     const result = expectOk(await reconcileProofs());
 

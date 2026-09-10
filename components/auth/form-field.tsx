@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
-
 /**
  * Form field wrapper (DESIGN §50–51): clear label, inline validation,
  * error messages near the field.
@@ -16,15 +14,21 @@ export function FormField({
   label,
   error,
   hint,
+  describedBy: describedByProp,
   children,
 }: {
   id: string;
   label: string;
   error?: string;
   hint?: string;
+  /** ID deskriptor tambahan (mis. error server) digabung ke aria-describedby. */
+  describedBy?: string;
   children: ReactNode;
 }) {
-  const describedBy = error ? `${id}-error` : undefined;
+  const describedBy =
+    [error ? `${id}-error` : null, describedByProp ?? null]
+      .filter(Boolean)
+      .join(" ") || undefined;
 
   return (
     <div
@@ -53,5 +57,3 @@ export function FormField({
     </div>
   );
 }
-
-export { cn };

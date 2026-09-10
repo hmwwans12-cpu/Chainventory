@@ -36,10 +36,25 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
   const [pending, startTransition] = React.useTransition();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
+  const editBtnRef = React.useRef<HTMLButtonElement>(null);
+
   const startEdit = () => {
     setEditing(true);
     setSaved(false);
   };
+
+  // NFE-14: fokus input saat mode edit; sukses/kembali diumumkan +
+  // fokus dikembalikan ke tombol Edit (bukan saat mount awal).
+  const wasEditing = React.useRef(false);
+  React.useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      wasEditing.current = true;
+    } else if (wasEditing.current) {
+      wasEditing.current = false;
+      editBtnRef.current?.focus();
+    }
+  }, [editing]);
 
   const cancelEdit = () => {
     setEditing(false);
@@ -72,11 +87,16 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
             size="icon-sm"
             aria-label="Edit display name"
             onClick={startEdit}
+            ref={editBtnRef}
           >
             <Pencil aria-hidden="true" />
           </Button>
         </div>
-        {saved ? <p className="text-primary text-sm">Name updated.</p> : null}
+        {saved ? (
+          <p role="status" className="text-primary text-sm">
+            Name updated.
+          </p>
+        ) : null}
       </div>
     );
   }

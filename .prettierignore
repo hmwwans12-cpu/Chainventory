@@ -4,3 +4,12 @@ contracts/lib/
 # Lockfile & artefak tooling
 pnpm-lock.yaml
 supabase/.temp/
+
+# Build/test artefacts — jangan diformat (CF-07: format:check flaky/lambat)
+.next/
+out/
+build/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo

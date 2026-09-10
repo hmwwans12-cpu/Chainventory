@@ -7,6 +7,7 @@ import {
   ExternalLink,
   Eye,
   MoreHorizontal,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { EntityName } from "@/components/shared/entity-name";
 import { EmptyState } from "@/components/shared/empty-state";
 import { BaseScanLink } from "@/components/shared/basescan-link";
 import { Pagination } from "@/components/shared/pagination";
@@ -116,8 +118,10 @@ export function TransactionsPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger aria-label="Warehouse">
-                <SelectValue />
+              <SelectTrigger aria-label="Warehouse" className="min-w-36">
+                <SelectValue
+                  getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
+                />
               </SelectTrigger>
               <SelectContent>
                 {warehouses.map((w) => (
@@ -132,12 +136,22 @@ export function TransactionsPage({
             value={type ?? "all"}
             onValueChange={(value) => {
               if (value !== null) {
-                goTo({ type: value === "all" ? undefined : value, page: "1" });
+                // APP-01: "all" = null (hapus filter). undefined = biarkan,
+                // sehingga pilihan All sebelumnya diam-diam tak mereset.
+                goTo({ type: value === "all" ? null : value, page: "1" });
               }
             }}
           >
-            <SelectTrigger aria-label="Filter by type">
-              <SelectValue placeholder="All types" />
+            <SelectTrigger aria-label="Filter by type" className="min-w-32">
+              <SelectValue
+                placeholder="All types"
+                getLabel={(v) =>
+                  v === "all"
+                    ? "All types"
+                    : MOVEMENT_TYPE_META[v as keyof typeof MOVEMENT_TYPE_META]
+                        ?.label
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All types</SelectItem>
@@ -156,12 +170,22 @@ export function TransactionsPage({
             value={proof ?? "all"}
             onValueChange={(value) => {
               if (value !== null) {
-                goTo({ proof: value === "all" ? undefined : value, page: "1" });
+                goTo({ proof: value === "all" ? null : value, page: "1" });
               }
             }}
           >
-            <SelectTrigger aria-label="Filter by blockchain status">
-              <SelectValue placeholder="All proof status" />
+            <SelectTrigger
+              aria-label="Filter by blockchain status"
+              className="min-w-44"
+            >
+              <SelectValue
+                placeholder="All blockchain status"
+                getLabel={(v) =>
+                  v === "all"
+                    ? "All blockchain status"
+                    : v.charAt(0).toUpperCase() + v.slice(1)
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All blockchain status</SelectItem>
@@ -175,6 +199,36 @@ export function TransactionsPage({
           {totalCount} transaction{totalCount === 1 ? "" : "s"}
         </span>
       </div>
+      {(type || proof) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {type ? (
+            <span className="bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
+              Type: {MOVEMENT_TYPE_META[type as keyof typeof MOVEMENT_TYPE_META]?.label ?? type}
+              <button
+                type="button"
+                aria-label="Clear type filter"
+                onClick={() => goTo({ type: null, page: "1" })}
+                className="hover:bg-primary/20 relative -mr-1 rounded-full p-1 transition-colors before:absolute before:-inset-[8px] before:content-['']"
+              >
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
+            </span>
+          ) : null}
+          {proof ? (
+            <span className="bg-secondary/20 text-secondary-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
+              Status: {proof.charAt(0).toUpperCase() + proof.slice(1)}
+              <button
+                type="button"
+                aria-label="Clear proof filter"
+                onClick={() => goTo({ proof: null, page: "1" })}
+                className="hover:bg-secondary/30 relative -mr-1 rounded-full p-1 transition-colors before:absolute before:-inset-[8px] before:content-['']"
+              >
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
+            </span>
+          ) : null}
+        </div>
+      )}
 
       {items.length === 0 ? (
         <EmptyState
@@ -195,16 +249,16 @@ export function TransactionsPage({
           }
         />
       ) : (
-        <PanelCard padding="none">
-          <div className="hidden overflow-x-auto md:block">
-            <Table className="md:min-w-[720px]">
+        <PanelCard padding="none" className="bg-card">
+          <div className="hidden overflow-x-auto lg:block">
+            <Table className="lg:min-w-[720px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Transaction</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead className="text-right">Quantity</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="hidden md:table-cell">
+                  <TableHead className="hidden lg:table-cell">
                     Blockchain
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">Actor</TableHead>
@@ -228,9 +282,9 @@ export function TransactionsPage({
                     <TableRow key={m.id}>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-foreground font-medium">
+                          <EntityName title={m.productName}>
                             {m.productName}
-                          </span>
+                          </EntityName>
                           <span className="text-muted-foreground font-mono text-sm">
                             {m.productSku} · {m.id.slice(0, 8)}
                           </span>
@@ -263,7 +317,7 @@ export function TransactionsPage({
                           label={statusMeta.label}
                         />
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell className="hidden lg:table-cell">
                         {m.proofTxHash && m.proofStatus === "confirmed" ? (
                           <a
                             href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
@@ -302,7 +356,7 @@ export function TransactionsPage({
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                aria-label={`Actions for ${typeMeta.label}`}
+                                aria-label={`Actions for ${m.productName}`}
                               />
                             }
                           >
@@ -325,7 +379,7 @@ export function TransactionsPage({
             </Table>
           </div>
           {/* Mobile: card list (audit N) */}
-          <ul className="divide-y md:hidden">
+          <ul className="divide-y lg:hidden">
             {items.map((m) => {
               const typeMeta = MOVEMENT_TYPE_META[m.movementType];
               const statusMeta = MOVEMENT_STATUS_META[m.status];
@@ -341,9 +395,9 @@ export function TransactionsPage({
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-foreground truncate font-medium">
+                      <EntityName title={m.productName} className="min-w-0">
                         {m.productName}
-                      </span>
+                      </EntityName>
                       <StatusBadge
                         tone={statusMeta.tone}
                         label={statusMeta.label}
@@ -357,8 +411,8 @@ export function TransactionsPage({
                       <span
                         className={
                           negative
-                            ? "text-destructive font-mono"
-                            : "text-foreground font-mono"
+                            ? "text-destructive font-mono tabular-nums"
+                            : "text-foreground font-mono tabular-nums"
                         }
                       >
                         {negative ? "−" : "+"}

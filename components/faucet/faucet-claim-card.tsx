@@ -1,12 +1,16 @@
 "use client";
 
+/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import * as React from "react";
 import { Droplets, ExternalLink, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-
-const LOW_BALANCE_ETH = 0.003;
+import {
+  BASESCAN_URL,
+  FAUCET_AMOUNT_ETH,
+  FAUCET_LOW_BALANCE_ETH,
+} from "@/lib/constants";
 
 export function FaucetClaimCard({
   walletAddress,
@@ -36,13 +40,17 @@ export function FaucetClaimCard({
     };
   }, [walletAddress]);
 
-  const balanceNum = balance === null ? null : Number(balance);
+  // Nilai dari API diformat locale ("1,234.5") — strip pemisah ribuan
+  // sebelum Number, kalau tidak saldo ≥1000 jadi NaN dan banner tak
+  // pernah tampil (findings audit segar).
+  const balanceNum =
+    balance === null ? null : Number(balance.replace(/,/g, ""));
   // Probe saldo GAGAL (null/NaN) bukan berarti saldo rendah — jangan
   // tampilkan nudging "Low balance" berdasarkan ketidaktahuan.
   const confirmedLow =
     balanceNum !== null &&
     !Number.isNaN(balanceNum) &&
-    balanceNum < LOW_BALANCE_ETH;
+    balanceNum < FAUCET_LOW_BALANCE_ETH;
   if (!walletAddress || !confirmedLow) return null;
 
   async function claim() {
@@ -67,7 +75,10 @@ export function FaucetClaimCard({
         return;
       }
       setTxHash(body.data?.txHash ?? null);
-      setMessage("0.001 Base Sepolia ETH has been submitted to your wallet.");
+      // FE-24: copy memakai konstanta (tidak basi bila nominal berubah).
+      setMessage(
+        `${FAUCET_AMOUNT_ETH} Base Sepolia ETH has been submitted to your wallet.`
+      );
     } catch {
       setMessage("Network error. Your faucet claim was not submitted.");
     } finally {
@@ -86,7 +97,8 @@ export function FaucetClaimCard({
             Low Base Sepolia balance
           </p>
           <p className="text-muted-foreground text-sm">
-            Claim 0.001 test ETH to pay for your next stock transaction.
+            Claim {FAUCET_AMOUNT_ETH} test ETH to pay for your next stock
+            transaction.
           </p>
           {message ? (
             txHash ? (
@@ -108,9 +120,9 @@ export function FaucetClaimCard({
               size="sm"
               render={
                 <a
-                  href={`https://sepolia.basescan.org/tx/${txHash}`}
+                  href={`${BASESCAN_URL}/tx/${txHash}`}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                 />
               }
             >
@@ -123,7 +135,7 @@ export function FaucetClaimCard({
             ) : (
               <Droplets aria-hidden="true" />
             )}
-            Claim 0.001 ETH
+            Claim {FAUCET_AMOUNT_ETH} ETH
           </Button>
         </div>
       </CardContent>

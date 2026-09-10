@@ -16,11 +16,11 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatEthDecimal } from "@/lib/utils";
 import { sanitizeConsoleError } from "@/lib/utils/sanitize-console-error";
+import { basescanTxUrl } from "@/lib/constants";
+import { shortenAddress } from "@/lib/utils";
 import type { TreasuryData } from "@/lib/console/types";
 
-function shortAddress(address: string): string {
-  return `${address.slice(0, 8)}\u2026${address.slice(-6)}`;
-}
+const shortAddress = (address: string) => shortenAddress(address, 8, 6);
 
 function formatCooldown(ms: number): string {
   if (ms <= 0) return "Available now";
@@ -197,20 +197,29 @@ export function TreasuryCard({
                     onClick={handleClaim}
                     disabled={claiming || !walletAddress}
                     className="min-h-11"
-                    aria-label="Claim 0.001 Base Sepolia ETH"
+                    aria-label={`Claim ${treasury.faucet?.amountEther ?? "0.001"} Base Sepolia ETH`}
+                    title={!walletAddress ? "Connect a wallet first" : undefined}
                   >
                     <Coins aria-hidden="true" className="size-4" />
-                    {claiming ? "Claiming…" : "Claim 0.001 Base Sepolia"}
+                    {claiming
+                      ? "Claiming…"
+                      : `Claim ${treasury.faucet?.amountEther ?? "0.001"} Base Sepolia`}
                   </Button>
                 )}
+                {!walletAddress ? (
+                  <p className="text-muted-foreground text-sm">
+                    Connect a wallet in Settings to claim.
+                  </p>
+                ) : null}
 
                 {claimTxHash && (
                   <span className="text-muted-foreground text-sm">
                     Tx:{" "}
                     <a
-                      href={`https://sepolia.basescan.org/tx/${claimTxHash}`}
+                      href={basescanTxUrl(claimTxHash)}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label="View claim transaction on BaseScan"
                       className="text-primary hover:text-primary/80 underline"
                     >
                       {shortAddress(claimTxHash)}
@@ -219,7 +228,9 @@ export function TreasuryCard({
                 )}
 
                 {claimError && (
-                  <p className="text-destructive text-sm">{claimError}</p>
+                  <p role="alert" className="text-destructive text-sm">
+                    {claimError}
+                  </p>
                 )}
               </div>
             ) : null}

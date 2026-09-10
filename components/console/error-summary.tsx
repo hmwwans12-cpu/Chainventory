@@ -43,7 +43,8 @@ export function ErrorSummary({ errors }: { errors: ErrorEntry[] }) {
         {errors.length === 0 ? (
           <EmptyState
             icon={FileWarning}
-            title="No recent proof errors."
+            bare
+            title="No recent proof errors"
             description="Failed and manual-review proofs show up here for correlation."
           />
         ) : (

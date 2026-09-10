@@ -6,7 +6,7 @@ import {
   getMyWarehouses,
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
-import { ErrorState } from "@/components/shared/error-state";
+import { RetryErrorState } from "@/components/shared/retry-error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { MovementsPage } from "@/components/inventory/movements-page";
@@ -93,7 +93,7 @@ export default async function StockMovementsPageRoute({
           title="Stock Movement"
           description={`${active.name} · ledger.`}
         />
-        <ErrorState
+        <RetryErrorState
           icon={ArrowDownToLine}
           title="Unable to load movements."
           description="Something went wrong while retrieving the ledger. Please try again."

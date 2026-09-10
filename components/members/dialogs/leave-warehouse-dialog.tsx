@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Crown, Loader2, LogOut } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { toast } from "@/components/ui/toast";
 import { leaveWarehouse } from "@/lib/warehouses/members-client";
@@ -59,7 +58,7 @@ export function LeaveWarehouseDialog({
       title="Leave warehouse?"
       description={
         isOwner
-          ? "You are the owner — you can't leave until ownership is transferred to another member. Transfer ownership first, then you can leave."
+          ? "You are the owner. You can't leave until ownership is transferred to another member. Transfer ownership first, then you can leave."
           : "You will immediately lose access to this warehouse. Your past activity remains. A Manager or Owner can re-invite you later."
       }
       error={error}
@@ -79,24 +78,8 @@ export function LeaveWarehouseDialog({
       }
       onConfirm={isOwner ? onTransfer : leave}
     >
-      {isOwner ? (
-        // No extra body for the owner path.
-        null
-      ) : (
-        <Button
-          variant="destructive"
-          onClick={leave}
-          disabled={busy}
-          className="sm:hidden"
-        >
-          {busy ? (
-            <Loader2 aria-hidden="true" className="animate-spin" />
-          ) : (
-            <LogOut aria-hidden="true" />
-          )}
-          Leave warehouse
-        </Button>
-      )}
+      {/* NFE-03: tombol mobile duplikat dihapus — footer ConfirmDialog
+          sudah me-render primary "Leave warehouse" yang responsif. */}
     </ConfirmDialog>
   );
 }

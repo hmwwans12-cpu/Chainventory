@@ -8,7 +8,16 @@ export default function Loading() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Transactions" description="Loading ledger…" />
-      <PanelCard padding="none" className="overflow-hidden">
+      {/* Filters: warehouse + type + proof status + count */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Skeleton className="h-11 w-36 rounded-lg" />
+          <Skeleton className="h-11 w-32 rounded-lg" />
+          <Skeleton className="h-11 w-44 rounded-lg" />
+        </div>
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <PanelCard padding="none" className="bg-card overflow-hidden">
         <div className="flex items-center justify-center gap-2 border-b px-6 py-4">
           <ArrowLeftRight
             aria-hidden="true"
@@ -21,15 +30,18 @@ export default function Loading() {
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
-            className={`flex items-center justify-between border-b px-6 py-4 last:border-b-0 ${
+            className={`flex h-14 items-center gap-4 border-b px-4 last:border-b-0 ${
               i % 2 === 0 ? "bg-muted/40" : ""
             }`}
           >
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-3 w-40" />
-              <Skeleton className="h-2.5 w-24" />
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-24" />
             </div>
             <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-6 w-20 rounded-full" />
+            <Skeleton className="hidden h-4 w-20 lg:block" />
+            <Skeleton className="size-10 rounded-lg" />
           </div>
         ))}
       </PanelCard>

@@ -1,6 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
-import { wipeUsers, wipeWallets } from "./support/cleanup";
+import { wipeRunData, wipeUsers, wipeWallets } from "./support/cleanup";
 import { localEnv } from "./support/env";
 import { createUser, type E2EUser } from "./support/supabase";
 
@@ -17,6 +17,9 @@ import { createUser, type E2EUser } from "./support/supabase";
 
 const RUN = Date.now();
 
+// Email allowlist SENGAJA statis: harus sama persis dengan entri
+// DEVELOPER_ALLOWLIST di .env.e2e.local. Suffix RUN akan membuatnya
+// tidak cocok → 403. (Pengecualian pola RUN-suffix di denied user.)
 const ALLOWED_EMAIL = "dev-verify@chainventory.test";
 
 test.describe.serial("developer console", () => {
@@ -37,6 +40,8 @@ test.describe.serial("developer console", () => {
     const userIds = [state.allowed?.userId, state.denied?.userId].filter(
       (id): id is string => Boolean(id)
     );
+    // NCF-10: bersihkan juga notifications/audit user-scoped.
+    await wipeRunData([], userIds);
     await wipeWallets(userIds);
     await wipeUsers(userIds);
   });

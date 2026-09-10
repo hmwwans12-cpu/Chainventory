@@ -147,6 +147,69 @@ export const env = createEnv({
 
   // CI/preview builds without live secrets should set SKIP_ENV_VALIDATION=1
   // to avoid fail-fast. Production deploys (Vercel) run without it and will
-  // fail-fast if secrets are missing (TECHSTACK §4).
+  // fail-fast if secrets are missing (TECHSTACK §4, fix A7 below).
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });
+
+// Fix A7: klaim TECHSTACK §4 "gagal cepat bila secret wajib hilang" sebelumnya
+// salah — semua secret di atas optional sehingga build lolos tanpa secret dan
+// prod boot degradasi diam-diam (proof macet, faucet mati, rate-limit off).
+// Blok ini menegakkan fail-fast pada BUILD/DEPLOY Vercel (tanpa
+// SKIP_ENV_VALIDATION).
+//
+// Koreksi audit segar: Next.js men-set NODE_ENV=production untuk SEMUA
+// `next build` termasuk lokal — gate berbasis NODE_ENV saja memecahkan build
+// lokal/preflight yang sah. Maka gate dipersempit ke build Vercel
+// (VERCEL=1; Vercel me-set-nya otomatis) — platform deploy resmi (ARSITEKTUR
+// §7.4). Build lokal/CI memakai SKIP_ENV_VALIDATION=1 seperti sebelumnya.
+const isVercelBuild = process.env.VERCEL === "1";
+if (isVercelBuild && !process.env.SKIP_ENV_VALIDATION) {
+  const missing: string[] = [];
+  const need = (name: string, ok: boolean) => {
+    if (!ok) missing.push(name);
+  };
+
+  need(
+    "SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY",
+    !!env.SUPABASE_SECRET_KEY || !!env.SUPABASE_SERVICE_ROLE_KEY
+  );
+  need("NEXT_PUBLIC_SUPABASE_URL", !!env.NEXT_PUBLIC_SUPABASE_URL);
+  need(
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    !!env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      !!env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+  need("NEXT_PUBLIC_PRIVY_APP_ID", !!env.NEXT_PUBLIC_PRIVY_APP_ID);
+  need("PRIVY_APP_SECRET", !!env.PRIVY_APP_SECRET);
+  need("TREASURY_PRIVATE_KEY", !!env.TREASURY_PRIVATE_KEY);
+  need("BASE_SEPOLIA_RPC_URL", !!env.BASE_SEPOLIA_RPC_URL);
+  need("WAREHOUSE_FACTORY_ADDRESS", !!env.WAREHOUSE_FACTORY_ADDRESS);
+  need("QSTASH_TOKEN", !!env.QSTASH_TOKEN);
+  need(
+    "QSTASH_CURRENT_SIGNING_KEY",
+    !!env.QSTASH_CURRENT_SIGNING_KEY
+  );
+  need("QSTASH_NEXT_SIGNING_KEY", !!env.QSTASH_NEXT_SIGNING_KEY);
+  need("UPSTASH_REDIS_REST_URL", !!env.UPSTASH_REDIS_REST_URL);
+  need("UPSTASH_REDIS_REST_TOKEN", !!env.UPSTASH_REDIS_REST_TOKEN);
+  need("CRON_SECRET", !!env.CRON_SECRET);
+
+  if (missing.length > 0) {
+    throw new Error(
+      `[env] missing required production secrets: ${missing.join(", ")}. ` +
+        `Set them in Vercel env or set SKIP_ENV_VALIDATION=1 for non-prod builds.`
+    );
+  }
+
+  // NEXT_PUBLIC_APP_URL default localhost = proof/QStash macet pending di
+  // prod (docs/E2E §base-url). Wajib https publik saat production.
+  const appUrl = env.NEXT_PUBLIC_APP_URL;
+  if (
+    !appUrl.startsWith("https://") ||
+    /localhost|127\.0\.0\.1|0\.0\.0\.0/.test(appUrl)
+  ) {
+    throw new Error(
+      `[env] NEXT_PUBLIC_APP_URL must be a public https URL in production (got "${appUrl}").`
+    );
+  }
+}

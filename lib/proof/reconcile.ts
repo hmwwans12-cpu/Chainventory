@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logger";
 import {
-  publishProofJob,
+  republishProofJob,
   scheduleProofConfirmationFromReconcile,
 } from "@/lib/proof/qstash";
 import { createProofServiceClient } from "@/lib/proof/supabase";
@@ -47,16 +47,25 @@ export async function reconcileProofs(): Promise<ReconcileResult> {
     try {
       if (c.kind === "republish") {
         await supabase.rpc("proof_republish", { p_proof_id: c.proof_id });
-        await publishProofJob(c.proof_id);
+        await republishProofJob(c.proof_id);
         republished.push(c.proof_id);
       } else if (c.kind === "orphan") {
-        await supabase.from("proof_outbox").insert({
-          proof_id: c.proof_id,
-          status: "pending",
-          attempt_count: 0,
-          next_attempt_at: new Date().toISOString(),
-        });
-        await publishProofJob(c.proof_id);
+        // Fix BE-26: dua cron konkuren bisa INSERT proof_outbox yang sama →
+        // unique violation menghentikan item (berisik). Upsert DO NOTHING =
+        // idempoten; republish tetap jalan untuk kandidat ini.
+        const { error: orphanError } = await supabase
+          .from("proof_outbox")
+          .upsert(
+            {
+              proof_id: c.proof_id,
+              status: "pending",
+              attempt_count: 0,
+              next_attempt_at: new Date().toISOString(),
+            },
+            { onConflict: "proof_id", ignoreDuplicates: true }
+          );
+        if (orphanError && orphanError.code !== "23505") throw orphanError;
+        await republishProofJob(c.proof_id);
         republished.push(c.proof_id);
       } else if (c.kind === "confirm") {
         await scheduleProofConfirmationFromReconcile(c.proof_id);

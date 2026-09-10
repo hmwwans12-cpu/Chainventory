@@ -6,7 +6,10 @@ export default function AnalyticsLoading() {
     <div className="flex flex-col gap-6">
       <PageHeader title="Analytics" description="Loading analytics…" />
       {/* Controls (range + warehouse) */}
-      <Skeleton className="h-10 w-full max-w-md rounded-lg" />
+      <div className="flex flex-wrap items-center gap-2">
+        <Skeleton className="h-11 w-full max-w-md rounded-lg" />
+        <Skeleton className="h-11 w-36 rounded-lg" />
+      </div>
       {/* Chart utama */}
       <Skeleton className="h-[320px] w-full rounded-lg" />
       {/* Top products */}

@@ -25,8 +25,9 @@ import {
 import { PROOF_STATUS_META as SHARED_PROOF_STATUS_META } from "@/lib/blockchain/proof-meta";
 import type { MovementListItem } from "@/lib/inventory/types";
 import { cn, formatDateTime } from "@/lib/utils";
+import { BASESCAN_URL } from "@/lib/constants";
 
-export const BASESCAN_URL = "https://sepolia.basescan.org";
+export { BASESCAN_URL };
 
 export const PROOF_STATUS_META = SHARED_PROOF_STATUS_META;
 
@@ -122,8 +123,8 @@ export function MovementDetailSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex flex-col gap-5 overflow-y-auto p-4">
-          <div className="ring-foreground/10 flex items-center justify-between rounded-lg p-3 ring-1">
+        <div className="flex flex-col gap-5 overflow-y-auto px-4 pb-4">
+          <div className="flex items-center justify-between rounded-lg py-1">
             <div className="flex flex-col gap-0.5">
               <span className="text-muted-foreground text-sm">Quantity</span>
               <span className="text-foreground text-2xl font-semibold tabular-nums">
@@ -152,7 +153,7 @@ export function MovementDetailSheet({
           ) : null}
 
           <div className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-sm font-medium">Timeline</span>
+            <h3 className="text-muted-foreground text-sm font-medium">Timeline</h3>
             <ol className="mt-1 flex flex-col">
               {steps.map((step, i) => (
                 <li key={step.label} className="flex gap-3">
@@ -210,12 +211,22 @@ export function MovementDetailSheet({
                   />
                 </div>
                 <p className="text-muted-foreground truncate font-mono text-sm">{movement.proofTxHash}</p>
-                <a href={`${BASESCAN_URL}/tx/${movement.proofTxHash}`} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="sm" className="w-full">
-                    <ExternalLink aria-hidden="true" className="size-4" />
-                    View blockchain proof
-                  </Button>
-                </a>
+                {/* NFE-11: pola render (bukan <button> dalam <a>) + hash encoded. */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  render={
+                    <a
+                      href={`${BASESCAN_URL}/tx/${encodeURIComponent(movement.proofTxHash)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    />
+                  }
+                >
+                  <ExternalLink aria-hidden="true" className="size-4" />
+                  View blockchain proof
+                </Button>
               </div>
             </details>
           ) : movement.proofStatus ? (

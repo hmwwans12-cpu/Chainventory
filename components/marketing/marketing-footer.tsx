@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/shared/logo";
+import { CopyButton } from "@/components/shared/copy-button";
 import { APP_NAME, BASE_SEPOLIA_CHAIN_ID } from "@/lib/constants";
 
 const FOOTER_GROUPS = [
@@ -24,7 +25,8 @@ const FOOTER_GROUPS = [
 
 /**
  * Marketing footer (DESIGN §21)- informative: brand, product links,
- * getting-started links, and network status with a copyable chain id.
+ * getting-started links, and network status with a copyable chain id
+ * (NFE-21: tombol salin kini benar ada, sesuai komentar).
  */
 export function MarketingFooter() {
   return (
@@ -68,8 +70,12 @@ export function MarketingFooter() {
           <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
             Verification runs on Base Sepolia, a safe and free test network.
           </p>
-          <span className="text-muted-foreground text-sm tabular-nums">
+          <span className="text-muted-foreground flex items-center gap-1 text-sm tabular-nums">
             Chain ID {BASE_SEPOLIA_CHAIN_ID}
+            <CopyButton
+              text={String(BASE_SEPOLIA_CHAIN_ID)}
+              label="Copy chain ID"
+            />
           </span>
         </div>
       </div>

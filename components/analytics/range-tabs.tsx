@@ -32,10 +32,12 @@ export function RangeTabs({
     <div
       role="group"
       aria-label="Analytics time range"
-      className="bg-muted flex items-center gap-0.5 rounded-md p-1"
+      className="bg-muted flex items-center gap-0.5 rounded-lg p-[3px]"
     >
       {ANALYTICS_RANGES.map((r) => {
         const active = r === range;
+        // FE-26: hanya range aktif yang prefetch — prefetch 3 range
+        // analytics berat sekaligus boros.
         return (
           <Link
             key={r}
@@ -44,12 +46,12 @@ export function RangeTabs({
               query: { warehouse: warehouseId, range: r },
             }}
             scroll={false}
-            prefetch={true}
+            prefetch={active}
             aria-current={active ? "true" : undefined}
             className={cn(
-              "focus-visible:ring-ring min-h-11 rounded-[calc(var(--radius-md)-2px)] px-3 py-2.5 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none",
+              "focus-visible:ring-ring min-h-11 rounded-md px-3 py-2.5 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:outline-none",
               active
-                ? "bg-card text-foreground shadow-sm"
+                ? "bg-card text-foreground shadow-(--shadow-card)"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >

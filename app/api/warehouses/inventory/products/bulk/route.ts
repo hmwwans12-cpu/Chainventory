@@ -36,6 +36,12 @@ import { logger } from "@/lib/logger";
  *          description?, lowStockThreshold?, initialQuantity? }] }
  */
 
+// Fix BE-12(d): bulk 1000 baris × RPC sekuensial melebihi budget function
+// default — beri budget eksplisit (60 = batas Vercel Hobby; lihat
+// create/route.ts). Reconciliation harian tetap safety net bila publish
+// proof per-baris gagal.
+export const maxDuration = 60;
+
 type RowResult =
   | { index: number; ok: true; productId: string }
   | { index: number; ok: false; error: string };
@@ -91,24 +97,38 @@ export async function POST(request: Request) {
     }
     seenSku.set(sku, idx);
   }
+  // Fix BE-12(a): pre-flight WAJIB case-insensitive. seenSku di-uppercase
+  // untuk deteksi intra-request, tetapi `.in("sku", UPPER_LIST)` terhadap
+  // kolom case-sensitive lolos ("abc" vs "ABC" tersimpan) lalu gagal per-baris
+  // dengan pesan generik. Ambil SKU warehouse lalu bandingkan upper-vs-upper
+  // di JS; bila katalog terlalu besar untuk pre-flight, lewati (per-baris
+  // DB unique constraint tetap penegak final).
   if (seenSku.size > 0) {
-    const skuList = Array.from(seenSku.keys());
-    const { data: existing } = await supabase
+    const PREFLIGHT_CAP = 5_000;
+    const { data: catalog } = await supabase
       .from("products")
       .select("sku")
       .eq("warehouse_id", parsed.data.warehouseId)
-      .in("sku", skuList);
-    if (existing && existing.length > 0) {
-      const conflicts = existing.map((e) => e.sku).join(", ");
-      return invalid(
-        `These SKUs already exist in this warehouse: ${conflicts}.`
+      .limit(PREFLIGHT_CAP);
+    if (catalog && catalog.length < PREFLIGHT_CAP) {
+      const stored = new Set(
+        catalog.map((e) => String(e.sku ?? "").trim().toUpperCase())
       );
+      const conflicts = Array.from(seenSku.keys()).filter((s) =>
+        stored.has(s)
+      );
+      if (conflicts.length > 0) {
+        return invalid(
+          `These SKUs already exist in this warehouse: ${conflicts.join(", ")}.`
+        );
+      }
     }
   }
 
   // Contract address diambil sekali — dipakai untuk proof per baris ber-stok.
+  // NBE-12: via warehouse_summaries (member-visible).
   const { data: wh } = await supabase
-    .from("warehouses")
+    .from("warehouse_summaries")
     .select("contract_address")
     .eq("id", parsed.data.warehouseId)
     .maybeSingle();

@@ -17,12 +17,12 @@ export default function AuthLayout({
 
   return (
     <div className="bg-muted flex min-h-dvh flex-col items-center justify-center px-4 py-12">
+      {/* NFE-01: Logo sudah me-render <Link> sendiri — wrapper Link luar
+          membuat <a> bersarang (DOM invalid + label ganda). */}
       <div className="mb-8">
-        <Link href="/" aria-label="Go to homepage">
-          <Logo />
-        </Link>
+        <Logo />
       </div>
-      <div className="bg-card w-full max-w-sm rounded-lg border p-6 shadow-sm sm:p-8">
+      <div className="bg-card w-full max-w-sm rounded-lg border p-6 shadow-(--shadow-card) sm:p-8">
         {children}
       </div>
       <p className="text-muted-foreground mt-6 text-sm">

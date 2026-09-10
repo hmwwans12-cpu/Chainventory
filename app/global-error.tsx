@@ -18,8 +18,16 @@ export default function GlobalError({
     console.error("[global-error]", error);
   }, [error]);
 
+  // FE-15: lang mengikuti cookie locale (bukan hardcode "en") — boundary
+  // ini menggantikan root layout sehingga tidak mewarisi <html lang>.
+  const lang =
+    typeof document !== "undefined" &&
+    /(?:^|;\s*)locale=id(?:;|$)/.test(document.cookie)
+      ? "id"
+      : "en";
+
   return (
-    <html lang="en">
+    <html lang={lang}>
       <body className="bg-background flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">
         <p className="font-display text-primary text-sm font-semibold tracking-wide uppercase">
           Error
@@ -28,7 +36,7 @@ export default function GlobalError({
           Something went wrong
         </h1>
         <p className="text-muted-foreground max-w-md text-base">
-          We&apos;re sorry — an unexpected error occurred.
+          We&apos;re sorry. An unexpected error occurred.
           {error.digest ? ` Reference: ${error.digest}` : null}
         </p>
         <Button onClick={reset}>Try again</Button>

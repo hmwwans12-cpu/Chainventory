@@ -6,7 +6,7 @@ import { SpotlightCard } from "@/components/marketing/spotlight-card";
 export const metadata: Metadata = {
   title: "Features",
   description:
-    "Real-time inventory, role-based access control, bulk import, verifiable blockchain proof, and more — for modern warehouse teams.",
+    "Real-time inventory, role-based access control, bulk import, verifiable blockchain proof, and more, for modern warehouse teams.",
   alternates: { canonical: "/features" },
 };
 
@@ -14,7 +14,7 @@ const FEATURE_GROUPS = [
   {
     title: "Inventory",
     description:
-      "Products, stock levels, and units managed in one place — with SKU-level uniqueness and atomic updates.",
+      "Products, stock levels, and units managed in one place, with SKU-level uniqueness and atomic updates.",
     items: [
       "Add, edit, archive, and bulk-import products",
       "Stock in / stock out with no negative balances",
@@ -25,7 +25,7 @@ const FEATURE_GROUPS = [
   {
     title: "Team & access",
     description:
-      "Five roles — Owner, Manager, Staff, Auditor, Viewer — enforced server-side, not just in the UI.",
+      "Five roles (Owner, Manager, Staff, Auditor, Viewer), enforced server-side, not just in the UI.",
     items: [
       "Join a warehouse by code or invite link",
       "Managers approve staff, auditors, and viewers",
@@ -57,10 +57,10 @@ export default function FeaturesPage() {
         {FEATURE_GROUPS.map((group) => (
           <SpotlightCard
             key={group.title}
-            className="ring-foreground/10 bg-card flex flex-col gap-3 rounded-lg p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-md"
+            className="ring-foreground/10 bg-card flex flex-col gap-3 rounded-lg p-6 ring-1 transition-shadow duration-200 ease-out hover:shadow-(--shadow-elevated)"
             spotlightClassName="bg-primary/10"
           >
-            <h2 className="font-display text-foreground text-lg font-semibold">
+            <h2 className="text-foreground text-lg font-semibold">
               {group.title}
             </h2>
             <p className="text-muted-foreground text-sm leading-relaxed">

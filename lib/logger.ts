@@ -15,11 +15,29 @@ import { env } from "@/lib/env";
 export const logger = pino({
   level: typeof window === "undefined" ? (env.LOG_LEVEL ?? "info") : "info",
   redact: {
+    // Fix BE-18: sebelumnya hanya 7 pola — qstash/redis/basescan/resend
+    // token, treasury key, privy secret, wallet address, email, dan userId
+    // lolos ke Vercel logs (PII + secret). TECHSTACK §5 mewajibkan user ID
+    // ter-redaksi; panggil logger dengan userIdHash bila butuh korelasi.
     paths: [
       "password",
       "*.password",
       "token",
       "*.token",
+      "qstash_token",
+      "*.qstash_token",
+      "redis_token",
+      "*.redis_token",
+      "basescan_key",
+      "*.basescan_key",
+      "resend_key",
+      "*.resend_key",
+      "treasury",
+      "*.treasury",
+      "privy_secret",
+      "*.privy_secret",
+      "privyUserId",
+      "*.privyUserId",
       "authorization",
       "*.authorization",
       "secret",
@@ -30,6 +48,16 @@ export const logger = pino({
       "*.signature",
       "jwt",
       "*.jwt",
+      "wallet",
+      "*.wallet",
+      "actorWallet",
+      "*.actorWallet",
+      "address",
+      "*.address",
+      "email",
+      "*.email",
+      "userId",
+      "*.userId",
     ],
     censor: "[REDACTED]",
   },

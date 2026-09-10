@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { invalid, ok, requireRateLimit, requireUser, serverError } from "@/lib/api-handler";
+import {
+  invalid,
+  ok,
+  requireReadRateLimit,
+  requireUser,
+  serverError,
+} from "@/lib/api-handler";
 import { fetchWalletBalance } from "@/lib/blockchain/balance";
 import { formatEthValue } from "@/lib/utils";
 
@@ -19,7 +25,12 @@ export async function GET(request: Request) {
   const auth = await requireUser(supabase);
   if (auth.res) return auth.res;
 
-  const limited = await requireRateLimit("export", auth.user.id, request);
+  // Fix BE-07: read-only fail-open + bucket sendiri (sebelumnya salah pakai "export").
+  const limited = await requireReadRateLimit(
+    "wallet-balance",
+    auth.user.id,
+    request
+  );
   if (limited) return limited;
 
   const address = new URL(request.url).searchParams.get("address");

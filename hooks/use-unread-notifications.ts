@@ -5,6 +5,7 @@ import * as React from "react";
 import { createClient } from "@/lib/supabase/client";
 import { fetchUnreadCount } from "@/lib/notifications/notifications-client";
 import { unreadStore } from "@/lib/notifications/unread-store";
+import { UNREAD_POLL_MS } from "@/lib/constants";
 
 /**
  * Unread count untuk SidebarMenuBadge (temuan #8; P2-06 store bersama).
@@ -55,7 +56,7 @@ export function useUnreadNotifications(enabled = true): number {
     }
 
     void refresh();
-    const interval = setInterval(refresh, 60_000);
+    const interval = setInterval(refresh, UNREAD_POLL_MS);
     const onVisible = () => {
       if (document.visibilityState === "visible") void refresh();
     };

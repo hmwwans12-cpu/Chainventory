@@ -61,15 +61,17 @@ export function Reveal({
     }
   }, []);
 
-  // CSS-driven animation classes
+  // CSS-driven animation classes.
+  // NFE-13: delay kini masuk shorthand (sebelumnya --reveal-delay no-op).
+  // rootMargin tetap prop cadangan (view() tak punya konsepnya).
   const animationStyle =
     mounted && !reduce
       ? {
+          animation:
+            "reveal var(--dur-slow, 350ms) var(--ease-out, ease-out) var(--reveal-delay, 0s) forwards",
           "--reveal-delay": `${delay}s`,
           "--reveal-threshold": threshold.toString(),
           "--reveal-root-margin": rootMargin,
-          animation:
-            "reveal var(--dur-slow, 350ms) var(--ease-out, ease-out) forwards",
           animationTimeline: "view()",
           animationRange: `entry ${threshold * 100}% cover 30%`,
           opacity: 0,

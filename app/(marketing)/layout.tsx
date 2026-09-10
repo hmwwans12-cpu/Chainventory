@@ -4,6 +4,10 @@ import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { LocaleProvider } from "@/components/providers/locale-provider";
 import { getLocale } from "@/lib/i18n/server";
 
+// FE-21: layout membaca sesi + cookie locale — wajib dynamic agar header
+// tidak ter-prerender basi (tampil "Login" padahal sudah login).
+export const dynamic = "force-dynamic";
+
 export default async function MarketingLayout({
   children,
 }: {

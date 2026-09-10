@@ -35,14 +35,16 @@ export function LocaleProvider({
   initialLocale?: Locale;
 }) {
   const router = useRouter();
-  const [locale, setLocaleState] = React.useState<Locale>(initialLocale);
+  // FE-04: inisialisasi lazy dari cookie — nilai render pertama sudah sama
+  // dengan server (initialLocale dibaca dari cookie yang sama), tanpa
+  // double-render + flash bahasa. Effect hanya sinkronkan <html lang>.
+  const [locale, setLocaleState] = React.useState<Locale>(() =>
+    typeof document === "undefined" ? initialLocale : readCookie()
+  );
 
   React.useEffect(() => {
-    const initial = readCookie();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocaleState(initial);
-    document.documentElement.lang = initial;
-  }, []);
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const setLocale = React.useCallback(
     (next: Locale) => {

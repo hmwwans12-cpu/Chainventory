@@ -5,6 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
+      // CF-22: lengkapi disallow untuk semua rute privat/auth agar tidak
+      // ter-crawl (sinkron dengan PROTECTED_ROUTES + AUTH_ROUTES).
       disallow: [
         "/dashboard",
         "/inventory",
@@ -14,6 +16,14 @@ export default function robots(): MetadataRoute.Robots {
         "/notifications",
         "/blockchain",
         "/settings",
+        "/console",
+        "/login",
+        "/signup",
+        "/onboarding",
+        "/invite",
+        "/forgot-password",
+        "/reset-password",
+        "/auth",
         "/api/",
       ],
     },

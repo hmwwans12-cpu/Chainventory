@@ -33,14 +33,19 @@ const spaceGrotesk = localFont({
   ],
 });
 
+const APP_BASE_URL =
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://chainventory.vercel.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://chainventory.vercel.app"),
+  // CF-22: jangan hardcode domain prod — preview deploy dapat canonical
+  // yang salah. NEXT_PUBLIC_APP_URL di-set per environment di Vercel.
+  metadataBase: new URL(APP_BASE_URL),
   title: {
-    default: "Chainventory — Inventory Management with Blockchain Verification",
+    default: "Chainventory: Inventory Management with Blockchain Verification",
     template: "%s | Chainventory",
   },
   description:
-    "Modern inventory management for teams. Real-time stock, role-based access control, and blockchain verification as a proof layer — without the crypto complexity.",
+    "Modern inventory management for teams. Real-time stock, role-based access control, and blockchain verification as a proof layer.  without the crypto complexity.",
   keywords: [
     "inventory management",
     "warehouse management",
@@ -50,7 +55,7 @@ export const metadata: Metadata = {
     "inventory software",
   ],
   openGraph: {
-    title: "Chainventory — Inventory Management with Blockchain Verification",
+    title: "Chainventory: Inventory Management with Blockchain Verification",
     description:
       "Real-time inventory, role-based access, and verifiable blockchain proof for every stock movement.",
     type: "website",
@@ -58,7 +63,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "Chainventory — Inventory Management with Blockchain Verification",
+    title: "Chainventory: Inventory Management with Blockchain Verification",
     description:
       "Real-time inventory, role-based access, and verifiable blockchain proof for every stock movement.",
   },

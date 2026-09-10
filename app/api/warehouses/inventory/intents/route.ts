@@ -92,9 +92,11 @@ export async function POST(request: Request) {
     );
     if (inactive) return inactive;
 
+    // NBE-12: via warehouse_summaries (member-visible); tabel dasar
+    // owner-only membuat intent v2 mustahil untuk non-owner.
     const [{ data: warehouse }, { data: product }] = await Promise.all([
       supabase
-        .from("warehouses")
+        .from("warehouse_summaries")
         .select("contract_address")
         .eq("id", parsed.data.warehouseId)
         .maybeSingle(),
@@ -129,6 +131,13 @@ export async function POST(request: Request) {
         return invalid("Invalid version.");
       }
     }
+    // Fix BE-25 (PRD §32): retryable writes WAJIB idempotencyKey stabil dari
+    // client. Fallback randomUUID() tiap retry = intent duplikat. Tolak bila
+    // kosong, selaras dengan movements yang mewajibkan key (C-10).
+    const idempotencyKey = parsed.data.idempotencyKey?.trim() || "";
+    if (!idempotencyKey) {
+      return invalid("idempotencyKey is required for stock intents.");
+    }
     const payload = buildProofPayload({
       movementId: intentId,
       warehouseId: parsed.data.warehouseId,
@@ -158,7 +167,7 @@ export async function POST(request: Request) {
         p_reason: parsed.data.reason || null,
         p_reference: parsed.data.reference || null,
         p_actor_wallet: parsed.data.actorWallet,
-        p_idempotency_key: parsed.data.idempotencyKey || randomUUID(),
+        p_idempotency_key: idempotencyKey,
         p_payload: payload,
         p_payload_hash: payloadHash,
       }
@@ -272,7 +281,7 @@ export async function POST(request: Request) {
     // apa pun (mis. transfer ETH biasa). Tanpa ini, stok bisa commit
     // tanpa proof on-chain.
     const { data: warehouse } = await supabase
-      .from("warehouses")
+      .from("warehouse_summaries")
       .select("contract_address")
       .eq("id", intent.warehouse_id)
       .maybeSingle();
@@ -303,6 +312,9 @@ export async function POST(request: Request) {
           contractAddress,
           actorWallet: intent.actor_wallet,
           intentId: intent.id,
+          // Fix BE-15: pastikan hash on-chain = hash intent tersimpan.
+          // Tanpa ini modifikasi payload di DB lolos tanpa deteksi.
+          payloadHash: intent.payload_hash,
         }
       );
       if (!verdict.ok)

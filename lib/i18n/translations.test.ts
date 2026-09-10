@@ -44,7 +44,9 @@ describe("i18n key parity", () => {
     expect(translate("en", "settings.signed_in", { email: "a@b.c" })).toBe(
       "Signed in as a@b.c"
     );
-    expect(translate("id", "inactivity.warning_title")).toContain("disuspend");
+    expect(translate("id", "inactivity.warning_title")).toContain(
+      "ditangguhkan"
+    );
   });
 
   it("missing key returns key string + console warn in dev", () => {

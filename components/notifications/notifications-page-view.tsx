@@ -19,6 +19,8 @@ import {
   type NotificationRow,
 } from "@/lib/notifications/types";
 import { debounce } from "@/lib/realtime/debounce";
+import { openChannel } from "@/lib/realtime/channel";
+import { FLASH_MESSAGE_MS, REALTIME_DEBOUNCE_MS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -28,7 +30,7 @@ import { LoadMore } from "@/components/shared/load-more";
 
 /**
  * Notifications halaman penuh (DESIGN §15). Mirip logika panel bell namun
- * ber-paginate (25/loading), punya "Mark all read", dan tetap subscribe
+ * ber-paginate (25/loading), punya "Mark All Read", dan tetap subscribe
  * realtime sehingga baris baru masuk tanpa reload.
  */
 export function NotificationsPageView({
@@ -71,10 +73,14 @@ export function NotificationsPageView({
     let channel: RealtimeChannel | undefined;
 
     // Audit #5: burst event → 1 refresh (pola P2-05 yang sama di tempat lain).
-    const refreshFromRealtime = debounce(async () => {
+    // NFE-17: pertahankan prefix yang sudah dimuat (refetch sepanjang
+    // loaded, bukan pageSize) — tanpa ini Load More 50 baris kolaps ke 25
+    // saat notif baru tiba. Dipakai jalur INSERT (debounce) DAN UPDATE.
+    const refreshPreserving = async () => {
+      const limit = Math.max(pageSize, notificationsRef.current.length);
       const [newCount, newRows, names] = await Promise.all([
         fetchUnreadCount(supabase),
-        fetchRecentNotifications(supabase, pageSize),
+        fetchRecentNotifications(supabase, limit),
         supabase.from("warehouse_summaries").select("id, name"),
       ]);
       if (cancelled) return;
@@ -88,14 +94,20 @@ export function NotificationsPageView({
           (names.data ?? []).map((w) => [w.id, w.name as string])
         )
       );
-      setHasMore(newRows.length >= pageSize);
+      setHasMore(newRows.length >= limit);
       if (added) {
         setFlashId(added.id);
         setAnnouncement("New notification");
         if (popTimer.current) clearTimeout(popTimer.current);
-        popTimer.current = setTimeout(() => setFlashId(null), 1800);
+        popTimer.current = setTimeout(
+          () => setFlashId(null),
+          FLASH_MESSAGE_MS
+        );
       }
-    }, 400);
+    };
+    const refreshFromRealtime = debounce(() => {
+      void refreshPreserving();
+    }, REALTIME_DEBOUNCE_MS);
 
     async function init() {
       const {
@@ -103,8 +115,9 @@ export function NotificationsPageView({
       } = await supabase.auth.getUser();
       if (cancelled || !user) return;
 
-      channel = supabase
-        .channel(`notifications-page:${user.id}`)
+      // Topik unik per attempt — cegah "cannot add callbacks after
+      // subscribe()" saat remount cepat/StrictMode (lihat channel.ts).
+      channel = openChannel(supabase, `notifications-page:${user.id}`)
         .on(
           "postgres_changes",
           {
@@ -117,7 +130,8 @@ export function NotificationsPageView({
             void refreshFromRealtime();
           }
         )
-        // M-07: UPDATE (mark-as-read di tab lain) ikut disinkronkan.
+        // M-07: UPDATE (mark-as-read di tab lain) ikut disinkronkan —
+        // lewat debounce yang sama (burst mark-all-read = 1 refetch).
         .on(
           "postgres_changes",
           {
@@ -126,21 +140,8 @@ export function NotificationsPageView({
             table: "notifications",
             filter: `user_id=eq.${user.id}`,
           },
-          async () => {
-            const [newCount, newRows, names] = await Promise.all([
-              fetchUnreadCount(supabase),
-              fetchRecentNotifications(supabase, pageSize),
-              supabase.from("warehouse_summaries").select("id, name"),
-            ]);
-            if (cancelled) return;
-            setUnreadCount(newCount);
-            setNotifications(newRows);
-            setWarehouseNames(
-              Object.fromEntries(
-                (names.data ?? []).map((w) => [w.id, w.name as string])
-              )
-            );
-            setHasMore(newRows.length >= pageSize);
+          () => {
+            refreshFromRealtime();
           }
         )
         .subscribe();
@@ -150,7 +151,7 @@ export function NotificationsPageView({
     return () => {
       cancelled = true;
       refreshFromRealtime.cancel();
-      if (channel) void supabase.removeChannel(channel);
+      if (channel) void supabase.removeChannel(channel).catch(() => {});
       if (popTimer.current) clearTimeout(popTimer.current);
     };
   }, [pageSize]);
@@ -204,6 +205,8 @@ export function NotificationsPageView({
     if (!error && data) {
       setNotifications((rows) => [...rows, ...(data as NotificationRow[])]);
       setHasMore(data.length >= pageSize);
+    } else {
+      setAnnouncement("Could not load more notifications. Try again.");
     }
     setLoadingMore(false);
   }, [loadingMore, pageSize]);
@@ -227,7 +230,7 @@ export function NotificationsPageView({
           disabled={unreadCount === 0}
         >
           <CheckCheck aria-hidden="true" />
-          Mark all read
+          Mark All Read
         </Button>
       </div>
 
@@ -260,13 +263,13 @@ export function NotificationsPageView({
                   >
                     <span
                       className={cn(
-                        "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg",
+                        "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent",
                         meta?.tone === "success" &&
                           "bg-muted text-muted-foreground",
                         meta?.tone === "warning" &&
-                          "bg-warning/15 text-warning",
+                          "bg-warning/15 text-warning-foreground border-warning/20",
                         meta?.tone === "danger" &&
-                          "bg-destructive/15 text-destructive",
+                          "bg-destructive/15 text-destructive border-destructive/20",
                         (!meta || meta.tone === "default") &&
                           "bg-muted text-muted-foreground"
                       )}
@@ -298,16 +301,19 @@ export function NotificationsPageView({
                         <span className="text-primary text-sm font-medium">Review →</span>
                       ) : null}
                       <span className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2 text-sm">
-                        <time dateTime={n.last_event_at}>
+                        <time dateTime={n.last_event_at} className="tabular-nums">
                           {formatTimeAgo(n.last_event_at)}
                         </time>
                         {manyWarehouses && n.warehouse_id && warehouseNames[n.warehouse_id] ? (
                           <Badge variant="outline" className="text-sm">{warehouseNames[n.warehouse_id]}</Badge>
                         ) : null}
                         {n.times > 1 ? (
-                          <Badge variant="secondary" className="gap-1">
-                            ×{n.times} · {n.times} updates in last 10 minutes
-                          </Badge>
+                          <span className="inline-flex items-center gap-1.5">
+                            <Badge variant="secondary" className="gap-1 tabular-nums">
+                              ×{n.times}
+                            </Badge>
+                            <span>updates in last 10 minutes</span>
+                          </span>
                         ) : null}
                       </span>
                     </span>

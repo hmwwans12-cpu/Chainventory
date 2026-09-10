@@ -18,6 +18,12 @@ export default function DashboardLoading() {
         <Skeleton className="h-[320px] rounded-lg lg:col-span-2" />
         <Skeleton className="h-[320px] rounded-lg" />
       </div>
+      {/* Recent movements + transactions/activity */}
+      <Skeleton className="h-[280px] w-full rounded-lg" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Skeleton className="h-[220px] rounded-lg" />
+        <Skeleton className="h-[220px] rounded-lg" />
+      </div>
     </div>
   );
 }

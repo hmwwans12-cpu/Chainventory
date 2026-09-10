@@ -8,7 +8,14 @@ const docsOptions: DocsLayoutProps = {
   nav: {
     title: "Chainventory",
   },
+  // Docs terkunci light-only — toggle tema bawaan fumadocs menyesatkan
+  // (tidak mengubah apa pun karena theme provider dimatikan di bawah).
+  themeSwitch: { enabled: false },
   links: [
+    {
+      text: "Home",
+      url: "/",
+    },
     {
       text: "Dashboard",
       url: "/dashboard",

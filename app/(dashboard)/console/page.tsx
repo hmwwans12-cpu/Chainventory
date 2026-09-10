@@ -6,6 +6,7 @@ import { DeveloperConsole } from "@/components/console/developer-console";
 import { allowlistSet, getConsoleActor } from "@/lib/console/guard";
 import {
   getAuditTrail,
+  getConsoleDataHealth,
   getConsoleSummary,
   getErrorSummary,
   getManualReviewProofs,
@@ -36,11 +37,12 @@ export default async function DeveloperConsolePage() {
     matchedVia,
   };
 
-  const [summary, manualReview, errors, audit] = await Promise.all([
+  const [summary, manualReview, errors, audit, health] = await Promise.all([
     getConsoleSummary(),
     getManualReviewProofs(100),
     getErrorSummary(100),
     getAuditTrail(100),
+    getConsoleDataHealth(),
   ]);
 
   const initial: ConsoleInitialData = {
@@ -58,6 +60,17 @@ export default async function DeveloperConsolePage() {
         title="Developer Console"
         description="Platform-wide operations, on-chain health, and manual proof recovery."
       />
+      {/* APP-17: daftar console fallback ke [] saat DB gagal — tanpa banner
+          ini operator mengira "sehat & kosong". */}
+      {!health.ok ? (
+        <p
+          role="alert"
+          className="border-warning/30 bg-warning/10 text-warning-foreground rounded-lg border px-4 py-3 text-sm"
+        >
+          Console data may be incomplete. The database probe failed. Numbers
+          below could be stale; retry shortly.
+        </p>
+      ) : null}
       <DeveloperConsole initial={initial} />
     </div>
   );

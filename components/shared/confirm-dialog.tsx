@@ -80,6 +80,7 @@ export function ConfirmDialog({
       }}
     >
       <DialogContent>
+        <div className="flex flex-col gap-4">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? (
@@ -90,7 +91,7 @@ export function ConfirmDialog({
         </DialogHeader>
         {error ? <ErrorAlert size="md">{error}</ErrorAlert> : null}
         {children}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
           <Button
             variant="outline"
             onClick={onCancel ?? (() => onOpenChange(false))}
@@ -106,6 +107,7 @@ export function ConfirmDialog({
             {primaryIcon}
             {primaryLabel}
           </Button>
+        </div>
         </div>
       </DialogContent>
     </Dialog>

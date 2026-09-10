@@ -137,7 +137,13 @@ const COMMANDS: Command[] = [
  * dan aksi umum. Tanpa dependensi cmdk: filter + navigasi sederhana dengan
  * keyboard penuh (↑/↓/Enter). Base UI Dialog (sudah ada di stack).
  */
-export function CommandMenu() {
+export const OPEN_COMMAND_EVENT = "chainventory:open-command";
+
+export function CommandMenu({
+  isDeveloper = false,
+}: {
+  isDeveloper?: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
@@ -146,15 +152,25 @@ export function CommandMenu() {
   const [active, setActive] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
+  // FE-11: Developer Console hanya discoverable untuk allowlist.
+  const visibleCommands = React.useMemo(
+    () => (isDeveloper ? COMMANDS : COMMANDS.filter((c) => c.id !== "console")),
+    [isDeveloper]
+  );
+
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return COMMANDS;
-    return COMMANDS.filter((c) =>
-      t(c.i18nKey ?? c.label)
-        .toLowerCase()
-        .includes(q)
+    if (!q) return visibleCommands;
+    // FE-11: filter bilingual (label EN + terjemahan) — cari "Products"
+    // tetap ketemu saat locale ID ("Produk").
+    return visibleCommands.filter((c) =>
+      `${c.label} ${t(c.i18nKey ?? c.label)}`.toLowerCase().includes(q)
     );
-  }, [query, t]);
+  }, [query, t, visibleCommands]);
+
+  // FE-11: clamp saat render (bukan effect) — tanpa ini Enter = no-op
+  // (go(undefined)) setelah filter dari 5 hasil ke 1.
+  const safeActive = Math.max(0, Math.min(active, results.length - 1));
 
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -163,8 +179,17 @@ export function CommandMenu() {
         setOpen((v) => !v);
       }
     }
+    // FE-11: trigger eksplisit via CustomEvent (bukan KeyboardEvent
+    // sintetis yang rapuh bila listener unmount).
+    function onOpen() {
+      setOpen(true);
+    }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener(OPEN_COMMAND_EVENT, onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener(OPEN_COMMAND_EVENT, onOpen);
+    };
   }, []);
 
   function go(cmd: Command | undefined) {
@@ -193,16 +218,16 @@ export function CommandMenu() {
       setActive((i) => Math.max(i - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      go(results[active]);
+      go(results[safeActive]);
     }
   }
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/50 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs" />
+        <DialogPrimitive.Backdrop className="fixed inset-0 z-[var(--z-overlay)] bg-overlay transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs" />
         <DialogPrimitive.Popup
-          className="bg-popover text-popover-foreground border-border fixed top-[15%] left-1/2 z-50 max-h-[min(80vh,32rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-lg border bg-clip-padding shadow-lg transition duration-150 ease-out outline-none data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0"
+          className="bg-popover text-popover-foreground border-border fixed top-[15%] left-1/2 z-[var(--z-modal)] max-h-[min(80vh,32rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-lg border bg-clip-padding shadow-(--shadow-modal) transition duration-150 ease-out outline-none data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0"
           aria-label="Command palette"
         >
           <DialogPrimitive.Title className="sr-only">
@@ -227,7 +252,7 @@ export function CommandMenu() {
               aria-expanded={open}
               aria-controls="command-listbox"
               aria-activedescendant={
-                results.length > 0 ? results[active]?.id : undefined
+                results.length > 0 ? results[safeActive]?.id : undefined
               }
               autoFocus
               className="text-foreground placeholder:text-muted-foreground focus-visible:ring-ring h-11 w-full bg-transparent text-sm outline-none focus-visible:ring-3"
@@ -261,6 +286,9 @@ export function CommandMenu() {
                 {t("cmd.no_results", { query })}
               </li>
             ) : (
+              // FE-11: opsi TANPA button bersarang (li role=option adalah
+              // elemen interaktif; aktivasi via Enter di input) — struktur
+              // ARIA listbox/option/aria-activedescendant yang valid.
               results.map((cmd, i) => {
                 const Icon = cmd.icon;
                 return (
@@ -268,32 +296,28 @@ export function CommandMenu() {
                     key={cmd.id}
                     id={cmd.id}
                     role="option"
-                    aria-selected={i === active}
+                    aria-selected={i === safeActive}
+                    onClick={() => go(cmd)}
+                    onMouseMove={() => setActive(i)}
+                    className={cn(
+                      "relative flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-left text-sm transition-colors outline-none before:absolute before:-inset-[9px] before:content-['']",
+                      i === safeActive
+                        ? "bg-muted text-foreground"
+                        : "text-foreground hover:bg-muted/60"
+                    )}
                   >
-                    <button
-                      type="button"
-                      onClick={() => go(cmd)}
-                      onMouseMove={() => setActive(i)}
-                      className={cn(
-                        "focus-visible:ring-ring relative flex h-10 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm transition-colors outline-none before:absolute before:-inset-[9px] before:content-[''] focus-visible:ring-3",
-                        i === active
-                          ? "bg-muted text-foreground"
-                          : "text-foreground hover:bg-muted/60"
-                      )}
-                    >
-                      <Icon
-                        aria-hidden="true"
-                        className="text-muted-foreground size-4 shrink-0"
-                      />
-                      <span className="flex-1 truncate">
-                        {t(cmd.i18nKey ?? cmd.label)}
-                      </span>
-                      <span className="text-muted-foreground text-sm tracking-wide uppercase">
-                        {cmd.group === "Navigate"
-                          ? t("cmd.group.navigate")
-                          : t("cmd.group.action")}
-                      </span>
-                    </button>
+                    <Icon
+                      aria-hidden="true"
+                      className="text-muted-foreground size-4 shrink-0"
+                    />
+                    <span className="flex-1 truncate">
+                      {t(cmd.i18nKey ?? cmd.label)}
+                    </span>
+                    <span className="text-muted-foreground text-sm tracking-wide uppercase">
+                      {cmd.group === "Navigate"
+                        ? t("cmd.group.navigate")
+                        : t("cmd.group.action")}
+                    </span>
                   </li>
                 );
               })

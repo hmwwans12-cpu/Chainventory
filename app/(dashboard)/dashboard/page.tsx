@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import {
+  AlertTriangle,
+  Check,
   Layers,
   Package,
   PackageMinus,
   PackagePlus,
-  TriangleAlert,
   UserPlus,
   Warehouse,
 } from "lucide-react";
@@ -17,9 +18,10 @@ import {
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
 import { fetchAnalytics, parseRange } from "@/lib/analytics/aggregate";
+import { isLowStock } from "@/lib/inventory/low-stock";
 import type { NotificationRow } from "@/lib/notifications/types";
 import { PageHeader } from "@/components/shared/page-header";
-import { EmptyState } from "@/components/shared/empty-state";
+import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { PanelCard } from "@/components/shared/panel-card";
 import { InactivityBanner } from "@/components/warehouses/inactivity-banner";
 import { ProfileWalletCard } from "@/components/dashboard/profile-wallet-card";
@@ -38,29 +40,11 @@ import {
 } from "@/components/dashboard/recent-activity";
 import { RangeTabs } from "@/components/analytics/range-tabs";
 import { StatCard } from "@/components/analytics/stat-card";
-import nextDynamic from "next/dynamic";
-
-// Audit v0.4.4 (bundle): recharts is heavy; lazy-load the chart so
-// the dashboard initial payload stays small. We alias the import to
-// `nextDynamic` because the file already declares its own
-// `export const dynamic = "force-dynamic"`.
-const StockMovementChartLazy = nextDynamic(
-  () =>
-    import("@/components/analytics/stock-movement-chart").then((m) => ({
-      default: m.StockMovementChart,
-    })),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        aria-hidden="true"
-        className="bg-muted/30 h-[260px] w-full animate-pulse rounded-md"
-      />
-    ),
-  }
-);
+import { LiveHealthDot } from "@/components/dashboard/live-health-dot";
+// Audit v0.4.4 (bundle): recharts is heavy — lazy via wrapper client
+// (ssr:false tidak boleh inline di Server Component).
+import { StockMovementChartLazy } from "@/components/analytics/stock-movement-chart-lazy";
 import { TopProducts } from "@/components/analytics/top-products";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -133,18 +117,12 @@ export default async function DashboardPage({
           title={t("dashboard.title")}
           description={t("dashboard.description")}
         />
-        <EmptyState
-          icon={Package}
+        {/* FE-17: satu komponen NoWarehouse (bukan duplikat EmptyState). */}
+        <NoWarehouse
           title={t("dashboard.empty_title")}
           description={t("dashboard.empty_desc")}
-          primaryAction={{
-            label: t("dashboard.create_warehouse"),
-            href: "/onboarding/create",
-          }}
-          secondaryAction={{
-            label: t("dashboard.join_warehouse"),
-            href: "/onboarding/join",
-          }}
+          createLabel={t("dashboard.create_warehouse")}
+          joinLabel={t("dashboard.join_warehouse")}
         />
       </div>
     );
@@ -185,16 +163,19 @@ export default async function DashboardPage({
         .eq("status", "pending"),
     ]);
 
-  // Low stock: aturan sama persis dengan halaman Products.
+  // Low stock: satu aturan dengan halaman Products (lib/inventory/low-stock).
   let lowStockCount = 0;
   for (const row of lowStockRes.data ?? []) {
-    const threshold = Number(row.low_stock_threshold);
     const balanceRow = Array.isArray(row.inventory_balances)
       ? row.inventory_balances[0]
       : row.inventory_balances;
-    const qty =
-      balanceRow?.quantity != null ? Number(balanceRow.quantity) : null;
-    if (qty != null && threshold > 0 && qty <= threshold) lowStockCount += 1;
+    if (
+      isLowStock({
+        quantity: balanceRow?.quantity ?? null,
+        threshold: row.low_stock_threshold,
+      })
+    )
+      lowStockCount += 1;
   }
 
   const recentMovements: RecentMovementItem[] = (
@@ -277,35 +258,14 @@ export default async function DashboardPage({
   const rangeHint = t("dashboard.vs_previous", { n: String(range) });
   const whQuery = `warehouse=${active.id}`;
 
-  const needsAttention = (lowStockCount > 0 ? 1 : 0) + ((pendingRes.count ?? 0) > 0 ? 1 : 0);
+  const needsAttention =
+    (lowStockCount > 0 ? 1 : 0) + ((pendingRes.count ?? 0) > 0 ? 1 : 0);
+  const pendingCount = pendingRes.count ?? 0;
   return (
-    <div className="flex flex-col gap-4 md:gap-6">
+    <div className="flex flex-col gap-6">
       <PageHeader
         title={t("dashboard.title")}
         description={t("dashboard.description")}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              render={
-                <a
-                  href={`/inventory/movements?warehouse=${active.id}&action=stock_in`}
-                />
-              }
-            >
-              <PackagePlus aria-hidden="true" className="size-4" /> Stock In
-            </Button>
-            <Button
-              variant="outline"
-              render={
-                <a
-                  href={`/inventory/movements?warehouse=${active.id}&action=stock_out`}
-                />
-              }
-            >
-              <PackageMinus aria-hidden="true" className="size-4" /> Stock Out
-            </Button>
-          </div>
-        }
       />
       {/* 1. Profile / Wallet Card — streamlined, wallet details secondary */}
       <ProfileWalletCard
@@ -317,35 +277,57 @@ export default async function DashboardPage({
       />
 
       {/* 2. Needs Attention — Von Restorff: visually distinct from KPI */}
-      {lowStockCount > 0 || (pendingRes.count ?? 0) > 0 ? (
+      {lowStockCount > 0 || pendingCount > 0 ? (
         <div className="border-warning/30 bg-warning/10 flex flex-col gap-3 rounded-lg border p-4">
           <div className="flex items-center gap-2">
-            <TriangleAlert aria-hidden="true" className="text-warning size-5" />
-            <h2 className="text-foreground text-sm font-semibold">Needs attention — {needsAttention} {needsAttention === 1 ? "item" : "items"}</h2>
+            <AlertTriangle aria-hidden="true" className="text-warning size-5" />
+            <h2 className="text-foreground text-sm font-semibold">
+              {needsAttention === 1
+                ? t("dashboard.needs_attention_one")
+                : t("dashboard.needs_attention_other", {
+                    n: String(needsAttention),
+                  })}
+            </h2>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap">
             {lowStockCount > 0 ? (
               <a
                 href={`/inventory/products?${whQuery}`}
-                className="bg-card border-warning/20 flex flex-1 items-center justify-between gap-3 rounded-lg border px-4 py-3 hover:bg-muted/50"
+                className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-warning/15"
               >
-                <span className="flex items-center gap-2">
-                  <TriangleAlert aria-hidden="true" className="text-warning size-4" />
-                  <span className="text-sm font-medium">{lowStockCount} product{lowStockCount > 1 ? "s" : ""} below minimum stock</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  <AlertTriangle aria-hidden="true" className="text-warning size-4 shrink-0" />
+                  <span className="text-sm font-medium">
+                    {lowStockCount === 1
+                      ? t("dashboard.below_minimum_one")
+                      : t("dashboard.below_minimum_other", {
+                          n: String(lowStockCount),
+                        })}
+                  </span>
                 </span>
-                <span className="text-primary text-sm font-medium">Review →</span>
+                <span className="text-primary shrink-0 text-sm font-medium whitespace-nowrap">
+                  {t("dashboard.review")} →
+                </span>
               </a>
             ) : null}
-            {(pendingRes.count ?? 0) > 0 ? (
+            {pendingCount > 0 ? (
               <a
                 href={`/members?${whQuery}`}
-                className="bg-card border-warning/20 flex flex-1 items-center justify-between gap-3 rounded-lg border px-4 py-3 hover:bg-muted/50"
+                className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-warning/15"
               >
-                <span className="flex items-center gap-2">
-                  <UserPlus aria-hidden="true" className="text-warning size-4" />
-                  <span className="text-sm font-medium">{pendingRes.count} join request{(pendingRes.count ?? 0) > 1 ? "s" : ""} awaiting approval</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  <UserPlus aria-hidden="true" className="text-warning size-4 shrink-0" />
+                  <span className="text-sm font-medium">
+                    {pendingCount === 1
+                      ? t("dashboard.join_requests_one")
+                      : t("dashboard.join_requests_other", {
+                          n: String(pendingCount),
+                        })}
+                  </span>
                 </span>
-                <span className="text-primary text-sm font-medium">Review →</span>
+                <span className="text-primary shrink-0 text-sm font-medium whitespace-nowrap">
+                  {t("dashboard.review")} →
+                </span>
               </a>
             ) : null}
           </div>
@@ -400,45 +382,51 @@ export default async function DashboardPage({
         <PanelCard className="bg-card">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full text-sm font-semibold">✓</span>
-              <h3 className="text-foreground text-sm font-semibold">Set up your warehouse</h3>
-              <span className="text-muted-foreground ml-auto text-sm">{analytics?.totalProducts ? 2 : 1}/4 completed</span>
+              <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full">
+                <Check aria-hidden="true" className="size-3.5" />
+                <span className="sr-only">Done</span>
+              </span>
+              <h2 className="text-foreground text-sm font-semibold">{t("dashboard.setup_title")}</h2>
+              <span className="text-muted-foreground ml-auto text-sm">{t("dashboard.setup_progress", { done: analytics?.totalProducts ? "2" : "1" })}</span>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div className="flex items-center gap-2.5 rounded-lg border bg-primary/5 px-3 py-2.5">
-                <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full text-sm">✓</span>
+            <div className="grid gap-1 sm:grid-cols-2">
+              <div className="flex items-center gap-2.5 rounded-md bg-primary/5 px-3 py-2.5">
+                <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full">
+                  <Check aria-hidden="true" className="size-3" />
+                  <span className="sr-only">Done</span>
+                </span>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">Create warehouse</span>
-                  <span className="text-muted-foreground text-sm">{active.name} — ready</span>
+                  <span className="text-sm font-medium">{t("dashboard.step_create")}</span>
+                  <span className="text-muted-foreground text-sm">{t("dashboard.step_ready", { name: active.name })}</span>
                 </div>
               </div>
-              <a href={`/inventory/products?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors">
+              <a href={`/inventory/products?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors">
                 <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">2</span>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">{(recentMovements.length === 0 && (analytics?.totalProducts ?? 0) === 0) ? "Add first product" : "Manage products"}</span>
-                  <span className="text-muted-foreground text-sm">{(analytics?.totalProducts ?? 0) === 0 ? "No products yet" : `${analytics?.totalProducts} products`}</span>
+                  <span className="text-sm font-medium">{(recentMovements.length === 0 && (analytics?.totalProducts ?? 0) === 0) ? t("dashboard.step_products_add") : t("dashboard.step_products_manage")}</span>
+                  <span className="text-muted-foreground text-sm">{(analytics?.totalProducts ?? 0) === 0 ? t("dashboard.step_products_empty") : t("dashboard.step_products_count", { n: String(analytics?.totalProducts ?? 0) })}</span>
                 </div>
                 <span className="text-primary ml-auto text-sm font-medium">→</span>
               </a>
-              <a href={`/members?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors">
+              <a href={`/members?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors">
                 <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">3</span>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">Invite team</span>
-                  <span className="text-muted-foreground text-sm">Share warehouse code</span>
+                  <span className="text-sm font-medium">{t("dashboard.step_invite")}</span>
+                  <span className="text-muted-foreground text-sm">{t("dashboard.step_invite_desc")}</span>
                 </div>
                 <span className="text-primary ml-auto text-sm font-medium">→</span>
               </a>
-              <a href={`/inventory/movements?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors">
+              <a href={`/inventory/movements?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors">
                 <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">4</span>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">Record stock movement</span>
-                  <span className="text-muted-foreground text-sm">Stock in / out</span>
+                  <span className="text-sm font-medium">{t("dashboard.step_movement")}</span>
+                  <span className="text-muted-foreground text-sm">{t("dashboard.step_movement_desc")}</span>
                 </div>
                 <span className="text-primary ml-auto text-sm font-medium">→</span>
               </a>
             </div>
-            {(analytics?.totalProducts ?? 0) === 0 && (pendingRes.count ?? 0) === 0 && lowStockCount === 0 && (
-              <p className="text-muted-foreground text-sm">Your warehouse is ready — add your first product to start the checklist.</p>
+            {(analytics?.totalProducts ?? 0) === 0 && pendingCount === 0 && lowStockCount === 0 && (
+              <p className="text-muted-foreground text-sm">{t("dashboard.setup_hint")}</p>
             )}
           </div>
         </PanelCard>
@@ -469,7 +457,10 @@ export default async function DashboardPage({
                 <CardTitle>{t("dashboard.top_products")}</CardTitle>
               </CardHeader>
               <CardContent>
-                <TopProducts products={analytics.topProducts} />
+                <TopProducts
+                  products={analytics.topProducts}
+                  warehouseId={active.id}
+                />
               </CardContent>
             </Card>
           ) : null}
@@ -486,32 +477,32 @@ export default async function DashboardPage({
       </div>
 
       {/* Warehouse health (F19) — operational health distinct from identity in ProfileWalletCard */}
-      <PanelCard className="bg-card flex flex-wrap items-center gap-x-6 gap-y-3 p-5">
+      <PanelCard className="bg-card flex flex-wrap items-center gap-x-6 gap-y-3 p-4">
         <div className="flex items-center gap-2">
           <Warehouse aria-hidden="true" className="text-muted-foreground size-4" />
-          <h2 className="text-foreground text-sm font-semibold">Warehouse health</h2>
+          <h2 className="text-foreground text-sm font-semibold">{t("dashboard.health_title")}</h2>
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
           <HealthDot
-            label="Inventory"
+            label={t("dashboard.health_inventory")}
             tone="success"
-            value={`${analytics?.totalProducts ?? 0} products`}
+            value={t("dashboard.step_products_count", {
+              n: String(analytics?.totalProducts ?? 0),
+            })}
           />
           <HealthDot
-            label="Members"
+            label={t("dashboard.health_members")}
             tone="success"
-            value={String(pendingRes.count ?? 0) === "0" ? "Stable" : `${pendingRes.count} pending`}
+            value={
+              pendingCount === 0
+                ? t("dashboard.health_stable")
+                : t("dashboard.health_pending", { n: String(pendingCount) })
+            }
           />
-          <HealthDot
-            label="Realtime"
-            tone="success"
-            value="Connected"
-          />
-          <HealthDot
-            label="Proof"
-            tone="success"
-            value="Operational"
-          />
+          {/* FE-13: status realtime live dari channel (bukan hijau statis).
+              Dot "Proof Operational" yang selalu hijau dihapus — status proof
+              yang sebenarnya ada di Audit Explorer per transaksi. */}
+          <LiveHealthDot warehouseId={active.id} />
         </div>
         <div className="ms-auto flex shrink-0 items-center gap-2">
           <CopyButton text={active.code} label="Copy warehouse code" />
@@ -529,11 +520,14 @@ export default async function DashboardPage({
   );
 }
 
-/** Hari sejak aktivitas terakhir (helper modul, bukan di body render). */
-function daysSince(iso: string): number {
+/**
+ * Hari sejak aktivitas terakhir (helper modul, bukan di body render).
+ * FE-24: tanggal null/invalid → null (unknown), BUKAN 0 — 0 berarti "sehat"
+ * dan menyembunyikan warning inactivity yang seharusnya muncul.
+ */
+function daysSince(iso: string | null | undefined): number | null {
   const t = iso ? new Date(iso).getTime() : NaN;
-  // Audit: lastActivityAt bisa null -> new Date(null) = Invalid Date -> NaN.
-  if (!Number.isFinite(t)) return 0;
+  if (!Number.isFinite(t)) return null;
   return Math.max(0, Math.floor((Date.now() - t) / DAY_MS));
 }
 

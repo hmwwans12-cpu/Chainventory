@@ -8,7 +8,12 @@ export default function NotificationsLoading() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Notifications" description="Loading inbox…" />
-      <PanelCard padding="none" className="overflow-hidden">
+      {/* Sub-header: unread count + mark all read */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-9 w-28 rounded-lg" />
+      </div>
+      <PanelCard padding="none" className="bg-card overflow-hidden">
         <div className="flex items-center justify-center gap-2 border-b px-6 py-4">
           <Bell aria-hidden="true" className="text-muted-foreground size-4" />
           <span className="text-muted-foreground text-sm">
@@ -27,7 +32,7 @@ export default function NotificationsLoading() {
               <Skeleton className="h-3.5 w-2/3" />
               <Skeleton className="h-2.5 w-1/2" />
             </div>
-            <Skeleton className="size-7 rounded-md" />
+            <Skeleton className="size-4 rounded-full" />
           </div>
         ))}
       </PanelCard>

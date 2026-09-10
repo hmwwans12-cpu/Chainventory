@@ -25,7 +25,7 @@ function StepNode({ state }: { state: DeploymentStepState }) {
       className={cn(
         "relative z-10 mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border",
         state === "done" &&
-          "border-primary bg-primary text-primary-foreground shadow-card",
+          "border-primary bg-primary text-primary-foreground shadow-(--shadow-card)",
         state === "active" &&
           "border-primary bg-primary/10 text-primary ring-primary/25 ring-4",
         state === "pending" && "border-border bg-card text-muted-foreground"

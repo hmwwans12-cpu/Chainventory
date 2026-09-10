@@ -27,7 +27,8 @@ export async function POST(request: Request) {
   // Without this, a compromised MANAGER/OWNER account can be used to
   // email-bomb arbitrary addresses or enumerate the user base by
   // inspecting the success/failure response.
-  const limited = await requireRateLimit("membership", auth.user.id, request);
+  // CF-20: bucket khusus "invite" (lebih ketat dari membership umum).
+  const limited = await requireRateLimit("invite", auth.user.id, request);
   if (limited) return limited;
 
   // Audit v0.3.0 §1.5: Zod schema + UUID v4 strict regex (sebelumnya
@@ -75,8 +76,10 @@ export async function POST(request: Request) {
 
   // Best-effort email delivery (audit: email invites). Kegagalan TIDAK
   // membatalkan undangan — UI tetap menampilkan link untuk disalin.
+  // NBE-12: via warehouse_summaries (member-visible; manager pengundang
+  // bukan owner sehingga tabel dasar mengembalikan null).
   const { data: wh } = await supabase
-    .from("warehouses")
+    .from("warehouse_summaries")
     .select("name")
     .eq("id", warehouseId)
     .maybeSingle();

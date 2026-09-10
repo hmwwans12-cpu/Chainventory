@@ -31,16 +31,26 @@
   --muted-foreground: #1e5b46;
   --accent: #e4d5c7;
   --accent-foreground: #186049;
-  --destructive: #b3402f;
+  /* Final pass: #8E2B1F 7.13:1 di --card, 5.82:1 di --background,
+     5.78:1 di atas tint bg-destructive/15 — satu token untuk teks, ikon,
+     border, dan dot di semua permukaan terang. Tetap brick-red, tidak neon. */
+  --destructive: #8e2b1f;
   --destructive-foreground: #ffffff;
   /* P0#11: #b7791f hanya ~2.5:1 di --card (gagal WCAG AA 4.5:1).
-     #8A5A0B ~5.1:1 di --card; --warning-foreground disesuaikan. */
-  --warning: #8a5a0b;
+     Final pass: #7F530A 5.71:1 di --card DAN 4.66:1 di --background
+     (ikon warning langsung di page bg ikut lolos); --warning-foreground
+     untuk teks di atas permukaan tinted (8.5:1+ di tint). */
+  --warning: #7f530a;
   --warning-foreground: #4a2f04;
   --border: #d4c2b2;
   --input: #d4c2b2;
   --ring: #186049;
   --placeholder: color-mix(in oklab, var(--foreground) 50%, transparent);
+  /* Unified overlay + hover tokens (UI overhaul): single source for
+     dialog/sheet/command overlays and secondary hover. */
+  --overlay: rgb(14 35 27 / 0.5);
+  --secondary-hover: color-mix(in oklch, var(--secondary), var(--foreground) 5%);
+  --shadow-inner-highlight: inset 0 1px 0 rgb(255 255 255 / 0.12);
 
   /* Tradewind-light accent for text on deep-green surfaces.
      #6ab29b fails 3:1 on #186049; #a4dcc7 passes AA (4.86:1). */
@@ -75,6 +85,14 @@
   --sidebar-accent-foreground: #1c3b30;
   --sidebar-border: #d4c2b2;
   --sidebar-ring: #186049;
+
+  /* Unified layout tokens — single source for page rhythm.
+     Page: gap-6 root, py-6 md:py-8. Section: gap-6. Component: gap-4.
+     Panel padding: compact 12 / default 16 / roomy 24. */
+  --panel-padding-compact: 0.75rem;
+  --panel-padding-default: 1rem;
+  --panel-padding-roomy: 1.5rem;
+  --z-sidebar: 10;
 }
 
 .dark {
@@ -95,10 +113,14 @@
   --muted-foreground: #6ab29b;
   --accent: #247158;
   --accent-foreground: #e4d5c7;
-  --destructive: #e57368;
+  /* Final pass: #EFA39C 5.93:1 di --card, 4.55:1+ di atas tint
+     bg-destructive/15 — teks error terbaca di dark tanpa jadi pink neon. */
+  --destructive: #efa39c;
   --destructive-foreground: #0e231b;
   --warning: #f4b23e;
-  --warning-foreground: #3a2404;
+  /* Final pass: #F5E6C8 7.25:1 di atas tint bg-warning/15 — warning-fg
+     lama (#3A2404) hanya 1.64:1 di dark tint (tidak terbaca). */
+  --warning-foreground: #f5e6c8;
   /* Border dinaikkan saturasi agar tidak redup di monitor low-contrast */
   --border: #2d5447;
   --input: #2d5447;
@@ -127,6 +149,8 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-overlay: var(--overlay);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -172,30 +196,17 @@
   --shadow-card: 0 1px 2px rgb(28 59 48 / 0.05);
   --shadow-elevated: 0 2px 8px rgb(28 59 48 / 0.08);
   --shadow-modal: 0 12px 32px rgb(28 59 48 / 0.18);
+  --shadow-inner-highlight: var(--shadow-inner-highlight);
 
-  --z-dropdown: var(--z-dropdown);
-  --z-select: var(--z-select);
-  --z-toast: var(--z-toast);
-  --z-modal: var(--z-modal);
-  --z-overlay: var(--z-overlay);
-
-  /* Motion tokens (Emil Design Eng §3) — custom easing curves for premium feel */
-  --ease-out: var(--ease-out);
-  --ease-in-out: var(--ease-in-out);
-  --ease-drawer: var(--ease-drawer);
-  --dur-fast: var(--dur-fast);
-  --dur-base: var(--dur-base);
-  --dur-slow: var(--dur-slow);
-
-  /* Density dial (UI-UX-Pro-Max §7) — compact/normal/comfortable spacing */
-  --density: var(--density);
-  --space-unit: var(--space-unit);
-
-  /* Z-index scale (audit UI #16 / Deep D-032) — dropdown < select < overlay < modal < toast */
+  /* Z-index scale (audit UI #16 / Deep D-032) — dropdown < select <
+     overlay < modal < modal-popover < toast. modal-popover untuk menu
+     portalled (Select/Dropdown) yang dirender DI DALAM dialog/sheet:
+     popup portal z-select (30) terkubur di bawah overlay (40). */
   --z-dropdown: 20;
   --z-select: 30;
   --z-overlay: 40;
   --z-modal: 50;
+  --z-modal-popover: 60;
   --z-toast: 1000;
 
   /* Motion tokens (Emil Design Eng §3) — custom easing curves for premium feel */

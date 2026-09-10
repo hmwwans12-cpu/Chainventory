@@ -8,7 +8,6 @@ import {
   requireRateLimit,
   requireUser,
 } from "@/lib/api-handler";
-import { NOTIFICATION_CATEGORIES } from "@/lib/users/notification-preferences";
 
 /**
  * PATCH /api/users/notification-preferences
@@ -24,19 +23,19 @@ import { NOTIFICATION_CATEGORIES } from "@/lib/users/notification-preferences";
  *    persist in the JSONB column and silently affect other consumers.
  */
 
-const categoryKeys = NOTIFICATION_CATEGORIES.map((c) => c.key) as [
-  (typeof NOTIFICATION_CATEGORIES)[number]["key"],
-  ...Array<(typeof NOTIFICATION_CATEGORIES)[number]["key"]>,
-];
-
-// zod 4's ZodRecord does not have a .strict() method; the closest
-// equivalent is the validator below. The map keys are validated as
-// belonging to the enum, which means unknown categories are rejected
-// by the schema. Unknown values are rejected by z.boolean().
-const channelMapSchema = z.record(
-  z.enum(categoryKeys as [string, ...string[]]),
-  z.boolean()
-);
+// NBE-04: z.record menerima SUBSET ({} lolos) walau komentar mengklaim
+// "no missing keys". Bentuk eksplisit per kategori: tepat 6 key boolean,
+// tidak lebih tidak kurang.
+const channelMapSchema = z
+  .object({
+    member_requests: z.boolean(),
+    role_changes: z.boolean(),
+    adjustment_pending: z.boolean(),
+    proof_failed: z.boolean(),
+    ownership: z.boolean(),
+    low_stock: z.boolean(),
+  })
+  .strict();
 
 const notificationPreferencesSchema = z.object({
   in_app: channelMapSchema,

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { JoinWarehouseForm } from "@/components/warehouses/join-warehouse-form";
+import { requireOnboardingUser } from "@/lib/onboarding/guard";
 
 export const metadata: Metadata = {
   title: "Join Warehouse",
@@ -13,6 +14,11 @@ export const metadata: Metadata = {
  * access. The request is stored as `join_requests` (pending) and must be
  * approved by an owner/manager (RBAC server flow, `/api/warehouses/membership`).
  */
-export default function JoinWarehousePage() {
+export const dynamic = "force-dynamic";
+
+export default async function JoinWarehousePage() {
+  // FE-02: belum login → /login?next=.... Sengaja TANPA redirect dashboard
+  // bila sudah punya warehouse — user boleh join warehouse lain.
+  await requireOnboardingUser("/onboarding/join");
   return <JoinWarehouseForm />;
 }

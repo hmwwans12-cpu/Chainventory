@@ -6,11 +6,12 @@ import {
   getMyWarehouses,
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
-import { ErrorState } from "@/components/shared/error-state";
+import { RetryErrorState } from "@/components/shared/retry-error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { BlockchainPage } from "@/components/blockchain/blockchain-page";
 import type { DeploymentSummary, ProofRow } from "@/lib/blockchain/types";
+import { PROOF_LIMIT } from "@/lib/constants";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md §6); cegah percobaan prerender saat env build minim.
@@ -19,8 +20,6 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   robots: { index: false, follow: false },
 };
-
-const PROOF_LIMIT = 50;
 
 export default async function BlockchainPageRoute({
   searchParams,
@@ -83,7 +82,7 @@ export default async function BlockchainPageRoute({
           title="Audit Explorer"
           description={`${active.name} · on-chain status.`}
         />
-        <ErrorState
+        <RetryErrorState
           icon={Link2}
           title="Unable to load audit trail."
           description="Something went wrong while retrieving proof data. Please try again."
@@ -103,6 +102,7 @@ export default async function BlockchainPageRoute({
         warehouses={warehouses}
         contractAddress={active.contractAddress}
         deployment={deploymentResult.data as DeploymentSummary | null}
+        deploymentError={Boolean(deploymentResult.error)}
         proofs={(proofsResult.data as ProofRow[] | null) ?? []}
         totalProofs={countResult.count ?? 0}
       />

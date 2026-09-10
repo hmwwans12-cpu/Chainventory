@@ -55,14 +55,14 @@ export function ManualReviewTable({
     <Card className="border-warning/30 bg-warning/5">
       <CardHeader>
         <div className="flex items-start gap-2.5">
-          <span className="bg-warning/15 text-warning flex size-9 shrink-0 items-center justify-center rounded-lg">
+          <span className="bg-warning/15 text-warning-foreground border border-warning/20 flex size-9 shrink-0 items-center justify-center rounded-lg">
             <AlertTriangle aria-hidden="true" className="size-4" />
           </span>
           <div className="flex flex-col gap-1">
             <CardTitle>Manual review queue</CardTitle>
             <CardDescription>
-              Proofs that exhausted automatic retries. Re-queue from here — the
-              only place this is allowed.
+              Proofs that exhausted automatic retries. Re-queue from here. It is
+              the only place this is allowed.
             </CardDescription>
           </div>
         </div>
@@ -71,7 +71,8 @@ export function ManualReviewTable({
         {proofs.length === 0 ? (
           <EmptyState
             icon={AlertTriangle}
-            title="No proofs in manual review."
+            bare
+            title="No proofs in manual review"
             description="The queue is clear. Proofs that fail here appear for re-queueing."
           />
         ) : (
@@ -135,7 +136,7 @@ export function ManualReviewTable({
                       </Tooltip>
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className="text-muted-foreground text-sm">
+                      <span className="text-muted-foreground text-sm tabular-nums">
                         {formatDateTime(proof.updatedAt)}
                       </span>
                     </TableCell>

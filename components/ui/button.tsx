@@ -12,11 +12,11 @@ const buttonVariants = cva(
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-secondary text-secondary-foreground hover:bg-secondary-hover aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         destructive:
-          "bg-destructive/15 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+          "bg-destructive/15 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 before:absolute before:content-[''] before:-inset-[7px] hover:underline",
       },
       size: {
@@ -24,14 +24,14 @@ const buttonVariants = cva(
           "h-11 gap-1.5 px-3 min-w-11 before:absolute before:content-[''] before:-inset-[7px] has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
         input:
           "h-11 gap-1.5 px-3 min-w-11 before:absolute before:content-[''] before:-inset-[7px] has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
-        xs: "h-8 min-w-10 gap-1 rounded-[min(var(--radius-md),10px)] px-2.5 text-sm before:absolute before:content-[''] before:-inset-[11px] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        sm: "h-10 min-w-10 gap-1.5 rounded-[min(var(--radius-md),12px)] px-3 text-sm before:absolute before:content-[''] before:-inset-[9px] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        xs: "h-8 min-w-10 gap-1 rounded-lg px-2.5 text-sm before:absolute before:content-[''] before:-inset-[11px] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-10 min-w-10 gap-1.5 rounded-lg px-3 text-sm before:absolute before:content-[''] before:-inset-[9px] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-12 min-w-11 gap-1.5 px-4 before:absolute before:content-[''] before:-inset-[5px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
         icon: "size-11 before:absolute before:content-[''] before:-inset-[7px] [&_svg:not([class*='size-'])]:size-4",
         "icon-xs":
-          "size-9 rounded-[min(var(--radius-md),10px)] before:absolute before:content-[''] before:-inset-[11px] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-4",
+          "size-9 rounded-lg before:absolute before:content-[''] before:-inset-[11px] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-4",
         "icon-sm":
-          "size-10 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg before:absolute before:content-[''] before:-inset-[9px] [&_svg:not([class*='size-'])]:size-4",
+          "size-10 rounded-lg in-data-[slot=button-group]:rounded-lg before:absolute before:content-[''] before:-inset-[9px] [&_svg:not([class*='size-'])]:size-4",
         "icon-lg":
           "size-12 before:absolute before:content-[''] before:-inset-[5px] [&_svg:not([class*='size-'])]:size-5",
       },

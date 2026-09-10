@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
+import { roleLabel } from "@/lib/auth/permissions";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -82,7 +83,9 @@ export default async function InvitePage({
   }
 
   const userEmail = (user.email ?? "").toLowerCase();
-  if (inv.email !== userEmail) {
+  // NFE-08: bandingkan case-insensitive dua sisi — email undangan
+  // "User@Example.com" sebelumnya selalu ditolak walau user benar.
+  if ((inv.email ?? "").toLowerCase() !== userEmail) {
     return (
       <InviteError
         title="Signed-in email does not match"
@@ -127,7 +130,7 @@ export default async function InvitePage({
             You&apos;re in!
           </CardTitle>
           <CardDescription>
-            You have joined {inv.warehouse_name} as a {inv.role}. Open it from
+            You have joined {inv.warehouse_name} as {roleLabel(inv.role)}. Open it from
             your dashboard.
           </CardDescription>
         </CardHeader>

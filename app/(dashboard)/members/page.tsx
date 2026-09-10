@@ -7,7 +7,7 @@ import {
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
 import { embedOne } from "@/lib/inventory/types";
-import { ErrorState } from "@/components/shared/error-state";
+import { RetryErrorState } from "@/components/shared/retry-error-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { MembersPage } from "@/components/members/members-page";
@@ -63,7 +63,7 @@ export default async function MembersPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader title="Members" description={`${active.name} · team.`} />
-        <ErrorState
+        <RetryErrorState
           icon={Users}
           title="Unable to load members."
           description="Something went wrong while retrieving your team. Please try again."
@@ -93,7 +93,9 @@ export default async function MembersPageRoute({
   // siapa yang boleh approve/reject dilakukan di UI via permission matrix.
   // Audit v0.3.0 §2.11: tanpa hint FK agar PostgREST auto-detect; nama
   // constraint `join_requests_user_id_fkey` rapuh terhadap rename migration.
-  const { data: pendingRows } = await supabase
+  // APP-17: error join_requests JANGAN ditelan — pending approvals yang
+  // hilang diam-diam berarti request tak pernah di-approve.
+  const { data: pendingRows, error: pendingError } = await supabase
     .from("join_requests")
     .select(
       "id, user_id, created_at, users(id, email, display_name)"
@@ -120,6 +122,15 @@ export default async function MembersPageRoute({
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Members" description={`${active.name} · team.`} />
+      {pendingError ? (
+        <p
+          role="alert"
+          className="border-warning/30 bg-warning/10 text-warning-foreground rounded-lg border px-4 py-3 text-sm"
+        >
+          Could not load pending join requests. New requests may be hidden.
+          Refresh to retry.
+        </p>
+      ) : null}
       <MembersPage
         warehouseId={active.id}
         warehouses={warehouses}

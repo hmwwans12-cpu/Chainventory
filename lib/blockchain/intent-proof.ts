@@ -7,7 +7,10 @@
  *   1. berstatus sukses (receipt),
  *   2. dikirim KE contract warehouse yang tepat,
  *   3. memanggil `recordProof` dengan proofId = keccak256(intent id),
- *   4. mengeset actor = wallet intent (bukan wallet orang lain).
+ *   4. mengeset actor = wallet intent (bukan wallet orang lain),
+ *   5. mencatat payloadHash = hash intent tersimpan (fix BE-15: tanpa ini
+ *      payload yang dimodifikasi di DB antara prepare→finalize tetap
+ *      `confirmed` tanpa deteksi tampering — setara re-hash processor §5.1).
  * Fungsi ini murni (tanpa network) agar mudah di-unit-test; Route Handler
  * yang mengambil tx/receipt dari RPC.
  */
@@ -46,6 +49,8 @@ export interface IntentExpectation {
   contractAddress: string;
   actorWallet: string;
   intentId: string;
+  /** Hash payload intent tersimpan (hex 0x…) — wajib cocok dengan calldata. */
+  payloadHash: string;
 }
 
 export type IntentProofVerdict = { ok: true } | { ok: false; reason: string };
@@ -74,12 +79,14 @@ export function verifyIntentProofTx(
   if (decoded.functionName !== "recordProof")
     return { ok: false, reason: "not a recordProof call" };
 
-  const [proofId, , actor] = decoded.args;
+  const [proofId, payloadHash, actor] = decoded.args;
   const expectedProofId = keccak256(toBytes(expected.intentId));
   if (proofId.toLowerCase() !== expectedProofId.toLowerCase())
     return { ok: false, reason: "proof id mismatch" };
   if (actor.toLowerCase() !== expected.actorWallet.toLowerCase())
     return { ok: false, reason: "actor wallet mismatch" };
+  if (payloadHash.toLowerCase() !== expected.payloadHash.toLowerCase())
+    return { ok: false, reason: "payload hash mismatch" };
 
   return { ok: true };
 }

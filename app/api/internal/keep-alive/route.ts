@@ -70,6 +70,11 @@ export async function GET(request: NextRequest) {
  * Read-only database ping. Uses the anon key (user request never touches
  * service-role); returns false if Supabase is not configured so the cron
  * degrades gracefully instead of failing.
+ *
+ * CF-23: memakai RPC keepalive_ping() (0001, granted anon+authenticated,
+ * STABLE, tanpa RLS) — bukan `select users limit 1` yang hasilnya
+ * tergantung policy RLS anon dan bisa menyesatkan (false-OK bila RLS
+ * deny-tanpa-error, false-degraded bila policy berubah).
  */
 async function runDatabaseHealthCheck(): Promise<{ database: boolean }> {
   const url = supabaseUrl();
@@ -81,8 +86,8 @@ async function runDatabaseHealthCheck(): Promise<{ database: boolean }> {
 
   try {
     const supabase = createClient(url, key);
-    const { error } = await supabase.from("users").select("id").limit(1);
-    return { database: error === null };
+    const { data, error } = await supabase.rpc("keepalive_ping");
+    return { database: error === null && data === true };
   } catch (err) {
     logger.error({ err }, "keep-alive database check failed");
     return { database: false };

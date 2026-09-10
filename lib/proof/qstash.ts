@@ -88,6 +88,30 @@ export async function publishProofJob(
   return res.messageId;
 }
 
+/**
+ * Fix BE-16: republish dari reconciliation WAJIB dedup unik per attempt.
+ * deduplicationId stabil `proof-process-{id}` + window QStash ~90 hari =
+ * republish reconcile di-drop diam-diam sebagai duplikat → proof macet
+ * pending. Fungsi ini untuk jalur republish/orphan saja (penerima idempoten
+ * via lease atomik).
+ */
+export async function republishProofJob(
+  proofId: string
+): Promise<string | undefined> {
+  const res = await qstashClient().publishJSON({
+    url: proofProcessUrl(),
+    body: { proofId, type: "process", retry: true },
+    headers: { "Content-Type": "application/json" },
+    retries: 0,
+    deduplicationId: `proof-process-${proofId}-republish-${randomUUID()}`,
+  });
+  logger.info(
+    { proofId, messageId: res.messageId },
+    "proof job republished to QStash (reconcile)"
+  );
+  return res.messageId;
+}
+
 /** Retry delayed (exponential backoff dari DB `next_attempt_at`). */
 export async function scheduleProofRetry(
   proofId: string,

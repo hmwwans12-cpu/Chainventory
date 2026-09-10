@@ -45,7 +45,7 @@ import {
 import { NAV_SECTIONS, DEV_NAV_ITEM, type NavItem } from "@/lib/navigation";
 import { getInitials } from "@/lib/utils";
 import { useLocale } from "@/components/providers/locale-provider";
-import { hasPermission, type Role } from "@/lib/auth/permissions";
+import { hasPermission, roleLabel, type Role } from "@/lib/auth/permissions";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 
@@ -79,9 +79,10 @@ export function AppSidebar({
     typeof warehouseParam === "string" && warehouseParam !== ""
       ? warehouseParam
       : undefined;
+  // NFE-18: encode param (UUID aman hari ini; pola rapuh bila ID berubah).
   const withWarehouse = (href: string) =>
     warehouseParamForLinks
-      ? `${href}?warehouse=${warehouseParamForLinks}`
+      ? `${href}?warehouse=${encodeURIComponent(warehouseParamForLinks)}`
       : href;
 
   const switchWarehouse = (id: string) => {
@@ -96,10 +97,16 @@ export function AppSidebar({
         !item.permission || !role || hasPermission(role, item.permission)
     );
 
+  // FE-12: exact-atau-prefix-dengan-slash — startsWith mentah menyorot
+  // ganda (parent + child dengan href sama) dan false-positive
+  // (/dashboard prefix-match rute lain yang kebetulan berawalan sama).
+  const hrefActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
   const isActive = (item: NavItem) =>
     item.children
-      ? item.children.some((c) => pathname.startsWith(c.href))
-      : pathname.startsWith(item.href);
+      ? item.children.some((c) => hrefActive(c.href)) ||
+        hrefActive(item.href)
+      : hrefActive(item.href);
 
   return (
     <Sidebar variant="inset" collapsible="icon" aria-label="Primary navigation">
@@ -111,6 +118,31 @@ export function AppSidebar({
           />
         </div>
 
+        {/* FE-12: 1 warehouse tetap tampil sebagai konteks aktif
+            (non-dropdown) — user selalu tahu warehouse mana yang aktif. */}
+        {warehouses.length === 1 && active ? (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                size="lg"
+                aria-label={t("common.active_warehouse")}
+                className="cursor-default"
+              >
+                <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold">
+                  {getInitials(active.name, null, "W")}
+                </span>
+                <span className="flex min-w-0 flex-col leading-tight">
+                  <span className="text-muted-foreground text-sm uppercase">
+                    {t("common.active_warehouse")}
+                  </span>
+                  <span className="truncate text-sm font-medium">
+                    {active.name}
+                  </span>
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        ) : null}
         {warehouses.length > 1 ? (
           <SidebarMenu>
             <SidebarMenuItem>
@@ -123,7 +155,7 @@ export function AppSidebar({
                     />
                   }
                 >
-                  <span className="bg-sidebar-primary text-sidebar-primary-foreground font-display flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold">
+                  <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold">
                     {getInitials(active?.name, null, "W")}
                   </span>
                   <span className="flex min-w-0 flex-col leading-tight">
@@ -187,8 +219,9 @@ export function AppSidebar({
                           <span>{t(item.i18nKey ?? item.title)}</span>
                         </SidebarMenuButton>
                         {item.title === "Notifications" && unreadCount > 0 ? (
-                          <SidebarMenuBadge className="bg-destructive/15 text-destructive tabular-nums">
-                            {unreadCount > 9 ? "9+" : unreadCount}
+                          <SidebarMenuBadge className="bg-destructive/15 text-destructive border border-destructive/20 tabular-nums">
+                            {/* FE-12: ambang sama dengan bell (99+). */}
+                            {unreadCount > 99 ? "99+" : unreadCount}
                           </SidebarMenuBadge>
                         ) : null}
                         {item.children ? (
@@ -199,7 +232,7 @@ export function AppSidebar({
                                   render={
                                     <Link href={withWarehouse(child.href)} />
                                   }
-                                  isActive={pathname.startsWith(child.href)}
+                                  isActive={hrefActive(child.href)}
                                 >
                                   {t(child.i18nKey ?? child.title)}
                                 </SidebarMenuSubButton>
@@ -217,14 +250,16 @@ export function AppSidebar({
         })}
 
         {isDeveloper ? (
-          <SidebarGroup>
-            <SidebarGroupLabel>Developer</SidebarGroupLabel>
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupLabel>Developer</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     render={<Link href={withWarehouse(DEV_NAV_ITEM.href)} />}
-                    isActive={pathname.startsWith(DEV_NAV_ITEM.href)}
+                    isActive={hrefActive(DEV_NAV_ITEM.href)}
                     tooltip={DEV_NAV_ITEM.title}
                   >
                     <SquareTerminal aria-hidden="true" />
@@ -233,7 +268,8 @@ export function AppSidebar({
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
-          </SidebarGroup>
+            </SidebarGroup>
+          </>
         ) : null}
       </SidebarContent>
 
@@ -252,7 +288,7 @@ export function AppSidebar({
                         />
                       }
                     >
-                      <span className="bg-sidebar-primary text-sidebar-primary-foreground font-display flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold">
+                      <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
                         {getInitials(user.name, user.email, "U")}
                       </span>
                       <span className="flex min-w-0 flex-col leading-tight">
@@ -261,7 +297,9 @@ export function AppSidebar({
                         </span>
                         <span className="text-sidebar-accent-foreground/70 truncate text-sm">
                           {role
-                            ? `${role} · ${active?.name ?? ""}`
+                            ? active?.name
+                              ? `${roleLabel(role)} · ${active.name}`
+                              : roleLabel(role)
                             : user.email}
                         </span>
                       </span>
@@ -287,7 +325,7 @@ export function AppSidebar({
                           <Link
                             href={
                               active
-                                ? `/settings?warehouse=${active.id}`
+                                ? `/settings?warehouse=${encodeURIComponent(active.id)}`
                                 : "/settings"
                             }
                           />

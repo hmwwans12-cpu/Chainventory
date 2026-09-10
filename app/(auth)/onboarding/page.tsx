@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { requireOnboardingUser } from "@/lib/onboarding/guard";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Building2, UserPlus } from "lucide-react";
@@ -18,7 +20,11 @@ export const metadata: Metadata = {
  * The full Create/Join Warehouse forms are P1 (Identity/Wallet + inventory);
  * this route provides the choice so signup never dead-ends at a 404.
  */
-export default function OnboardingPage() {
+export const dynamic = "force-dynamic";
+
+export default async function OnboardingPage() {
+  // FE-02: guard server — belum login dialihkan sebelum render.
+  await requireOnboardingUser("/onboarding");
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">

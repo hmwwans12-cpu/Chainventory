@@ -11,6 +11,8 @@ export default function SettingsLoading() {
       </div>
       {/* Account / sesi */}
       <Skeleton className="h-[88px] w-full rounded-lg" />
+      {/* Notification preferences */}
+      <Skeleton className="min-h-[160px] w-full rounded-lg" />
     </div>
   );
 }
