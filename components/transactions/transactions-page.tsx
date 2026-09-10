@@ -89,8 +89,7 @@ export function TransactionsPage({
   const goTo = (params: Record<string, string | null | undefined>) => {
     const url = new URLSearchParams();
     if (warehouseId) url.set("warehouse", warehouseId);
-    const nextType =
-      params.type === null ? undefined : (params.type ?? type);
+    const nextType = params.type === null ? undefined : (params.type ?? type);
     const nextProof =
       params.proof === null ? undefined : (params.proof ?? proof);
     const nextPage = params.page ?? String(page);
@@ -203,7 +202,9 @@ export function TransactionsPage({
         <div className="flex flex-wrap items-center gap-2">
           {type ? (
             <span className="bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
-              Type: {MOVEMENT_TYPE_META[type as keyof typeof MOVEMENT_TYPE_META]?.label ?? type}
+              Type:{" "}
+              {MOVEMENT_TYPE_META[type as keyof typeof MOVEMENT_TYPE_META]
+                ?.label ?? type}
               <button
                 type="button"
                 aria-label="Clear type filter"
@@ -233,7 +234,11 @@ export function TransactionsPage({
       {items.length === 0 ? (
         <EmptyState
           icon={ArrowLeftRight}
-          title={type || proof ? "No transactions match your filters" : "No transactions yet"}
+          title={
+            type || proof
+              ? "No transactions match your filters"
+              : "No transactions yet"
+          }
           description={
             type || proof
               ? "Try a different filter combination."

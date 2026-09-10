@@ -333,7 +333,7 @@ export function MembersPage({
           ) : null}
         </div>
         {canInvite ? (
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-1 py-1.5 sm:gap-2 sm:border sm:border-border sm:px-3">
+          <div className="sm:border-border flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-1 py-1.5 sm:gap-2 sm:border sm:px-3">
             <span className="text-muted-foreground text-sm">Invite code</span>
             <span className="truncate font-mono text-sm tracking-wide">
               {inviteCode}
@@ -395,8 +395,8 @@ export function MembersPage({
                   </div>
                   <p className="text-muted-foreground text-sm">
                     {inviteSent
-            ? "Invitation sent. They'll also get this link by email."
-            : "Email delivery is not configured in this environment. Share the link directly."}
+                      ? "Invitation sent. They'll also get this link by email."
+                      : "Email delivery is not configured in this environment. Share the link directly."}
                   </p>
                 </div>
               ) : (
@@ -414,7 +414,9 @@ export function MembersPage({
                       onChange={(e) => setInviteEmail(e.target.value)}
                       disabled={inviteBusy}
                       aria-invalid={Boolean(inviteError)}
-                      aria-describedby={inviteError ? "invite-email-error" : undefined}
+                      aria-describedby={
+                        inviteError ? "invite-email-error" : undefined
+                      }
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -428,9 +430,7 @@ export function MembersPage({
                       <SelectTrigger id="invite-role" className="w-full">
                         <SelectValue
                           placeholder="Select role"
-                          getLabel={(v) =>
-                            ROLE_META[v as Role]?.label ?? v
-                          }
+                          getLabel={(v) => ROLE_META[v as Role]?.label ?? v}
                         />
                       </SelectTrigger>
                       <SelectContent layer="modal">
@@ -443,7 +443,13 @@ export function MembersPage({
                     </Select>
                   </div>
                   {inviteError ? (
-                    <p id="invite-email-error" role="alert" className="text-destructive text-sm">{inviteError}</p>
+                    <p
+                      id="invite-email-error"
+                      role="alert"
+                      className="text-destructive text-sm"
+                    >
+                      {inviteError}
+                    </p>
                   ) : null}
                 </div>
               )}
@@ -513,7 +519,7 @@ export function MembersPage({
                           : ""}
                       </p>
                     </div>
-                    <div className="flex max-w-full flex-wrap shrink-0 items-center gap-2">
+                    <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2">
                       <Select
                         value={chosen || undefined}
                         onValueChange={(value) => {
@@ -532,9 +538,7 @@ export function MembersPage({
                         >
                           <SelectValue
                             placeholder="Select role"
-                            getLabel={(v) =>
-                              ROLE_META[v as Role]?.label ?? v
-                            }
+                            getLabel={(v) => ROLE_META[v as Role]?.label ?? v}
                           />
                         </SelectTrigger>
                         <SelectContent>
@@ -635,7 +639,10 @@ export function MembersPage({
                               </span>
                             ) : null}
                           </EntityName>
-                          <span className="text-muted-foreground max-w-64 truncate text-sm" title={member.email}>
+                          <span
+                            className="text-muted-foreground max-w-64 truncate text-sm"
+                            title={member.email}
+                          >
                             {member.email}
                           </span>
                         </div>
@@ -654,21 +661,18 @@ export function MembersPage({
                               className="w-32"
                               disabled={changing.has(member.membershipId)}
                             >
-                            <SelectValue
-                              getLabel={(v) =>
-                                ROLE_META[v as Role]?.label ?? v
-                              }
-                            />
+                              <SelectValue
+                                getLabel={(v) =>
+                                  ROLE_META[v as Role]?.label ?? v
+                                }
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               {/* Role saat ini ikut dirender agar trigger
                                   menampilkan label ("Staff"), bukan raw value
                                   ("STAFF") — Base UI fallback ke value bila
                                   tak ada item cocok. Pilih ulang = no-op. */}
-                              <SelectItem
-                                key={member.role}
-                                value={member.role}
-                              >
+                              <SelectItem key={member.role} value={member.role}>
                                 {ROLE_META[member.role].label}
                               </SelectItem>
                               {assignable.map((r) => (
@@ -708,39 +712,39 @@ export function MembersPage({
                       </TableCell>
                       <TableCell>
                         {isSelf || manageable ? (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label={`Actions for ${member.displayName ?? member.email}`}
-                              />
-                            }
-                          >
-                            <MoreHorizontal aria-hidden="true" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {isSelf ? (
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onClick={() => setLeaveTarget(member)}
-                              >
-                                <LogOut aria-hidden="true" />
-                                Leave warehouse
-                              </DropdownMenuItem>
-                            ) : null}
-                            {manageable ? (
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onClick={() => setRemoveTarget(member)}
-                              >
-                                <UserMinus aria-hidden="true" />
-                                Remove member
-                              </DropdownMenuItem>
-                            ) : null}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              render={
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  aria-label={`Actions for ${member.displayName ?? member.email}`}
+                                />
+                              }
+                            >
+                              <MoreHorizontal aria-hidden="true" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {isSelf ? (
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onClick={() => setLeaveTarget(member)}
+                                >
+                                  <LogOut aria-hidden="true" />
+                                  Leave warehouse
+                                </DropdownMenuItem>
+                              ) : null}
+                              {manageable ? (
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onClick={() => setRemoveTarget(member)}
+                                >
+                                  <UserMinus aria-hidden="true" />
+                                  Remove member
+                                </DropdownMenuItem>
+                              ) : null}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         ) : null}
                       </TableCell>
                     </TableRow>
@@ -792,7 +796,10 @@ export function MembersPage({
                         </span>
                       ) : null}
                     </EntityName>
-                    <p className="text-muted-foreground mt-0.5 truncate text-sm" title={member.email}>
+                    <p
+                      className="text-muted-foreground mt-0.5 truncate text-sm"
+                      title={member.email}
+                    >
                       {member.email}
                     </p>
                     <div className="mt-2 flex items-center gap-2">
@@ -810,16 +817,11 @@ export function MembersPage({
                             disabled={changing.has(member.membershipId)}
                           >
                             <SelectValue
-                                getLabel={(v) =>
-                                  ROLE_META[v as Role]?.label ?? v
-                                }
-                              />
+                              getLabel={(v) => ROLE_META[v as Role]?.label ?? v}
+                            />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem
-                              key={member.role}
-                              value={member.role}
-                            >
+                            <SelectItem key={member.role} value={member.role}>
                               {ROLE_META[member.role].label}
                             </SelectItem>
                             {assignable.map((r) => (
@@ -846,39 +848,39 @@ export function MembersPage({
                     </div>
                   </div>
                   {isSelf || manageable ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Actions for ${member.displayName ?? member.email}`}
-                        />
-                      }
-                    >
-                      <MoreHorizontal aria-hidden="true" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {isSelf ? (
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => setLeaveTarget(member)}
-                        >
-                          <LogOut aria-hidden="true" />
-                          Leave warehouse
-                        </DropdownMenuItem>
-                      ) : null}
-                      {manageable ? (
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => setRemoveTarget(member)}
-                        >
-                          <UserMinus aria-hidden="true" />
-                          Remove member
-                        </DropdownMenuItem>
-                      ) : null}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Actions for ${member.displayName ?? member.email}`}
+                          />
+                        }
+                      >
+                        <MoreHorizontal aria-hidden="true" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {isSelf ? (
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setLeaveTarget(member)}
+                          >
+                            <LogOut aria-hidden="true" />
+                            Leave warehouse
+                          </DropdownMenuItem>
+                        ) : null}
+                        {manageable ? (
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setRemoveTarget(member)}
+                          >
+                            <UserMinus aria-hidden="true" />
+                            Remove member
+                          </DropdownMenuItem>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   ) : null}
                 </li>
               );

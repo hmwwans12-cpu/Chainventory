@@ -51,7 +51,7 @@ export function MarketingHeader({
 
   return (
     <header className="sticky top-3 z-40 px-4">
-      <div className="border-border/80 bg-background/80 shadow-(--shadow-elevated) mx-auto flex h-12 w-full max-w-6xl items-center gap-2 rounded-full border px-3 backdrop-blur-md sm:gap-6 sm:px-5">
+      <div className="border-border/80 bg-background/80 mx-auto flex h-12 w-full max-w-6xl items-center gap-2 rounded-full border px-3 shadow-(--shadow-elevated) backdrop-blur-md sm:gap-6 sm:px-5">
         <Logo />
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
@@ -63,7 +63,7 @@ export function MarketingHeader({
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ease-out before:absolute before:-inset-y-[6px] before:-inset-x-[2px] before:content-['']",
+                  "relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ease-out before:absolute before:-inset-x-[2px] before:-inset-y-[6px] before:content-['']",
                   active
                     ? "text-foreground bg-muted font-medium"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -106,7 +106,11 @@ export function MarketingHeader({
               >
                 Login
               </Button>
-              <Button variant="default" size="default" render={<Link href="/signup" />}>
+              <Button
+                variant="default"
+                size="default"
+                render={<Link href="/signup" />}
+              >
                 Sign up
               </Button>
             </>

@@ -106,7 +106,11 @@ function fillDailyGaps(
   start.setUTCDate(start.getUTCDate() - (rangeDays - 1));
 
   const result: DailyMovement[] = [];
-  for (let d = new Date(start); d.getTime() <= endMs; d.setUTCDate(d.getUTCDate() + 1)) {
+  for (
+    let d = new Date(start);
+    d.getTime() <= endMs;
+    d.setUTCDate(d.getUTCDate() + 1)
+  ) {
     const iso = toISODate(d);
     const row = byDay.get(iso);
     result.push({

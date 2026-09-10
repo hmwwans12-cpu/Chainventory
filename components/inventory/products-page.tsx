@@ -274,11 +274,19 @@ export function ProductsPage({
     setBulkCategoryOpen(false);
     setBulkCategoryValue("");
     if (failed === 0) {
-      toast.add({ type: "success", title: `${ids.length} products updated`, description: `Category → ${bulkCategoryValue.trim()}` });
+      toast.add({
+        type: "success",
+        title: `${ids.length} products updated`,
+        description: `Category → ${bulkCategoryValue.trim()}`,
+      });
       clearSelection();
       refresh();
     } else {
-      toast.add({ type: "warning", title: "Partial update", description: `${ids.length - failed} updated, ${failed} failed.` });
+      toast.add({
+        type: "warning",
+        title: "Partial update",
+        description: `${ids.length - failed} updated, ${failed} failed.`,
+      });
       refresh();
     }
   };
@@ -297,7 +305,10 @@ export function ProductsPage({
 
   // Aksi per-produk (dropdown) — dipakai di tabel desktop & card list mobile
   // supaya tidak duplikasi markup (audit: mobile card-list).
-  const renderActions = (product: ProductRow, mode: "dropdown" | "inline" = "dropdown") => {
+  const renderActions = (
+    product: ProductRow,
+    mode: "dropdown" | "inline" = "dropdown"
+  ) => {
     const archived = product.status === "archived";
     const inlineStockActions = !archived && (canStockIn || canStockOut);
     if (mode === "inline" && inlineStockActions) {
@@ -447,7 +458,12 @@ export function ProductsPage({
   }, [searchInput]);
 
   const SAVED_VIEWS_KEY = `chainventory:savedViews:${warehouseId}`;
-  type SavedView = { id: string; name: string; q: string; status: "active" | "archived" | "all" };
+  type SavedView = {
+    id: string;
+    name: string;
+    q: string;
+    status: "active" | "archived" | "all";
+  };
   const [savedViews, setSavedViews] = React.useState<SavedView[]>([]);
   const [saveName, setSaveName] = React.useState("");
   const [showSave, setShowSave] = React.useState(false);
@@ -456,27 +472,41 @@ export function ProductsPage({
       const raw = localStorage.getItem(SAVED_VIEWS_KEY);
       if (raw) setSavedViews(JSON.parse(raw));
       else setSavedViews([]);
-    } catch { setSavedViews([]); }
+    } catch {
+      setSavedViews([]);
+    }
   }, [SAVED_VIEWS_KEY]);
   const persistViews = (next: SavedView[]) => {
     setSavedViews(next);
-    try { localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(next)); } catch {}
+    try {
+      localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(next));
+    } catch {}
   };
   const saveCurrentView = () => {
     const name = saveName.trim() || `${query || "All"} · ${statusFilter}`;
     // FE-18: randomUUID (bukan Date.now) — dua klik simpan dalam 1ms
     // tidak boleh menghasilkan id kembar.
-    const next: SavedView = { id: crypto.randomUUID(), name, q: query, status: statusFilter };
+    const next: SavedView = {
+      id: crypto.randomUUID(),
+      name,
+      q: query,
+      status: statusFilter,
+    };
     persistViews([...savedViews, next]);
     setSaveName("");
     setShowSave(false);
-    toast.add({ type: "success", title: `View “${name}” saved`, description: "Quick access below." });
+    toast.add({
+      type: "success",
+      title: `View “${name}” saved`,
+      description: "Quick access below.",
+    });
   };
   const applySavedView = (v: SavedView) => {
     setSearchInput(v.q);
     applyFilters(v.q, v.status);
   };
-  const deleteView = (id: string) => persistViews(savedViews.filter((v) => v.id !== id));
+  const deleteView = (id: string) =>
+    persistViews(savedViews.filter((v) => v.id !== id));
 
   const refresh = () => router.refresh();
 
@@ -485,7 +515,7 @@ export function ProductsPage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 flex-1 items-center gap-2 flex-wrap">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-64">
             <Search
               aria-hidden="true"
@@ -542,7 +572,10 @@ export function ProductsPage({
                 setStatus(value as "active" | "archived" | "all");
             }}
           >
-            <SelectTrigger aria-label="Product status filter" className="min-w-32">
+            <SelectTrigger
+              aria-label="Product status filter"
+              className="min-w-32"
+            >
               <span className="text-muted-foreground mr-1 hidden sm:inline">
                 Status:
               </span>
@@ -593,7 +626,7 @@ export function ProductsPage({
               Bulk Add
             </Button>
           ) : null}
-          {(canExport || canBulk) ? (
+          {canExport || canBulk ? (
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
@@ -679,12 +712,32 @@ export function ProductsPage({
           </button>
           <span className="text-border hidden sm:inline">|</span>
           {!showSave ? (
-            <Button variant="outline" size="sm" onClick={() => setShowSave(true)}>Save View</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSave(true)}
+            >
+              Save View
+            </Button>
           ) : (
             <span className="flex items-center gap-1.5">
-              <Input value={saveName} onChange={(e) => setSaveName(e.target.value)} placeholder="e.g. Low-stock items" className="h-11 w-40" aria-label="Saved view name" />
-              <Button size="sm" onClick={saveCurrentView}>Save</Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowSave(false)}>Discard</Button>
+              <Input
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                placeholder="e.g. Low-stock items"
+                className="h-11 w-40"
+                aria-label="Saved view name"
+              />
+              <Button size="sm" onClick={saveCurrentView}>
+                Save
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSave(false)}
+              >
+                Discard
+              </Button>
             </span>
           )}
         </div>
@@ -694,15 +747,41 @@ export function ProductsPage({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-muted-foreground text-sm">Saved views:</span>
           {savedViews.map((v) => (
-            <span key={v.id} className="bg-card border-border inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm">
-              <button type="button" onClick={() => applySavedView(v)} className="hover:text-primary font-medium">{v.name}</button>
-              <span className="text-muted-foreground text-sm">· {v.q || "All"} · {v.status === "active" ? "Active" : v.status === "archived" ? "Archived" : "All"}</span>
-              <button type="button" aria-label={`Delete ${v.name}`} onClick={() => deleteView(v.id)} className="hover:text-destructive hover:bg-destructive/10 -mr-1 rounded-full p-1 transition-colors"><X aria-hidden="true" className="size-3.5" /></button>
+            <span
+              key={v.id}
+              className="bg-card border-border inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm"
+            >
+              <button
+                type="button"
+                onClick={() => applySavedView(v)}
+                className="hover:text-primary font-medium"
+              >
+                {v.name}
+              </button>
+              <span className="text-muted-foreground text-sm">
+                · {v.q || "All"} ·{" "}
+                {v.status === "active"
+                  ? "Active"
+                  : v.status === "archived"
+                    ? "Archived"
+                    : "All"}
+              </span>
+              <button
+                type="button"
+                aria-label={`Delete ${v.name}`}
+                onClick={() => deleteView(v.id)}
+                className="hover:text-destructive hover:bg-destructive/10 -mr-1 rounded-full p-1 transition-colors"
+              >
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
             </span>
           ))}
-          {savedViews.length > 0 && (query.trim() || statusFilter !== "active") && (
-            <span className="text-muted-foreground hidden text-sm sm:inline">→ one click to reapply</span>
-          )}
+          {savedViews.length > 0 &&
+            (query.trim() || statusFilter !== "active") && (
+              <span className="text-muted-foreground hidden text-sm sm:inline">
+                → one click to reapply
+              </span>
+            )}
         </div>
       )}
 
@@ -747,7 +826,12 @@ export function ProductsPage({
               </span>
               <div className="ml-auto flex flex-wrap items-center gap-2">
                 {canEdit && (
-                  <Button variant="outline" size="sm" onClick={() => setBulkCategoryOpen(true)} disabled={bulkBusy}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBulkCategoryOpen(true)}
+                    disabled={bulkBusy}
+                  >
                     <Pencil aria-hidden="true" />
                     Category
                   </Button>
@@ -792,7 +876,7 @@ export function ProductsPage({
                         type="checkbox"
                         checked={allVisibleSelected}
                         onChange={toggleSelectAll}
-                            aria-label="Toggle selection for all products on this page"
+                        aria-label="Toggle selection for all products on this page"
                         className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:-inset-[12px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
                       />
                     </TableHead>
@@ -865,7 +949,10 @@ export function ProductsPage({
                             </span>
                             {low ? (
                               <span className="text-warning flex items-center gap-1.5 text-sm font-medium">
-                                <TriangleAlert aria-hidden="true" className="size-3.5 shrink-0" />
+                                <TriangleAlert
+                                  aria-hidden="true"
+                                  className="size-3.5 shrink-0"
+                                />
                                 Low stock
                               </span>
                             ) : null}
@@ -881,8 +968,12 @@ export function ProductsPage({
                           {formatDate(product.updatedAt)}
                         </TableCell>
                         <TableCell>
-                          <div className="hidden xl:flex">{renderActions(product, "inline")}</div>
-                          <div className="xl:hidden">{renderActions(product, "dropdown")}</div>
+                          <div className="hidden xl:flex">
+                            {renderActions(product, "inline")}
+                          </div>
+                          <div className="xl:hidden">
+                            {renderActions(product, "dropdown")}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -950,10 +1041,25 @@ export function ProductsPage({
                       {!archived && (canStockIn || canStockOut) ? (
                         <div className="mt-3 flex flex-wrap gap-2">
                           {canStockIn ? (
-                            <Button size="sm" onClick={() => setStockTarget({ product, type: "stock_in" })}>Stock In</Button>
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                setStockTarget({ product, type: "stock_in" })
+                              }
+                            >
+                              Stock In
+                            </Button>
                           ) : null}
                           {canStockOut ? (
-                            <Button variant="outline" size="sm" onClick={() => setStockTarget({ product, type: "stock_out" })}>Stock Out</Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setStockTarget({ product, type: "stock_out" })
+                              }
+                            >
+                              Stock Out
+                            </Button>
                           ) : null}
                         </div>
                       ) : null}
@@ -1084,23 +1190,63 @@ export function ProductsPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={bulkCategoryOpen} onOpenChange={(open) => { setBulkCategoryOpen(open); if (!open) setBulkCategoryValue(""); }}>
+      <Dialog
+        open={bulkCategoryOpen}
+        onOpenChange={(open) => {
+          setBulkCategoryOpen(open);
+          if (!open) setBulkCategoryValue("");
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Change category for {selected.size} products?</DialogTitle>
-            <DialogDescription>Set a new category for all selected products. SKU, unit and stock unaffected.</DialogDescription>
+            <DialogTitle>
+              Change category for {selected.size} products?
+            </DialogTitle>
+            <DialogDescription>
+              Set a new category for all selected products. SKU, unit and stock
+              unaffected.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="bulk-cat" className="text-sm font-medium">Category</label>
-            <Input id="bulk-cat" value={bulkCategoryValue} onChange={(e) => setBulkCategoryValue(e.target.value)} placeholder="e.g. Packaging" aria-invalid={Boolean(bulkCategoryValue && !bulkCategoryValue.trim())} aria-describedby={bulkCategoryValue && !bulkCategoryValue.trim() ? "err-bulk-cat" : undefined} />
+            <label htmlFor="bulk-cat" className="text-sm font-medium">
+              Category
+            </label>
+            <Input
+              id="bulk-cat"
+              value={bulkCategoryValue}
+              onChange={(e) => setBulkCategoryValue(e.target.value)}
+              placeholder="e.g. Packaging"
+              aria-invalid={Boolean(
+                bulkCategoryValue && !bulkCategoryValue.trim()
+              )}
+              aria-describedby={
+                bulkCategoryValue && !bulkCategoryValue.trim()
+                  ? "err-bulk-cat"
+                  : undefined
+              }
+            />
             {bulkCategoryValue && !bulkCategoryValue.trim() ? (
-              <p id="err-bulk-cat" className="text-destructive text-sm">Category cannot be empty.</p>
+              <p id="err-bulk-cat" className="text-destructive text-sm">
+                Category cannot be empty.
+              </p>
             ) : null}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkCategoryOpen(false)}>Keep current</Button>
-            <Button onClick={bulkChangeCategory} disabled={bulkBusy || !bulkCategoryValue.trim()}>
-              {bulkBusy ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Pencil aria-hidden="true" />}
+            <Button
+              variant="outline"
+              onClick={() => setBulkCategoryOpen(false)}
+            >
+              Keep current
+            </Button>
+            <Button
+              onClick={bulkChangeCategory}
+              disabled={bulkBusy || !bulkCategoryValue.trim()}
+            >
+              {bulkBusy ? (
+                <Loader2 aria-hidden="true" className="animate-spin" />
+              ) : (
+                <Pencil aria-hidden="true" />
+              )}
               Update {selected.size} products
             </Button>
           </DialogFooter>

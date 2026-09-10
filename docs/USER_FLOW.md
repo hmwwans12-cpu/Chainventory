@@ -334,12 +334,12 @@ Form dialog dengan field:
 
 ### Tipe mutasi
 
-| Tipe       | Siapa yang bisa   | Approval?                                                   |
-| ---------- | ----------------- | ----------------------------------------------------------- |
-| stock_in   | Staff, Manager, Owner | Langsung committed                                        |
-| stock_out  | Staff, Manager, Owner | Langsung committed                                        |
-| adjustment | Manager, Owner    | **Butuh approval** dari Owner/Manager lain (NCF-07: bukan Staff) |
-| reversal   | Manager, Owner    | Langsung committed, tanpa approval terpisah (NCF-07)        |
+| Tipe       | Siapa yang bisa       | Approval?                                                        |
+| ---------- | --------------------- | ---------------------------------------------------------------- |
+| stock_in   | Staff, Manager, Owner | Langsung committed                                               |
+| stock_out  | Staff, Manager, Owner | Langsung committed                                               |
+| adjustment | Manager, Owner        | **Butuh approval** dari Owner/Manager lain (NCF-07: bukan Staff) |
+| reversal   | Manager, Owner        | Langsung committed, tanpa approval terpisah (NCF-07)             |
 
 ---
 

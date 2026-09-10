@@ -102,15 +102,27 @@ export function StatCard({
           <div className="flex min-w-0 flex-1 items-center gap-2">
             {secondaryTooltip ? (
               <Tooltip>
-                <TooltipTrigger render={<span className="flex min-w-0 cursor-help items-center" />}>
-                  <span title={typeof secondary === "string" ? secondary : undefined} className="truncate">
+                <TooltipTrigger
+                  render={
+                    <span className="flex min-w-0 cursor-help items-center" />
+                  }
+                >
+                  <span
+                    title={
+                      typeof secondary === "string" ? secondary : undefined
+                    }
+                    className="truncate"
+                  >
                     {secondary}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>{secondaryTooltip}</TooltipContent>
               </Tooltip>
             ) : secondary ? (
-              <span title={typeof secondary === "string" ? secondary : undefined} className="truncate">
+              <span
+                title={typeof secondary === "string" ? secondary : undefined}
+                className="truncate"
+              >
                 {secondary}
               </span>
             ) : null}
@@ -135,9 +147,7 @@ export function StatCard({
           <CardAction>
             <Tooltip>
               <TooltipTrigger
-                render={
-                  <span className="flex cursor-help items-center" />
-                }
+                render={<span className="flex cursor-help items-center" />}
               >
                 <DeltaBadge delta={d} />
               </TooltipTrigger>
@@ -151,7 +161,11 @@ export function StatCard({
   );
 
   if (!href)
-    return <Card className="@container/card min-h-[148px] gap-4 rounded-lg">{innerBody}</Card>;
+    return (
+      <Card className="@container/card min-h-[148px] gap-4 rounded-lg">
+        {innerBody}
+      </Card>
+    );
 
   return (
     <Link
@@ -163,7 +177,9 @@ export function StatCard({
         "focus-visible:ring-3 focus-visible:outline-none"
       )}
     >
-      <Card className="@container/card min-h-[148px] gap-4 rounded-lg">{innerBody}</Card>
+      <Card className="@container/card min-h-[148px] gap-4 rounded-lg">
+        {innerBody}
+      </Card>
     </Link>
   );
 }

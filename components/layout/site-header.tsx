@@ -157,7 +157,7 @@ export function SiteHeader({
         {/* FE-20: tema & bahasa tetap tersedia di mobile (sebelumnya
             hidden xl:flex — hilang total di bawah 1280px). */}
         <span className="flex items-center gap-1 xl:hidden">
-          <span className="hidden sm:flex items-center">
+          <span className="hidden items-center sm:flex">
             <LocaleToggle />
           </span>
           <ThemeToggle />

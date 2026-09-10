@@ -14,8 +14,16 @@ export const PROOF_STATUS_META: Record<
   submitted: { label: "Verifying", tone: "pending", short: "Verifying" },
   confirming: { label: "Verifying", tone: "pending", short: "Verifying" },
   confirmed: { label: "Verified", tone: "success", short: "Verified" },
-  retrying: { label: "Verification delayed", tone: "warning", short: "Recorded" },
-  manual_review: { label: "Verification delayed", tone: "warning", short: "Recorded" },
+  retrying: {
+    label: "Verification delayed",
+    tone: "warning",
+    short: "Recorded",
+  },
+  manual_review: {
+    label: "Verification delayed",
+    tone: "warning",
+    short: "Recorded",
+  },
   // Konsistensi warna: failed = merah di semua menu (movement rejected,
   // deployment failed). Amber "delayed" meremehkan kegagalan final.
   failed: { label: "Verification failed", tone: "failed", short: "Failed" },

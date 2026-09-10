@@ -71,9 +71,7 @@ export type CreateProductWithInitialStockResult = {
 export async function createProduct(
   values: CreateProductInput,
   fetcher: Fetcher = fetch
-): Promise<
-  ApiResult<{ id: string; initialStockApplied?: boolean }>
-> {
+): Promise<ApiResult<{ id: string; initialStockApplied?: boolean }>> {
   const { status, json } = await sendJson(
     PRODUCTS_ROUTE,
     { body: values },

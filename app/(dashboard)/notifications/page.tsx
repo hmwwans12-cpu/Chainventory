@@ -73,8 +73,8 @@ export default async function NotificationsPage() {
           role="alert"
           className="border-warning/30 bg-warning/10 text-warning-foreground rounded-lg border px-4 py-3 text-sm"
         >
-          Some notification data failed to load. Unread counts may be
-          outdated. Refresh to retry.
+          Some notification data failed to load. Unread counts may be outdated.
+          Refresh to retry.
         </p>
       ) : null}
       <NotificationsPageView

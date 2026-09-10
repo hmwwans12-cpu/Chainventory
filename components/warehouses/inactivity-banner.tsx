@@ -108,8 +108,8 @@ export async function InactivityBanner({
           className={cn(
             "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full",
             critical
-              ? "bg-destructive/15 text-destructive border border-destructive/20"
-              : "bg-warning/15 text-warning-foreground border border-warning/20"
+              ? "bg-destructive/15 text-destructive border-destructive/20 border"
+              : "bg-warning/15 text-warning-foreground border-warning/20 border"
           )}
         >
           {critical ? (

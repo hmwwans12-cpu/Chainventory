@@ -34,8 +34,7 @@ import { FAUCET_AMOUNT_ETH } from "@/lib/constants";
 import { logger } from "@/lib/logger";
 
 export type TransferResult =
-  | { ok: true; txHash: Hex }
-  | { ok: false; error: string; reason: "rejected" };
+  { ok: true; txHash: Hex } | { ok: false; error: string; reason: "rejected" };
 
 /**
  * Kirim testnet ETH dari treasury ke user wallet.
@@ -127,8 +126,7 @@ export async function transferFaucetEth(
       try {
         logger.warn(
           {
-            err:
-              logErr instanceof Error ? logErr.message : String(logErr),
+            err: logErr instanceof Error ? logErr.message : String(logErr),
           },
           "faucet post-broadcast log failed (non-fatal)"
         );

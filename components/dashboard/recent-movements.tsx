@@ -24,7 +24,11 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { EntityName } from "@/components/shared/entity-name";
 import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   MOVEMENT_STATUS_META,
   MOVEMENT_TYPE_META,
@@ -52,7 +56,8 @@ const STATUS_TONE_LABEL = MOVEMENT_STATUS_META;
 // Tone → class mapping for type badges (keeps visual parity with StatusBadge)
 const TONE_CLASS: Record<string, string> = {
   success: "bg-primary/10 text-primary border border-primary/20",
-  pending: "bg-secondary/20 text-secondary-foreground border border-secondary/30",
+  pending:
+    "bg-secondary/20 text-secondary-foreground border border-secondary/30",
   warning: "bg-warning/15 text-warning-foreground border border-warning/20",
   failed: "bg-destructive/15 text-destructive border border-destructive/20",
   inactive: "bg-muted text-muted-foreground border border-border",
@@ -152,7 +157,8 @@ export function RecentMovements({
                           />
                         ) : (
                           <span className="text-muted-foreground text-sm">
-                            {item.status.charAt(0).toUpperCase() + item.status.slice(1).replace(/_/g, " ")}
+                            {item.status.charAt(0).toUpperCase() +
+                              item.status.slice(1).replace(/_/g, " ")}
                           </span>
                         )}
                       </TableCell>
@@ -163,10 +169,19 @@ export function RecentMovements({
                       </TableCell>
                       <TableCell className="text-muted-foreground text-right text-sm tabular-nums">
                         <Tooltip>
-                          <TooltipTrigger render={<time dateTime={item.createdAt} className="cursor-help" />}>
+                          <TooltipTrigger
+                            render={
+                              <time
+                                dateTime={item.createdAt}
+                                className="cursor-help"
+                              />
+                            }
+                          >
                             {formatTimeAgo(item.createdAt)}
                           </TooltipTrigger>
-                          <TooltipContent>{formatDateTime(item.createdAt)}</TooltipContent>
+                          <TooltipContent>
+                            {formatDateTime(item.createdAt)}
+                          </TooltipContent>
                         </Tooltip>
                       </TableCell>
                     </TableRow>

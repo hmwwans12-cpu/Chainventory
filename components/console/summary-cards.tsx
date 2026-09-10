@@ -31,10 +31,10 @@ function StatCard({
           <span
             className={
               accent === "destructive"
-                ? "bg-destructive/15 text-destructive border border-destructive/20 flex size-9 items-center justify-center rounded-lg"
+                ? "bg-destructive/15 text-destructive border-destructive/20 flex size-9 items-center justify-center rounded-lg border"
                 : accent === "warning"
-                  ? "bg-warning/15 text-warning-foreground border border-warning/20 flex size-9 items-center justify-center rounded-lg"
-                  : "bg-primary/10 text-primary border border-primary/20 flex size-9 items-center justify-center rounded-lg"
+                  ? "bg-warning/15 text-warning-foreground border-warning/20 flex size-9 items-center justify-center rounded-lg border"
+                  : "bg-primary/10 text-primary border-primary/20 flex size-9 items-center justify-center rounded-lg border"
             }
           >
             <Icon aria-hidden="true" className="size-4" />

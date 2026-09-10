@@ -36,7 +36,9 @@ export function ErrorState({
       <div className="mt-2 space-y-1">
         <p className="text-foreground text-base font-semibold">{title}</p>
         {description ? (
-          <p className="text-muted-foreground mx-auto max-w-sm text-sm text-pretty">{description}</p>
+          <p className="text-muted-foreground mx-auto max-w-sm text-sm text-pretty">
+            {description}
+          </p>
         ) : null}
       </div>
       {onRetry ? (

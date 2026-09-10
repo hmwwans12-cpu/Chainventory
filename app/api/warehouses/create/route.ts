@@ -350,7 +350,9 @@ export async function POST(request: Request) {
       deploymentId: existing.id,
       warehouseId: existing.warehouse_id,
       warehouseCode:
-        ws?.warehouse_code ?? warehouse?.warehouse_code ?? parsed.data.warehouseCode,
+        ws?.warehouse_code ??
+        warehouse?.warehouse_code ??
+        parsed.data.warehouseCode,
       txHash: existing.tx_hash,
       contractAddress: warehouse?.contract_address ?? null,
     });

@@ -45,7 +45,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EntityName } from "@/components/shared/entity-name";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -246,9 +250,7 @@ export function MovementsPage({
       setHasMore(items.length === PAGE_SIZE);
       setRealtimeError(null);
     } catch {
-      setRealtimeError(
-        "Live update failed. Showing the last known movements."
-      );
+      setRealtimeError("Live update failed. Showing the last known movements.");
     }
   }, [supabase, warehouseId]);
 
@@ -365,11 +367,14 @@ export function MovementsPage({
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                    <Button variant="outline" aria-label="More movement types">
-                      <MoreHorizontal aria-hidden="true" />
-                      <span className="hidden sm:inline">More</span>
-                      <ChevronDown aria-hidden="true" className="size-3.5 opacity-60" />
-                    </Button>
+                  <Button variant="outline" aria-label="More movement types">
+                    <MoreHorizontal aria-hidden="true" />
+                    <span className="hidden sm:inline">More</span>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className="size-3.5 opacity-60"
+                    />
+                  </Button>
                 }
               >
                 <span className="sr-only">More movement types</span>
@@ -493,7 +498,7 @@ export function MovementsPage({
                   <TableHead className="text-right">Quantity</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden lg:table-cell">Actor</TableHead>
-                      <TableHead className="hidden lg:table-cell">Proof</TableHead>
+                  <TableHead className="hidden lg:table-cell">Proof</TableHead>
                   <TableHead className="hidden lg:table-cell">
                     Created
                   </TableHead>
@@ -586,7 +591,9 @@ export function MovementsPage({
                           >
                             {formatTimeAgo(m.created_at)}
                           </TooltipTrigger>
-                          <TooltipContent>{formatDateTime(m.created_at)}</TooltipContent>
+                          <TooltipContent>
+                            {formatDateTime(m.created_at)}
+                          </TooltipContent>
                         </Tooltip>
                       </TableCell>
                       <TableCell>
@@ -691,7 +698,9 @@ export function MovementsPage({
                         >
                           {formatTimeAgo(m.created_at)}
                         </TooltipTrigger>
-                        <TooltipContent>{formatDateTime(m.created_at)}</TooltipContent>
+                        <TooltipContent>
+                          {formatDateTime(m.created_at)}
+                        </TooltipContent>
                       </Tooltip>
                     </p>
                     {m.proofTxHash && m.proofStatus === "confirmed" ? (

@@ -33,12 +33,7 @@ import { ErrorAlert } from "@/components/shared/error-alert";
  * by pressing Escape or clicking the overlay).
  */
 export type ConfirmDialogVariant =
-  | "default"
-  | "outline"
-  | "secondary"
-  | "ghost"
-  | "destructive"
-  | "link";
+  "default" | "outline" | "secondary" | "ghost" | "destructive" | "link";
 
 export function ConfirmDialog({
   open,
@@ -81,33 +76,33 @@ export function ConfirmDialog({
     >
       <DialogContent>
         <div className="flex flex-col gap-4">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description ? (
-            <DialogDescription className="text-sm">
-              {description}
-            </DialogDescription>
-          ) : null}
-        </DialogHeader>
-        {error ? <ErrorAlert size="md">{error}</ErrorAlert> : null}
-        {children}
-        <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
-          <Button
-            variant="outline"
-            onClick={onCancel ?? (() => onOpenChange(false))}
-            disabled={busy}
-          >
-            {cancelLabel}
-          </Button>
-          <Button
-            variant={primaryVariant}
-            onClick={onConfirm}
-            disabled={busy || primaryDisabled}
-          >
-            {primaryIcon}
-            {primaryLabel}
-          </Button>
-        </div>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            {description ? (
+              <DialogDescription className="text-sm">
+                {description}
+              </DialogDescription>
+            ) : null}
+          </DialogHeader>
+          {error ? <ErrorAlert size="md">{error}</ErrorAlert> : null}
+          {children}
+          <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={onCancel ?? (() => onOpenChange(false))}
+              disabled={busy}
+            >
+              {cancelLabel}
+            </Button>
+            <Button
+              variant={primaryVariant}
+              onClick={onConfirm}
+              disabled={busy || primaryDisabled}
+            >
+              {primaryIcon}
+              {primaryLabel}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

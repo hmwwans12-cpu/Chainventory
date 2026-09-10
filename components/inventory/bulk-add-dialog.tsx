@@ -229,21 +229,48 @@ export function BulkAddDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90dvh]">
+      <DialogContent className="max-h-[90dvh] max-w-2xl">
         <DialogHeader>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">1</span>
-            <span className={`text-xs sm:text-sm ${step === "input" ? "font-semibold" : "text-muted-foreground"}`}><span className="hidden min-[420px]:inline">Add data</span><span className="min-[420px]:hidden">Add</span></span>
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full text-sm font-semibold">
+              1
+            </span>
+            <span
+              className={`text-xs sm:text-sm ${step === "input" ? "font-semibold" : "text-muted-foreground"}`}
+            >
+              <span className="hidden min-[420px]:inline">Add data</span>
+              <span className="min-[420px]:hidden">Add</span>
+            </span>
             <span className="text-muted-foreground text-sm">—</span>
-            <span className={`flex size-6 items-center justify-center rounded-full text-sm font-semibold ${step === "preview" ? "bg-primary text-primary-foreground" : step === "result" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>2</span>
-            <span className={`text-xs sm:text-sm ${step === "preview" ? "font-semibold" : "text-muted-foreground"}`}>Review</span>
+            <span
+              className={`flex size-6 items-center justify-center rounded-full text-sm font-semibold ${step === "preview" ? "bg-primary text-primary-foreground" : step === "result" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+            >
+              2
+            </span>
+            <span
+              className={`text-xs sm:text-sm ${step === "preview" ? "font-semibold" : "text-muted-foreground"}`}
+            >
+              Review
+            </span>
             <span className="text-muted-foreground text-sm">—</span>
-            <span className={`flex size-6 items-center justify-center rounded-full text-sm font-semibold ${step === "result" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>3</span>
-            <span className={`text-xs sm:text-sm ${step === "result" ? "font-semibold" : "text-muted-foreground"}`}>Complete</span>
+            <span
+              className={`flex size-6 items-center justify-center rounded-full text-sm font-semibold ${step === "result" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+            >
+              3
+            </span>
+            <span
+              className={`text-xs sm:text-sm ${step === "result" ? "font-semibold" : "text-muted-foreground"}`}
+            >
+              Complete
+            </span>
           </div>
           <DialogTitle>Bulk Add Products</DialogTitle>
           <DialogDescription>
-            {step === "input" ? "Add many products at once with a preview before importing." : step === "preview" ? `Review ${rows.length} products before importing.` : "Import complete. Review results."}
+            {step === "input"
+              ? "Add many products at once with a preview before importing."
+              : step === "preview"
+                ? `Review ${rows.length} products before importing.`
+                : "Import complete. Review results."}
           </DialogDescription>
         </DialogHeader>
 
@@ -302,7 +329,12 @@ export function BulkAddDialog({
                   >
                     {/* NFE-04: label terhubung (ganti span tanpa htmlFor). */}
                     <div className="flex flex-col gap-1 sm:col-span-5">
-                      <Label htmlFor={`bulk-name-${row.id}`} className="sm:sr-only">Product name</Label>
+                      <Label
+                        htmlFor={`bulk-name-${row.id}`}
+                        className="sm:sr-only"
+                      >
+                        Product name
+                      </Label>
                       <Input
                         id={`bulk-name-${row.id}`}
                         value={row.name}
@@ -313,7 +345,12 @@ export function BulkAddDialog({
                       />
                     </div>
                     <div className="flex flex-col gap-1 sm:col-span-3">
-                      <Label htmlFor={`bulk-sku-${row.id}`} className="sm:sr-only">SKU</Label>
+                      <Label
+                        htmlFor={`bulk-sku-${row.id}`}
+                        className="sm:sr-only"
+                      >
+                        SKU
+                      </Label>
                       <Input
                         id={`bulk-sku-${row.id}`}
                         value={row.sku}
@@ -324,7 +361,12 @@ export function BulkAddDialog({
                       />
                     </div>
                     <div className="flex flex-col gap-1 sm:col-span-2">
-                      <Label htmlFor={`bulk-unit-${row.id}`} className="sm:sr-only">Unit</Label>
+                      <Label
+                        htmlFor={`bulk-unit-${row.id}`}
+                        className="sm:sr-only"
+                      >
+                        Unit
+                      </Label>
                       <Input
                         id={`bulk-unit-${row.id}`}
                         value={row.unit}
@@ -335,8 +377,13 @@ export function BulkAddDialog({
                       />
                     </div>
                     <div className="flex items-center gap-1 sm:col-span-2">
-                      <div className="flex-1 flex flex-col gap-1">
-                        <Label htmlFor={`bulk-cat-${row.id}`} className="sm:sr-only">Category</Label>
+                      <div className="flex flex-1 flex-col gap-1">
+                        <Label
+                          htmlFor={`bulk-cat-${row.id}`}
+                          className="sm:sr-only"
+                        >
+                          Category
+                        </Label>
                         <Input
                           id={`bulk-cat-${row.id}`}
                           value={row.category}
@@ -410,15 +457,17 @@ export function BulkAddDialog({
                   }
                 />
                 <div className="border-border bg-muted/40 flex flex-col gap-1.5 rounded-lg border px-3 py-2.5 text-sm">
-                  <span className="text-foreground font-medium">CSV format</span>
+                  <span className="text-foreground font-medium">
+                    CSV format
+                  </span>
                   <span className="text-muted-foreground leading-relaxed">
                     Columns: <span className="font-mono">name, sku, unit</span>{" "}
                     (required) +{" "}
                     <span className="font-mono">
                       category, description, low_stock_threshold, initial_qty
                     </span>
-                    . Header row is detected, column order is free. Max 1.000 rows
-                    / 1 MB.{" "}
+                    . Header row is detected, column order is free. Max 1.000
+                    rows / 1 MB.{" "}
                     <a
                       className="text-primary hover:text-primary/80 font-medium underline underline-offset-2"
                       href="/templates/products-import.csv"
@@ -431,7 +480,7 @@ export function BulkAddDialog({
               </div>
             )}
 
-            <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
+            <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
@@ -483,7 +532,7 @@ export function BulkAddDialog({
               </div>
             ) : null}
 
-            <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
+            <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
               <Button
                 variant="outline"
                 onClick={() => setStep("input")}
@@ -505,9 +554,14 @@ export function BulkAddDialog({
 
         {step === "result" && results ? (
           <div className="flex flex-col gap-4">
-            <div className={`flex flex-col gap-1.5 rounded-lg border px-4 py-4 ${results.failed === 0 ? "bg-primary/10 border-primary/20" : results.created === 0 ? "bg-destructive/10 border-destructive/20" : "bg-warning/10 border-warning/20"}`}>
+            <div
+              className={`flex flex-col gap-1.5 rounded-lg border px-4 py-4 ${results.failed === 0 ? "bg-primary/10 border-primary/20" : results.created === 0 ? "bg-destructive/10 border-destructive/20" : "bg-warning/10 border-warning/20"}`}
+            >
               <span className="flex items-center gap-2 text-base font-semibold">
-                <CheckCircle2 aria-hidden="true" className={`size-5 ${results.failed === 0 ? "text-primary" : results.created === 0 ? "text-destructive" : "text-warning-foreground"}`} />
+                <CheckCircle2
+                  aria-hidden="true"
+                  className={`size-5 ${results.failed === 0 ? "text-primary" : results.created === 0 ? "text-destructive" : "text-warning-foreground"}`}
+                />
                 {results.failed === 0
                   ? `Import complete: ${results.created} products added`
                   : results.created === 0
@@ -525,8 +579,10 @@ export function BulkAddDialog({
 
             {results.failed > 0 ? (
               <div className="flex flex-col gap-2">
-                <span className="text-foreground text-sm font-medium">Failed rows</span>
-                <ul className="flex max-h-48 flex-col gap-1 overflow-y-auto rounded-lg bg-destructive/5 p-2">
+                <span className="text-foreground text-sm font-medium">
+                  Failed rows
+                </span>
+                <ul className="bg-destructive/5 flex max-h-48 flex-col gap-1 overflow-y-auto rounded-lg p-2">
                   {results.results
                     .filter((r) => !r.ok)
                     .map((r) => (
@@ -549,7 +605,13 @@ export function BulkAddDialog({
                   size="sm"
                   onClick={() => {
                     const failedRows = results.results.filter((r) => !r.ok);
-                    const csv = ["row,error", ...failedRows.map((r) => `${r.index+1},"${(r.error ?? "").replace(/"/g,'""')}"`)].join("\n");
+                    const csv = [
+                      "row,error",
+                      ...failedRows.map(
+                        (r) =>
+                          `${r.index + 1},"${(r.error ?? "").replace(/"/g, '""')}"`
+                      ),
+                    ].join("\n");
                     const blob = new Blob([csv], { type: "text/csv" });
                     const url = URL.createObjectURL(blob);
                     // NFE-20: anchor harus di DOM (Firefox) + revoke
@@ -568,7 +630,7 @@ export function BulkAddDialog({
               </div>
             ) : null}
 
-            <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
+            <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
               {results.failed > 0 ? (
                 <Button variant="outline" onClick={() => setStep("input")}>
                   Fix and re-upload

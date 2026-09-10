@@ -22,8 +22,7 @@ export const dynamic = "force-dynamic";
 export default async function CreateWarehousePage() {
   // FE-02: belum login → /login?next=...; sudah own warehouse aktif →
   // /dashboard (create pasti 409 — cegah sebelum user sign).
-  const { supabase, user } =
-    await requireOnboardingUser("/onboarding/create");
+  const { supabase, user } = await requireOnboardingUser("/onboarding/create");
   await redirectIfOwnsActiveWarehouse(supabase, user.id);
   return <CreateWarehouseForm />;
 }

@@ -86,10 +86,9 @@ export function parseSuccess<T>(status: number, json: unknown): ApiResult<T> {
       return { ok: true, status, data: body.data as T };
     }
     if (body?.ok === true) {
-      return toFailure<T>(
-        status,
-        { error: "Server returned success without a payload." }
-      );
+      return toFailure<T>(status, {
+        error: "Server returned success without a payload.",
+      });
     }
     return { ok: true, status, data: body?.data as T };
   }

@@ -62,7 +62,11 @@ type FaqItem = { q: string; a: string; isRaw?: boolean };
 export function Faq() {
   const { t } = useLocale();
   const hasTranslation = (key: string) => {
-    try { return t(key) !== key; } catch { return false; }
+    try {
+      return t(key) !== key;
+    } catch {
+      return false;
+    }
   };
   const useKeys = hasTranslation("landing.faq.q1");
   return (
@@ -73,28 +77,36 @@ export function Faq() {
             {useKeys ? t("landing.faq.title") : "Frequently asked questions"}
           </h2>
           <p className="text-muted-foreground max-w-xl text-base leading-relaxed text-pretty">
-            {useKeys ? t("landing.faq.subtitle") : "The quick answers. No blockchain vocabulary required."}
+            {useKeys
+              ? t("landing.faq.subtitle")
+              : "The quick answers. No blockchain vocabulary required."}
           </p>
         </Reveal>
 
         <Reveal delay={0.05}>
           <Accordion multiple>
-            {((useKeys
-              ? FAQ_KEYS
-              : FAQ_ITEMS.map((f) => ({ q: f.question, a: f.answer, isRaw: true }))
-            ) as FaqItem[]).map((item) => {
+            {(
+              (useKeys
+                ? FAQ_KEYS
+                : FAQ_ITEMS.map((f) => ({
+                    q: f.question,
+                    a: f.answer,
+                    isRaw: true,
+                  }))) as FaqItem[]
+            ).map((item) => {
               const q = item.isRaw ? item.q : t(item.q);
               const a = item.isRaw ? item.a : t(item.a);
               return (
-              <AccordionItem key={q} value={q}>
-                <AccordionTrigger className="text-foreground py-4 text-left text-base font-medium">
-                  {q}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-sm leading-relaxed text-pretty">
-                  {a}
-                </AccordionContent>
-              </AccordionItem>
-            )})}
+                <AccordionItem key={q} value={q}>
+                  <AccordionTrigger className="text-foreground py-4 text-left text-base font-medium">
+                    {q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                    {a}
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
           </Accordion>
         </Reveal>
       </div>

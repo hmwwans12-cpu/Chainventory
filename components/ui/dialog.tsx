@@ -31,7 +31,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 z-[var(--z-overlay)] bg-overlay transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs",
+        "bg-overlay fixed inset-0 z-[var(--z-overlay)] transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs",
         className
       )}
       {...props}
@@ -58,7 +58,7 @@ function DialogContent({
         {...props}
       >
         {children}
-          {showCloseButton && (
+        {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
             render={
@@ -105,10 +105,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn(
-        "text-foreground pr-12 text-lg font-semibold",
-        className
-      )}
+      className={cn("text-foreground pr-12 text-lg font-semibold", className)}
       {...props}
     />
   );

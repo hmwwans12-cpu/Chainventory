@@ -198,7 +198,9 @@ export function TreasuryCard({
                     disabled={claiming || !walletAddress}
                     className="min-h-11"
                     aria-label={`Claim ${treasury.faucet?.amountEther ?? "0.001"} Base Sepolia ETH`}
-                    title={!walletAddress ? "Connect a wallet first" : undefined}
+                    title={
+                      !walletAddress ? "Connect a wallet first" : undefined
+                    }
                   >
                     <Coins aria-hidden="true" className="size-4" />
                     {claiming

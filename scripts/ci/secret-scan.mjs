@@ -58,7 +58,10 @@ function nodeScan(root) {
         continue;
       }
       text.split("\n").forEach((line, i) => {
-        if (re.test(line)) hits.push(`${relative(root, full)}:${i + 1}:${line.trim().slice(0, 120)}`);
+        if (re.test(line))
+          hits.push(
+            `${relative(root, full)}:${i + 1}:${line.trim().slice(0, 120)}`
+          );
       });
     }
   };

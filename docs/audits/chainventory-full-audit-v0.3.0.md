@@ -1,4 +1,5 @@
 # Chainventory — Comprehensive Bug, Inconsistency & Flow Audit (v0.3.0)
+
 **Scope:** Logic bugs, RBAC/security holes, error handling, data flow, UI/UX consistency  
 **Stack:** Next.js 16 · React 19 · Tailwind v4 · `@base-ui/react` · Supabase (PostgREST + RPC) · Privy · QStash · Viem  
 **Audit baseline:** 4 prior audit reports (v0.1.7 through v0.2.9) consolidated. This pass goes **deeper** into auth, RBAC, error semantics, transaction boundaries, and cross-page state propagation.
@@ -20,19 +21,19 @@
 
 **Pattern:** Multiple API routes return `serverError(err.message)` or `invalid(error.message)` where `err` is the raw exception (PostgREST, viem RPC, JSON parse, etc). This violates `lib/domain/errors.ts` policy (P1-09) and the design intent of the catalog.
 
-| Location | Severity | Issue |
-|---|---|---|
-| `app/api/console/audit/route.ts:16` | HIGH | `serverError(err instanceof Error ? err.message : "audit read failed")` |
-| `app/api/console/errors/route.ts:16` | HIGH | same |
-| `app/api/console/treasury/route.ts:16-18` | HIGH | same; on `getTreasuryData` failure, leaks viem RPC URL + chain id |
-| `app/api/console/dependencies/route.ts:20-22` | HIGH | same |
-| `app/api/console/export/route.ts:64-66` | HIGH | same |
-| `app/api/console/proofs/[id]/retry/route.ts:62` | HIGH | `serverError(err instanceof Error ? err.message : "retry failed")` |
-| `app/api/warehouses/create/route.ts:463` | HIGH | `serverError(createError.message)` — PostgREST detail |
-| `app/api/users/notification-preferences/route.ts:26` | HIGH | `return invalid(error.message)` |
-| `app/api/warehouses/members/invite/route.ts:56-62` | MEDIUM | returns generic 400 even on 500-class errors; only info is masked |
-| `app/api/warehouses/export/route.ts:72, 121` | MEDIUM | returns `new Response("Export failed.", { status: 500 })` — plain text inconsistent with `api-handler` JSON |
-| `app/api/faucet/claim/route.ts:62` | MEDIUM | non-cooldown errors return 400 INVALID_INPUT; treasury depletion or RPC failure should be 500/503 |
+| Location                                             | Severity | Issue                                                                                                       |
+| ---------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| `app/api/console/audit/route.ts:16`                  | HIGH     | `serverError(err instanceof Error ? err.message : "audit read failed")`                                     |
+| `app/api/console/errors/route.ts:16`                 | HIGH     | same                                                                                                        |
+| `app/api/console/treasury/route.ts:16-18`            | HIGH     | same; on `getTreasuryData` failure, leaks viem RPC URL + chain id                                           |
+| `app/api/console/dependencies/route.ts:20-22`        | HIGH     | same                                                                                                        |
+| `app/api/console/export/route.ts:64-66`              | HIGH     | same                                                                                                        |
+| `app/api/console/proofs/[id]/retry/route.ts:62`      | HIGH     | `serverError(err instanceof Error ? err.message : "retry failed")`                                          |
+| `app/api/warehouses/create/route.ts:463`             | HIGH     | `serverError(createError.message)` — PostgREST detail                                                       |
+| `app/api/users/notification-preferences/route.ts:26` | HIGH     | `return invalid(error.message)`                                                                             |
+| `app/api/warehouses/members/invite/route.ts:56-62`   | MEDIUM   | returns generic 400 even on 500-class errors; only info is masked                                           |
+| `app/api/warehouses/export/route.ts:72, 121`         | MEDIUM   | returns `new Response("Export failed.", { status: 500 })` — plain text inconsistent with `api-handler` JSON |
+| `app/api/faucet/claim/route.ts:62`                   | MEDIUM   | non-cooldown errors return 400 INVALID_INPUT; treasury depletion or RPC failure should be 500/503           |
 
 **Fix:** standardize on `lib/domain/errors.ts` `mapDbError()` for known patterns; everything else → `serverError("internal error")` with full `err.message` logged via `logger.error` only.
 
@@ -44,6 +45,7 @@ const description = error ? error.message : "You have joined...";
 ```
 
 The token is user-controllable. RPC error messages can include:
+
 - constraint names (e.g. `duplicate key value violates unique constraint "invitations_email_warehouse_id_key"`)
 - timestamps and UUIDs
 - function internals
@@ -101,7 +103,11 @@ No `requireUser`, no `requireRateLimit`. The address is public testnet info but 
 ## 1.9 `app/api/warehouses/inventory/movements/route.ts:127-135` — "not a member" 403 leaks existence (MEDIUM)
 
 ```ts
-const role = await getMemberRole(supabase, parsed.data.warehouseId, auth.user.id);
+const role = await getMemberRole(
+  supabase,
+  parsed.data.warehouseId,
+  auth.user.id
+);
 if (!role) return forbidden("Not a member of this warehouse.");
 const permission = STOCK_PERMISSION[parsed.data.movementType];
 if (!permission || !hasPermission(role, permission)) {
@@ -201,7 +207,8 @@ If `countQuery` fails (e.g. transient RLS issue), `totalCount` is null, fallback
 ## 2.5 `app/(dashboard)/inventory/products/page.tsx:43-45` — `?status=Archived` (case-sensitive) silently defaults to "active" (LOW)
 
 ```ts
-const statusFilter = rawStatus === "archived" || rawStatus === "all" ? rawStatus : "active";
+const statusFilter =
+  rawStatus === "archived" || rawStatus === "all" ? rawStatus : "active";
 ```
 
 If user types `?status=Archived` it falls to "active". Inconsistent. Should be case-insensitive: `rawStatus.toLowerCase()` first.
@@ -282,6 +289,7 @@ Any RPC error (network, DB outage, etc) gets a "user already invited" message. *
 Base UI's `<Select name="gender">` does not write the value into a hidden form input automatically (unlike shadcn). When the form is submitted, `formData.get("gender")` is `null` unless the user explicitly selects. Verify in the rendered DOM — if no hidden input is present, signup is silently missing the field.
 
 **Fix:** add a hidden input bound to the value:
+
 ```tsx
 <input type="hidden" name="gender" value={gender ?? ""} />
 ```
@@ -467,7 +475,10 @@ Archiving a product that has stock balance is allowed. The product status change
 ## 4.6 `app/api/warehouses/export/route.ts:60-64` — `ids` filter on bulk export doesn't validate ids belong to the warehouse (LOW)
 
 ```ts
-const ids = idsParam.split(",").map((x) => x.trim()).filter((x) => /^[0-9a-f-]{36}$/i.test(x));
+const ids = idsParam
+  .split(",")
+  .map((x) => x.trim())
+  .filter((x) => /^[0-9a-f-]{36}$/i.test(x));
 if (ids.length) productsQuery = productsQuery.in("id", ids);
 ```
 
@@ -641,38 +652,39 @@ Adding tests for these would prevent regression.
 
 # PART IX — TOP-15 PRIORITY FIX LIST (with estimated impact)
 
-| # | File:Line | Issue | Severity | Impact |
-|---|---|---|---|---|
-| 1 | `lib/notifications/notification-bell.tsx:213-214` | `unreadRef` race regression | HIGH | Counter wrong on rapid clicks |
-| 2 | `lib/security/rate-limit.ts:97-99` | incr/expire race | HIGH | Rate limit can be bypassed at window boundary |
-| 3 | `app/api/warehouses/members/invite/route.ts:68-71` | Broken email link when `NEXT_PUBLIC_APP_URL` empty | HIGH | Invitation emails non-functional |
-| 4 | `app/invite/[token]/page.tsx:42` | Raw RPC error shown to user | HIGH | Information disclosure |
-| 5 | `app/actions/update-profile.ts:47` | Raw error.message leaked | HIGH | Information disclosure |
-| 6 | `app/(dashboard)/error.tsx` | No `useEffect` log | MEDIUM | Silent prod errors |
-| 7 | Multiple `serverError(err.message)` sites (8+) | Internal error leak | HIGH | Information disclosure |
-| 8 | `lib/analytics/aggregate.ts:74-78,87-89` | Local time in chart | MEDIUM | Wrong chart for non-UTC users |
-| 9 | `lib/i18n/translations.ts:497` | Missing key returns key string | HIGH | Untranslated strings in UI |
-| 10 | `app/(auth)/layout.tsx:25` | `rounded-xl` violates DESIGN | MEDIUM | Visual inconsistency |
-| 11 | `app/(dashboard)/inventory/products/page.tsx:78-128` | `countQuery` errors swallowed | MEDIUM | Pagination missing without reason |
-| 12 | `app/(auth)/onboarding/...` and similar — unused `Dashboard` data | LOW | Wasted bandwidth |
-| 13 | `components/auth/signup-form.tsx:73-83` | Gender Select may not submit | MEDIUM | Lost user data |
-| 14 | `app/api/warehouses/inventory/movements/route.ts:175-187` | Silent proof skip on missing product | HIGH | Inconsistent state |
-| 15 | `app/(dashboard)/inventory/members/page.tsx:94-101` | Hardcoded FK constraint name | MEDIUM | Silent data loss on rename |
+| #   | File:Line                                                         | Issue                                              | Severity         | Impact                                        |
+| --- | ----------------------------------------------------------------- | -------------------------------------------------- | ---------------- | --------------------------------------------- |
+| 1   | `lib/notifications/notification-bell.tsx:213-214`                 | `unreadRef` race regression                        | HIGH             | Counter wrong on rapid clicks                 |
+| 2   | `lib/security/rate-limit.ts:97-99`                                | incr/expire race                                   | HIGH             | Rate limit can be bypassed at window boundary |
+| 3   | `app/api/warehouses/members/invite/route.ts:68-71`                | Broken email link when `NEXT_PUBLIC_APP_URL` empty | HIGH             | Invitation emails non-functional              |
+| 4   | `app/invite/[token]/page.tsx:42`                                  | Raw RPC error shown to user                        | HIGH             | Information disclosure                        |
+| 5   | `app/actions/update-profile.ts:47`                                | Raw error.message leaked                           | HIGH             | Information disclosure                        |
+| 6   | `app/(dashboard)/error.tsx`                                       | No `useEffect` log                                 | MEDIUM           | Silent prod errors                            |
+| 7   | Multiple `serverError(err.message)` sites (8+)                    | Internal error leak                                | HIGH             | Information disclosure                        |
+| 8   | `lib/analytics/aggregate.ts:74-78,87-89`                          | Local time in chart                                | MEDIUM           | Wrong chart for non-UTC users                 |
+| 9   | `lib/i18n/translations.ts:497`                                    | Missing key returns key string                     | HIGH             | Untranslated strings in UI                    |
+| 10  | `app/(auth)/layout.tsx:25`                                        | `rounded-xl` violates DESIGN                       | MEDIUM           | Visual inconsistency                          |
+| 11  | `app/(dashboard)/inventory/products/page.tsx:78-128`              | `countQuery` errors swallowed                      | MEDIUM           | Pagination missing without reason             |
+| 12  | `app/(auth)/onboarding/...` and similar — unused `Dashboard` data | LOW                                                | Wasted bandwidth |
+| 13  | `components/auth/signup-form.tsx:73-83`                           | Gender Select may not submit                       | MEDIUM           | Lost user data                                |
+| 14  | `app/api/warehouses/inventory/movements/route.ts:175-187`         | Silent proof skip on missing product               | HIGH             | Inconsistent state                            |
+| 15  | `app/(dashboard)/inventory/members/page.tsx:94-101`               | Hardcoded FK constraint name                       | MEDIUM           | Silent data loss on rename                    |
 
 ---
 
 # PART X — SUMMARY TABLE
 
-| Severity | Count | Theme |
-|---|---|---|
-| CRITICAL | 1 | Information disclosure via raw error messages (1.1, 1.2, 1.3) |
-| HIGH | 14 | Rate-limit race · unread race · broken email link · silent skips · FK fragility · FK missing FK hint · missing translation fallback · etc. |
-| MEDIUM | 22 | Case-sensitivity · FK hardcoding · page error missing log · UTC vs local · select data emission · DRY violations · etc. |
-| LOW | 16 | Dead code · redundant overrides · minor copy issues · unused constants · etc. |
+| Severity | Count | Theme                                                                                                                                      |
+| -------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| CRITICAL | 1     | Information disclosure via raw error messages (1.1, 1.2, 1.3)                                                                              |
+| HIGH     | 14    | Rate-limit race · unread race · broken email link · silent skips · FK fragility · FK missing FK hint · missing translation fallback · etc. |
+| MEDIUM   | 22    | Case-sensitivity · FK hardcoding · page error missing log · UTC vs local · select data emission · DRY violations · etc.                    |
+| LOW      | 16    | Dead code · redundant overrides · minor copy issues · unused constants · etc.                                                              |
 
 **Total findings:** 53.
 
 **Top systemic issues to fix first** (each removes several findings):
+
 1. **Error handling system** — replace 8+ `serverError(err.message)` with catalog-mapped responses. Removes findings 1.1, 1.2, 1.3, 2.9.
 2. **Translation completeness check** — add build test. Removes finding 5.1.
 3. **Notification ref pattern** — migrate `notification-bell.tsx` to `unreadStore`. Removes finding 2.1.

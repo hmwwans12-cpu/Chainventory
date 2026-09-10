@@ -190,14 +190,11 @@ export async function claimFaucet(
   // raise: wajib dicek eksplisit, kalau tidak tx_hash gagal tersimpan
   // diam-diam (bug 0051: confirm menolak status 'pending').
   try {
-    const { error: attachError } = await supabase.rpc(
-      "confirm_faucet_claim",
-      {
-        p_claim_id: claimId,
-        p_tx_hash: transferResult.txHash,
-        p_status: "pending",
-      }
-    );
+    const { error: attachError } = await supabase.rpc("confirm_faucet_claim", {
+      p_claim_id: claimId,
+      p_tx_hash: transferResult.txHash,
+      p_status: "pending",
+    });
     if (attachError) throw new Error(attachError.message);
   } catch (dbErr) {
     // Broadcast already succeeded on-chain. Log loudly so operators

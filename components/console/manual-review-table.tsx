@@ -55,7 +55,7 @@ export function ManualReviewTable({
     <Card className="border-warning/30 bg-warning/5">
       <CardHeader>
         <div className="flex items-start gap-2.5">
-          <span className="bg-warning/15 text-warning-foreground border border-warning/20 flex size-9 shrink-0 items-center justify-center rounded-lg">
+          <span className="bg-warning/15 text-warning-foreground border-warning/20 flex size-9 shrink-0 items-center justify-center rounded-lg border">
             <AlertTriangle aria-hidden="true" className="size-4" />
           </span>
           <div className="flex flex-col gap-1">

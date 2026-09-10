@@ -1,6 +1,12 @@
 /* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import Link from "next/link";
-import { ArrowLeftRight, XCircle, CheckCircle2, Clock3, type LucideIcon } from "lucide-react";
+import {
+  ArrowLeftRight,
+  XCircle,
+  CheckCircle2,
+  Clock3,
+  type LucideIcon,
+} from "lucide-react";
 
 import {
   Card,
@@ -14,7 +20,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 /**
  * Recent Transactions (DESIGN §29) — operasi terbaru + status proof on-chain
@@ -43,12 +53,14 @@ const PROOF_META: Record<
   pending: {
     label: "Verifying",
     icon: Clock3,
-    className: "bg-secondary/20 text-secondary-foreground border border-secondary/30",
+    className:
+      "bg-secondary/20 text-secondary-foreground border border-secondary/30",
   },
   failed: {
     label: "Failed",
     icon: XCircle as unknown as LucideIcon,
-    className: "bg-destructive/15 text-destructive border border-destructive/20",
+    className:
+      "bg-destructive/15 text-destructive border border-destructive/20",
   },
 };
 
@@ -111,23 +123,48 @@ export function RecentTransactions({
               const proof =
                 item.proofStatus != null ? PROOF_META[item.proofStatus] : null;
               const ProofIcon = proof?.icon;
-              const qtyNegative = item.movementType === "stock_out" || item.movementType === "reversal";
+              const qtyNegative =
+                item.movementType === "stock_out" ||
+                item.movementType === "reversal";
               return (
                 <li key={item.id} className="flex items-center gap-3 py-3">
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-foreground truncate text-sm font-medium" title={`${item.productName} · ${TYPE_LABEL[item.movementType] ?? item.movementType}`}>
-                      {item.productName} · {TYPE_LABEL[item.movementType] ?? item.movementType.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                    <span
+                      className="text-foreground truncate text-sm font-medium"
+                      title={`${item.productName} · ${TYPE_LABEL[item.movementType] ?? item.movementType}`}
+                    >
+                      {item.productName} ·{" "}
+                      {TYPE_LABEL[item.movementType] ??
+                        item.movementType
+                          .split("_")
+                          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                          .join(" ")}
                     </span>
                     <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
-                      <span className={cn("font-mono tabular-nums", qtyNegative ? "text-destructive" : "text-foreground")}>
-                        {qtyNegative ? "−" : "+"}{item.quantity} {item.unit}
+                      <span
+                        className={cn(
+                          "font-mono tabular-nums",
+                          qtyNegative ? "text-destructive" : "text-foreground"
+                        )}
+                      >
+                        {qtyNegative ? "−" : "+"}
+                        {item.quantity} {item.unit}
                       </span>
                       <span>·</span>
                       <Tooltip>
-                        <TooltipTrigger render={<time dateTime={item.createdAt} className="cursor-help tabular-nums" />}>
+                        <TooltipTrigger
+                          render={
+                            <time
+                              dateTime={item.createdAt}
+                              className="cursor-help tabular-nums"
+                            />
+                          }
+                        >
                           {formatTimeAgo(item.createdAt)}
                         </TooltipTrigger>
-                        <TooltipContent>{formatDateTime(item.createdAt)}</TooltipContent>
+                        <TooltipContent>
+                          {formatDateTime(item.createdAt)}
+                        </TooltipContent>
                       </Tooltip>
                     </span>
                   </div>

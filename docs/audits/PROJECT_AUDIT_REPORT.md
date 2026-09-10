@@ -12,17 +12,17 @@ Chainventory is a **production-grade, full-stack SaaS application** combining tr
 
 ### Scores (0–10)
 
-| Dimension | Score | Notes |
-|-----------|-------|-------|
-| **UI/UX** | 7.5 | Polished design system, but inconsistent spacing/sizing in places, missing micro-interactions |
-| **Functionality** | 8.5 | Feature-complete for MVP, robust RBAC, real-time sync, blockchain integration |
-| **Code Quality** | 8.0 | Well-structured, good separation of concerns, some large files need decomposition |
-| **Architecture** | 8.5 | Clean BFF pattern, proper RLS, good use of Server Components |
-| **Performance** | 7.0 | Good parallel fetching, but missing image optimization, some unnecessary re-renders |
-| **Accessibility** | 8.0 | WCAG AA contrast, skip links, ARIA labels, but some interactive elements lack focus states |
-| **Security** | 8.5 | Proper RBAC, rate limiting, RLS, but some client-side trust boundaries |
-| **Maintainability** | 8.0 | Good naming, consistent patterns, but some files exceed 700 lines |
-| **Overall** | **8.0** | Strong foundation, production-ready with targeted improvements |
+| Dimension           | Score   | Notes                                                                                         |
+| ------------------- | ------- | --------------------------------------------------------------------------------------------- |
+| **UI/UX**           | 7.5     | Polished design system, but inconsistent spacing/sizing in places, missing micro-interactions |
+| **Functionality**   | 8.5     | Feature-complete for MVP, robust RBAC, real-time sync, blockchain integration                 |
+| **Code Quality**    | 8.0     | Well-structured, good separation of concerns, some large files need decomposition             |
+| **Architecture**    | 8.5     | Clean BFF pattern, proper RLS, good use of Server Components                                  |
+| **Performance**     | 7.0     | Good parallel fetching, but missing image optimization, some unnecessary re-renders           |
+| **Accessibility**   | 8.0     | WCAG AA contrast, skip links, ARIA labels, but some interactive elements lack focus states    |
+| **Security**        | 8.5     | Proper RBAC, rate limiting, RLS, but some client-side trust boundaries                        |
+| **Maintainability** | 8.0     | Good naming, consistent patterns, but some files exceed 700 lines                             |
+| **Overall**         | **8.0** | Strong foundation, production-ready with targeted improvements                                |
 
 ---
 
@@ -117,11 +117,12 @@ CHAINVENTORY BUFF/
 **Location:** `app/globals.css:190-194`
 
 **Problem:**
+
 ```css
 --z-dropdown: 60;
 --z-select: 61;
 --z-toast: 1000;
---z-modal: 50;  /* LOWER than dropdown! */
+--z-modal: 50; /* LOWER than dropdown! */
 --z-overlay: 40;
 ```
 
@@ -133,6 +134,7 @@ The z-index scale was defined without considering that dropdowns can appear insi
 
 **Recommendation:**
 Restructure the z-index scale:
+
 ```css
 --z-dropdown: 1100;
 --z-select: 1101;
@@ -152,6 +154,7 @@ Restructure the z-index scale:
 
 **Problem:**
 CSS custom properties are defined twice in `@theme inline`:
+
 - Lines 171-187: References `var(--z-dropdown)` etc. (unresolved circular references)
 - Lines 190-206: Actual values
 
@@ -177,6 +180,7 @@ Remove the first block (lines 171-187) entirely. The second block already define
 
 **Problem:**
 Several interactive elements lack visible focus indicators:
+
 1. `SiteHeader.tsx:166` — Account menu trigger uses `focus-visible:ring-3` but the ring color is not visible against the background
 2. `products-page.tsx:334` — Clear search button has `focus-visible:ring-3` but no ring color defined
 3. `command-menu.tsx:273` — Command items have `focus-visible:ring-3` but no ring color
@@ -201,6 +205,7 @@ Explicitly set `focus-visible:ring-ring` (or `focus-visible:ring-primary`) on al
 
 **Problem:**
 The `NotificationBell` component creates a Supabase Realtime channel (`notifications:<userId>`) that is mounted on every dashboard page (via `SiteHeader`). Combined with `useWarehouseRealtime` (which creates `wh:<warehouseId>`) and the `useUnreadNotifications` polling, this means:
+
 - 2 realtime channels per page
 - 1 polling interval (60s)
 - Multiple `router.refresh()` calls
@@ -212,6 +217,7 @@ Increased memory usage, potential for channel conflicts, unnecessary network tra
 The notification bell is always mounted in the header, even when the user is on pages that don't need real-time notifications.
 
 **Recommendation:**
+
 1. Consider a single centralized realtime manager that all components subscribe to
 2. Or lazy-load the notification bell only when the user interacts with it
 3. Or use a single channel for all realtime events and route them client-side
@@ -291,9 +297,11 @@ Add a stock availability check before allowing reversals, or warn the user if th
 **Location:** `components/inventory/bulk-add-dialog.tsx:136`
 
 **Problem:**
+
 ```typescript
 id: `parsed-${idx}-${Date.now()}`,
 ```
+
 Using `Date.now()` for React keys means all rows created in the same millisecond get the same suffix, potentially causing key collisions.
 
 **Impact:**
@@ -403,9 +411,11 @@ Use a consistent max-width for all dashboard pages (e.g., `max-w-[1200px]`), or 
 **Location:** `components/analytics/stat-card.tsx:112`
 
 **Problem:**
+
 ```typescript
 <Card className="@container/card min-h-[148px] gap-4">
 ```
+
 The fixed `min-h-[148px]` can cause excessive whitespace when the card content is minimal.
 
 **Impact:**
@@ -429,9 +439,11 @@ Remove `min-h-[148px]` or use `min-h-fit` with a smaller minimum. Let content de
 **Location:** `components/marketing/hero.tsx:146`
 
 **Problem:**
+
 ```html
 <dt className="sr-only">{t(stat.labelKey)}</dt>
 ```
+
 The definition term is hidden from visual users but the definition value is visible. This creates an imbalance where sighted users see values without context.
 
 **Impact:**
@@ -453,6 +465,7 @@ Make the label visible (it already is in the `dd` below), or remove the `sr-only
 **Location:** Multiple files
 
 **Problem:**
+
 - Dashboard stat cards use `font-semibold` (600)
 - Settings cards use `font-semibold` (600)
 - Marketing hero uses `font-semibold` (600)
@@ -480,6 +493,7 @@ Standardize all card titles to `font-semibold` (600) for consistency.
 
 **Problem:**
 Several icon-only buttons lack tooltips:
+
 1. `products-page.tsx:233` — Actions dropdown trigger
 2. `movements-page.tsx:293` — More movement types trigger
 3. `members-page.tsx:291` — Copy invite code button
@@ -525,6 +539,7 @@ Consider using `variant="outline"` for the destructive action in confirmation di
 **Location:** Multiple files
 
 **Problem:**
+
 - Some buttons show a spinner + text change (`"Signing in…"`)
 - Some buttons show only a spinner (`disabled={busy}`)
 - Some buttons show no loading state at all
@@ -638,9 +653,11 @@ Add a `usePathname` listener that closes the sidebar on route change.
 **Location:** `components/inventory/movements-table.tsx:49-51`
 
 **Problem:**
+
 ```html
-<div className="hidden overflow-x-auto md:block">
+<div className="hidden overflow-x-auto md:block"></div>
 ```
+
 Tables scroll horizontally on medium screens but there's no visual indicator that the table is scrollable.
 
 **Impact:**
@@ -685,9 +702,11 @@ Add a small proof status indicator to the mobile card list, perhaps as a small i
 **Location:** `app/(dashboard)/dashboard/page.tsx:278`
 
 **Problem:**
+
 ```html
-<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"></div>
 ```
+
 On tablet (md breakpoint), stat cards are 2 columns, which can make each card very wide and the numbers very large.
 
 **Impact:**
@@ -757,9 +776,11 @@ Verify that Base UI Dialog implements focus trapping. If not, add `focus-trap-re
 **Location:** `app/layout.tsx:98-103`
 
 **Problem:**
+
 ```html
-<a href="#main-content" ...>
+<a href="#main-content" ...></a>
 ```
+
 The skip link targets `#main-content`, but not all pages may have an element with this ID.
 
 **Impact:**
@@ -783,11 +804,11 @@ Ensure all pages have `<main id="main-content">` or use a more reliable selector
 **Location:** `components/notifications/notification-bell.tsx:259-261`
 
 **Problem:**
+
 ```html
-<span aria-live="polite" className="sr-only">
-  {announcement}
-</span>
+<span aria-live="polite" className="sr-only"> {announcement} </span>
 ```
+
 The announcement changes on every realtime event, which can be overwhelming for screen reader users.
 
 **Impact:**
@@ -814,6 +835,7 @@ Debounce announcements or only announce when the panel is closed.
 
 **Problem:**
 Filter state (search query, status filter) is stored in URL search params. While this enables deep-linking, it also means:
+
 - Every filter change triggers a server round-trip
 - `router.replace()` causes a full page re-render
 - No client-side caching of previous filter results
@@ -838,6 +860,7 @@ Consider using client-side state for filters with debounced URL sync, or use `us
 
 **Problem:**
 The unread notification count is managed in three places:
+
 1. `unreadStore` — external store
 2. `useUnreadNotifications` — polling hook
 3. `NotificationBell` — realtime updates
@@ -866,13 +889,16 @@ Consolidate to a single source of truth. The store is the right approach — rem
 
 **Problem:**
 The low stock calculation logic is duplicated:
+
 ```typescript
 // Dashboard
 if (qty != null && threshold > 0 && qty <= threshold) lowStockCount += 1;
 
 // Products page
-const low = !archived && product.quantity != null && 
-  Number(product.lowStockThreshold) > 0 && 
+const low =
+  !archived &&
+  product.quantity != null &&
+  Number(product.lowStockThreshold) > 0 &&
   Number(product.quantity) <= Number(product.lowStockThreshold);
 ```
 
@@ -896,6 +922,7 @@ Extract to a shared utility function: `isLowStock(quantity, threshold)`.
 
 **Problem:**
 The warehouse switching logic is duplicated across:
+
 - `products-page.tsx:302-306`
 - `movements-page.tsx` (via `useInventoryFilters`)
 - `members-page.tsx:204-208`
@@ -1083,10 +1110,12 @@ Memoize the calculation with `useMemo` if the product list is large.
 **Location:** `components/inventory/products-page.tsx:283-289`
 
 **Problem:**
+
 ```typescript
 const canCreate = hasPermission(role, PERMISSIONS.PRODUCT_CREATE);
 const canEdit = hasPermission(role, PERMISSIONS.PRODUCT_EDIT);
 ```
+
 These checks control UI visibility but don't enforce security. A malicious user could bypass these checks.
 
 **Impact:**
@@ -1131,9 +1160,11 @@ Implement CSRF tokens for state-changing operations, or ensure all API routes ve
 **Location:** `app/layout.tsx:90-95`
 
 **Problem:**
+
 ```javascript
-var t=localStorage.getItem('theme');
+var t = localStorage.getItem("theme");
 ```
+
 Theme preference is stored in localStorage, which is accessible to any JavaScript on the page.
 
 **Impact:**
@@ -1160,6 +1191,7 @@ Ensure no sensitive data (tokens, keys) is ever stored in localStorage. Use http
 
 **Problem:**
 The file contains:
+
 - Form state management
 - Validation logic
 - Deployment flow (5 phases)
@@ -1175,6 +1207,7 @@ Difficult to maintain, test, and understand.
 
 **Recommendation:**
 Decompose into:
+
 1. `create-warehouse-form.tsx` — Main component (state + render)
 2. `create-warehouse-validation.ts` — Validation logic
 3. `create-warehouse-deployment.ts` — Deployment flow logic
@@ -1192,6 +1225,7 @@ Decompose into:
 
 **Problem:**
 The file handles:
+
 - Member list rendering
 - Role change logic
 - Invite flow (email + link)
@@ -1204,6 +1238,7 @@ Too many responsibilities in one component.
 
 **Recommendation:**
 Extract into:
+
 1. `members-page.tsx` — Main orchestrator
 2. `members-table.tsx` — Table rendering
 3. `invite-flow.tsx` — Email invite logic
@@ -1221,6 +1256,7 @@ Extract into:
 
 **Problem:**
 The file handles:
+
 - Product list rendering (desktop + mobile)
 - Search/filter logic
 - Bulk selection
@@ -1232,6 +1268,7 @@ Difficult to test and maintain.
 
 **Recommendation:**
 Extract into:
+
 1. `products-page.tsx` — Main orchestrator
 2. `products-table.tsx` — Desktop table
 3. `products-mobile-list.tsx` — Mobile card list
@@ -1250,6 +1287,7 @@ Extract into:
 **Location:** Multiple files
 
 **Problem:**
+
 - `movement_type` (database column)
 - `movementType` (TypeScript property)
 - `MovementType` (TypeScript type)
@@ -1279,6 +1317,7 @@ Standardize on `movementType` for variables/properties, `MovementType` for the t
 **Location:** `app/(dashboard)/dashboard/page.tsx:1-12`
 
 **Problem:**
+
 ```typescript
 import {
   ArrowRight,
@@ -1291,6 +1330,7 @@ import {
   Warehouse,
 } from "lucide-react";
 ```
+
 All icons are used, but if any are removed from the UI, the imports remain.
 
 **Impact:**
@@ -1312,6 +1352,7 @@ Run a linter with unused import detection (ESLint `no-unused-vars`).
 **Location:** `components/blockchain/blockchain-page.tsx:46-49`
 
 **Problem:**
+
 ```typescript
 import {
   DEPLOYMENT_STATUS_META,
@@ -1319,6 +1360,7 @@ import {
   type ProofRow,
 } from "@/lib/blockchain/types";
 ```
+
 `DeploymentSummary` and `ProofRow` are used, but verify all imports are necessary.
 
 **Impact:**
@@ -1339,18 +1381,21 @@ Run TypeScript with `--noUnusedLocals` to detect unused imports.
 #### [P2] ShortWallet Function Duplicated
 
 **Category:** Duplicate Code  
-**Location:** 
+**Location:**
+
 - `components/inventory/movements-table.tsx:29-32`
 - `components/inventory/movement-detail-sheet.tsx:33-36`
 - `components/console/developer-console.tsx:35-37`
 
 **Problem:**
+
 ```typescript
 function shortWallet(wallet: string | null): string {
   if (!wallet) return "Member";
   return `${wallet.slice(0, 6)}…${wallet.slice(-4)}`;
 }
 ```
+
 This function is defined in three different files.
 
 **Impact:**
@@ -1370,10 +1415,12 @@ Extract to `lib/utils.ts` as `shortWallet(wallet, fallback = "Member")`.
 
 **Category:** Duplicate Code  
 **Location:**
+
 - `components/inventory/product-dialogs.tsx:45-55`
 - `components/inventory/stock-movement-dialog.tsx:42-51`
 
 **Problem:**
+
 ```typescript
 function ErrorBanner({ message }: { message: string }) {
   return (
@@ -1384,6 +1431,7 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 ```
+
 Identical component in two files.
 
 **Impact:**
@@ -1403,34 +1451,34 @@ Extract to `components/shared/error-banner.tsx`.
 
 ### 14.1 Production Dependencies
 
-| Package | Version | Assessment |
-|---------|---------|------------|
-| `@base-ui/react` | ^1.7.0 | ✅ Good — accessible primitives |
-| `@hookform/resolvers` | ^5.7.1 | ✅ Good — Zod integration |
-| `@privy-io/node` | ^0.28.0 | ✅ Good — wallet auth |
-| `@privy-io/react-auth` | ^3.37.1 | ✅ Good — wallet auth |
-| `@supabase/ssr` | ^0.12.4 | ✅ Good — SSR client |
-| `@supabase/supabase-js` | ^2.112.3 | ✅ Good — DB client |
-| `@t3-oss/env-nextjs` | ^0.13.11 | ✅ Good — env validation |
-| `@upstash/qstash` | ^2.11.3 | ✅ Good — async jobs |
-| `@upstash/redis` | ^1.38.2 | ✅ Good — rate limiting |
-| `class-variance-authority` | ^0.7.1 | ✅ Good — variant styling |
-| `clsx` | ^2.1.1 | ✅ Good — className utility |
-| `fumadocs-core` | ^16.14.5 | ⚠️ Heavy for just docs |
-| `fumadocs-mdx` | ^15.3.0 | ⚠️ Heavy for just docs |
-| `fumadocs-ui` | ^16.14.5 | ⚠️ Heavy for just docs |
-| `lucide-react` | ^1.31.0 | ✅ Good — icons |
-| `motion` | ^13.1.0 | ✅ Good — animations |
-| `next` | 16.3.0 | ✅ Good — framework |
-| `pino` | ^10.3.1 | ✅ Good — logging |
-| `react` | 19.2.8 | ✅ Good — UI library |
-| `react-dom` | 19.2.8 | ✅ Good — DOM rendering |
-| `react-hook-form` | ^7.85.0 | ✅ Good — forms |
-| `recharts` | ^3.10.1 | ⚠️ Heavy for one chart |
-| `tailwind-merge` | ^3.6.0 | ✅ Good — class merging |
-| `tw-animate-css` | ^1.4.0 | ✅ Good — animations |
-| `viem` | ^2.55.13 | ✅ Good — Ethereum |
-| `zod` | ^4.4.3 | ✅ Good — validation |
+| Package                    | Version  | Assessment                      |
+| -------------------------- | -------- | ------------------------------- |
+| `@base-ui/react`           | ^1.7.0   | ✅ Good — accessible primitives |
+| `@hookform/resolvers`      | ^5.7.1   | ✅ Good — Zod integration       |
+| `@privy-io/node`           | ^0.28.0  | ✅ Good — wallet auth           |
+| `@privy-io/react-auth`     | ^3.37.1  | ✅ Good — wallet auth           |
+| `@supabase/ssr`            | ^0.12.4  | ✅ Good — SSR client            |
+| `@supabase/supabase-js`    | ^2.112.3 | ✅ Good — DB client             |
+| `@t3-oss/env-nextjs`       | ^0.13.11 | ✅ Good — env validation        |
+| `@upstash/qstash`          | ^2.11.3  | ✅ Good — async jobs            |
+| `@upstash/redis`           | ^1.38.2  | ✅ Good — rate limiting         |
+| `class-variance-authority` | ^0.7.1   | ✅ Good — variant styling       |
+| `clsx`                     | ^2.1.1   | ✅ Good — className utility     |
+| `fumadocs-core`            | ^16.14.5 | ⚠️ Heavy for just docs          |
+| `fumadocs-mdx`             | ^15.3.0  | ⚠️ Heavy for just docs          |
+| `fumadocs-ui`              | ^16.14.5 | ⚠️ Heavy for just docs          |
+| `lucide-react`             | ^1.31.0  | ✅ Good — icons                 |
+| `motion`                   | ^13.1.0  | ✅ Good — animations            |
+| `next`                     | 16.3.0   | ✅ Good — framework             |
+| `pino`                     | ^10.3.1  | ✅ Good — logging               |
+| `react`                    | 19.2.8   | ✅ Good — UI library            |
+| `react-dom`                | 19.2.8   | ✅ Good — DOM rendering         |
+| `react-hook-form`          | ^7.85.0  | ✅ Good — forms                 |
+| `recharts`                 | ^3.10.1  | ⚠️ Heavy for one chart          |
+| `tailwind-merge`           | ^3.6.0   | ✅ Good — class merging         |
+| `tw-animate-css`           | ^1.4.0   | ✅ Good — animations            |
+| `viem`                     | ^2.55.13 | ✅ Good — Ethereum              |
+| `zod`                      | ^4.4.3   | ✅ Good — validation            |
 
 ### 14.2 Recommendations
 
@@ -1759,10 +1807,12 @@ Add a skeleton loader that matches the expected content layout.
 ### 18.1 Typography
 
 **Current State:**
+
 - Plus Jakarta Sans (body) — 400, 500, 600, 700
 - Space Grotesk (display) — 400, 500, 600, 700
 
 **Recommendations:**
+
 1. **Standardize heading sizes:**
    - H1: `text-2xl font-semibold` (24px)
    - H2: `text-xl font-semibold` (20px)
@@ -1779,10 +1829,12 @@ Add a skeleton loader that matches the expected content layout.
 ### 18.2 Colors
 
 **Current State:**
+
 - Brand: Fun Green (#186049), Eden (#247158), Tradewind (#6AB29B), Dawn Pink (#E4D5C7)
 - Functional: Primary, Secondary, Destructive, Warning, Muted
 
 **Recommendations:**
+
 1. **Add semantic color tokens:**
    - `--color-info`: Blue for informational states
    - `--color-success`: Green for success states (could reuse primary)
@@ -1794,10 +1846,12 @@ Add a skeleton loader that matches the expected content layout.
 ### 18.3 Spacing
 
 **Current State:**
+
 - Uses Tailwind's default spacing scale (4px base unit)
 - Custom `--space-unit` token defined but not consistently used
 
 **Recommendations:**
+
 1. **Standardize spacing scale:**
    - xs: 4px
    - sm: 8px
@@ -1814,12 +1868,14 @@ Add a skeleton loader that matches the expected content layout.
 ### 18.4 Radius
 
 **Current State:**
+
 - `--radius-sm: 6px`
 - `--radius-md: 8px`
 - `--radius-lg: 12px`
 - `--radius-xl: 16px`
 
 **Recommendations:**
+
 1. **Standardize usage:**
    - Buttons: `rounded-lg` (8px)
    - Cards: `rounded-lg` (12px)
@@ -1830,11 +1886,13 @@ Add a skeleton loader that matches the expected content layout.
 ### 18.5 Shadows
 
 **Current State:**
+
 - `--shadow-card: 0 1px 2px rgb(28 59 48 / 0.05)`
 - `--shadow-elevated: 0 2px 8px rgb(28 59 48 / 0.08)`
 - `--shadow-modal: 0 12px 32px rgb(28 59 48 / 0.18)`
 
 **Recommendations:**
+
 1. **Add shadow scale:**
    - sm: `0 1px 2px` (subtle)
    - md: `0 2px 8px` (elevated)
@@ -1844,10 +1902,12 @@ Add a skeleton loader that matches the expected content layout.
 ### 18.6 Buttons
 
 **Current State:**
+
 - Variants: default, outline, secondary, ghost, destructive, link
 - Sizes: xs, sm, default, lg, icon-xs, icon-sm, icon, icon-lg
 
 **Recommendations:**
+
 1. **Standardize button usage:**
    - Primary action: `variant="default"`
    - Secondary action: `variant="outline"`
@@ -1905,15 +1965,17 @@ Add a skeleton loader that matches the expected content layout.
 ### 20.1 Z-Index Scale
 
 **Before:**
+
 ```css
 --z-dropdown: 60;
 --z-select: 61;
 --z-toast: 1000;
---z-modal: 50;  /* Wrong! Lower than dropdown */
+--z-modal: 50; /* Wrong! Lower than dropdown */
 --z-overlay: 40;
 ```
 
 **After:**
+
 ```css
 --z-dropdown: 1100;
 --z-select: 1101;
@@ -1929,13 +1991,17 @@ Add a skeleton loader that matches the expected content layout.
 ### 20.2 Focus States
 
 **Before:**
+
 ```html
-<button class="focus-visible:ring-3">
+<button class="focus-visible:ring-3"></button>
 ```
 
 **After:**
+
 ```html
-<button class="focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-offset-2">
+<button
+  class="focus-visible:ring-ring focus-visible:ring-3 focus-visible:ring-offset-2"
+></button>
 ```
 
 **Reason:** Explicit ring color ensures visibility against any background.
@@ -1945,13 +2011,13 @@ Add a skeleton loader that matches the expected content layout.
 ### 20.3 Loading States
 
 **Before:**
+
 ```html
-<button disabled={busy}>
-  {busy ? <Spinner /> : "Save"}
-</button>
+<button disabled="{busy}">{busy ? <Spinner /> : "Save"}</button>
 ```
 
 **After:**
+
 ```html
 <button disabled={busy} aria-busy={busy}>
   {busy ? <><Spinner /> Saving...</> : "Save"}
@@ -1965,11 +2031,13 @@ Add a skeleton loader that matches the expected content layout.
 ### 20.4 Mobile Sidebar
 
 **Before:**
+
 ```typescript
 // Sidebar stays open after navigation
 ```
 
 **After:**
+
 ```typescript
 // Sidebar closes on route change
 const pathname = usePathname();
@@ -1986,54 +2054,54 @@ React.useEffect(() => {
 
 ### Phase 1 — Critical Fixes (Week 1)
 
-| Task | Priority | Effort |
-|------|----------|--------|
-| Fix z-index scale | P1 | 1 hour |
-| Remove duplicate CSS custom properties | P1 | 30 min |
-| Add focus visible states to all interactive elements | P1 | 2 hours |
-| Fix notification bell realtime channel management | P1 | 3 hours |
-| Add password visibility toggle | P1 | 1 hour |
+| Task                                                 | Priority | Effort  |
+| ---------------------------------------------------- | -------- | ------- |
+| Fix z-index scale                                    | P1       | 1 hour  |
+| Remove duplicate CSS custom properties               | P1       | 30 min  |
+| Add focus visible states to all interactive elements | P1       | 2 hours |
+| Fix notification bell realtime channel management    | P1       | 3 hours |
+| Add password visibility toggle                       | P1       | 1 hour  |
 
 ### Phase 2 — UX Improvement (Week 2-3)
 
-| Task | Priority | Effort |
-|------|----------|--------|
-| Add tooltips to all icon-only buttons | P2 | 2 hours |
-| Standardize loading states across all buttons | P2 | 2 hours |
-| Fix mobile sidebar auto-close | P2 | 1 hour |
-| Add form validation feedback | P2 | 3 hours |
-| Fix product archive dialog copy | P2 | 30 min |
-| Add password visibility toggle to signup | P2 | 1 hour |
+| Task                                          | Priority | Effort  |
+| --------------------------------------------- | -------- | ------- |
+| Add tooltips to all icon-only buttons         | P2       | 2 hours |
+| Standardize loading states across all buttons | P2       | 2 hours |
+| Fix mobile sidebar auto-close                 | P2       | 1 hour  |
+| Add form validation feedback                  | P2       | 3 hours |
+| Fix product archive dialog copy               | P2       | 30 min  |
+| Add password visibility toggle to signup      | P2       | 1 hour  |
 
 ### Phase 3 — UI Redesign (Week 4-6)
 
-| Task | Priority | Effort |
-|------|----------|--------|
-| Move quick actions to top of dashboard | P2 | 1 hour |
-| Remove redundant warehouse card | P3 | 30 min |
-| Remove duplicate header account menu | P3 | 1 hour |
-| Standardize spacing across all pages | P3 | 4 hours |
-| Add skeleton loaders for all async content | P3 | 3 hours |
+| Task                                       | Priority | Effort  |
+| ------------------------------------------ | -------- | ------- |
+| Move quick actions to top of dashboard     | P2       | 1 hour  |
+| Remove redundant warehouse card            | P3       | 30 min  |
+| Remove duplicate header account menu       | P3       | 1 hour  |
+| Standardize spacing across all pages       | P3       | 4 hours |
+| Add skeleton loaders for all async content | P3       | 3 hours |
 
 ### Phase 4 — Architecture & Code Quality (Week 7-8)
 
-| Task | Priority | Effort |
-|------|----------|--------|
-| Decompose large files (>700 lines) | P2 | 8 hours |
-| Extract shared utilities (shortWallet, ErrorBanner) | P2 | 2 hours |
-| Centralize realtime management | P2 | 4 hours |
-| Standardize API error shapes | P2 | 2 hours |
-| Add request IDs for debugging | P2 | 2 hours |
+| Task                                                | Priority | Effort  |
+| --------------------------------------------------- | -------- | ------- |
+| Decompose large files (>700 lines)                  | P2       | 8 hours |
+| Extract shared utilities (shortWallet, ErrorBanner) | P2       | 2 hours |
+| Centralize realtime management                      | P2       | 4 hours |
+| Standardize API error shapes                        | P2       | 2 hours |
+| Add request IDs for debugging                       | P2       | 2 hours |
 
 ### Phase 5 — Performance & Polish (Week 9-10)
 
-| Task | Priority | Effort |
-|------|----------|--------|
-| Optimize bundle size (Recharts, Fumadocs) | P2 | 4 hours |
-| Add onboarding flow | P2 | 6 hours |
-| Implement dark mode toggle | P3 | 3 hours |
-| Add comprehensive error boundaries | P2 | 3 hours |
-| Performance monitoring setup | P3 | 2 hours |
+| Task                                      | Priority | Effort  |
+| ----------------------------------------- | -------- | ------- |
+| Optimize bundle size (Recharts, Fumadocs) | P2       | 4 hours |
+| Add onboarding flow                       | P2       | 6 hours |
+| Implement dark mode toggle                | P3       | 3 hours |
+| Add comprehensive error boundaries        | P2       | 3 hours |
+| Performance monitoring setup              | P3       | 2 hours |
 
 ---
 
@@ -2041,45 +2109,45 @@ React.useEffect(() => {
 
 These changes have high impact and low effort:
 
-| # | Change | Impact | Effort |
-|---|--------|--------|--------|
-| 1 | Fix z-index scale | High | 30 min |
-| 2 | Remove duplicate CSS custom properties | Medium | 30 min |
-| 3 | Add focus visible states | High | 2 hours |
-| 4 | Add tooltips to icon buttons | Medium | 2 hours |
-| 5 | Fix product archive dialog copy | Low | 30 min |
-| 6 | Extract `shortWallet` to shared utility | Medium | 1 hour |
-| 7 | Extract `ErrorBanner` to shared component | Medium | 1 hour |
-| 8 | Add password visibility toggle | Medium | 1 hour |
-| 9 | Fix mobile sidebar auto-close | Medium | 1 hour |
-| 10 | Remove redundant warehouse card | Low | 30 min |
+| #   | Change                                    | Impact | Effort  |
+| --- | ----------------------------------------- | ------ | ------- |
+| 1   | Fix z-index scale                         | High   | 30 min  |
+| 2   | Remove duplicate CSS custom properties    | Medium | 30 min  |
+| 3   | Add focus visible states                  | High   | 2 hours |
+| 4   | Add tooltips to icon buttons              | Medium | 2 hours |
+| 5   | Fix product archive dialog copy           | Low    | 30 min  |
+| 6   | Extract `shortWallet` to shared utility   | Medium | 1 hour  |
+| 7   | Extract `ErrorBanner` to shared component | Medium | 1 hour  |
+| 8   | Add password visibility toggle            | Medium | 1 hour  |
+| 9   | Fix mobile sidebar auto-close             | Medium | 1 hour  |
+| 10  | Remove redundant warehouse card           | Low    | 30 min  |
 
 ---
 
 ## 23. Top 20 Improvements
 
-| Rank | Improvement | Category | Impact | Effort | Priority |
-|------|-------------|----------|--------|--------|----------|
-| 1 | Fix z-index scale | Bug | High | Low | P1 |
-| 2 | Add focus visible states | Accessibility | High | Medium | P1 |
-| 3 | Decompose large files | Code Quality | High | High | P2 |
-| 4 | Centralize realtime management | Architecture | High | Medium | P2 |
-| 5 | Add tooltips to icon buttons | UX | Medium | Low | P2 |
-| 6 | Standardize loading states | UX | Medium | Low | P2 |
-| 7 | Fix mobile sidebar auto-close | UX | Medium | Low | P2 |
-| 8 | Extract shared utilities | Code Quality | Medium | Low | P2 |
-| 9 | Add password visibility toggle | UX | Medium | Low | P2 |
-| 10 | Optimize bundle size | Performance | High | Medium | P2 |
-| 11 | Add onboarding flow | UX | High | Medium | P2 |
-| 12 | Standardize API error shapes | Architecture | Medium | Low | P2 |
-| 13 | Add request IDs for debugging | Security | Medium | Low | P2 |
-| 14 | Implement dark mode | Feature | Medium | Medium | P3 |
-| 15 | Move quick actions to top | UX | Medium | Low | P3 |
-| 16 | Remove redundant UI elements | UX | Low | Low | P3 |
-| 17 | Add skeleton loaders | UX | Medium | Medium | P3 |
-| 18 | Add comprehensive error boundaries | Reliability | High | Medium | P2 |
-| 19 | Standardize spacing | Design System | Medium | Medium | P3 |
-| 20 | Add keyboard shortcuts documentation | UX | Low | Low | P3 |
+| Rank | Improvement                          | Category      | Impact | Effort | Priority |
+| ---- | ------------------------------------ | ------------- | ------ | ------ | -------- |
+| 1    | Fix z-index scale                    | Bug           | High   | Low    | P1       |
+| 2    | Add focus visible states             | Accessibility | High   | Medium | P1       |
+| 3    | Decompose large files                | Code Quality  | High   | High   | P2       |
+| 4    | Centralize realtime management       | Architecture  | High   | Medium | P2       |
+| 5    | Add tooltips to icon buttons         | UX            | Medium | Low    | P2       |
+| 6    | Standardize loading states           | UX            | Medium | Low    | P2       |
+| 7    | Fix mobile sidebar auto-close        | UX            | Medium | Low    | P2       |
+| 8    | Extract shared utilities             | Code Quality  | Medium | Low    | P2       |
+| 9    | Add password visibility toggle       | UX            | Medium | Low    | P2       |
+| 10   | Optimize bundle size                 | Performance   | High   | Medium | P2       |
+| 11   | Add onboarding flow                  | UX            | High   | Medium | P2       |
+| 12   | Standardize API error shapes         | Architecture  | Medium | Low    | P2       |
+| 13   | Add request IDs for debugging        | Security      | Medium | Low    | P2       |
+| 14   | Implement dark mode                  | Feature       | Medium | Medium | P3       |
+| 15   | Move quick actions to top            | UX            | Medium | Low    | P3       |
+| 16   | Remove redundant UI elements         | UX            | Low    | Low    | P3       |
+| 17   | Add skeleton loaders                 | UX            | Medium | Medium | P3       |
+| 18   | Add comprehensive error boundaries   | Reliability   | High   | Medium | P2       |
+| 19   | Standardize spacing                  | Design System | Medium | Medium | P3       |
+| 20   | Add keyboard shortcuts documentation | UX            | Low    | Low    | P3       |
 
 ---
 
@@ -2149,7 +2217,8 @@ After these fixes, the application is ready for production deployment.
 ---
 
 **Audit Completed:** 2026-08-31  
-**Total Issues Found:** 47  
+**Total Issues Found:** 47
+
 - P0: 0
 - P1: 5
 - P2: 25

@@ -48,12 +48,14 @@ export default async function InvitePage({
   // Sebelumnya, accept_invitation raise raw exception untuk email mismatch
   // — yang bocor ke user. Sekarang kita tampilkan friendly message dan
   // sarankan sign-in dengan email yang tepat.
-  const { data: preview, error: previewError } = await supabase
-    .rpc("get_invitation_by_token", { p_token: token });
+  const { data: preview, error: previewError } = await supabase.rpc(
+    "get_invitation_by_token",
+    { p_token: token }
+  );
 
-  const inv = (Array.isArray(preview) ? preview[0] : null) as
-    | InvitationPreview
-    | null;
+  const inv = (
+    Array.isArray(preview) ? preview[0] : null
+  ) as InvitationPreview | null;
 
   if (previewError || !inv) {
     logger.warn(
@@ -123,23 +125,17 @@ export default async function InvitePage({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CheckCircle2
-              aria-hidden="true"
-              className="text-primary size-5"
-            />
+            <CheckCircle2 aria-hidden="true" className="text-primary size-5" />
             You&apos;re in!
           </CardTitle>
           <CardDescription>
-            You have joined {inv.warehouse_name} as {roleLabel(inv.role)}. Open it from
-            your dashboard.
+            You have joined {inv.warehouse_name} as {roleLabel(inv.role)}. Open
+            it from your dashboard.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-2">
-            <Button
-              size="lg"
-              render={<Link href="/dashboard" />}
-            >
+            <Button size="lg" render={<Link href="/dashboard" />}>
               Go to dashboard
             </Button>
             {sp.next && next !== "/dashboard" ? (
@@ -158,13 +154,7 @@ export default async function InvitePage({
   );
 }
 
-function InviteError({
-  title,
-  detail,
-}: {
-  title: string;
-  detail: string;
-}) {
+function InviteError({ title, detail }: { title: string; detail: string }) {
   return (
     <div className="mx-auto flex w-full max-w-[560px] flex-col gap-6 py-10">
       <PageHeader title="Accept invitation" />

@@ -71,8 +71,7 @@ export function MovementDetailSheet({
     });
   } else {
     steps.push({
-      label:
-        movement.status === "committed" ? "Inventory updated" : "Rejected",
+      label: movement.status === "committed" ? "Inventory updated" : "Rejected",
       detail:
         movement.status === "rejected"
           ? movement.reason || "Rejected by approver."
@@ -153,7 +152,9 @@ export function MovementDetailSheet({
           ) : null}
 
           <div className="flex flex-col gap-1">
-            <h3 className="text-muted-foreground text-sm font-medium">Timeline</h3>
+            <h3 className="text-muted-foreground text-sm font-medium">
+              Timeline
+            </h3>
             <ol className="mt-1 flex flex-col">
               {steps.map((step, i) => (
                 <li key={step.label} className="flex gap-3">
@@ -204,13 +205,22 @@ export function MovementDetailSheet({
               </summary>
               <div className="flex flex-col gap-2 border-t px-3 py-3">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground text-sm">Proof status</span>
+                  <span className="text-muted-foreground text-sm">
+                    Proof status
+                  </span>
                   <StatusBadge
-                    tone={PROOF_STATUS_META[movement.proofStatus]?.tone ?? "pending"}
-                    label={PROOF_STATUS_META[movement.proofStatus]?.label ?? movement.proofStatus}
+                    tone={
+                      PROOF_STATUS_META[movement.proofStatus]?.tone ?? "pending"
+                    }
+                    label={
+                      PROOF_STATUS_META[movement.proofStatus]?.label ??
+                      movement.proofStatus
+                    }
                   />
                 </div>
-                <p className="text-muted-foreground truncate font-mono text-sm">{movement.proofTxHash}</p>
+                <p className="text-muted-foreground truncate font-mono text-sm">
+                  {movement.proofTxHash}
+                </p>
                 {/* NFE-11: pola render (bukan <button> dalam <a>) + hash encoded. */}
                 <Button
                   variant="outline"
@@ -231,9 +241,15 @@ export function MovementDetailSheet({
             </details>
           ) : movement.proofStatus ? (
             <details className="ring-foreground/10 rounded-lg ring-1">
-              <summary className="text-muted-foreground flex cursor-pointer items-center justify-between px-3 py-2.5 text-sm">Technical details <span className="text-sm">▼</span></summary>
-              <div className="flex flex-col gap-1 px-3 py-3 border-t">
-                <span className="text-muted-foreground text-sm">Proof status: {PROOF_STATUS_META[movement.proofStatus]?.label ?? movement.proofStatus}</span>
+              <summary className="text-muted-foreground flex cursor-pointer items-center justify-between px-3 py-2.5 text-sm">
+                Technical details <span className="text-sm">▼</span>
+              </summary>
+              <div className="flex flex-col gap-1 border-t px-3 py-3">
+                <span className="text-muted-foreground text-sm">
+                  Proof status:{" "}
+                  {PROOF_STATUS_META[movement.proofStatus]?.label ??
+                    movement.proofStatus}
+                </span>
               </div>
             </details>
           ) : null}

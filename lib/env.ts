@@ -19,7 +19,10 @@ import { z } from "zod";
 const emptyToUndefined = (v: unknown) =>
   typeof v === "string" && v.trim() === "" ? undefined : v;
 
-const optionalString = z.preprocess(emptyToUndefined, z.string().min(1).optional());
+const optionalString = z.preprocess(
+  emptyToUndefined,
+  z.string().min(1).optional()
+);
 const optionalUrl = z.preprocess(emptyToUndefined, z.string().url().optional());
 const optionalHexAddress = z.preprocess(
   emptyToUndefined,
@@ -72,10 +75,7 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_TOKEN: optionalString,
 
     // Developer Console allowlist (ARSITEKTUR §7.4)
-    DEVELOPER_ALLOWLIST: z.preprocess(
-      emptyToUndefined,
-      z.string().optional()
-    ),
+    DEVELOPER_ALLOWLIST: z.preprocess(emptyToUndefined, z.string().optional()),
 
     // Vercel Cron keep-alive secret (ARSITEKTUR §7.3).
     // Vercel sends `Authorization: Bearer <CRON_SECRET>` on cron requests;
@@ -93,10 +93,7 @@ export const env = createEnv({
     VERCEL_URL: optionalString,
 
     // CI bypass for builds without live secrets
-    SKIP_ENV_VALIDATION: z.preprocess(
-      emptyToUndefined,
-      z.string().optional()
-    ),
+    SKIP_ENV_VALIDATION: z.preprocess(emptyToUndefined, z.string().optional()),
 
     // Observability
     LOG_LEVEL: z
@@ -185,10 +182,7 @@ if (isVercelBuild && !process.env.SKIP_ENV_VALIDATION) {
   need("BASE_SEPOLIA_RPC_URL", !!env.BASE_SEPOLIA_RPC_URL);
   need("WAREHOUSE_FACTORY_ADDRESS", !!env.WAREHOUSE_FACTORY_ADDRESS);
   need("QSTASH_TOKEN", !!env.QSTASH_TOKEN);
-  need(
-    "QSTASH_CURRENT_SIGNING_KEY",
-    !!env.QSTASH_CURRENT_SIGNING_KEY
-  );
+  need("QSTASH_CURRENT_SIGNING_KEY", !!env.QSTASH_CURRENT_SIGNING_KEY);
   need("QSTASH_NEXT_SIGNING_KEY", !!env.QSTASH_NEXT_SIGNING_KEY);
   need("UPSTASH_REDIS_REST_URL", !!env.UPSTASH_REDIS_REST_URL);
   need("UPSTASH_REDIS_REST_TOKEN", !!env.UPSTASH_REDIS_REST_TOKEN);

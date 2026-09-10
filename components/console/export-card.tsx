@@ -34,8 +34,8 @@ export function ExportCard() {
       <CardHeader>
         <CardTitle>Export</CardTitle>
         <CardDescription>
-          Manual database export: proofs ledger or audit trail as CSV.
-          Sensitive fields are never included.
+          Manual database export: proofs ledger or audit trail as CSV. Sensitive
+          fields are never included.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">

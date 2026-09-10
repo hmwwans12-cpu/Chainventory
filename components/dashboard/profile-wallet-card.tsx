@@ -70,10 +70,8 @@ export function ProfileWalletCard({
 
           {/* Utility — balance + network, right aligned desktop */}
           <div className="flex items-center justify-between gap-4 sm:ms-auto sm:justify-end">
-            <div className="flex flex-col sm:items-end gap-0.5">
-              <Suspense
-                fallback={<Skeleton className="h-6 w-24" />}
-              >
+            <div className="flex flex-col gap-0.5 sm:items-end">
+              <Suspense fallback={<Skeleton className="h-6 w-24" />}>
                 <span className="flex items-baseline gap-1.5">
                   <WalletBalance
                     address={walletAddress}
@@ -103,7 +101,10 @@ export function ProfileWalletCard({
           {walletAddress || contractAddress ? (
             <div className="flex flex-col gap-1.5 border-t pt-3 sm:hidden">
               {walletAddress ? (
-                <DetailRow label="Wallet" value={shortenAddress(walletAddress)} />
+                <DetailRow
+                  label="Wallet"
+                  value={shortenAddress(walletAddress)}
+                />
               ) : null}
               {contractAddress ? (
                 <DetailRow

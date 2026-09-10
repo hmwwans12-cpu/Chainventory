@@ -163,9 +163,8 @@ export function CreateWarehouseForm() {
   // which can produce different values if the SSR snapshot is empty. The
   // initial render now always uses `null`; the effect populates from
   // sessionStorage after mount.
-  const [prepared, setPreparedState] = React.useState<PreparedDeployment | null>(
-    null
-  );
+  const [prepared, setPreparedState] =
+    React.useState<PreparedDeployment | null>(null);
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -178,26 +177,23 @@ export function CreateWarehouseForm() {
       // ignore parse errors
     }
   }, []);
-  const setPrepared = React.useCallback(
-    (next: PreparedDeployment | null) => {
-      try {
-        if (next) {
-          window.sessionStorage.setItem(
-            "chainventory:create-warehouse:prepared",
-            JSON.stringify(next)
-          );
-        } else {
-          window.sessionStorage.removeItem(
-            "chainventory:create-warehouse:prepared"
-          );
-        }
-      } catch {
-        /* sessionStorage unavailable */
+  const setPrepared = React.useCallback((next: PreparedDeployment | null) => {
+    try {
+      if (next) {
+        window.sessionStorage.setItem(
+          "chainventory:create-warehouse:prepared",
+          JSON.stringify(next)
+        );
+      } else {
+        window.sessionStorage.removeItem(
+          "chainventory:create-warehouse:prepared"
+        );
       }
-      setPreparedState(next);
-    },
-    []
-  );
+    } catch {
+      /* sessionStorage unavailable */
+    }
+    setPreparedState(next);
+  }, []);
   const [result, setResult] = React.useState<SubmitResult | null>(null);
   const [refreshed, setRefreshed] = React.useState(false);
   const completeTimerRef = React.useRef<number | null>(null);
@@ -827,12 +823,14 @@ export function CreateWarehouseForm() {
             </FormField>
 
             <div className="flex flex-col gap-2 border-t pt-4">
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full text-base"
-              disabled={busy || walletSync.syncing || !ready || !authenticated}
-            >
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full text-base"
+                disabled={
+                  busy || walletSync.syncing || !ready || !authenticated
+                }
+              >
                 {walletSync.syncing ? (
                   <Loader2 aria-hidden="true" className="animate-spin" />
                 ) : (

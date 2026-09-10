@@ -115,7 +115,9 @@ export function TransferOwnershipDialog({
       }
       error={error}
       cancelLabel={confirming ? "Back" : "Keep ownership"}
-      primaryLabel={busy ? "Transferring…" : confirming ? "Transfer ownership" : "Continue"}
+      primaryLabel={
+        busy ? "Transferring…" : confirming ? "Transfer ownership" : "Continue"
+      }
       primaryDisabled={!targetId || members.length === 0}
       primaryIcon={
         busy ? (
@@ -149,8 +151,8 @@ export function TransferOwnershipDialog({
               ?
             </p>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              You will become a Manager. Only the new owner can manage
-              ownership from now on. This action cannot be undone by you.
+              You will become a Manager. Only the new owner can manage ownership
+              from now on. This action cannot be undone by you.
             </p>
           </div>
         ) : (

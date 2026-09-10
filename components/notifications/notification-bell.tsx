@@ -32,10 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { unreadStore } from "@/lib/notifications/unread-store";
 import { openChannel } from "@/lib/realtime/channel";
 import { cn } from "@/lib/utils";
-import {
-  FLASH_MESSAGE_MS,
-  NOTIFICATION_PANEL_LIMIT,
-} from "@/lib/constants";
+import { FLASH_MESSAGE_MS, NOTIFICATION_PANEL_LIMIT } from "@/lib/constants";
 
 const PANEL_LIMIT = NOTIFICATION_PANEL_LIMIT;
 
@@ -75,8 +72,7 @@ export function NotificationBell() {
   const setNotifications = useCallback(
     (
       value:
-        | NotificationRow[]
-        | ((rows: NotificationRow[]) => NotificationRow[])
+        NotificationRow[] | ((rows: NotificationRow[]) => NotificationRow[])
     ) => {
       const next =
         typeof value === "function"
@@ -285,7 +281,7 @@ export function NotificationBell() {
           <Popover.Positioner align="end" sideOffset={8}>
             <Popover.Popup
               aria-labelledby="notif-heading"
-              className="border-border bg-popover text-popover-foreground shadow-(--shadow-elevated) w-[min(calc(100vw-1.5rem),24rem)] rounded-lg border outline-none"
+              className="border-border bg-popover text-popover-foreground w-[min(calc(100vw-1.5rem),24rem)] rounded-lg border shadow-(--shadow-elevated) outline-none"
             >
               <div className="border-b-border/60 flex items-center justify-between gap-2 border-b px-3 py-2.5">
                 <div className="flex items-center gap-2">
@@ -392,8 +388,12 @@ export function NotificationBell() {
                               ) : null}
                               <span className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-1.5 text-sm">
                                 <span>{formatTimeAgo(n.last_event_at)}</span>
-                                {manyWarehouses && n.warehouse_id && warehouseNames[n.warehouse_id] ? (
-                                  <Badge variant="outline" className="text-sm">{warehouseNames[n.warehouse_id]}</Badge>
+                                {manyWarehouses &&
+                                n.warehouse_id &&
+                                warehouseNames[n.warehouse_id] ? (
+                                  <Badge variant="outline" className="text-sm">
+                                    {warehouseNames[n.warehouse_id]}
+                                  </Badge>
                                 ) : null}
                                 {n.times > 1 ? (
                                   <span className="bg-muted text-muted-foreground rounded-sm px-1">

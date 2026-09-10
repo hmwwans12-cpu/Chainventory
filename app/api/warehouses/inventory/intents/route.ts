@@ -250,7 +250,9 @@ export async function POST(request: Request) {
   if (action === "finalize") {
     const { data: intent, error: intentError } = await supabase
       .from("stock_intents")
-      .select("id, actor_user_id, actor_wallet, payload_hash, warehouse_id, status, tx_hash")
+      .select(
+        "id, actor_user_id, actor_wallet, payload_hash, warehouse_id, status, tx_hash"
+      )
       .eq("id", body.intentId)
       .maybeSingle();
     if (intentError || !intent) {

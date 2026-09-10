@@ -55,7 +55,10 @@ export function useWarehouseRealtime(
 
     // P2-05: burst realtime event (movement→proof→movement…) di-debounce
     // — N event hanya memicu SATU router.refresh().
-    const refreshDebounced = debounce(() => router.refresh(), REALTIME_DEBOUNCE_MS);
+    const refreshDebounced = debounce(
+      () => router.refresh(),
+      REALTIME_DEBOUNCE_MS
+    );
 
     const onDataChange = () => {
       dispatch({ type: "data" });
@@ -159,10 +162,7 @@ export function useWarehouseRealtime(
     // Tab kembali fokus -> tarik data terbaru segera (lewati saat
     // offline: refresh tanpa jaringan hanya membuang request gagal).
     const onVisible = () => {
-      if (
-        document.visibilityState === "visible" &&
-        navigator.onLine !== false
-      )
+      if (document.visibilityState === "visible" && navigator.onLine !== false)
         router.refresh();
     };
     document.addEventListener("visibilitychange", onVisible);

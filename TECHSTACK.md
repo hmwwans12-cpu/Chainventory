@@ -8,36 +8,36 @@
 
 ## 1. Stack Table
 
-| Area                   | Pilihan                                                                     |
-| ---------------------- | --------------------------------------------------------------------------- |
-| App                    | Next.js App Router + React + TypeScript strict                              |
-| Styling/UI             | Tailwind CSS + shadcn/ui + Radix primitives                                 |
-| Design assets          | Lucide icons, Motion, custom Gooey Toast                                    |
-| Form/validasi          | React Hook Form + Zod                                                       |
-| Auth & session         | Supabase Auth: email + Google, JWT asymmetric/JWKS                          |
-| Wallet                 | Privy custom auth, embedded wallet + external wallet                        |
-| Database               | Supabase PostgreSQL                                                         |
-| Authorization          | PostgreSQL RLS (defense-in-depth) + server-side permission checks (primary) |
-| Realtime               | Supabase Realtime (filtered per warehouse)                                  |
-| Backend API            | Next.js Route Handlers sebagai BFF                                          |
-| Blockchain client      | viem; tanpa wagmi agar integrasi Privy lebih sederhana                      |
-| Network                | Base Sepolia (`84532`)                                                      |
-| Smart contract         | Solidity + Foundry + OpenZeppelin Contracts                                 |
-| Contract model         | Factory immutable + Warehouse immutable per warehouse                       |
-| Proof                  | JCS RFC 8785 + Keccak-256; outbox table + retry                             |
-| Async job delivery     | Upstash QStash (signed async delivery)                                      |
-| RPC                    | Primary RPC (Infura preferred candidate) + fallback melalui adapter tunggal |
+| Area                   | Pilihan                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| App                    | Next.js App Router + React + TypeScript strict                                                    |
+| Styling/UI             | Tailwind CSS + shadcn/ui + Radix primitives                                                       |
+| Design assets          | Lucide icons, Motion, custom Gooey Toast                                                          |
+| Form/validasi          | React Hook Form + Zod                                                                             |
+| Auth & session         | Supabase Auth: email + Google, JWT asymmetric/JWKS                                                |
+| Wallet                 | Privy custom auth, embedded wallet + external wallet                                              |
+| Database               | Supabase PostgreSQL                                                                               |
+| Authorization          | PostgreSQL RLS (defense-in-depth) + server-side permission checks (primary)                       |
+| Realtime               | Supabase Realtime (filtered per warehouse)                                                        |
+| Backend API            | Next.js Route Handlers sebagai BFF                                                                |
+| Blockchain client      | viem; tanpa wagmi agar integrasi Privy lebih sederhana                                            |
+| Network                | Base Sepolia (`84532`)                                                                            |
+| Smart contract         | Solidity + Foundry + OpenZeppelin Contracts                                                       |
+| Contract model         | Factory immutable + Warehouse immutable per warehouse                                             |
+| Proof                  | JCS RFC 8785 + Keccak-256; outbox table + retry                                                   |
+| Async job delivery     | Upstash QStash (signed async delivery)                                                            |
+| RPC                    | Primary RPC (Infura preferred candidate) + fallback melalui adapter tunggal                       |
 | CSV import/export      | Parser CSV RFC-4180 hand-rolled (`lib/inventory/csv.ts`, tanpa dep baru); generator CSV di server |
-| Charts                 | Recharts                                                                    |
-| Testing web            | Vitest + Testing Library + Playwright                                       |
-| Testing contract       | Forge tests + Base Sepolia smoke test                                       |
-| Lint/format            | ESLint + Prettier                                                           |
-| CI/CD                  | GitHub Actions + Vercel Hobby                                               |
-| Monitoring             | Pino structured logs + Vercel/Supabase status + Developer Console           |
-| Caching                | Next.js cache untuk read-only/public; data warehouse sensitif tetap dynamic |
-| Environment validation | `@t3-oss/env-nextjs` + Zod                                                  |
-| Rate limiting          | Upstash Redis + Redis command langsung (`INCR`/`EXPIRE` via Lua, tanpa dep `@upstash/ratelimit`) |
-| Package manager        | pnpm                                                                        |
+| Charts                 | Recharts                                                                                          |
+| Testing web            | Vitest + Testing Library + Playwright                                                             |
+| Testing contract       | Forge tests + Base Sepolia smoke test                                                             |
+| Lint/format            | ESLint + Prettier                                                                                 |
+| CI/CD                  | GitHub Actions + Vercel Hobby                                                                     |
+| Monitoring             | Pino structured logs + Vercel/Supabase status + Developer Console                                 |
+| Caching                | Next.js cache untuk read-only/public; data warehouse sensitif tetap dynamic                       |
+| Environment validation | `@t3-oss/env-nextjs` + Zod                                                                        |
+| Rate limiting          | Upstash Redis + Redis command langsung (`INCR`/`EXPIRE` via Lua, tanpa dep `@upstash/ratelimit`)  |
+| Package manager        | pnpm                                                                                              |
 
 ---
 

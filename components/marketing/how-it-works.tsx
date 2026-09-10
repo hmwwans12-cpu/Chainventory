@@ -56,7 +56,7 @@ export function HowItWorks() {
                 key={step.step}
                 className="relative flex flex-col items-start gap-3 md:items-center md:text-center"
               >
-                <span className="shadow-(--shadow-elevated) bg-card border-border text-primary relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-semibold tabular-nums">
+                <span className="bg-card border-border text-primary relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-semibold tabular-nums shadow-(--shadow-elevated)">
                   {step.step}
                 </span>
                 <h3 className="text-foreground text-base font-semibold">

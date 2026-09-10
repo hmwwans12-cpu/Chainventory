@@ -46,10 +46,7 @@ export async function getConsoleDataHealth(): Promise<{ ok: boolean }> {
     .from("proofs")
     .select("id", { count: "exact", head: true });
   if (error) {
-    logger.warn(
-      { err: error.message },
-      "console data health probe failed"
-    );
+    logger.warn({ err: error.message }, "console data health probe failed");
     return { ok: false };
   }
   return { ok: true };
@@ -248,10 +245,7 @@ export async function getAuditTrail(limit = 100): Promise<AuditEntry[]> {
     // Audit v0.3.4 §9.19: silent fallback = misleading; operator tidak
     // tahu kalau DB sedang down. Log + return [] konsisten dengan
     // getErrorSummary dan getManualReviewProofs.
-    logger.error(
-      { err: error.message },
-      "console audit_trail read failed"
-    );
+    logger.error({ err: error.message }, "console audit_trail read failed");
     return [];
   }
   if (!rows) return [];
@@ -290,8 +284,7 @@ export async function getTreasuryData(): Promise<TreasuryData> {
     // Fix BE-11 (PRD §16: integer eksak pakai BigInt): Number(bigint wei)
     // hilang presisi >2^53 (~0.009 ETH) → eligible/affordable salah total.
     const amountWei = parseEther(FAUCET_AMOUNT_ETH);
-    const affordable =
-      amountWei > 0n ? Number(balance / amountWei) : 0;
+    const affordable = amountWei > 0n ? Number(balance / amountWei) : 0;
 
     return {
       ok: true,

@@ -293,10 +293,13 @@ export default async function DashboardPage({
             {lowStockCount > 0 ? (
               <a
                 href={`/inventory/products?${whQuery}`}
-                className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-warning/15"
+                className="hover:bg-warning/15 flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-3 py-2.5 transition-colors"
               >
                 <span className="flex min-w-0 items-center gap-2">
-                  <AlertTriangle aria-hidden="true" className="text-warning size-4 shrink-0" />
+                  <AlertTriangle
+                    aria-hidden="true"
+                    className="text-warning size-4 shrink-0"
+                  />
                   <span className="text-sm font-medium">
                     {lowStockCount === 1
                       ? t("dashboard.below_minimum_one")
@@ -313,10 +316,13 @@ export default async function DashboardPage({
             {pendingCount > 0 ? (
               <a
                 href={`/members?${whQuery}`}
-                className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-warning/15"
+                className="hover:bg-warning/15 flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-3 py-2.5 transition-colors"
               >
                 <span className="flex min-w-0 items-center gap-2">
-                  <UserPlus aria-hidden="true" className="text-warning size-4 shrink-0" />
+                  <UserPlus
+                    aria-hidden="true"
+                    className="text-warning size-4 shrink-0"
+                  />
                   <span className="text-sm font-medium">
                     {pendingCount === 1
                       ? t("dashboard.join_requests_one")
@@ -386,48 +392,102 @@ export default async function DashboardPage({
                 <Check aria-hidden="true" className="size-3.5" />
                 <span className="sr-only">Done</span>
               </span>
-              <h2 className="text-foreground text-sm font-semibold">{t("dashboard.setup_title")}</h2>
-              <span className="text-muted-foreground ml-auto text-sm">{t("dashboard.setup_progress", { done: analytics?.totalProducts ? "2" : "1" })}</span>
+              <h2 className="text-foreground text-sm font-semibold">
+                {t("dashboard.setup_title")}
+              </h2>
+              <span className="text-muted-foreground ml-auto text-sm">
+                {t("dashboard.setup_progress", {
+                  done: analytics?.totalProducts ? "2" : "1",
+                })}
+              </span>
             </div>
             <div className="grid gap-1 sm:grid-cols-2">
-              <div className="flex items-center gap-2.5 rounded-md bg-primary/5 px-3 py-2.5">
+              <div className="bg-primary/5 flex items-center gap-2.5 rounded-md px-3 py-2.5">
                 <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full">
                   <Check aria-hidden="true" className="size-3" />
                   <span className="sr-only">Done</span>
                 </span>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">{t("dashboard.step_create")}</span>
-                  <span className="text-muted-foreground text-sm">{t("dashboard.step_ready", { name: active.name })}</span>
+                  <span className="text-sm font-medium">
+                    {t("dashboard.step_create")}
+                  </span>
+                  <span className="text-muted-foreground text-sm">
+                    {t("dashboard.step_ready", { name: active.name })}
+                  </span>
                 </div>
               </div>
-              <a href={`/inventory/products?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors">
-                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">2</span>
+              <a
+                href={`/inventory/products?warehouse=${active.id}`}
+                className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors"
+              >
+                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">
+                  2
+                </span>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">{(recentMovements.length === 0 && (analytics?.totalProducts ?? 0) === 0) ? t("dashboard.step_products_add") : t("dashboard.step_products_manage")}</span>
-                  <span className="text-muted-foreground text-sm">{(analytics?.totalProducts ?? 0) === 0 ? t("dashboard.step_products_empty") : t("dashboard.step_products_count", { n: String(analytics?.totalProducts ?? 0) })}</span>
+                  <span className="text-sm font-medium">
+                    {recentMovements.length === 0 &&
+                    (analytics?.totalProducts ?? 0) === 0
+                      ? t("dashboard.step_products_add")
+                      : t("dashboard.step_products_manage")}
+                  </span>
+                  <span className="text-muted-foreground text-sm">
+                    {(analytics?.totalProducts ?? 0) === 0
+                      ? t("dashboard.step_products_empty")
+                      : t("dashboard.step_products_count", {
+                          n: String(analytics?.totalProducts ?? 0),
+                        })}
+                  </span>
                 </div>
-                <span className="text-primary ml-auto text-sm font-medium">→</span>
+                <span className="text-primary ml-auto text-sm font-medium">
+                  →
+                </span>
               </a>
-              <a href={`/members?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors">
-                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">3</span>
+              <a
+                href={`/members?warehouse=${active.id}`}
+                className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors"
+              >
+                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">
+                  3
+                </span>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">{t("dashboard.step_invite")}</span>
-                  <span className="text-muted-foreground text-sm">{t("dashboard.step_invite_desc")}</span>
+                  <span className="text-sm font-medium">
+                    {t("dashboard.step_invite")}
+                  </span>
+                  <span className="text-muted-foreground text-sm">
+                    {t("dashboard.step_invite_desc")}
+                  </span>
                 </div>
-                <span className="text-primary ml-auto text-sm font-medium">→</span>
+                <span className="text-primary ml-auto text-sm font-medium">
+                  →
+                </span>
               </a>
-              <a href={`/inventory/movements?warehouse=${active.id}`} className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors">
-                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">4</span>
+              <a
+                href={`/inventory/movements?warehouse=${active.id}`}
+                className="hover:bg-muted/50 flex items-center gap-2.5 rounded-md px-3 py-2.5 transition-colors"
+              >
+                <span className="border-border flex size-5 items-center justify-center rounded-full border text-sm">
+                  4
+                </span>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">{t("dashboard.step_movement")}</span>
-                  <span className="text-muted-foreground text-sm">{t("dashboard.step_movement_desc")}</span>
+                  <span className="text-sm font-medium">
+                    {t("dashboard.step_movement")}
+                  </span>
+                  <span className="text-muted-foreground text-sm">
+                    {t("dashboard.step_movement_desc")}
+                  </span>
                 </div>
-                <span className="text-primary ml-auto text-sm font-medium">→</span>
+                <span className="text-primary ml-auto text-sm font-medium">
+                  →
+                </span>
               </a>
             </div>
-            {(analytics?.totalProducts ?? 0) === 0 && pendingCount === 0 && lowStockCount === 0 && (
-              <p className="text-muted-foreground text-sm">{t("dashboard.setup_hint")}</p>
-            )}
+            {(analytics?.totalProducts ?? 0) === 0 &&
+              pendingCount === 0 &&
+              lowStockCount === 0 && (
+                <p className="text-muted-foreground text-sm">
+                  {t("dashboard.setup_hint")}
+                </p>
+              )}
           </div>
         </PanelCard>
       )}
@@ -472,15 +532,23 @@ export default async function DashboardPage({
 
       {/* 5â€“6. Recent Transactions + Activity berdampingan (urutan Â§29 tetap) */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <RecentTransactions items={recentTransactions} warehouseId={active.id} />
+        <RecentTransactions
+          items={recentTransactions}
+          warehouseId={active.id}
+        />
         <RecentActivity items={recentActivity} />
       </div>
 
       {/* Warehouse health (F19) — operational health distinct from identity in ProfileWalletCard */}
       <PanelCard className="bg-card flex flex-wrap items-center gap-x-6 gap-y-3 p-4">
         <div className="flex items-center gap-2">
-          <Warehouse aria-hidden="true" className="text-muted-foreground size-4" />
-          <h2 className="text-foreground text-sm font-semibold">{t("dashboard.health_title")}</h2>
+          <Warehouse
+            aria-hidden="true"
+            className="text-muted-foreground size-4"
+          />
+          <h2 className="text-foreground text-sm font-semibold">
+            {t("dashboard.health_title")}
+          </h2>
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
           <HealthDot

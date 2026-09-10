@@ -14,7 +14,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDateTime, formatTimeAgo } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 /**
@@ -34,18 +38,26 @@ export type RecentActivityItem = {
 
 const TABS = ["All", "Inventory", "Members", "Blockchain"] as const;
 
-function matchesTab(item: RecentActivityItem, tab: typeof TABS[number]): boolean {
+function matchesTab(
+  item: RecentActivityItem,
+  tab: (typeof TABS)[number]
+): boolean {
   if (tab === "All") return true;
   const hay = `${item.title} ${item.body ?? ""}`.toLowerCase();
-  if (tab === "Inventory") return /stock|inventory|product|adjustment|reversal/.test(hay);
+  if (tab === "Inventory")
+    return /stock|inventory|product|adjustment|reversal/.test(hay);
   if (tab === "Members") return /member|join|request|role|owner/.test(hay);
-  if (tab === "Blockchain") return /proof|blockchain|verified|verification|basescan/.test(hay);
+  if (tab === "Blockchain")
+    return /proof|blockchain|verified|verification|basescan/.test(hay);
   return true;
 }
 
 export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
-  const [tab, setTab] = React.useState<typeof TABS[number]>("All");
-  const filtered = React.useMemo(() => items.filter((i) => matchesTab(i, tab)), [items, tab]);
+  const [tab, setTab] = React.useState<(typeof TABS)[number]>("All");
+  const filtered = React.useMemo(
+    () => items.filter((i) => matchesTab(i, tab)),
+    [items, tab]
+  );
   return (
     <Card>
       <CardHeader>
@@ -58,7 +70,11 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {items.length > 0 ? (
-              <div className="bg-muted flex items-center gap-0.5 rounded-lg p-1" role="tablist" aria-label="Activity filter">
+              <div
+                className="bg-muted flex items-center gap-0.5 rounded-lg p-1"
+                role="tablist"
+                aria-label="Activity filter"
+              >
                 {TABS.map((t) => (
                   <button
                     key={t}
@@ -66,8 +82,10 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
                     aria-selected={tab === t}
                     onClick={() => setTab(t)}
                     className={cn(
-                      "rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2",
-                      tab === t ? "bg-card shadow-(--shadow-card) text-foreground" : "text-muted-foreground hover:text-foreground"
+                      "rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                      tab === t
+                        ? "bg-card text-foreground shadow-(--shadow-card)"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {t}
@@ -102,7 +120,12 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
         ) : filtered.length === 0 ? (
           <p className="text-muted-foreground py-4 text-sm">
             No {tab} activity.{" "}
-            <button onClick={() => setTab("All")} className="text-primary underline-offset-4 hover:underline">Show All</button>
+            <button
+              onClick={() => setTab("All")}
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              Show All
+            </button>
           </p>
         ) : (
           <ul className="divide-border/60 -my-1 divide-y">
@@ -130,11 +153,20 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
                   ) : null}
                 </div>
                 <Tooltip>
-                  <TooltipTrigger render={<time dateTime={item.lastEventAt} className="text-muted-foreground ms-auto shrink-0 pt-0.5 text-sm tabular-nums cursor-help" />}>
+                  <TooltipTrigger
+                    render={
+                      <time
+                        dateTime={item.lastEventAt}
+                        className="text-muted-foreground ms-auto shrink-0 cursor-help pt-0.5 text-sm tabular-nums"
+                      />
+                    }
+                  >
                     {formatTimeAgo(item.lastEventAt)}
                     {item.times > 1 ? ` · ${item.times}×` : ""}
                   </TooltipTrigger>
-                  <TooltipContent>{formatDateTime(item.lastEventAt)}</TooltipContent>
+                  <TooltipContent>
+                    {formatDateTime(item.lastEventAt)}
+                  </TooltipContent>
                 </Tooltip>
               </li>
             ))}

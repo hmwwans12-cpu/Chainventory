@@ -36,40 +36,40 @@ export const getMyWarehouses = cache(
     supabase: SupabaseClient,
     userId: string
   ): Promise<WarehouseSummary[]> => {
-  const { data: memberships, error } = await supabase
-    .from("memberships")
-    .select("warehouse_id, role, status, joined_at")
-    .eq("user_id", userId)
-    .eq("status", "ACTIVE")
-    .order("joined_at", { ascending: true });
+    const { data: memberships, error } = await supabase
+      .from("memberships")
+      .select("warehouse_id, role, status, joined_at")
+      .eq("user_id", userId)
+      .eq("status", "ACTIVE")
+      .order("joined_at", { ascending: true });
 
-  if (error || !memberships || memberships.length === 0) return [];
+    if (error || !memberships || memberships.length === 0) return [];
 
-  const ids = memberships.map((m) => m.warehouse_id);
-  const { data: warehouses } = await supabase
-    .from("warehouse_summaries")
-    .select(
-      "id, name, warehouse_code, contract_address, status, last_activity_at"
-    )
-    .in("id", ids);
+    const ids = memberships.map((m) => m.warehouse_id);
+    const { data: warehouses } = await supabase
+      .from("warehouse_summaries")
+      .select(
+        "id, name, warehouse_code, contract_address, status, last_activity_at"
+      )
+      .in("id", ids);
 
-  const byId = new Map((warehouses ?? []).map((w) => [w.id, w]));
-  const list: WarehouseSummary[] = [];
-  for (const m of memberships) {
-    const warehouse = byId.get(m.warehouse_id);
-    if (!warehouse) continue;
-    list.push({
-      id: m.warehouse_id,
-      name: warehouse.name,
-      code: warehouse.warehouse_code,
-      contractAddress: warehouse.contract_address,
-      role: m.role as Role,
-      joinedAt: m.joined_at,
-      status: warehouse.status as WarehouseSummary["status"],
-      lastActivityAt: warehouse.last_activity_at,
-    });
-  }
-  return list;
+    const byId = new Map((warehouses ?? []).map((w) => [w.id, w]));
+    const list: WarehouseSummary[] = [];
+    for (const m of memberships) {
+      const warehouse = byId.get(m.warehouse_id);
+      if (!warehouse) continue;
+      list.push({
+        id: m.warehouse_id,
+        name: warehouse.name,
+        code: warehouse.warehouse_code,
+        contractAddress: warehouse.contract_address,
+        role: m.role as Role,
+        joinedAt: m.joined_at,
+        status: warehouse.status as WarehouseSummary["status"],
+        lastActivityAt: warehouse.last_activity_at,
+      });
+    }
+    return list;
   }
 );
 

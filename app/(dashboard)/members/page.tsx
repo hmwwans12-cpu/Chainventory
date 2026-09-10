@@ -97,9 +97,7 @@ export default async function MembersPageRoute({
   // hilang diam-diam berarti request tak pernah di-approve.
   const { data: pendingRows, error: pendingError } = await supabase
     .from("join_requests")
-    .select(
-      "id, user_id, created_at, users(id, email, display_name)"
-    )
+    .select("id, user_id, created_at, users(id, email, display_name)")
     .eq("warehouse_id", active.id)
     .eq("status", "pending")
     .order("created_at", { ascending: true });

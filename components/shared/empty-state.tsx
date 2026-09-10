@@ -65,7 +65,9 @@ export function EmptyState({
       <Title className="text-foreground mt-2 text-base font-semibold">
         {title}
       </Title>
-      <p className="text-muted-foreground max-w-sm text-sm text-pretty">{description}</p>
+      <p className="text-muted-foreground max-w-sm text-sm text-pretty">
+        {description}
+      </p>
       {(primaryAction || secondaryAction) && (
         <div className="mt-4 flex items-center gap-2">
           {primaryAction ? (

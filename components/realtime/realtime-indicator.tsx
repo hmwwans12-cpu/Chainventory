@@ -48,8 +48,10 @@ export function RealtimeIndicator({
       className={cn(
         "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium transition-colors",
         effective === "live" && "bg-primary/10 text-primary",
-        effective === "reconnecting" && "bg-warning/15 text-warning-foreground border border-warning/20",
-        effective === "offline" && "bg-destructive/10 text-destructive border border-destructive/20",
+        effective === "reconnecting" &&
+          "bg-warning/15 text-warning-foreground border-warning/20 border",
+        effective === "offline" &&
+          "bg-destructive/10 text-destructive border-destructive/20 border",
         effective === "outdated" && "bg-destructive/15 text-destructive"
       )}
     >

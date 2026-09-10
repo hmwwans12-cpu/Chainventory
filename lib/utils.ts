@@ -78,11 +78,7 @@ export function formatEthDecimal(value: string | number): string {
  * Alamat/hash pendek "0x12ab…cdef" — satu sumber (FE-23: sebelumnya 3
  * implementasi slice(0,6) dengan karakter ellipsis berbeda).
  */
-export function shortenAddress(
-  address: string,
-  head = 6,
-  tail = 4
-): string {
+export function shortenAddress(address: string, head = 6, tail = 4): string {
   if (address.length <= head + tail + 1) return address;
   return `${address.slice(0, head)}…${address.slice(-tail)}`;
 }

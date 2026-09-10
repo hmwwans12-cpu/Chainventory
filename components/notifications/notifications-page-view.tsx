@@ -99,10 +99,7 @@ export function NotificationsPageView({
         setFlashId(added.id);
         setAnnouncement("New notification");
         if (popTimer.current) clearTimeout(popTimer.current);
-        popTimer.current = setTimeout(
-          () => setFlashId(null),
-          FLASH_MESSAGE_MS
-        );
+        popTimer.current = setTimeout(() => setFlashId(null), FLASH_MESSAGE_MS);
       }
     };
     const refreshFromRealtime = debounce(() => {
@@ -297,19 +294,33 @@ export function NotificationsPageView({
                           {n.body}
                         </span>
                       ) : null}
-                      {n.type === "join_request" || n.type === "adjustment_pending" || n.type === "proof_failed" ? (
-                        <span className="text-primary text-sm font-medium">Review →</span>
+                      {n.type === "join_request" ||
+                      n.type === "adjustment_pending" ||
+                      n.type === "proof_failed" ? (
+                        <span className="text-primary text-sm font-medium">
+                          Review →
+                        </span>
                       ) : null}
                       <span className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2 text-sm">
-                        <time dateTime={n.last_event_at} className="tabular-nums">
+                        <time
+                          dateTime={n.last_event_at}
+                          className="tabular-nums"
+                        >
                           {formatTimeAgo(n.last_event_at)}
                         </time>
-                        {manyWarehouses && n.warehouse_id && warehouseNames[n.warehouse_id] ? (
-                          <Badge variant="outline" className="text-sm">{warehouseNames[n.warehouse_id]}</Badge>
+                        {manyWarehouses &&
+                        n.warehouse_id &&
+                        warehouseNames[n.warehouse_id] ? (
+                          <Badge variant="outline" className="text-sm">
+                            {warehouseNames[n.warehouse_id]}
+                          </Badge>
                         ) : null}
                         {n.times > 1 ? (
                           <span className="inline-flex items-center gap-1.5">
-                            <Badge variant="secondary" className="gap-1 tabular-nums">
+                            <Badge
+                              variant="secondary"
+                              className="gap-1 tabular-nums"
+                            >
                               ×{n.times}
                             </Badge>
                             <span>updates in last 10 minutes</span>

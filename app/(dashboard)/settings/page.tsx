@@ -148,7 +148,9 @@ export default async function SettingsPage({
               <>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-muted-foreground text-sm">{t("settings.wallet_address")}</p>
+                    <p className="text-muted-foreground text-sm">
+                      {t("settings.wallet_address")}
+                    </p>
                     <CopyButton
                       text={walletAddress}
                       label={t("settings.copy_wallet")}
@@ -214,12 +216,18 @@ export default async function SettingsPage({
                 </p>
                 <p className="text-muted-foreground text-sm">{active.code}</p>
               </div>
-              <Badge variant={active.status === "active" ? "default" : "destructive"}>{active.status === "active" ? "Active" : "Suspended"}</Badge>
+              <Badge
+                variant={active.status === "active" ? "default" : "destructive"}
+              >
+                {active.status === "active" ? "Active" : "Suspended"}
+              </Badge>
             </div>
             {active.contractAddress ? (
               <div className="flex flex-col gap-2 border-t pt-4">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-muted-foreground text-sm">{t("settings.contract_address")}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {t("settings.contract_address")}
+                  </p>
                   <CopyButton
                     text={active.contractAddress}
                     label={t("settings.copy_contract")}

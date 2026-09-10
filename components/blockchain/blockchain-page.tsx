@@ -246,7 +246,7 @@ export function BlockchainPage({
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          <span className="bg-muted text-muted-foreground inline-flex h-6 items-center gap-1.5 rounded-full border border-border px-2.5 py-0.5 font-mono text-sm whitespace-nowrap">
+          <span className="bg-muted text-muted-foreground border-border inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-sm whitespace-nowrap">
             Base Sepolia · {BASE_SEPOLIA_CHAIN_ID}
           </span>
         </div>
@@ -257,8 +257,8 @@ export function BlockchainPage({
           role="alert"
           className="border-warning/30 bg-warning/10 text-warning-foreground rounded-lg border px-4 py-3 text-sm"
         >
-          Could not load deployment status. Contract info below may be
-          outdated. Refresh to retry.
+          Could not load deployment status. Contract info below may be outdated.
+          Refresh to retry.
         </p>
       ) : null}
 
@@ -485,7 +485,8 @@ export function BlockchainPage({
                           <StatusBadge tone={meta.tone} label={meta.label} />
                         ) : (
                           <span className="text-muted-foreground text-sm">
-                            {proof.status.charAt(0).toUpperCase() + proof.status.slice(1)}
+                            {proof.status.charAt(0).toUpperCase() +
+                              proof.status.slice(1)}
                           </span>
                         )}
                       </TableCell>
@@ -550,7 +551,8 @@ export function BlockchainPage({
                       <StatusBadge tone={meta.tone} label={meta.label} />
                     ) : (
                       <span className="text-muted-foreground text-sm">
-                        {proof.status.charAt(0).toUpperCase() + proof.status.slice(1)}
+                        {proof.status.charAt(0).toUpperCase() +
+                          proof.status.slice(1)}
                       </span>
                     )}
                   </div>

@@ -225,7 +225,7 @@ export function CommandMenu({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Backdrop className="fixed inset-0 z-[var(--z-overlay)] bg-overlay transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs" />
+        <DialogPrimitive.Backdrop className="bg-overlay fixed inset-0 z-[var(--z-overlay)] transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs" />
         <DialogPrimitive.Popup
           className="bg-popover text-popover-foreground border-border fixed top-[15%] left-1/2 z-[var(--z-modal)] max-h-[min(80vh,32rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-lg border bg-clip-padding shadow-(--shadow-modal) transition duration-150 ease-out outline-none data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0"
           aria-label="Command palette"

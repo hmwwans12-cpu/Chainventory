@@ -96,7 +96,9 @@ export function ProductForm({
   return (
     <form className="flex flex-col gap-6" onSubmit={submit} noValidate>
       <section aria-label="Product details" className="flex flex-col gap-4">
-        <h3 className="text-foreground text-sm font-semibold">Product details</h3>
+        <h3 className="text-foreground text-sm font-semibold">
+          Product details
+        </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="product-name">Product Name</Label>
@@ -131,7 +133,10 @@ export function ProductForm({
               {...register("category")}
               placeholder="e.g. Raw Material"
             />
-            <FieldError message={errors.category?.message} id="err-product-category" />
+            <FieldError
+              message={errors.category?.message}
+              id="err-product-category"
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="product-unit">Unit</Label>
@@ -150,7 +155,10 @@ export function ProductForm({
                 records consistent.
               </p>
             ) : (
-              <FieldError id="err-product-unit" message={errors.unit?.message} />
+              <FieldError
+                id="err-product-unit"
+                message={errors.unit?.message}
+              />
             )}
           </div>
         </div>
@@ -171,7 +179,9 @@ export function ProductForm({
       </section>
 
       <section aria-label="Stock settings" className="flex flex-col gap-4">
-        <h3 className="text-foreground text-sm font-semibold">Stock settings</h3>
+        <h3 className="text-foreground text-sm font-semibold">
+          Stock settings
+        </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="product-threshold">Low Stock Threshold</Label>
@@ -210,10 +220,7 @@ export function ProductForm({
                 />
               ) : (
                 <p className="text-muted-foreground flex items-start gap-1.5 text-sm leading-relaxed">
-                  <Info
-                    aria-hidden="true"
-                    className="mt-0.5 size-4 shrink-0"
-                  />
+                  <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
                   Applied atomically with product creation. If either fails,
                   nothing is saved.
                 </p>
@@ -223,7 +230,7 @@ export function ProductForm({
         </div>
       </section>
 
-      <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
+      <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
         {onCancel ? (
           <Button
             type="button"

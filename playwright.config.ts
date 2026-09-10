@@ -35,8 +35,7 @@ const webServer = local
       // build / env changes (the test silently runs against a stale
       // build on port 3100). Set E2E_REUSE_SERVER=1 to opt back in for
       // fast iteration. CI always starts fresh.
-      reuseExistingServer:
-        !!process.env.E2E_REUSE_SERVER && !process.env.CI,
+      reuseExistingServer: !!process.env.E2E_REUSE_SERVER && !process.env.CI,
       timeout: 240_000,
     }
   : undefined;

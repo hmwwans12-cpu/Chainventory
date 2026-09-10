@@ -16,7 +16,12 @@ export type StatusTone =
 
 const STATUS_META: Record<
   StatusTone,
-  { label: string; icon: LucideIcon; variant: "success" | "secondary" | "warning" | "destructive" | "outline"; className: string }
+  {
+    label: string;
+    icon: LucideIcon;
+    variant: "success" | "secondary" | "warning" | "destructive" | "outline";
+    className: string;
+  }
 > = {
   success: {
     label: "Success",

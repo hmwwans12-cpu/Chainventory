@@ -12,6 +12,10 @@ export async function GET() {
     const treasury = await getTreasuryData();
     return ok(treasury);
   } catch (err) {
-    return safeError(err, { route: "console/treasury" }, "treasury read failed");
+    return safeError(
+      err,
+      { route: "console/treasury" },
+      "treasury read failed"
+    );
   }
 }

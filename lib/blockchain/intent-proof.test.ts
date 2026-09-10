@@ -65,7 +65,12 @@ describe("verifyIntentProofTx", () => {
   it("menolak receipt reverted", () => {
     const verdict = verifyIntentProofTx(
       { ...VALID_TX(), status: "reverted" },
-      { contractAddress: CONTRACT, actorWallet: ACTOR, intentId: INTENT_ID, payloadHash: PAYLOAD_HASH }
+      {
+        contractAddress: CONTRACT,
+        actorWallet: ACTOR,
+        intentId: INTENT_ID,
+        payloadHash: PAYLOAD_HASH,
+      }
     );
     expect(verdict).toMatchObject({ ok: false });
   });
@@ -86,7 +91,12 @@ describe("verifyIntentProofTx", () => {
   it("menolak tx tanpa penerima kontrak", () => {
     const verdict = verifyIntentProofTx(
       { ...VALID_TX(), to: null },
-      { contractAddress: CONTRACT, actorWallet: ACTOR, intentId: INTENT_ID, payloadHash: PAYLOAD_HASH }
+      {
+        contractAddress: CONTRACT,
+        actorWallet: ACTOR,
+        intentId: INTENT_ID,
+        payloadHash: PAYLOAD_HASH,
+      }
     );
     expect(verdict).toMatchObject({
       ok: false,
@@ -97,7 +107,12 @@ describe("verifyIntentProofTx", () => {
   it("menolak calldata yang bukan recordProof (transfer ETH biasa)", () => {
     const verdict = verifyIntentProofTx(
       { ...VALID_TX(), input: "0x" as Hex },
-      { contractAddress: CONTRACT, actorWallet: ACTOR, intentId: INTENT_ID, payloadHash: PAYLOAD_HASH }
+      {
+        contractAddress: CONTRACT,
+        actorWallet: ACTOR,
+        intentId: INTENT_ID,
+        payloadHash: PAYLOAD_HASH,
+      }
     );
     expect(verdict).toMatchObject({
       ok: false,
@@ -109,7 +124,12 @@ describe("verifyIntentProofTx", () => {
     const otherProofId = keccak256(toBytes("another-intent"));
     const verdict = verifyIntentProofTx(
       { ...VALID_TX(), input: recordProofCalldata(otherProofId, ACTOR) },
-      { contractAddress: CONTRACT, actorWallet: ACTOR, intentId: INTENT_ID, payloadHash: PAYLOAD_HASH }
+      {
+        contractAddress: CONTRACT,
+        actorWallet: ACTOR,
+        intentId: INTENT_ID,
+        payloadHash: PAYLOAD_HASH,
+      }
     );
     expect(verdict).toMatchObject({ ok: false, reason: "proof id mismatch" });
   });
@@ -117,7 +137,12 @@ describe("verifyIntentProofTx", () => {
   it("menolak actor wallet berbeda (replay proof orang lain)", () => {
     const verdict = verifyIntentProofTx(
       { ...VALID_TX(), input: recordProofCalldata(PROOF_ID, OTHER_WALLET) },
-      { contractAddress: CONTRACT, actorWallet: ACTOR, intentId: INTENT_ID, payloadHash: PAYLOAD_HASH }
+      {
+        contractAddress: CONTRACT,
+        actorWallet: ACTOR,
+        intentId: INTENT_ID,
+        payloadHash: PAYLOAD_HASH,
+      }
     );
     expect(verdict).toMatchObject({
       ok: false,
@@ -128,7 +153,12 @@ describe("verifyIntentProofTx", () => {
   it("status undefined diperlakukan belum sukses", () => {
     const verdict = verifyIntentProofTx(
       { ...VALID_TX(), status: undefined },
-      { contractAddress: CONTRACT, actorWallet: ACTOR, intentId: INTENT_ID, payloadHash: PAYLOAD_HASH }
+      {
+        contractAddress: CONTRACT,
+        actorWallet: ACTOR,
+        intentId: INTENT_ID,
+        payloadHash: PAYLOAD_HASH,
+      }
     );
     expect(verdict).toMatchObject({ ok: false });
   });
@@ -138,7 +168,12 @@ describe("verifyIntentProofTx", () => {
       "0x2222222222222222222222222222222222222222222222222222222222222222";
     const verdict = verifyIntentProofTx(
       { ...VALID_TX(), input: recordProofCalldata(PROOF_ID, ACTOR, otherHash) },
-      { contractAddress: CONTRACT, actorWallet: ACTOR, intentId: INTENT_ID, payloadHash: PAYLOAD_HASH }
+      {
+        contractAddress: CONTRACT,
+        actorWallet: ACTOR,
+        intentId: INTENT_ID,
+        payloadHash: PAYLOAD_HASH,
+      }
     );
     expect(verdict).toMatchObject({
       ok: false,

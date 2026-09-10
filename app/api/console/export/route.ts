@@ -4,11 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getConsoleActor } from "@/lib/console/guard";
 import { createProofServiceClient } from "@/lib/proof/supabase";
 import { csvFilename, toCsv } from "@/lib/console/csv";
-import {
-  fromPostgrestError,
-  invalid,
-  safeError,
-} from "@/lib/api-handler";
+import { fromPostgrestError, invalid, safeError } from "@/lib/api-handler";
 
 /**
  * Export DB → CSV (Developer Console).

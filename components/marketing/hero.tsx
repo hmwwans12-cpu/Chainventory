@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/components/providers/locale-provider";
 
-
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 const container = {
@@ -46,7 +45,8 @@ const CHART = [35, 48, 30, 58, 45, 70, 62];
 // NFE-12: normalisasi ke viewBox (0..40) — nilai mentah >40 terpotong dan
 // menipu (70 vs 58 tampil sama tinggi).
 const CHART_MAX = Math.max(...CHART);
-const chartHeight = (v: number) => Math.max(4, Math.round((v / CHART_MAX) * 34));
+const chartHeight = (v: number) =>
+  Math.max(4, Math.round((v / CHART_MAX) * 34));
 
 /**
  * Hero (DESIGN §23).
@@ -161,74 +161,79 @@ export function Hero() {
           className="relative mx-auto w-full max-w-md lg:max-w-none"
           aria-label="Chainventory dashboard preview"
         >
-          <div className="bg-card shadow-(--shadow-elevated) ring-foreground/10 rounded-lg p-6 ring-1">
-                <div className="border-border flex items-center justify-between border-b pb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
-                      <Package aria-hidden="true" className="size-4" />
-                    </span>
-                    <div className="flex flex-col">
-                      <span className="text-foreground text-sm font-semibold">
-                        {t("landing.hero.preview_name")}
-                      </span>
-                      <span className="text-muted-foreground text-sm">
-                        CHV-7K29XP4 · Base Sepolia
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-primary bg-primary/10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium">
-                    <span className="bg-primary size-1.5 animate-pulse rounded-full" />
-                    {t("landing.hero.live")}
+          <div className="bg-card ring-foreground/10 rounded-lg p-6 shadow-(--shadow-elevated) ring-1">
+            <div className="border-border flex items-center justify-between border-b pb-4">
+              <div className="flex items-center gap-3">
+                <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
+                  <Package aria-hidden="true" className="size-4" />
+                </span>
+                <div className="flex flex-col">
+                  <span className="text-foreground text-sm font-semibold">
+                    {t("landing.hero.preview_name")}
                   </span>
-                </div>
-
-                <div className="pt-6">
-                  <span className="text-muted-foreground text-sm">Total Stock</span>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-foreground text-3xl font-semibold tabular-nums">1,284</span>
-                    <span className="text-muted-foreground text-sm">Units</span>
-                    <span className="bg-primary/10 text-primary ml-auto inline-flex items-center gap-1 rounded-full px-2 py-1 text-sm font-medium">
-                      <BadgeCheck aria-hidden="true" className="size-3.5" /> Verified
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-6">
                   <span className="text-muted-foreground text-sm">
-                    {t("landing.hero.chart_label")}
+                    CHV-7K29XP4 · Base Sepolia
                   </span>
-                  <svg
-                    viewBox="0 0 100 40"
-                    className="mt-2 h-16 w-full"
-                    role="img"
-                    aria-label={t("landing.hero.chart_label")}
-                  >
-                    <title>{t("landing.hero.chart_label")}</title>
-                    {CHART.map((v, i) => {
-                      const height = chartHeight(v);
-                      return (
-                        <rect
-                          key={i}
-                          x={i * 13 + 3}
-                          y={40 - height}
-                          width={8}
-                          height={height}
-                          rx={2}
-                          fill={i === 5 ? "var(--primary)" : "var(--secondary)"}
-                          opacity={i === 5 ? 1 : 0.45}
-                        />
-                      );
-                    })}
-                  </svg>
                 </div>
               </div>
+              <span className="text-primary bg-primary/10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium">
+                <span className="bg-primary size-1.5 animate-pulse rounded-full" />
+                {t("landing.hero.live")}
+              </span>
+            </div>
+
+            <div className="pt-6">
+              <span className="text-muted-foreground text-sm">Total Stock</span>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-foreground text-3xl font-semibold tabular-nums">
+                  1,284
+                </span>
+                <span className="text-muted-foreground text-sm">Units</span>
+                <span className="bg-primary/10 text-primary ml-auto inline-flex items-center gap-1 rounded-full px-2 py-1 text-sm font-medium">
+                  <BadgeCheck aria-hidden="true" className="size-3.5" />{" "}
+                  Verified
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <span className="text-muted-foreground text-sm">
+                {t("landing.hero.chart_label")}
+              </span>
+              <svg
+                viewBox="0 0 100 40"
+                className="mt-2 h-16 w-full"
+                role="img"
+                aria-label={t("landing.hero.chart_label")}
+              >
+                <title>{t("landing.hero.chart_label")}</title>
+                {CHART.map((v, i) => {
+                  const height = chartHeight(v);
+                  return (
+                    <rect
+                      key={i}
+                      x={i * 13 + 3}
+                      y={40 - height}
+                      width={8}
+                      height={height}
+                      rx={2}
+                      fill={i === 5 ? "var(--primary)" : "var(--secondary)"}
+                      opacity={i === 5 ? 1 : 0.45}
+                    />
+                  );
+                })}
+              </svg>
+            </div>
+          </div>
 
           <motion.div
             variants={item}
-            className="bg-popover text-popover-foreground shadow-(--shadow-elevated) absolute bottom-4 left-4 flex items-center gap-2 rounded-lg border px-3 py-2"
+            className="bg-popover text-popover-foreground absolute bottom-4 left-4 flex items-center gap-2 rounded-lg border px-3 py-2 shadow-(--shadow-elevated)"
           >
             <Wifi aria-hidden="true" className="text-primary size-4" />
-            <span className="text-foreground text-sm font-medium">{t("landing.hero.live_sync")}</span>
+            <span className="text-foreground text-sm font-medium">
+              {t("landing.hero.live_sync")}
+            </span>
           </motion.div>
         </motion.div>
       </motion.div>

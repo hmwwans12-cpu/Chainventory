@@ -63,9 +63,7 @@ export function LeaveWarehouseDialog({
       }
       error={error}
       cancelLabel={isOwner ? "Keep as owner" : "Stay in warehouse"}
-      primaryLabel={
-        isOwner ? "Transfer ownership" : "Leave warehouse"
-      }
+      primaryLabel={isOwner ? "Transfer ownership" : "Leave warehouse"}
       primaryVariant={isOwner ? "outline" : "destructive"}
       primaryIcon={
         isOwner ? (

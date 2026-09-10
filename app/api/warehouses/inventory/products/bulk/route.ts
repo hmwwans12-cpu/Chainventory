@@ -88,7 +88,9 @@ export async function POST(request: Request) {
   // the warehouse so the user gets a clear pre-flight check.
   const seenSku = new Map<string, number>();
   for (const [idx, row] of parsed.data.products.entries()) {
-    const sku = String(row.sku ?? "").trim().toUpperCase();
+    const sku = String(row.sku ?? "")
+      .trim()
+      .toUpperCase();
     if (!sku) continue;
     if (seenSku.has(sku)) {
       return invalid(
@@ -112,11 +114,13 @@ export async function POST(request: Request) {
       .limit(PREFLIGHT_CAP);
     if (catalog && catalog.length < PREFLIGHT_CAP) {
       const stored = new Set(
-        catalog.map((e) => String(e.sku ?? "").trim().toUpperCase())
+        catalog.map((e) =>
+          String(e.sku ?? "")
+            .trim()
+            .toUpperCase()
+        )
       );
-      const conflicts = Array.from(seenSku.keys()).filter((s) =>
-        stored.has(s)
-      );
+      const conflicts = Array.from(seenSku.keys()).filter((s) => stored.has(s));
       if (conflicts.length > 0) {
         return invalid(
           `These SKUs already exist in this warehouse: ${conflicts.join(", ")}.`

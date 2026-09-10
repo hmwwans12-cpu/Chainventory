@@ -50,7 +50,7 @@ function Row({ dep }: { dep: DependencyStatus }) {
       <span className="text-muted-foreground min-w-0 truncate font-mono text-sm">
         {dep.error
           ? sanitizeConsoleError(dep.error, "Probe error")
-          : dep.detail ?? (dep.ok ? "ok" : "down")}
+          : (dep.detail ?? (dep.ok ? "ok" : "down"))}
       </span>
     </li>
   );

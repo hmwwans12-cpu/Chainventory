@@ -104,8 +104,7 @@ export function AppSidebar({
     pathname === href || pathname.startsWith(`${href}/`);
   const isActive = (item: NavItem) =>
     item.children
-      ? item.children.some((c) => hrefActive(c.href)) ||
-        hrefActive(item.href)
+      ? item.children.some((c) => hrefActive(c.href)) || hrefActive(item.href)
       : hrefActive(item.href);
 
   return (
@@ -219,7 +218,7 @@ export function AppSidebar({
                           <span>{t(item.i18nKey ?? item.title)}</span>
                         </SidebarMenuButton>
                         {item.title === "Notifications" && unreadCount > 0 ? (
-                          <SidebarMenuBadge className="bg-destructive/15 text-destructive border border-destructive/20 tabular-nums">
+                          <SidebarMenuBadge className="bg-destructive/15 text-destructive border-destructive/20 border tabular-nums">
                             {/* FE-12: ambang sama dengan bell (99+). */}
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </SidebarMenuBadge>
@@ -254,20 +253,22 @@ export function AppSidebar({
             <SidebarSeparator />
             <SidebarGroup>
               <SidebarGroupLabel>Developer</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    render={<Link href={withWarehouse(DEV_NAV_ITEM.href)} />}
-                    isActive={hrefActive(DEV_NAV_ITEM.href)}
-                    tooltip={DEV_NAV_ITEM.title}
-                  >
-                    <SquareTerminal aria-hidden="true" />
-                    <span>{t(DEV_NAV_ITEM.i18nKey ?? DEV_NAV_ITEM.title)}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      render={<Link href={withWarehouse(DEV_NAV_ITEM.href)} />}
+                      isActive={hrefActive(DEV_NAV_ITEM.href)}
+                      tooltip={DEV_NAV_ITEM.title}
+                    >
+                      <SquareTerminal aria-hidden="true" />
+                      <span>
+                        {t(DEV_NAV_ITEM.i18nKey ?? DEV_NAV_ITEM.title)}
+                      </span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
             </SidebarGroup>
           </>
         ) : null}

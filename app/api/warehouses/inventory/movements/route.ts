@@ -120,13 +120,8 @@ export async function POST(request: Request) {
       // warehouse, not null). AGENT.md §4 mandates idempotency for every
       // stock mutation; the only acceptable NULL is the DB rejecting it
       // before reaching apply_stock_movement.
-      if (
-        !parsed.data.idempotencyKey ||
-        !parsed.data.idempotencyKey.trim()
-      ) {
-        return invalid(
-          "idempotencyKey is required for stock movements."
-        );
+      if (!parsed.data.idempotencyKey || !parsed.data.idempotencyKey.trim()) {
+        return invalid("idempotencyKey is required for stock movements.");
       }
 
       // Audit: adjustment/reversal bersifat struktur-ledger yang kritis —

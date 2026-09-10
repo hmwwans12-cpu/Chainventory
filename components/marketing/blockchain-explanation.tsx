@@ -48,7 +48,7 @@ export function BlockchainExplanation() {
             >
               <DoubleBezelCardContent className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
                 <div className="flex flex-col gap-5">
-                  <span className="text-primary-foreground inline-flex w-fit items-center gap-1.5 rounded-full bg-primary-foreground/10 px-3 py-1 text-sm font-medium">
+                  <span className="text-primary-foreground bg-primary-foreground/10 inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium">
                     <Blocks
                       aria-hidden="true"
                       className="text-primary-foreground size-3.5"
@@ -91,7 +91,7 @@ export function BlockchainExplanation() {
                       {RECORD_ROWS.map((row) => (
                         <div
                           key={row.labelKey}
-                          className="flex items-center justify-between gap-4 border-b border-primary-foreground/10 py-3"
+                          className="border-primary-foreground/10 flex items-center justify-between gap-4 border-b py-3"
                         >
                           <span className="text-primary-foreground/90 text-sm">
                             {t(row.labelKey)}
@@ -111,7 +111,7 @@ export function BlockchainExplanation() {
                         </span>
                       </div>
                     </div>
-                    <div className="mt-5 flex items-center justify-between border-t border-primary-foreground/10 pt-4">
+                    <div className="border-primary-foreground/10 mt-5 flex items-center justify-between border-t pt-4">
                       <span className="text-primary-foreground/90 text-sm">
                         {t("landing.blockchain.anchored_on")}
                       </span>

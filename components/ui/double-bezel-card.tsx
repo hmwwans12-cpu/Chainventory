@@ -36,7 +36,7 @@ export function DoubleBezelCard({
       className={cn(
         "relative",
         "bg-muted/50",
-        "ring-1 ring-foreground/10",
+        "ring-foreground/10 ring-1",
         "p-1.5", // bezel width
         outerClassName,
         className

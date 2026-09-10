@@ -346,22 +346,22 @@ export function JoinWarehouseForm() {
             </Button>
           ) : (
             <>
-            <Button
-              size="lg"
-              className="h-11 w-full text-base"
-              onClick={retry}
-              disabled={!ready || !authenticated}
-              title={!authenticated ? "Sign in first, then retry" : undefined}
-            >
-              Try Again
-            </Button>
-            {!ready || !authenticated ? (
-              <p className="text-muted-foreground text-center text-sm">
-                {!authenticated
-                  ? "Sign in first, then try again."
-                  : "Still preparing. Wait a moment, then try again."}
-              </p>
-            ) : null}
+              <Button
+                size="lg"
+                className="h-11 w-full text-base"
+                onClick={retry}
+                disabled={!ready || !authenticated}
+                title={!authenticated ? "Sign in first, then retry" : undefined}
+              >
+                Try Again
+              </Button>
+              {!ready || !authenticated ? (
+                <p className="text-muted-foreground text-center text-sm">
+                  {!authenticated
+                    ? "Sign in first, then try again."
+                    : "Still preparing. Wait a moment, then try again."}
+                </p>
+              ) : null}
             </>
           )}
         </div>

@@ -1,10 +1,5 @@
 import { redirect } from "next/navigation";
-import {
-  Package,
-  Layers,
-  PackagePlus,
-  PackageMinus,
-} from "lucide-react";
+import { Package, Layers, PackagePlus, PackageMinus } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {

@@ -544,8 +544,8 @@ export function StockMovementDialog({
                 {targetsLoaded ? (
                   targetsError ? (
                     <p role="alert" className="text-destructive text-sm">
-                      Could not load movements. Check your connection and
-                      reopen this dialog to retry.
+                      Could not load movements. Check your connection and reopen
+                      this dialog to retry.
                     </p>
                   ) : reversalTargets.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
@@ -571,9 +571,9 @@ export function StockMovementDialog({
                       <SelectContent layer="modal">
                         {reversalTargets.map((t) => (
                           <SelectItem key={t.id} value={t.id}>
-                            {(MOVEMENT_TYPE_META[
+                            {MOVEMENT_TYPE_META[
                               t.movementType as keyof typeof MOVEMENT_TYPE_META
-                            ]?.label ?? t.movementType)}{" "}
+                            ]?.label ?? t.movementType}{" "}
                             · {t.quantity} · {formatDate(t.created_at)}
                           </SelectItem>
                         ))}
@@ -613,38 +613,54 @@ export function StockMovementDialog({
                   aria-describedby={error ? "movement-form-error" : undefined}
                 />
                 {selected ? (
-                  <div className="flex flex-col gap-1.5 rounded-lg border bg-muted/20 px-3 py-2.5">
+                  <div className="bg-muted/20 flex flex-col gap-1.5 rounded-lg border px-3 py-2.5">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Current stock</span>
+                      <span className="text-muted-foreground">
+                        Current stock
+                      </span>
                       <span className="font-mono font-medium tabular-nums">
                         {selected.quantity ?? "0"} {selected.unit}
                       </span>
                     </div>
-                    {quantity.trim() && /^\d+(\.\d{1,3})?$/.test(quantity.trim()) && Number(quantity) > 0 ? (
+                    {quantity.trim() &&
+                    /^\d+(\.\d{1,3})?$/.test(quantity.trim()) &&
+                    Number(quantity) > 0 ? (
                       <>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">
-                            {movementType === "stock_in" ? "Quantity added" : "Quantity removed"}
+                            {movementType === "stock_in"
+                              ? "Quantity added"
+                              : "Quantity removed"}
                           </span>
-                          <span className={`font-mono font-medium tabular-nums ${movementType === "stock_in" ? "text-primary" : "text-destructive"}`}>
+                          <span
+                            className={`font-mono font-medium tabular-nums ${movementType === "stock_in" ? "text-primary" : "text-destructive"}`}
+                          >
                             {movementType === "stock_in" ? "+" : "−"}
                             {quantity.trim()} {selected.unit}
                           </span>
                         </div>
-                        <div className="border-t pt-1.5 flex items-center justify-between text-sm font-semibold">
+                        <div className="flex items-center justify-between border-t pt-1.5 text-sm font-semibold">
                           <span>New stock</span>
                           <span className="font-mono tabular-nums">
                             {(() => {
                               const cur = Number(selected.quantity ?? 0);
                               const qty = Number(quantity.trim());
-                              const next = movementType === "stock_in" ? cur + qty : cur - qty;
+                              const next =
+                                movementType === "stock_in"
+                                  ? cur + qty
+                                  : cur - qty;
                               return `${next} ${selected.unit}`;
                             })()}
                           </span>
                         </div>
-                        {movementType === "stock_out" && Number(quantity.trim()) > Number(selected.quantity ?? 0) ? (
+                        {movementType === "stock_out" &&
+                        Number(quantity.trim()) >
+                          Number(selected.quantity ?? 0) ? (
                           <p className="text-destructive flex items-center gap-1.5 text-sm font-medium">
-                            <AlertTriangle aria-hidden="true" className="size-4 shrink-0" />
+                            <AlertTriangle
+                              aria-hidden="true"
+                              className="size-4 shrink-0"
+                            />
                             Quantity exceeds current stock
                           </p>
                         ) : null}
@@ -683,7 +699,7 @@ export function StockMovementDialog({
             />
           </div>
 
-          <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
+          <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}

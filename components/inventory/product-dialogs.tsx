@@ -94,7 +94,7 @@ export function CreateProductDialog({
     toast.add({
       type: "success",
       title: `${values.name} added`,
-      description: `${values.sku} is now in ${warehouseId.slice(0,6)}… inventory.${qtyNote}`,
+      description: `${values.sku} is now in ${warehouseId.slice(0, 6)}… inventory.${qtyNote}`,
     });
   };
 
@@ -240,13 +240,16 @@ export function ArchiveProductDialog({
         <DialogHeader>
           <DialogTitle>Archive “{product.name}”?</DialogTitle>
           <DialogDescription className="text-sm text-pretty">
-            <span className="font-medium">{product.name}</span> will disappear from active inventory. Its movement history and proofs remain.
+            <span className="font-medium">{product.name}</span> will disappear
+            from active inventory. Its movement history and proofs remain.
             <br />
-            <span className="text-muted-foreground">This can be restored from archived products.</span>
+            <span className="text-muted-foreground">
+              This can be restored from archived products.
+            </span>
           </DialogDescription>
         </DialogHeader>
         {error ? <ErrorBanner message={error} /> : null}
-          <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -416,7 +419,9 @@ export function ProductDetailSheet({
               </span>
             </div>
             {loading ? (
-              <p className="text-muted-foreground text-sm">Loading movements…</p>
+              <p className="text-muted-foreground text-sm">
+                Loading movements…
+              </p>
             ) : loadError ? (
               <p role="alert" className="text-destructive text-sm">
                 Could not load movements. Reopen this panel to retry.
