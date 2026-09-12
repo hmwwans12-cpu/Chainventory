@@ -339,7 +339,7 @@ export function MembersPage({
           ) : null}
         </div>
         {canInvite ? (
-          <div className="sm:border-border flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-1 py-1.5 sm:gap-2 sm:border sm:px-3">
+          <div className="sm:border-border flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-1 py-2 sm:gap-2 sm:border sm:px-3">
             <span className="text-muted-foreground text-sm">Invite code</span>
             <span className="truncate font-mono text-sm tracking-wide">
               {inviteCode}

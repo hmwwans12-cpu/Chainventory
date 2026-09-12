@@ -175,7 +175,7 @@ export function AppSidebar({
                   </span>
                   <ChevronsUpDown
                     aria-hidden="true"
-                    className="ms-auto size-4"
+                    className="ms-auto size-4 shrink-0"
                   />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
@@ -314,7 +314,7 @@ export function AppSidebar({
                       </span>
                       <ChevronsUpDown
                         aria-hidden="true"
-                        className="ms-auto size-4"
+                        className="ms-auto size-4 shrink-0"
                       />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-56">

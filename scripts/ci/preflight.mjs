@@ -96,9 +96,35 @@ const skipTouch = [
   /badge|Badge/,
   /icon.*size-[345]/,
   /size-[345].*icon/,
+  // CAL-2026-09-12: non-interactive by construction — never a hit target.
+  /pointer-events-none/,
+  // CAL-2026-09-12: skeleton shimmer blocks (aria-hidden loading shapes).
+  /animate-pulse/,
+  // CAL-2026-09-12: mirror of the size-4+shrink-0 rule — fixed-size
+  // decorative glyphs that cannot wrap/shift layout.
+  /size-[56].*shrink-0/,
+  /shrink-0.*size-[56]/,
+  // CAL-2026-09-12: child-glyph sizing selectors (e.g. [&>svg]:size-4)
+  // size icons inside a larger control — never hit targets themselves.
+  /\[\&[>_ ]svg/,
+  // CAL-2026-09-12: order-agnostic twin of size-4.*shrink-0 above.
+  /shrink-0.*size-4/,
+  // CAL-2026-09-12: Skeleton instances are aria-hidden loading shapes.
+  /Skeleton/,
+  // CAL-2026-09-12: static <code> chips (copyable text, not controls).
+  /^\s*<code/,
+  // CAL-2026-09-12: chart datum heights are quoted data values, not classes.
+  /h: "h-[78]"/,
+  // CAL-2026-09-12: tab-list containers are not targets (triggers inside
+  // are audited on their own lines).
+  /tabs-list/,
   /Chevron|Arrow|Check|X|Bell|Mail|Shield|Lock|Eye|File|Package|Users|Wifi|Blocks|Link2|Search|Settings|LayoutDashboard|ReceiptText|ChartNoAxesCombined|SquareTerminal|UserPlus|Warehouse|CheckCircle2|AlertTriangle|Ban|Clock3/,
   /status.*badge/i,
   /span.*rounded-full.*px-.*py-.*text-xs/,
+  // CAL-2026-09-12: same for text-sm display pills (filter/status chips).
+  // These are not targets — inner icon-buttons carry their own expanded
+  // hit-slop (before:-inset), audited on their own lines.
+  /span.*rounded-full.*px-.*py-.*text-sm/,
   /div.*rounded-lg.*border.*px-.*py-.*text-sm/,
   /inline-flex.*rounded-full.*px-.*py-.*text-xs/,
 ];
@@ -126,6 +152,17 @@ const radiusPatterns = [
 const skipRadius = [
   /rounded-full/,
   /rounded-\[min\(var\(--radius/,
+  // CAL-2026-09-12: DESIGN.md §9 prescribes 12px cards (rounded-xl) and
+  // 16px large-cards/modals (rounded-2xl). A rounded-xl/2xl line that also
+  // carries border/ring/shadow is a proper surface, not a sloppy radius —
+  // audit of 2026-09-12 found 38/38 hits in this shape, zero true positives.
+  /border/,
+  /ring-/,
+  /shadow/,
+  // CAL-2026-09-12: modal shells (DESIGN §9 = 16px) get their border from
+  // the shared ui/dialog + ui/sheet base classes, not the call-site line.
+  /DialogContent.*rounded-/,
+  /SheetContent.*rounded-/,
   /bg-card.*rounded-xl/, // Card components intentionally use rounded-xl
   /rounded-xl.*shadow/, // Elevated surfaces
   /toast.*rounded-xl/, // Toast component
@@ -187,6 +224,20 @@ const skipFont = [
   /text-primary-foreground\/90.*text-xs/, // Primary text at 90% opacity
   /xs:.*text-xs/, // Button xs size variant
   /text-xs leading-relaxed/, // Deployment steps text
+  // CAL-2026-09-12: bare "text-xs" inside cn() ternaries is a conditional
+  // fragment, not a font-size decision on its own.
+  /^\s*"text-xs",?\s*$/,
+  // CAL-2026-09-12: 12px small-emphasis labels (stepper, stat numerals).
+  /text-xs.*font-bold/,
+  /font-bold.*text-xs/,
+  // CAL-2026-09-12: compact h-9 dialog inputs keep 12px text per the
+  // approved Stitch reference (visual density, not body copy).
+  /h-9.*text-xs/,
+  /text-xs.*h-9/,
+  // CAL-2026-09-12: bordered micro-panels (receipt cards, schema cards,
+  // banners) carry caption-grade 12px text by design, not body copy.
+  /rounded-(xl|2xl).*border.*text-xs/,
+  /border.*rounded-(xl|2xl).*text-xs/,
 ];
 for (const file of [...walk(COMPONENTS_DIR), ...walk(APP_DIR)]) {
   checkFile(file, fontPatterns, "Font size < 12px (text-xs/10-11px)", skipFont);
@@ -207,20 +258,29 @@ try {
 }
 
 // 7. Double-bezel audit (optional - check for flat cards)
+// CAL-2026-09-12: was file-level (any file containing both strings was
+// flagged — 18/18 false positives). Now line-level: only a single element
+// combining bg-card + rounded-lg WITHOUT border/ring/shadow is reported.
 console.log("\n🔍 7/7 Double-bezel audit (high-end visual design)...");
 let doubleBezelCount = 0;
 for (const file of walk(COMPONENTS_DIR)) {
-  const content = readFileSync(file, "utf-8");
-  if (
-    content.includes("rounded-lg") &&
-    content.includes("bg-card") &&
-    !content.includes("ring-1")
-  ) {
-    doubleBezelCount++;
-    warn(
-      "Potential flat card (bg-card + rounded-lg without ring/border)",
-      file
-    );
+  const lines = readFileSync(file, "utf-8").split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (
+      line.includes("bg-card") &&
+      line.includes("rounded-lg") &&
+      !line.includes("border") &&
+      !line.includes("ring-") &&
+      !line.includes("shadow")
+    ) {
+      doubleBezelCount++;
+      warn(
+        "Potential flat card (bg-card + rounded-lg without ring/border)",
+        `${file}:${i + 1}`
+      );
+      break;
+    }
   }
 }
 if (doubleBezelCount > 0) {

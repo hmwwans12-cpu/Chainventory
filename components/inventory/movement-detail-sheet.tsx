@@ -123,7 +123,7 @@ export function MovementDetailSheet({
         </SheetHeader>
 
         <div className="flex flex-col gap-5 overflow-y-auto px-4 pb-4">
-          <div className="flex items-center justify-between rounded-lg py-1">
+          <div className="flex items-center justify-between rounded-lg py-2">
             <div className="flex flex-col gap-0.5">
               <span className="text-muted-foreground text-sm">Quantity</span>
               <span className="text-foreground text-2xl font-semibold tabular-nums">

@@ -723,7 +723,7 @@ export function StockMovementDialog({
                     <p className="text-muted-foreground flex items-center justify-center gap-2 text-xs font-medium">
                       <Loader2
                         aria-hidden="true"
-                        className="text-primary size-4 animate-spin"
+                        className="text-primary size-4 shrink-0 animate-spin"
                       />
                       Loading recent committed movements…
                     </p>
@@ -900,7 +900,7 @@ export function StockMovementDialog({
             size="sm"
             onClick={() => onOpenChange(false)}
             disabled={busy}
-            className="h-8 w-full px-4 text-xs font-semibold sm:w-auto"
+            className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
           >
             Discard
           </Button>
@@ -908,7 +908,7 @@ export function StockMovementDialog({
             onClick={submit}
             disabled={busy || stale}
             size="sm"
-            className="h-8 w-full px-4 text-xs font-semibold sm:w-auto"
+            className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
           >
             {busy ? (
               <Loader2 aria-hidden="true" className="animate-spin" />

@@ -277,7 +277,7 @@ export function JoinWarehouseForm() {
               <span className="text-foreground flex items-center gap-1.5 text-sm font-medium">
                 <Clock
                   aria-hidden="true"
-                  className="text-muted-foreground size-4"
+                  className="text-muted-foreground size-4 shrink-0"
                 />
                 Pending approval
               </span>

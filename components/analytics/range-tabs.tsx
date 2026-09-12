@@ -49,7 +49,7 @@ export function RangeTabs({
             prefetch={active}
             aria-current={active ? "true" : undefined}
             className={cn(
-              "focus-visible:ring-ring rounded-md px-3 py-1 text-xs font-semibold transition-colors focus-visible:ring-3 focus-visible:outline-none",
+              "focus-visible:ring-ring relative rounded-md px-3 py-1 text-xs font-semibold transition-colors before:absolute before:-inset-y-2 before:content-[''] focus-visible:ring-3 focus-visible:outline-none",
               active
                 ? "bg-card text-primary shadow-(--shadow-card)"
                 : "text-muted-foreground hover:text-foreground"

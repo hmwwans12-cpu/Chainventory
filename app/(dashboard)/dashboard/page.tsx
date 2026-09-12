@@ -503,7 +503,7 @@ export default async function DashboardPage({
               <div className="bg-surface-low border-border flex flex-col justify-between rounded-lg border p-3.5">
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full">
+                    <span className="bg-primary text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full">
                       <Check aria-hidden="true" className="size-4" />
                       <span className="sr-only">Done</span>
                     </span>
@@ -525,7 +525,7 @@ export default async function DashboardPage({
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="bg-primary-container text-primary-foreground flex size-6 items-center justify-center rounded-full text-xs font-bold">
+                    <span className="bg-primary-container text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold">
                       2
                     </span>
                     <span className="text-muted-foreground font-mono text-[10px]">
@@ -551,12 +551,12 @@ export default async function DashboardPage({
                 <div>
                   <div className="flex items-center justify-between">
                     {inviteDone && pendingCount === 0 ? (
-                      <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full">
+                      <span className="bg-primary text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full">
                         <Check aria-hidden="true" className="size-4" />
                         <span className="sr-only">Done</span>
                       </span>
                     ) : (
-                      <span className="bg-primary-container text-primary-foreground flex size-6 items-center justify-center rounded-full text-xs font-bold">
+                      <span className="bg-primary-container text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold">
                         3
                       </span>
                     )}
@@ -609,12 +609,12 @@ export default async function DashboardPage({
                 <div>
                   <div className="flex items-center justify-between">
                     {movementDone ? (
-                      <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full">
+                      <span className="bg-primary text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full">
                         <Check aria-hidden="true" className="size-4" />
                         <span className="sr-only">Done</span>
                       </span>
                     ) : (
-                      <span className="text-muted-foreground flex size-6 items-center justify-center rounded-full border-2 border-current text-xs font-bold">
+                      <span className="text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-current text-xs font-bold">
                         4
                       </span>
                     )}
@@ -658,7 +658,7 @@ export default async function DashboardPage({
               <CardTitle className="t-headline-sm flex items-center gap-2">
                 <ChartNoAxesCombined
                   aria-hidden="true"
-                  className="text-primary size-4"
+className="text-primary size-4 shrink-0"
                 />
                 {t("dashboard.stock_velocity")}
               </CardTitle>

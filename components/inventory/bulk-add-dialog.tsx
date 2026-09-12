@@ -340,7 +340,7 @@ export function BulkAddDialog({
                       aria-pressed={active}
                       onClick={() => setMode(m.id)}
                       className={cn(
-                        "focus-visible:ring-ring flex min-h-9 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all focus-visible:ring-3 focus-visible:outline-none",
+                        "focus-visible:ring-ring relative flex min-h-9 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all before:absolute before:-inset-y-1 before:content-[''] focus-visible:ring-3 focus-visible:outline-none",
                         active
                           ? "bg-card text-primary font-semibold shadow-(--shadow-card)"
                           : "text-muted-foreground hover:text-foreground"
@@ -615,14 +615,14 @@ export function BulkAddDialog({
                   variant="outline"
                   size="sm"
                   onClick={() => onOpenChange(false)}
-                  className="h-8 px-4 text-xs font-semibold"
+                  className="h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={goToPreview}
                   size="sm"
-                  className="h-8 px-4 text-xs font-semibold"
+                  className="h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative"
                 >
                   Continue to review
                 </Button>
@@ -687,7 +687,7 @@ export function BulkAddDialog({
                     :
                   </span>
                   <div className="border-border divide-border/60 bg-card overflow-hidden rounded-xl border text-xs">
-                    <div className="bg-surface-low/60 grid grid-cols-12 gap-2 px-3 py-1.5 text-[11px] font-semibold">
+                    <div className="bg-surface-low/60 grid grid-cols-12 gap-2 px-3 py-2 text-[11px] font-semibold">
                       <span className="col-span-5">Product</span>
                       <span className="col-span-3">SKU</span>
                       <span className="col-span-2">Unit</span>
@@ -752,7 +752,7 @@ export function BulkAddDialog({
                   size="sm"
                   onClick={() => setStep("input")}
                   disabled={busy}
-                  className="h-8 px-4 text-xs font-semibold"
+                  className="h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative"
                 >
                   Back to edit
                 </Button>
@@ -760,7 +760,7 @@ export function BulkAddDialog({
                   onClick={importRows}
                   disabled={busy || rows.length === 0}
                   size="sm"
-                  className="h-8 px-4 text-xs font-semibold"
+                  className="h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative"
                 >
                   {busy ? (
                     <Loader2 aria-hidden="true" className="animate-spin" />
@@ -813,10 +813,10 @@ export function BulkAddDialog({
                 <div className="border-border bg-surface-low/50 flex flex-col gap-3 rounded-xl border p-4">
                   <span className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-primary flex items-center gap-2 text-xs font-semibold">
-                      <AlertTriangle
-                        aria-hidden="true"
-                        className="text-status-warn-fg size-4"
-                      />
+                    <AlertTriangle
+                      aria-hidden="true"
+                      className="text-status-warn-fg size-4 shrink-0"
+                    />
                       {results.failed} row{results.failed === 1 ? "" : "s"} need
                       {results.failed === 1 ? "s" : ""} attention:
                     </span>
@@ -844,7 +844,7 @@ export function BulkAddDialog({
                         a.remove();
                         window.setTimeout(() => URL.revokeObjectURL(url), 1000);
                       }}
-                      className="h-8 text-xs font-semibold"
+                      className="h-8 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative"
                     >
                       Download failed rows (CSV)
                     </Button>
@@ -875,7 +875,7 @@ export function BulkAddDialog({
                     variant="outline"
                     size="sm"
                     onClick={() => setStep("input")}
-                    className="h-8 px-4 text-xs font-semibold"
+                    className="h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative"
                   >
                     Fix and re-upload
                   </Button>
@@ -884,7 +884,7 @@ export function BulkAddDialog({
                     variant="outline"
                     size="sm"
                     onClick={() => setStep("input")}
-                    className="h-8 px-4 text-xs font-semibold"
+                    className="h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative"
                   >
                     Import more
                   </Button>
@@ -895,7 +895,7 @@ export function BulkAddDialog({
                 <Button
                   onClick={() => onOpenChange(false)}
                   size="sm"
-                  className="h-8 px-4 text-xs font-semibold"
+                  className="h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative"
                 >
                   {results.failed > 0 ? "Close" : "Done"}
                 </Button>

@@ -233,7 +233,7 @@ export default async function ProductsPageRoute({
             </Badge>
             <Badge
               variant={lowStockCount > 0 ? "warning" : "neutral"}
-              className="gap-1.5 px-3 py-1.5"
+              className="gap-1.5 px-3 py-2"
             >
               <TriangleAlert aria-hidden="true" className="size-3.5" />
               {lowStockCount} Low Stock Alerts

@@ -32,7 +32,7 @@ export function ErrorAlert({
       role={role}
       className={cn(
         "bg-destructive/15 text-destructive rounded-lg",
-        size === "sm" ? "px-2.5 py-1.5 text-sm" : "px-3 py-2 text-sm",
+        size === "sm" ? "px-2.5 py-2 text-sm" : "px-3 py-2 text-sm",
         className
       )}
     >

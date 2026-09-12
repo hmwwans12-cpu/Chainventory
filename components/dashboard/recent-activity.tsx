@@ -109,7 +109,7 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
                     aria-selected={tab === id}
                     onClick={() => setTab(id)}
                     className={cn(
-                      "rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                      "rounded-md px-2.5 py-1 text-sm font-medium transition-colors before:absolute before:-inset-y-2 before:content-[''] relative focus-visible:ring-3 focus-visible:outline-none",
                       tab === id
                         ? "bg-card text-primary shadow-(--shadow-card)"
                         : "text-muted-foreground hover:text-foreground"

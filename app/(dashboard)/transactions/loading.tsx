@@ -21,7 +21,7 @@ export default function Loading() {
         <div className="flex items-center justify-center gap-2 border-b px-6 py-4">
           <ArrowLeftRight
             aria-hidden="true"
-            className="text-muted-foreground size-4"
+            className="text-muted-foreground size-4 shrink-0"
           />
           <span className="text-muted-foreground text-sm">
             Loading transactions...

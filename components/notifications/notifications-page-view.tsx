@@ -339,7 +339,7 @@ export function NotificationsPageView({
                     <span className="flex shrink-0 flex-col items-end gap-1.5">
                       <ChevronRight
                         aria-hidden="true"
-                        className="text-muted-foreground/50 mt-1 size-4 opacity-60 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                        className="text-muted-foreground/50 mt-1 size-4 shrink-0 opacity-60 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
                       />
                       {unread ? (
                         <span

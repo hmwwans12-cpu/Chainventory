@@ -220,9 +220,9 @@ export function ProductForm({
           <Textarea
             id="product-description"
             {...register("description")}
-            placeholder="Optional note about this product."
-            rows={3}
-            className="px-3 py-2 text-xs"
+          placeholder="Optional note about this product."
+          rows={3}
+          className="px-3 py-2 text-sm"
           />
           <FieldError
             id="err-product-description"
@@ -304,7 +304,7 @@ export function ProductForm({
             size="sm"
             onClick={onCancel}
             disabled={busy}
-            className="h-8 w-full px-4 text-xs font-semibold sm:w-auto"
+            className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
           >
             Cancel
           </Button>
@@ -313,7 +313,7 @@ export function ProductForm({
           type="submit"
           size="sm"
           disabled={busy}
-          className="h-8 w-full px-4 text-xs font-semibold sm:w-auto"
+          className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
         >
           {busy ? (
             <Loader2 aria-hidden="true" className="animate-spin" />

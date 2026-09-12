@@ -818,7 +818,7 @@ export function ProductsPage({
           {savedViews.map((v) => (
             <span
               key={v.id}
-              className="bg-card border-border inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm"
+              className="bg-card border-border inline-flex items-center gap-1.5 rounded-full border px-2.5 py-2 text-sm"
             >
               <button
                 type="button"

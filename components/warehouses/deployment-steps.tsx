@@ -34,7 +34,7 @@ function StepNode({ state }: { state: DeploymentStepState }) {
       {state === "done" ? (
         <CheckIcon className="size-4" />
       ) : state === "active" ? (
-        <Loader2Icon className="size-4 animate-spin" />
+        <Loader2Icon className="size-4 shrink-0 animate-spin" />
       ) : (
         <span className="size-2 rounded-full bg-current" />
       )}

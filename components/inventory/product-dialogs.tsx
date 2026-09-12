@@ -323,7 +323,7 @@ export function ArchiveProductDialog({
             size="sm"
             onClick={() => onOpenChange(false)}
             disabled={busy}
-            className="h-8 w-full px-4 text-xs font-semibold sm:w-auto"
+            className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
           >
             Cancel
           </Button>
@@ -332,7 +332,7 @@ export function ArchiveProductDialog({
             size="sm"
             onClick={confirm}
             disabled={busy}
-            className="h-8 w-full px-4 text-xs font-semibold sm:w-auto"
+            className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
           >
             {busy ? (
               <Loader2 aria-hidden="true" className="animate-spin" />
@@ -488,7 +488,7 @@ export function ProductDetailSheet({
               <h3 className="text-muted-foreground font-mono text-[11px] font-semibold tracking-[0.08em] uppercase">
                 Specifications
               </h3>
-              <dl className="border-border grid grid-cols-2 gap-x-4 rounded-xl border px-4 py-1">
+              <dl className="border-border grid grid-cols-2 gap-x-4 rounded-xl border px-4 py-2">
                 <div className="border-border flex flex-col gap-0.5 border-b py-2.5">
                   <dt className="text-muted-foreground text-[13px]">
                     Category
