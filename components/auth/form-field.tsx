@@ -15,6 +15,7 @@ export function FormField({
   error,
   hint,
   describedBy: describedByProp,
+  labelSuffix,
   children,
 }: {
   id: string;
@@ -23,6 +24,8 @@ export function FormField({
   hint?: string;
   /** ID deskriptor tambahan (mis. error server) digabung ke aria-describedby. */
   describedBy?: string;
+  /** Konten opsional di kanan label (mis. pill "Optional."). */
+  labelSuffix?: ReactNode;
   children: ReactNode;
 }) {
   const describedBy =
@@ -35,9 +38,12 @@ export function FormField({
       className="flex flex-col gap-1.5"
       data-invalid={error ? true : undefined}
     >
-      <label htmlFor={id} className="text-foreground text-sm font-medium">
-        {label}
-      </label>
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor={id} className="text-foreground text-sm font-medium">
+          {label}
+        </label>
+        {labelSuffix}
+      </div>
       {React.isValidElement(children)
         ? React.cloneElement(
             children as React.ReactElement<Record<string, unknown>>,
