@@ -25,10 +25,13 @@ export function ThemeToggle() {
   // dengan ikon Sun + label berbeda → hydration mismatch di semua halaman.
   // `mounted` memaksa render pertama klien identik dengan server (Moon),
   // lalu flip ke Sun setelah mount — update biasa, bukan mismatch.
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  // useSyncExternalStore (bukan setState-in-effect): snapshot server false,
+  // klien true — pola kanonis "mounted" React tanpa cascading render.
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const showDark = mounted && dark;
   const { t } = useLocale();
 

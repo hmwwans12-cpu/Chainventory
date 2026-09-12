@@ -1,0 +1,9 @@
+# Normalisasi line-ending: blob selalu LF (CI Linux + Prettier endOfLine lf).
+# Tanpa ini checkout Windows (autocrlf) menghasilkan CRLF dan membuat
+# `format:check` merah massal secara lokal walau isi kode bersih.
+* text=auto eol=lf
+*.woff2 binary
+*.ttf binary
+*.png binary
+*.jpg binary
+*.ico binary

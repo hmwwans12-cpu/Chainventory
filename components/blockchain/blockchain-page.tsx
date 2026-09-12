@@ -114,11 +114,23 @@ export function BlockchainPage({
   const [proofsState, setProofsState] = React.useState<ProofRow[]>(proofs);
   const [totalProofsState, setTotalProofsState] = React.useState(totalProofs);
   // Sinkronisasi warehouse (pola members-page): tanpa ini pindah warehouse
-  // A→B meninggalkan daftar proofs milik A.
-  React.useEffect(() => {
+  // A→B meninggalkan daftar proofs milik A. Render-phase adjust (bukan
+  // setState-in-effect): ekuivalen dengan effect ber-deps
+  // [warehouseId, proofs, totalProofs], tanpa cascading render.
+  const [proofsSync, setProofsSync] = React.useState<{
+    id: string;
+    rows: ProofRow[];
+    total: number;
+  }>(() => ({ id: warehouseId, rows: proofs, total: totalProofs }));
+  if (
+    proofsSync.id !== warehouseId ||
+    proofsSync.rows !== proofs ||
+    proofsSync.total !== totalProofs
+  ) {
+    setProofsSync({ id: warehouseId, rows: proofs, total: totalProofs });
     setProofsState(proofs);
     setTotalProofsState(totalProofs);
-  }, [warehouseId, proofs, totalProofs]);
+  }
   const [liveStatus, reportLive] = useLiveStatus();
   const [busyProof, setBusyProof] = React.useState<string | null>(null);
 

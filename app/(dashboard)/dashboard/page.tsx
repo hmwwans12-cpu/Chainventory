@@ -9,8 +9,6 @@ import {
   Package,
   PackageMinus,
   PackagePlus,
-  ShieldCheck,
-  UserPlus,
   Warehouse,
 } from "lucide-react";
 
@@ -27,7 +25,6 @@ import type { NotificationRow } from "@/lib/notifications/types";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { PanelCard } from "@/components/shared/panel-card";
-import { Badge } from "@/components/ui/badge";
 import { InactivityBanner } from "@/components/warehouses/inactivity-banner";
 import { ProfileWalletCard } from "@/components/dashboard/profile-wallet-card";
 import { FaucetClaimCard } from "@/components/faucet/faucet-claim-card";

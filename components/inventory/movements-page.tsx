@@ -179,12 +179,19 @@ export function MovementsPage({
   // Sinkronisasi warehouse: tanpa ini, pindah warehouse A→B via
   // router.replace membuat props baru tapi list/offset lokal tetap milik A
   // (loadMore pakai movements.length yang salah). Ikuti pola members-page.
-  React.useEffect(() => {
+  // Render-phase adjust (bukan setState-in-effect): ekuivalen dengan effect
+  // ber-deps [warehouseId, initialMovements], tanpa cascading render.
+  const [syncKey, setSyncKey] = React.useState<{
+    id: string;
+    rows: MovementListItem[];
+  }>(() => ({ id: warehouseId, rows: initialMovements }));
+  if (syncKey.id !== warehouseId || syncKey.rows !== initialMovements) {
+    setSyncKey({ id: warehouseId, rows: initialMovements });
     setMovements(initialMovements);
     setHasMore(initialMovements.length === PAGE_SIZE);
     setLoadingMore(false);
     setLoadError(false);
-  }, [warehouseId, initialMovements]);
+  }
   const [liveStatus, reportLive] = useLiveStatus();
 
   const [movementDialog, setMovementDialog] = React.useState<{
