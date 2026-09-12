@@ -2,72 +2,62 @@
 
 import {
   ArrowLeftRight,
-  Blocks,
-  Link2,
+  Barcode,
+  History,
   Package,
+  RefreshCw,
+  ScanBarcode,
   ShieldCheck,
-  Users,
-  Wifi,
+  UserCog,
+  Zap,
 } from "lucide-react";
 
 import { useLocale } from "@/components/providers/locale-provider";
 import { Reveal } from "@/components/marketing/reveal";
-import {
-  DoubleBezelCard,
-  DoubleBezelCardContent,
-} from "@/components/ui/double-bezel-card";
 
 /**
- * Features section (DESIGN §22).
- * Asymmetric bento- one tall featured tile (Verifiable records) breaks the
- * flat 6-card grid and gives the differentiator extra weight (Miller's law).
- * Upgraded to DoubleBezelCard for premium nested architecture (high-end-visual-design §4.A).
+ * Features bento — reference copy (public_2, id="product"):
+ * 1 big card (Verifiable records + sample proof <details>) + 4 small cards.
  */
-const FEATURES = [
+const SMALL = [
   {
     icon: Package,
     titleKey: "landing.features.f1_title",
     descKey: "landing.features.f1_desc",
+    footKey: "landing.features.f1_foot",
+    footIcon: ScanBarcode,
   },
   {
     icon: ArrowLeftRight,
     titleKey: "landing.features.f2_title",
     descKey: "landing.features.f2_desc",
+    footKey: "landing.features.f2_foot",
+    footIcon: Barcode,
   },
   {
-    icon: Wifi,
+    icon: RefreshCw,
     titleKey: "landing.features.f3_title",
     descKey: "landing.features.f3_desc",
-  },
-  {
-    icon: Users,
-    titleKey: "landing.features.f4_title",
-    descKey: "landing.features.f4_desc",
-  },
-  {
-    icon: Blocks,
-    titleKey: "landing.features.f5_title",
-    descKey: "landing.features.f5_desc",
-    featured: true,
-    proof: ["0x7f...c2", "0x3a...9d", "0x9c...41"],
+    footKey: "landing.features.f3_foot",
+    footIcon: Zap,
   },
   {
     icon: ShieldCheck,
-    titleKey: "landing.features.f6_title",
-    descKey: "landing.features.f6_desc",
+    titleKey: "landing.features.f4_title",
+    descKey: "landing.features.f4_desc",
+    footKey: "landing.features.f4_foot",
+    footIcon: UserCog,
   },
 ];
 
 export function Features() {
   const { t } = useLocale();
-  const featured = FEATURES.find((f) => f.featured)!;
-  const rest = FEATURES.filter((f) => !f.featured);
 
   return (
-    <section className="py-20 md:py-28">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-6">
-        <Reveal className="flex max-w-2xl flex-col gap-4">
-          <h2 className="font-display text-foreground text-3xl font-semibold tracking-tight text-balance md:text-4xl">
+    <section id="product" className="border-t bg-surface-container py-20 scroll-mt-24">
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-12">
+        <Reveal className="mx-auto mb-12 flex max-w-2xl flex-col items-center gap-3 text-center">
+          <h2 className="font-display text-primary text-2xl font-bold tracking-tight text-balance md:text-4xl">
             {t("landing.features.title")}
           </h2>
           <p className="text-muted-foreground max-w-xl text-base leading-relaxed text-pretty">
@@ -75,60 +65,87 @@ export function Features() {
           </p>
         </Reveal>
 
-        <div className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-3">
-          <Reveal className="md:col-span-2 md:row-span-2">
-            <DoubleBezelCard className="md:p-8">
-              <DoubleBezelCardContent className="flex flex-col justify-between gap-6">
-                <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Reveal className="md:col-span-2">
+            <div className="bg-surface-container/60 h-full rounded-2xl border p-2.5">
+              <div className="bg-card flex h-full flex-col rounded-xl p-6 sm:p-8">
+                <div className="flex items-start justify-between gap-3">
                   <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-lg">
-                    <featured.icon aria-hidden="true" className="size-5" />
+                    <Package aria-hidden="true" className="size-5" />
                   </span>
-                  <h3 className="font-display text-foreground text-xl font-semibold">
-                    {t(featured.titleKey)}
-                  </h3>
-                  <p className="text-muted-foreground max-w-md text-sm leading-relaxed text-pretty md:text-base">
-                    {t(featured.descKey)}
-                  </p>
+                  <span className="bg-secondary-container/60 rounded-full px-2.5 py-1 text-xs font-semibold">
+                    {t("landing.features.ledger_anchored")}
+                  </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {featured.proof!.map((hash) => (
+                <h3 className="font-display text-foreground mt-4 text-xl font-bold">
+                  {t("landing.features.f5_title")}
+                </h3>
+                <p className="text-muted-foreground mt-2 max-w-xl text-sm leading-relaxed text-pretty md:text-base">
+                  {t("landing.features.f5_desc")}
+                </p>
+                <details className="group mt-6 rounded-xl border">
+                  <summary className="text-primary flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-semibold">
+                    <History aria-hidden="true" className="size-4" />
+                    {t("landing.features.sample_proof")}
                     <span
-                      key={hash}
-                      className="text-muted-foreground bg-card flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-sm"
+                      aria-hidden
+                      className="ml-auto transition-transform group-open:rotate-180"
                     >
-                      <Link2
-                        aria-hidden="true"
-                        className="text-primary size-3.5 shrink-0"
-                      />
-                      {hash}
+                      ↓
                     </span>
-                  ))}
-                  <span className="bg-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium">
-                    <ShieldCheck aria-hidden="true" className="size-3.5 shrink-0" />
-                    {t("landing.features.verified")}
-                  </span>
-                </div>
-              </DoubleBezelCardContent>
-            </DoubleBezelCard>
+                  </summary>
+                  <div className="border-t px-4 py-4 font-mono text-xs leading-relaxed">
+                    <p className="text-foreground font-bold">
+                      RECORD ID: #TRX-94812
+                    </p>
+                    <p className="text-primary font-semibold">
+                      Proof: ✓ {t("landing.features.verified")}
+                    </p>
+                    <dl className="text-muted-foreground mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                      <dt>Product:</dt>
+                      <dd className="text-foreground">
+                        Robusta Green Beans 60kg
+                      </dd>
+                      <dt>Type:</dt>
+                      <dd className="text-foreground">Stock out (-120 bags)</dd>
+                      <dt>Performed by:</dt>
+                      <dd className="text-foreground">
+                        Siti Rahmawati (Warehouse Manager)
+                      </dd>
+                      <dt>Block:</dt>
+                      <dd className="text-foreground">12,845,201</dd>
+                    </dl>
+                    <p className="text-muted-foreground mt-2 text-[11px] tracking-wide uppercase">
+                      (static sample)
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </div>
           </Reveal>
 
-          {rest.map((feature, index) => {
+          {SMALL.map((feature, index) => {
             const Icon = feature.icon;
+            const FootIcon = feature.footIcon;
             return (
               <Reveal
                 key={feature.titleKey}
                 delay={index * 0.04}
                 className="h-full"
               >
-                <div className="bg-card ring-foreground/10 flex h-full flex-col gap-3 rounded-lg p-6 ring-1">
+                <div className="bg-card flex h-full flex-col rounded-2xl border p-6 sm:p-7">
                   <span className="bg-muted text-foreground flex size-10 items-center justify-center rounded-lg">
                     <Icon aria-hidden="true" className="size-5" />
                   </span>
-                  <h3 className="text-foreground text-base font-semibold">
+                  <h3 className="text-foreground mt-4 text-base font-bold">
                     {t(feature.titleKey)}
                   </h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed text-pretty">
                     {t(feature.descKey)}
+                  </p>
+                  <p className="text-primary border-border mt-6 flex items-center gap-1.5 border-t pt-3 text-xs font-semibold">
+                    <FootIcon aria-hidden="true" className="size-3.5" />
+                    {t(feature.footKey)}
                   </p>
                 </div>
               </Reveal>

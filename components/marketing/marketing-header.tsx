@@ -19,10 +19,18 @@ import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LocaleToggle } from "@/components/shared/locale-toggle";
 import { cn } from "@/lib/utils";
 
-const NAV_LINKS = [
+const PAGE_LINKS = [
   { href: "/features", label: "Features" },
   { href: "/about", label: "About" },
   { href: "/faq", label: "FAQ" },
+  { href: "/docs", label: "Docs" },
+];
+
+// Reference anchor nav (landing only): Product / Proof / FAQ + Docs page.
+const ANCHOR_LINKS = [
+  { href: "/#product", label: "Product" },
+  { href: "/#proof", label: "Proof" },
+  { href: "/#faq", label: "FAQ" },
   { href: "/docs", label: "Docs" },
 ];
 
@@ -46,15 +54,23 @@ export function MarketingHeader({
   // collapsed expand-trigger (header z-40 over fumadocs panel z-10), making
   // expand-after-collapse impossible. Docs nav already links Dashboard.
   if (pathname === "/docs" || pathname.startsWith("/docs/")) return null;
+  // Reference: anchor nav on the landing page, page links elsewhere.
+  const isLanding = pathname === "/";
+  const NAV_LINKS = isLanding ? ANCHOR_LINKS : PAGE_LINKS;
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="sticky top-3 z-40 px-4">
-      <div className="border-border/80 bg-background/80 mx-auto flex h-12 w-full max-w-6xl items-center gap-2 rounded-full border px-3 shadow-(--shadow-elevated) backdrop-blur-md sm:gap-6 sm:px-5">
-        <Logo />
+    <header className="sticky top-4 z-40 px-4 md:px-12">
+      <div className="border-border/80 bg-background/80 mx-auto flex h-12 w-full max-w-6xl items-center gap-2 rounded-full border px-3 shadow-(--shadow-elevated) backdrop-blur-md sm:gap-4 sm:px-5">
+        <span className="flex items-center gap-2">
+          <Logo />
+        </span>
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+        <nav
+          className="bg-muted mx-auto hidden items-center gap-1 rounded-full border p-1 md:flex"
+          aria-label="Primary"
+        >
           {NAV_LINKS.map((link) => {
             const active = isActive(link.href);
             return (
@@ -63,19 +79,12 @@ export function MarketingHeader({
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors duration-150 ease-out before:absolute before:-inset-x-[2px] before:-inset-y-[6px] before:content-['']",
+                  "relative flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs transition-colors duration-150 ease-out",
                   active
-                    ? "text-foreground bg-muted font-medium"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-secondary-container text-primary font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "size-1 rounded-full transition-opacity duration-200",
-                    active ? "bg-primary opacity-100" : "opacity-0"
-                  )}
-                />
                 {link.label}
               </Link>
             );
@@ -109,9 +118,10 @@ export function MarketingHeader({
               <Button
                 variant="default"
                 size="default"
+                className="rounded-full"
                 render={<Link href="/signup" />}
               >
-                Sign up
+                Get Started
               </Button>
             </>
           )}
@@ -185,11 +195,12 @@ export function MarketingHeader({
                   <>
                     <Button
                       size="lg"
+                      className="rounded-full"
                       render={
                         <Link href="/signup" onClick={() => setOpen(false)} />
                       }
                     >
-                      Sign up
+                      Get Started
                     </Button>
                     <Button
                       size="lg"

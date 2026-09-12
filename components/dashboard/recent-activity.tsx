@@ -1,6 +1,5 @@
 "use client";
 
-/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import Link from "next/link";
 import * as React from "react";
 
@@ -20,6 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/components/providers/locale-provider";
 
 /**
  * Notifications / Activity preview (DESIGN §29) — 5 notifikasi terakhir
@@ -29,6 +29,9 @@ import { cn } from "@/lib/utils";
 
 export type RecentActivityItem = {
   id: string;
+  /** Explicit notification type (lib/notifications/types) — primary filter
+      key. Empty when the source query didn't select it (legacy). */
+  type: string;
   title: string;
   body: string | null;
   times: number;
@@ -36,28 +39,52 @@ export type RecentActivityItem = {
   lastEventAt: string;
 };
 
-const TABS = ["All", "Inventory", "Members", "Audit"] as const;
+type ActivityTab = "all" | "inventory" | "members" | "audit";
 
-function matchesTab(
-  item: RecentActivityItem,
-  tab: (typeof TABS)[number]
-): boolean {
-  if (tab === "All") return true;
+const TABS: readonly ActivityTab[] = ["all", "inventory", "members", "audit"];
+
+// Explicit type → tab mapping (single source with the notification
+// taxonomy). Unknown/legacy types fall back to the old title+body regex
+// so nothing silently disappears from a tab.
+const TYPE_TAB: Record<string, ActivityTab> = {
+  adjustment_pending: "inventory",
+  adjustment_approved: "inventory",
+  adjustment_rejected: "inventory",
+  warehouse_inactivity_warning: "inventory",
+  warehouse_suspended: "inventory",
+  join_requested: "members",
+  join_approved: "members",
+  join_rejected: "members",
+  membership_role_changed: "members",
+  membership_removed: "members",
+  membership_left: "members",
+  ownership_transferred: "members",
+  proof_confirmed: "audit",
+  proof_failed: "audit",
+  proof_manual_review: "audit",
+};
+
+function matchesTab(item: RecentActivityItem, tab: ActivityTab): boolean {
+  if (tab === "all") return true;
+  const explicit = TYPE_TAB[item.type];
+  if (explicit) return explicit === tab;
   const hay = `${item.title} ${item.body ?? ""}`.toLowerCase();
-  if (tab === "Inventory")
+  if (tab === "inventory")
     return /stock|inventory|product|adjustment|reversal/.test(hay);
-  if (tab === "Members") return /member|join|request|role|owner/.test(hay);
-  if (tab === "Audit")
+  if (tab === "members") return /member|join|request|role|owner/.test(hay);
+  if (tab === "audit")
     return /proof|blockchain|verified|verification|basescan/.test(hay);
   return true;
 }
 
 export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
-  const [tab, setTab] = React.useState<(typeof TABS)[number]>("All");
+  const { t } = useLocale();
+  const [tab, setTab] = React.useState<ActivityTab>("all");
   const filtered = React.useMemo(
     () => items.filter((i) => matchesTab(i, tab)),
     [items, tab]
   );
+  const tabLabel = (id: ActivityTab) => t(`activity.tab_${id}`);
   return (
     <Card>
       <CardHeader className="border-b">
@@ -73,29 +100,29 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
               <div
                 className="bg-surface-container flex items-center gap-0.5 rounded-lg border p-1"
                 role="tablist"
-                aria-label="Activity filter"
+                aria-label={t("activity.filter_label")}
               >
-                {TABS.map((t) => (
+                {TABS.map((id) => (
                   <button
-                    key={t}
+                    key={id}
                     role="tab"
-                    aria-selected={tab === t}
-                    onClick={() => setTab(t)}
+                    aria-selected={tab === id}
+                    onClick={() => setTab(id)}
                     className={cn(
                       "rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
-                      tab === t
+                      tab === id
                         ? "bg-card text-primary shadow-(--shadow-card)"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    {t}
+                    {tabLabel(id)}
                   </button>
                 ))}
               </div>
             ) : null}
             <CardAction>
               <Button variant="link" render={<Link href="/notifications" />}>
-                View All <span aria-hidden="true">→</span>
+                {t("activity.view_all")} <span aria-hidden="true">→</span>
               </Button>
             </CardAction>
           </div>
@@ -104,23 +131,23 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
       <CardContent className="flex flex-col">
         {items.length === 0 ? (
           <p className="text-muted-foreground py-4 text-sm">
-            Nothing to review yet.{" "}
+            {t("activity.empty")}{" "}
             <Link
               href="/notifications"
               className="text-primary underline-offset-4 hover:underline"
             >
-              Open Notifications
+              {t("activity.open_notifications")}
             </Link>{" "}
-            to see join requests and blockchain events.
+            {t("activity.empty_suffix")}
           </p>
         ) : filtered.length === 0 ? (
           <p className="text-muted-foreground py-4 text-sm">
-            No {tab} activity.{" "}
+            {t("activity.no_match", { tab: tabLabel(tab) })}{" "}
             <button
-              onClick={() => setTab("All")}
+              onClick={() => setTab("all")}
               className="text-primary underline-offset-4 hover:underline"
             >
-              Show All
+              {t("activity.show_all")}
             </button>
           </p>
         ) : (

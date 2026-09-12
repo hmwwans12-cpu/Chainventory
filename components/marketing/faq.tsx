@@ -70,10 +70,10 @@ export function Faq() {
   };
   const useKeys = hasTranslation("landing.faq.q1");
   return (
-    <section className="py-20 md:py-28">
+    <section id="faq" className="bg-background py-20 scroll-mt-24">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-12 px-4 sm:px-6">
         <Reveal className="flex flex-col items-center gap-4 text-center">
-          <h2 className="text-foreground text-3xl font-semibold tracking-tight text-balance md:text-4xl">
+          <h2 className="font-display text-foreground text-2xl font-bold tracking-tight text-balance md:text-4xl">
             {useKeys ? t("landing.faq.title") : "Frequently asked questions"}
           </h2>
           <p className="text-muted-foreground max-w-xl text-base leading-relaxed text-pretty">

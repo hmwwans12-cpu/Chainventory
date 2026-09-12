@@ -1166,6 +1166,7 @@ export function ProductsPage({
       {createOpen ? (
         <CreateProductDialog
           warehouseId={warehouseId}
+          warehouseName={warehouses.find((w) => w.id === warehouseId)?.name}
           open
           onOpenChange={setCreateOpen}
           onCreated={refresh}
@@ -1225,6 +1226,10 @@ export function ProductsPage({
           onOpenChange={(open) => {
             if (!open) setDetailTarget(null);
           }}
+          onEdit={(p) => setEditTarget(p)}
+          onRecordMovement={(p) =>
+            setStockTarget({ product: p, type: "stock_in" })
+          }
         />
       ) : null}
 

@@ -136,38 +136,51 @@ export default async function DashboardPage({
 
   // Tahap 2: seluruh data dashboard (paralel, semuanya member-scoped RLS).
   const walletAddress = (walletRes.data?.address as string | undefined) ?? null;
-  const [analytics, movementsRes, txRes, notifRes, lowStockRes, pendingRes] =
-    await Promise.all([
-      fetchAnalytics(supabase, active.id, range),
-      supabase
-        .from("stock_movements")
-        .select(MOVEMENT_COLS)
-        .eq("warehouse_id", active.id)
-        .order("created_at", { ascending: false })
-        .limit(8),
-      supabase.rpc("list_transactions", {
-        p_warehouse_id: active.id,
-        p_movement_type: null,
-        p_proof_bucket: null,
-        p_page: 1,
-        p_per_page: 5,
-      }),
-      supabase
-        .from("notifications")
-        .select("id, title, body, times, read_at, last_event_at")
-        .order("last_event_at", { ascending: false })
-        .limit(5),
-      supabase
-        .from("products")
-        .select("low_stock_threshold, inventory_balances(quantity)")
-        .eq("warehouse_id", active.id)
-        .eq("status", "active"),
-      supabase
-        .from("join_requests")
-        .select("id", { count: "exact", head: true })
-        .eq("warehouse_id", active.id)
-        .eq("status", "pending"),
-    ]);
+  const [
+    analytics,
+    movementsRes,
+    txRes,
+    notifRes,
+    lowStockRes,
+    pendingRes,
+    membersCountRes,
+  ] = await Promise.all([
+    fetchAnalytics(supabase, active.id, range),
+    supabase
+      .from("stock_movements")
+      .select(MOVEMENT_COLS)
+      .eq("warehouse_id", active.id)
+      .order("created_at", { ascending: false })
+      .limit(8),
+    supabase.rpc("list_transactions", {
+      p_warehouse_id: active.id,
+      p_movement_type: null,
+      p_proof_bucket: null,
+      p_page: 1,
+      p_per_page: 5,
+    }),
+    supabase
+      .from("notifications")
+      .select("id, type, title, body, times, read_at, last_event_at")
+      .order("last_event_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("products")
+      .select("low_stock_threshold, inventory_balances(quantity)")
+      .eq("warehouse_id", active.id)
+      .eq("status", "active"),
+    supabase
+      .from("join_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("warehouse_id", active.id)
+      .eq("status", "pending"),
+    // Setup-progress step 3: hitung anggota agar undangan yang sudah
+    // join (bukan cuma pending) ikut terhitung.
+    supabase
+      .from("memberships")
+      .select("id", { count: "exact", head: true })
+      .eq("warehouse_id", active.id),
+  ]);
 
   // Low stock: satu aturan dengan halaman Products (lib/inventory/low-stock).
   let lowStockCount = 0;
@@ -243,10 +256,11 @@ export default async function DashboardPage({
   const recentActivity: RecentActivityItem[] = (
     (notifRes.data ?? []) as Pick<
       NotificationRow,
-      "id" | "title" | "body" | "times" | "read_at" | "last_event_at"
+      "id" | "type" | "title" | "body" | "times" | "read_at" | "last_event_at"
     >[]
   ).map((row) => ({
     id: String(row.id),
+    type: String(row.type ?? ""),
     title: String(row.title),
     body: row.body ?? null,
     times: Number(row.times ?? 1),
@@ -267,6 +281,20 @@ export default async function DashboardPage({
   const needsAttention =
     (lowStockCount > 0 ? 1 : 0) + ((pendingRes.count ?? 0) > 0 ? 1 : 0);
   const pendingCount = pendingRes.count ?? 0;
+  // Setup progress jujur: kartu ini hanya tampil saat totalProducts === 0,
+  // tapi step 3 (invite) dan step 4 (movement) bisa sudah kejadian duluan
+  // (undang member dulu baru tambah produk). Hitung dari data nyata:
+  // step 1 selalu done; step 3 done bila ada anggota selain pemilik ATAU
+  // ada pending request (aksi undang sudah dilakukan); step 4 done bila
+  // sudah ada movement tercatat. Count gagal → fallback aman (diabaikan).
+  const membersCount = membersCountRes.error
+    ? null
+    : (membersCountRes.count ?? 0);
+  const inviteDone =
+    pendingCount > 0 || (membersCount !== null && membersCount > 1);
+  const movementDone = recentMovements.length > 0;
+  const setupDone = 1 + (inviteDone ? 1 : 0) + (movementDone ? 1 : 0);
+  const setupPct = setupDone * 25;
   // Stitch "Ledger Synced #N" — total ledger rows dari RPC list_transactions.
   const ledgerTotal =
     typeof ledger?.total === "number" && Number.isFinite(ledger.total)
@@ -455,18 +483,21 @@ export default async function DashboardPage({
                 {t("dashboard.setup_title")}
               </h2>
               <span className="text-muted-foreground t-body-sm ml-auto">
-                {t("dashboard.setup_progress", { done: "1" })}
+                {t("dashboard.setup_progress", { done: String(setupDone) })}
               </span>
             </div>
             <div
               role="progressbar"
-              aria-valuenow={25}
+              aria-valuenow={setupPct}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-label={t("dashboard.setup_title")}
               className="bg-surface-high h-2 overflow-hidden rounded-full"
             >
-              <div className="bg-primary h-full w-1/4 rounded-full" />
+              <div
+                className="bg-primary h-full rounded-full"
+                style={{ width: `${setupPct}%` }}
+              />
             </div>
             <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-4">
               <div className="bg-surface-low border-border flex flex-col justify-between rounded-lg border p-3.5">
@@ -511,13 +542,24 @@ export default async function DashboardPage({
               </Link>
               <Link
                 href={`/members?warehouse=${active.id}`}
-                className="focus-visible:ring-ring border-primary bg-card flex flex-col justify-between rounded-lg border-2 p-3.5 shadow-sm transition-colors outline-none focus-visible:ring-3"
+                className={
+                  inviteDone && pendingCount === 0
+                    ? "hover:border-primary focus-visible:ring-ring bg-surface-low border-border flex flex-col justify-between rounded-lg border p-3.5 transition-colors outline-none focus-visible:ring-3"
+                    : "focus-visible:ring-ring border-primary bg-card flex flex-col justify-between rounded-lg border-2 p-3.5 shadow-sm transition-colors outline-none focus-visible:ring-3"
+                }
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="bg-primary-container text-primary-foreground flex size-6 items-center justify-center rounded-full text-xs font-bold">
-                      3
-                    </span>
+                    {inviteDone && pendingCount === 0 ? (
+                      <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full">
+                        <Check aria-hidden="true" className="size-4" />
+                        <span className="sr-only">Done</span>
+                      </span>
+                    ) : (
+                      <span className="bg-primary-container text-primary-foreground flex size-6 items-center justify-center rounded-full text-xs font-bold">
+                        3
+                      </span>
+                    )}
                     {pendingCount > 0 ? (
                       <span className="text-primary font-mono text-[10px] font-bold">
                         {t("dashboard.action_needed").toUpperCase()}
@@ -531,12 +573,24 @@ export default async function DashboardPage({
                   <p className="text-foreground mt-3 text-sm font-bold">
                     {t("dashboard.step_invite")}
                   </p>
-                  <p className="t-body-sm mt-0.5 font-semibold text-amber-700">
+                  <p
+                    className={
+                      pendingCount > 0
+                        ? "t-body-sm mt-0.5 font-semibold text-amber-700"
+                        : inviteDone
+                          ? "text-primary t-body-sm mt-0.5"
+                          : "text-muted-foreground t-body-sm mt-0.5"
+                    }
+                  >
                     {pendingCount > 0
                       ? t("dashboard.join_requests_other", {
                           n: String(pendingCount),
                         })
-                      : t("dashboard.step_invite_desc")}
+                      : inviteDone && membersCount !== null
+                        ? t("dashboard.step_team_count", {
+                            n: String(membersCount),
+                          })
+                        : t("dashboard.step_invite_desc")}
                   </p>
                 </div>
                 <span className="text-primary border-border mt-3 flex items-center justify-between border-t pt-2 text-xs font-bold">
@@ -546,13 +600,24 @@ export default async function DashboardPage({
               </Link>
               <Link
                 href={`/inventory/movements?warehouse=${active.id}`}
-                className="hover:border-primary focus-visible:ring-ring bg-surface-low border-border flex flex-col justify-between rounded-lg border p-3.5 opacity-75 transition-colors outline-none focus-visible:ring-3"
+                className={
+                  movementDone
+                    ? "hover:border-primary focus-visible:ring-ring bg-surface-low border-border flex flex-col justify-between rounded-lg border p-3.5 transition-colors outline-none focus-visible:ring-3"
+                    : "hover:border-primary focus-visible:ring-ring bg-surface-low border-border flex flex-col justify-between rounded-lg border p-3.5 opacity-75 transition-colors outline-none focus-visible:ring-3"
+                }
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground flex size-6 items-center justify-center rounded-full border-2 border-current text-xs font-bold">
-                      4
-                    </span>
+                    {movementDone ? (
+                      <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full">
+                        <Check aria-hidden="true" className="size-4" />
+                        <span className="sr-only">Done</span>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground flex size-6 items-center justify-center rounded-full border-2 border-current text-xs font-bold">
+                        4
+                      </span>
+                    )}
                     <span className="text-muted-foreground font-mono text-[10px]">
                       STEP 04
                     </span>
@@ -560,8 +625,16 @@ export default async function DashboardPage({
                   <p className="text-foreground mt-3 text-sm font-bold">
                     {t("dashboard.step_movement")}
                   </p>
-                  <p className="text-muted-foreground t-body-sm mt-0.5">
-                    {t("dashboard.step_movement_desc")}
+                  <p
+                    className={
+                      movementDone
+                        ? "text-primary t-body-sm mt-0.5"
+                        : "text-muted-foreground t-body-sm mt-0.5"
+                    }
+                  >
+                    {movementDone
+                      ? t("dashboard.step_movement_done")
+                      : t("dashboard.step_movement_desc")}
                   </p>
                 </div>
               </Link>

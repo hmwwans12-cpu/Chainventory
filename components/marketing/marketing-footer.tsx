@@ -1,21 +1,19 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/shared/logo";
-import { CopyButton } from "@/components/shared/copy-button";
-import { APP_NAME, BASE_SEPOLIA_CHAIN_ID } from "@/lib/constants";
+import { APP_NAME } from "@/lib/constants";
 
 const FOOTER_GROUPS = [
   {
     group: "Product",
     links: [
-      { href: "/features", label: "Features" },
-      { href: "/about", label: "About" },
-      { href: "/faq", label: "FAQ" },
-      { href: "/docs", label: "Docs" },
+      { href: "/#product", label: "Product" },
+      { href: "/#proof", label: "Proof" },
+      { href: "/#faq", label: "FAQ" },
     ],
   },
   {
-    group: "Get started",
+    group: "Get Started",
     links: [
       { href: "/signup", label: "Create Warehouse" },
       { href: "/login", label: "Login" },
@@ -31,15 +29,15 @@ const FOOTER_GROUPS = [
 export function MarketingFooter() {
   return (
     <footer className="border-border bg-card border-t">
-      <div className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-14 sm:px-6 md:grid-cols-12">
-        <div className="flex flex-col gap-4 md:col-span-5">
+      <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
+        <div className="flex flex-col gap-4 md:col-span-2">
           <Logo />
           <p className="text-muted-foreground max-w-sm text-sm leading-relaxed text-pretty">
-            Modern inventory management with real-time stock and blockchain
-            verification- built to feel like a normal SaaS.
+            Modern warehouse inventory management with verifiable
+            cryptographic proof stamping for every critical movement.
           </p>
           <span className="text-muted-foreground bg-background border-border mt-1 inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium">
-            <span className="bg-primary size-1.5 rounded-full" />
+            <span className="bg-primary size-1.5 animate-pulse rounded-full" />
             Base Sepolia · test network
           </span>
         </div>
@@ -47,7 +45,7 @@ export function MarketingFooter() {
         {FOOTER_GROUPS.map((group) => (
           <nav
             key={group.group}
-            className="flex flex-col gap-3 md:col-span-2"
+            className="flex flex-col gap-3"
             aria-label={group.group}
           >
             <span className="text-foreground text-sm font-semibold">
@@ -64,26 +62,13 @@ export function MarketingFooter() {
             ))}
           </nav>
         ))}
-
-        <div className="flex flex-col gap-3 md:col-span-3">
-          <span className="text-foreground text-sm font-semibold">Network</span>
-          <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-            Verification runs on Base Sepolia, a safe and free test network.
-          </p>
-          <span className="text-muted-foreground flex items-center gap-1 text-sm tabular-nums">
-            Chain ID {BASE_SEPOLIA_CHAIN_ID}
-            <CopyButton
-              text={String(BASE_SEPOLIA_CHAIN_ID)}
-              label="Copy chain ID"
-            />
-          </span>
-        </div>
       </div>
 
       <div className="border-border border-t">
-        <div className="text-muted-foreground mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm sm:flex-row sm:px-6">
+        <div className="text-muted-foreground mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs sm:flex-row sm:px-6">
           <span>
             © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+            Verifiable Warehouse Operations.
           </span>
           <span>Blockchain verification on Base Sepolia</span>
         </div>

@@ -22,7 +22,7 @@ export default async function MarketingLayout({
 
   return (
     <LocaleProvider initialLocale={initialLocale}>
-      <div className="flex min-h-dvh flex-col">
+      <div className="bg-canvas flex min-h-dvh flex-col">
         <a
           href="#main"
           className="bg-primary text-primary-foreground sr-only z-50 rounded-lg px-4 py-2 text-sm font-medium focus-visible:not-sr-only"

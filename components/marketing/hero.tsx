@@ -6,9 +6,9 @@ import { motion, useReducedMotion } from "motion/react";
 import {
   ArrowRight,
   BadgeCheck,
+  CheckCircle2,
   Package,
-  ShieldCheck,
-  Wifi,
+  Warehouse,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,31 +28,34 @@ const item = {
 
 const STATS: { valueKey: string; labelKey: string }[] = [
   {
-    valueKey: "landing.hero.stat_real_time",
-    labelKey: "landing.hero.stat_stock_updates",
+    valueKey: "landing.hero.stat_100",
+    labelKey: "landing.hero.stat_100_label",
   },
   {
     valueKey: "landing.hero.stat_5_roles",
-    labelKey: "landing.hero.stat_fine_access",
+    labelKey: "landing.hero.stat_5_roles_label",
   },
   {
-    valueKey: "landing.hero.stat_proof",
-    labelKey: "landing.hero.stat_every_movement",
+    valueKey: "landing.hero.stat_1_day",
+    labelKey: "landing.hero.stat_1_day_label",
   },
 ];
 
-const CHART = [35, 48, 30, 58, 45, 70, 62];
-// NFE-12: normalisasi ke viewBox (0..40) — nilai mentah >40 terpotong dan
-// menipu (70 vs 58 tampil sama tinggi).
-const CHART_MAX = Math.max(...CHART);
-const chartHeight = (v: number) =>
-  Math.max(4, Math.round((v / CHART_MAX) * 34));
+// Static illustrative preview (reference labels it as such) — bar heights
+// mirror the reference mock so the composition matches 1:1.
+const PREVIEW_BARS = [
+  { day: "Mon", h: "h-7" },
+  { day: "Tue", h: "h-11" },
+  { day: "Wed", h: "h-9" },
+  { day: "Thu", h: "h-14" },
+  { day: "Fri", h: "h-8" },
+  { day: "Sat", h: "h-5" },
+  { day: "Sun", h: "h-16", today: true },
+];
 
 /**
- * Hero (DESIGN §23).
- * Positioning: "Inventory Management with Blockchain Verification".
- * Single loud CTA: Create Warehouse (Hick). Large 48px targets (Fitts).
- * Right side is a real mini-dashboard preview inside a double-bezel shell.
+ * Hero — reference copy (public_2): asymmetric grid, underline accent,
+ * stat strip, static illustrative product preview card.
  */
 export function Hero() {
   const reduce = useReducedMotion();
@@ -64,17 +67,16 @@ export function Hero() {
   const { t } = useLocale();
 
   return (
-    <section className="relative overflow-hidden pt-10 pb-20 md:pt-16 md:pb-28">
+    <section className="relative overflow-hidden pt-12 pb-20 md:pt-20 md:pb-28">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage: [
-            "radial-gradient(55% 45% at 50% 0%, rgb(106 178 155 / 0.16), transparent 70%)",
-            "linear-gradient(to right, rgb(28 59 48 / 0.045) 1px, transparent 1px)",
-            "linear-gradient(to bottom, rgb(28 59 48 / 0.045) 1px, transparent 1px)",
+            "radial-gradient(55% 45% at 50% 0%, rgb(106 178 155 / 0.14), transparent 70%)",
+            "radial-gradient(rgb(28 59 48 / 0.10) 1px, transparent 1px)",
           ].join(", "),
-          backgroundSize: "100% 100%, 40px 40px, 40px 40px",
+          backgroundSize: "100% 100%, 20px 20px",
         }}
       />
 
@@ -82,30 +84,30 @@ export function Hero() {
         variants={container}
         initial={mounted && !reduce ? "hidden" : false}
         animate={mounted && !reduce ? "show" : undefined}
-        className="mx-auto grid w-full max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr]"
+        className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 px-4 md:px-12 lg:grid-cols-12"
       >
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col lg:col-span-7">
           <motion.span
             variants={item}
-            className="text-muted-foreground border-primary/15 bg-card inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium"
+            className="bg-secondary-container/60 inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
           >
-            <ShieldCheck aria-hidden="true" className="text-primary size-3.5" />
+            <CheckCircle2 aria-hidden="true" className="text-primary size-3.5" />
             {t("landing.hero.badge")}
           </motion.span>
 
           <motion.h1
             variants={item}
-            className="font-display text-foreground text-4xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-6xl"
+            className="font-display text-foreground mt-5 text-3xl font-bold tracking-tight text-balance md:text-5xl"
           >
             {t("landing.hero.title_main")}{" "}
-            <span className="text-primary">
+            <span className="text-primary underline decoration-secondary-container decoration-4 underline-offset-4">
               {t("landing.hero.title_accent")}
             </span>
           </motion.h1>
 
           <motion.p
             variants={item}
-            className="text-muted-foreground max-w-lg text-base leading-relaxed text-pretty md:text-lg"
+            className="text-muted-foreground mt-4 mb-8 max-w-xl text-lg leading-relaxed text-pretty"
           >
             {t("landing.hero.subtitle")}
           </motion.p>
@@ -116,7 +118,7 @@ export function Hero() {
           >
             <Button
               size="lg"
-              className="group px-7 text-base shadow-(--shadow-card) transition-all duration-150 hover:shadow-(--shadow-elevated) hover:brightness-[1.02] active:brightness-[0.98]"
+              className="group px-6 py-3 shadow-md transition-all duration-150 active:scale-95"
               render={<Link href="/signup" />}
             >
               {t("landing.hero.cta_primary")}
@@ -128,7 +130,7 @@ export function Hero() {
             <Button
               size="lg"
               variant="outline"
-              className="px-7 text-base"
+              className="bg-card px-6 py-3"
               render={<Link href="/login" />}
             >
               {t("landing.hero.cta_secondary")}
@@ -137,18 +139,18 @@ export function Hero() {
 
           <motion.dl
             variants={item}
-            className="border-border mt-2 flex max-w-md flex-col gap-4 border-t pt-6 sm:flex-row sm:gap-0 sm:divide-x sm:pt-6"
+            className="bg-card mt-8 grid max-w-xl grid-cols-3 divide-x rounded-xl border p-4 shadow-sm"
           >
             {STATS.map((stat) => (
               <div
                 key={stat.labelKey}
-                className="flex min-w-0 flex-1 flex-col px-0 sm:px-4 sm:first:pl-0"
+                className="flex min-w-0 flex-col items-center px-2 text-center"
               >
                 <dt className="sr-only">{t(stat.labelKey)}</dt>
-                <dd className="font-display text-foreground text-xl font-semibold text-balance">
+                <dd className="font-display text-primary text-2xl font-bold tabular-nums">
                   {t(stat.valueKey)}
                 </dd>
-                <dd className="text-muted-foreground mt-0.5 text-sm">
+                <dd className="text-muted-foreground mt-0.5 text-xs leading-snug">
                   {t(stat.labelKey)}
                 </dd>
               </div>
@@ -158,83 +160,97 @@ export function Hero() {
 
         <motion.div
           variants={item}
-          className="relative mx-auto w-full max-w-md lg:max-w-none"
-          aria-label="Chainventory dashboard preview"
+          className="relative mx-auto w-full max-w-md lg:col-span-5 lg:max-w-none"
+          aria-label={t("landing.hero.preview_label")}
         >
-          <div className="bg-card ring-foreground/10 rounded-lg p-6 shadow-(--shadow-elevated) ring-1">
-            <div className="border-border flex items-center justify-between border-b pb-4">
-              <div className="flex items-center gap-3">
-                <span className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
-                  <Package aria-hidden="true" className="size-4" />
+          <div className="bg-card relative rounded-2xl border p-5 pt-8 shadow-lg">
+            <span className="bg-muted text-muted-foreground absolute -top-3 right-6 rounded border px-2 py-0.5 font-mono text-[11px] tracking-wide uppercase">
+              {t("landing.hero.preview_ribbon")}
+            </span>
+            <span className="bg-card absolute -bottom-4 -left-4 flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[11px] shadow-md">
+              <span className="bg-primary size-2 animate-pulse rounded-full" />
+              {t("landing.hero.preview_latency")}
+            </span>
+
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
+                  <Warehouse aria-hidden="true" className="size-4" />
                 </span>
-                <div className="flex flex-col">
-                  <span className="text-foreground text-sm font-semibold">
+                <div className="flex min-w-0 flex-col">
+                  <span className="text-foreground truncate text-sm font-semibold">
                     {t("landing.hero.preview_name")}
                   </span>
-                  <span className="text-muted-foreground text-sm">
-                    CHV-7K29XP4 · Base Sepolia
+                  <span className="text-muted-foreground truncate font-mono text-[11px]">
+                    Central Depot Jakarta #01
                   </span>
                 </div>
               </div>
-              <span className="text-primary bg-primary/10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium">
+              <span className="text-primary inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold">
                 <span className="bg-primary size-1.5 animate-pulse rounded-full" />
                 {t("landing.hero.live")}
               </span>
             </div>
 
-            <div className="pt-6">
-              <span className="text-muted-foreground text-sm">Total Stock</span>
-              <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-foreground text-3xl font-semibold tabular-nums">
-                  1,284
+            <div className="mt-5">
+              <span className="text-muted-foreground text-sm">
+                {t("landing.hero.total_products")}
+              </span>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-foreground text-xl font-bold tabular-nums">
+                  1,284 SKUs
                 </span>
-                <span className="text-muted-foreground text-sm">Units</span>
-                <span className="bg-primary/10 text-primary ml-auto inline-flex items-center gap-1 rounded-full px-2 py-1 text-sm font-medium">
-                  <BadgeCheck aria-hidden="true" className="size-3.5" />{" "}
-                  Verified
+                <span className="border-primary text-primary ml-auto inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold">
+                  <BadgeCheck aria-hidden="true" className="size-3.5" />
+                  {t("landing.hero.blockchain_verified")}
                 </span>
               </div>
             </div>
 
-            <div className="mt-6">
-              <span className="text-muted-foreground text-sm">
-                {t("landing.hero.chart_label")}
-              </span>
-              <svg
-                viewBox="0 0 100 40"
-                className="mt-2 h-16 w-full"
-                role="img"
-                aria-label={t("landing.hero.chart_label")}
-              >
-                <title>{t("landing.hero.chart_label")}</title>
-                {CHART.map((v, i) => {
-                  const height = chartHeight(v);
-                  return (
-                    <rect
-                      key={i}
-                      x={i * 13 + 3}
-                      y={40 - height}
-                      width={8}
-                      height={height}
-                      rx={2}
-                      fill={i === 5 ? "var(--primary)" : "var(--secondary)"}
-                      opacity={i === 5 ? 1 : 0.45}
+            <div className="mt-5">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-muted-foreground text-sm">
+                  {t("landing.hero.chart_label")}
+                </span>
+                <span className="text-primary truncate font-mono text-[11px]">
+                  Base Sepolia Block #9,401,212
+                </span>
+              </div>
+              <div className="mt-2 grid h-20 grid-cols-7 items-end gap-2">
+                {PREVIEW_BARS.map((b) => (
+                  <div key={b.day} className="flex h-full flex-col items-center justify-end gap-1">
+                    <div
+                      className={
+                        b.today
+                          ? "bg-primary w-full rounded-sm " + b.h
+                          : "bg-muted w-full rounded-sm " + b.h
+                      }
                     />
-                  );
-                })}
-              </svg>
+                    <span className="text-muted-foreground font-mono text-[10px]">
+                      {b.day === "Sun" ? "Today" : b.day}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-muted/60 mt-4 flex items-center gap-2 rounded-lg px-3 py-2 font-mono text-xs">
+              <Package aria-hidden="true" className="text-primary size-3.5 shrink-0" />
+              <span className="text-foreground truncate">
+                TX-8921 // 240kg Gayo Green Beans
+              </span>
+              <span className="text-muted-foreground ml-auto shrink-0">
+                0x4a9f…e102
+              </span>
             </div>
           </div>
 
-          <motion.div
-            variants={item}
-            className="bg-popover text-popover-foreground absolute bottom-4 left-4 flex items-center gap-2 rounded-lg border px-3 py-2 shadow-(--shadow-elevated)"
+          <span
+            aria-hidden
+            className="bg-foreground text-background absolute -right-6 -bottom-8 hidden rounded px-2 py-1 font-mono text-[11px] sm:flex"
           >
-            <Wifi aria-hidden="true" className="text-primary size-4" />
-            <span className="text-foreground text-sm font-medium">
-              {t("landing.hero.live_sync")}
-            </span>
-          </motion.div>
+            {t("landing.hero.preview_tap")} →
+          </span>
         </motion.div>
       </motion.div>
     </section>

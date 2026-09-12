@@ -65,18 +65,22 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Real-time stock for your whole team, with a verifiable proof on every important record. No crypto knowledge needed.",
     "landing.hero.cta_primary": "Create Warehouse",
     "landing.hero.cta_secondary": "Login",
-    "landing.hero.stat_stock_updates": "Stock Updates",
-    "landing.hero.stat_fine_access": "Fine-Grained Access",
-    "landing.hero.stat_every_movement": "On Every Movement",
-    "landing.hero.stat_real_time": "Real-time",
+    "landing.hero.stat_100": "100%",
+    "landing.hero.stat_100_label": "Every movement anchored",
     "landing.hero.stat_5_roles": "5 roles",
-    "landing.hero.stat_proof": "Proof",
-    "landing.hero.preview_name": "Warehouse · Jakarta",
+    "landing.hero.stat_5_roles_label": "Owner → Viewer, server-side",
+    "landing.hero.stat_1_day": "< 1 day",
+    "landing.hero.stat_1_day_label": "Team onboarding time",
+    "landing.hero.preview_label": "Chainventory dashboard preview",
+    "landing.hero.preview_ribbon": "Illustrative static preview",
+    "landing.hero.preview_latency": "Live sync: 0.12s latency",
+    "landing.hero.preview_tap": "Tap to verify",
+    "landing.hero.preview_name": "Warehouse",
     "landing.hero.live": "Live",
-    "landing.hero.total_products": "Total products",
+    "landing.hero.total_products": "Total Products in Custody",
     "landing.hero.stock_in_30": "Stock In (30d)",
     "landing.hero.stock_out_30": "Stock Out (30d)",
-    "landing.hero.chart_label": "Stock In / Last 7 Days",
+    "landing.hero.chart_label": "Weekly Stock Dispatches",
     "landing.hero.blockchain_verified": "Blockchain verified",
     "landing.hero.base_sepolia": "Base Sepolia",
     "landing.hero.proof_verified": "Proof verified",
@@ -86,55 +90,128 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Landing - Problem
     "landing.problem.title": "Inventory is hard to keep consistent",
     "landing.problem.subtitle":
-      "Warehouse teams juggle stock between spreadsheets, chats, and memory. Records drift apart, and nobody trusts the numbers.",
+      "Traditional warehouses struggle with spreadsheets and paper trails. Chainventory guarantees undeniable truth between warehouse floors, finance desks, and compliance inspectors.",
+    "landing.problem.without_title": "Without Chainventory",
+    "landing.problem.with_title": "With Chainventory",
+    "landing.problem.verified_cockpit": "Verified Cockpit",
+    "landing.problem.without_outcome":
+      "Outcome: 4.8 hrs spent weekly chasing missing counts",
+    "landing.problem.with_outcome":
+      "Outcome: Instant audits & zero reconciliation overhead",
     "landing.problem.p1_title": "Spreadsheets go stale",
     "landing.problem.p1_desc":
-      "Multiple people editing stock in parallel leads to outdated counts and conflicting numbers.",
+      "Multiple manual edits lead to conflicting counts, untracked loss, and stockout emergencies.",
     "landing.problem.p2_title": "Disputes over who changed what",
     "landing.problem.p2_desc":
-      "When stock is wrong, there's no reliable record of what happened, when, and by whom.",
+      "No tamper-proof log of who made adjustments, why numbers dropped, or who authorized releases.",
     "landing.problem.p3_title": "Slow, out-of-sync teams",
     "landing.problem.p3_desc":
-      "Warehouse staff, managers, and auditors work from different views of the same inventory.",
+      "Floor staff, managers, and external auditors see mismatched numbers, demanding weekly reconciliations.",
+    "landing.proof.w1_title": "One source of truth, updated in real time",
+    "landing.proof.w1_desc":
+      "Atomically synced across all connected devices the instant a barcode or pallet is scanned.",
+    "landing.proof.w2_title": "Every change has a verifiable record",
+    "landing.proof.w2_desc":
+      "Cryptographic tamper-evident ledger proofs verify exactly who initiated and recorded the stock event.",
+    "landing.proof.w3_title": "Everyone sees the same numbers",
+    "landing.proof.w3_desc":
+      "Role-based views ensure floor staff, logistics leads, and compliance auditors share zero discrepancies.",
     // Landing - Features
     "landing.features.title": "Everything a modern warehouse needs",
     "landing.features.subtitle":
-      "Manage inventory the way a modern SaaS should feel, with trust and verification layered underneath.",
+      "Engineered for rapid warehouse operations, total team transparency, and effortless proof stamping.",
+    "landing.features.ledger_anchored": "Ledger Anchored",
+    "landing.features.sample_proof": "See a sample proof record",
     "landing.features.f1_title": "Centralized inventory",
     "landing.features.f1_desc":
-      "Products, stock levels, and units in one place. Add individually or import in bulk from CSV.",
+      "Track multi-aisle locations, batch SKUs, and expiration thresholds from a consolidated real-time operational dashboard.",
+    "landing.features.f1_foot": "Aisle & Rack Tracking",
     "landing.features.f2_title": "Stock In / Stock Out",
     "landing.features.f2_desc":
-      "Every movement is recorded atomically. No lost updates or negative stock from concurrent edits.",
+      "Perform intake and outbound dispatches in two quick steps. Scan barcodes or lookup purchase order manifests directly.",
+    "landing.features.f2_foot": "Instant Barcode Lookup",
     "landing.features.f3_title": "Real-time sync",
     "landing.features.f3_desc":
-      "Changes propagate to every connected team member instantly. No manual refresh required.",
+      "Low-latency distributed state changes reflect across hand scanners, floor tablets, and remote office terminals instantly.",
+    "landing.features.f3_foot": "Sub-second Push",
     "landing.features.f4_title": "Role-based access",
     "landing.features.f4_desc":
-      "Owners, managers, staff, auditors, and viewers each get exactly the access they need.",
+      "Strict permissions for Owner, Manager, Staff, Auditor, and Viewer ensure users only access the controls they need.",
+    "landing.features.f4_foot": "5 Discrete Roles",
     "landing.features.f5_title": "Verifiable records",
     "landing.features.f5_desc":
-      "Important movements get a cryptographic proof you can verify anytime, without touching crypto yourself.",
+      "Every dispatched movement, adjustment, and receipt receives an immutable cryptographic fingerprint anchored on Base Sepolia. Proof without revealing sensitive pricing or partner details.",
     "landing.features.f6_title": "Built-in security",
     "landing.features.f6_desc":
       "Server-side authorization, audited history, and an append-only trail of who did what.",
     "landing.features.verified": "Verified",
     // Landing - How it works
-    "landing.how.title": "From empty warehouse to running team in minutes",
+    "landing.how.eyebrow": "Execution Pipeline",
+    "landing.how.title": "How It Works",
     "landing.how.subtitle":
-      "Four steps. No crypto setup, no contract addresses, no technical configuration.",
+      "Simple four-step setup engineered for immediate adoption across non-technical floor crews.",
     "landing.how.s1_title": "Create your warehouse",
     "landing.how.s1_desc":
-      "Give it a name and company. You automatically become the owner with a secure warehouse code.",
+      "Automatically register as warehouse owner and generate an isolated, secure depot identity code.",
+    "landing.how.s1_foot": "Takes 60 seconds",
     "landing.how.s2_title": "Invite your team",
     "landing.how.s2_desc":
-      "Share the code or a link. New members request access and get assigned an appropriate role.",
+      "Share code or invite links to designate roles: Owner, Manager, Staff, Auditor, or Viewer.",
+    "landing.how.s2_foot": "Role-gated access",
     "landing.how.s3_title": "Manage stock in real time",
     "landing.how.s3_desc":
-      "Add products, record Stock In and Out, and watch updates reach the whole team instantly.",
+      "Record Stock In / Stock Out batches and observe immediate synchronized stock counts across floor scanners.",
+    "landing.how.s3_foot": "Real-time socket sync",
     "landing.how.s4_title": "Verify when you need to",
     "landing.how.s4_desc":
       "Every movement gets a proof record. Open the history to see exactly who did what, anytime.",
+    "landing.how.s4_foot": "Cryptographic proof",
+    // Landing - Strip / Band / Trust / Pilot (reference public_2 + public_1)
+    "landing.strip.s1_title": "Defense in depth",
+    "landing.strip.s1_desc":
+      "Isolated server validations guard against unauthorized client inputs.",
+    "landing.strip.s2_title": "Access you control",
+    "landing.strip.s2_desc":
+      "Server-enforced RBAC gates sensitive actions per team tier.",
+    "landing.strip.s3_title": "Append-only audit history",
+    "landing.strip.s3_desc":
+      "Past records cannot be erased; corrections require counter-entries.",
+    "landing.strip.s4_title": "Transparent verification",
+    "landing.strip.s4_desc":
+      "Cryptographic root state publicly confirmed on Base Sepolia testnet.",
+    "landing.band.badge": "Base Sepolia Layer 2",
+    "landing.band.title": "Verification, without the complexity",
+    "landing.band.subtitle":
+      "You don't need gas tokens, crypto wallets, or private key management. Chainventory handles state-anchoring natively under the hood.",
+    "landing.band.b1_title": "Zero Gas Overhead",
+    "landing.band.b1_desc":
+      "Transactions are batched and sponsored through our managed relayer infrastructure.",
+    "landing.band.b2_title": "Tamper-Evident Merkle Proofs",
+    "landing.band.b2_desc":
+      "If a past database row is altered, the cryptographic root mismatch alerts managers instantly.",
+    "landing.band.b3_title": "Public Audit Transparency",
+    "landing.band.b3_desc":
+      "External auditors verify inventory movements on-chain without exposing trade secrets.",
+    "landing.band.inspector_title": "Ledger Proof Inspector",
+    "landing.band.tx_hash": "Transaction Hash",
+    "landing.band.dispatched_by": "Dispatched By",
+    "landing.band.role_auth": "Role Authorization",
+    "landing.band.proof_status": "Cryptographically Verified",
+    "landing.band.view_basescan": "View on BaseScan Sepolia Explorer",
+    "landing.trust.title": "Trustworthy records, clear accountability",
+    "landing.trust.subtitle":
+      "Defense-in-depth architecture combining web security standards with immutable cryptographic ledger audits.",
+    "landing.trust.t1_title": "Server-Enforced RBAC",
+    "landing.trust.t1_desc":
+      "Every permission is verified on the server before anything reaches the ledger. The UI never decides who can do what.",
+    "landing.trust.t2_title": "Append-Only Movement Log",
+    "landing.trust.t2_desc":
+      "Records can never be edited or deleted. Corrections happen through reasoned offsetting Stock In / Out transactions.",
+    "landing.trust.t3_title": "Privacy-Preserving Hashes",
+    "landing.trust.t3_desc":
+      "Addresses and pricing stay encrypted in the database. Only Merkle proofs go on-chain.",
+    "landing.pilot.text": "Currently piloting with early warehouse teams.",
+    "landing.pilot.cta": "Join the pilot waitlist",
     // Landing - Blockchain
     "landing.blockchain.badge": "Why blockchain?",
     "landing.blockchain.title": "Verification, without the complexity",
@@ -205,11 +282,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Landing - CTA
     "landing.cta.title": "Start managing inventory with verifiable records",
     "landing.cta.subtitle":
-      "Create your warehouse in minutes. Your team gets real-time stock, role-based access, and proof you can trust.",
+      "Eliminate disputes, accelerate audits, and give your logistics team an undeniable single source of truth.",
     "landing.cta.primary": "Create Warehouse",
     "landing.cta.secondary": "Login",
     "landing.cta.footnote":
-      "No crypto knowledge needed. Free on the Base Sepolia test network",
+      "No crypto knowledge needed. Free on the Base Sepolia test network.",
     "landing.faq.title": "Frequently asked questions",
     "landing.faq.subtitle":
       "The quick answers. No blockchain vocabulary required.",
@@ -287,8 +364,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.step_products_count": "{n} products",
     "dashboard.step_invite": "Invite team",
     "dashboard.step_invite_desc": "Share warehouse code",
+    "dashboard.step_team_count": "{n} members",
     "dashboard.step_movement": "Record stock movement",
     "dashboard.step_movement_desc": "Stock In / Out",
+    "dashboard.step_movement_done": "First movement recorded",
     "dashboard.setup_hint":
       "Your warehouse is ready. Add your first product to start the checklist.",
     "dashboard.health_title": "Warehouse Operations Health",
@@ -304,6 +383,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.manage_invites": "Manage Invites",
     "dashboard.health_realtime": "Realtime Sync",
     "dashboard.node_code": "Node Code",
+    "activity.tab_all": "All",
+    "activity.tab_inventory": "Inventory",
+    "activity.tab_members": "Members",
+    "activity.tab_audit": "Audit",
+    "activity.filter_label": "Activity filter",
+    "activity.view_all": "View All",
+    "activity.empty": "Nothing to review yet.",
+    "activity.open_notifications": "Open Notifications",
+    "activity.empty_suffix": "to see join requests and blockchain events.",
+    "activity.no_match": "No {tab} activity.",
+    "activity.show_all": "Show All",
     "settings.title": "Settings",
     "settings.description":
       "Your profile, wallet, and active warehouse details.",
@@ -394,18 +484,22 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Stok real-time untuk seluruh tim, dengan bukti terverifikasi pada setiap catatan penting. Tanpa perlu tahu kripto.",
     "landing.hero.cta_primary": "Buat Gudang",
     "landing.hero.cta_secondary": "Masuk",
-    "landing.hero.stat_stock_updates": "pembaruan stok",
-    "landing.hero.stat_fine_access": "akses terperinci",
-    "landing.hero.stat_every_movement": "pada setiap pergerakan",
-    "landing.hero.stat_real_time": "Waktu nyata",
+    "landing.hero.stat_100": "100%",
+    "landing.hero.stat_100_label": "Setiap pergerakan ditambatkan",
     "landing.hero.stat_5_roles": "5 peran",
-    "landing.hero.stat_proof": "Bukti",
-    "landing.hero.preview_name": "Gudang · Jakarta",
+    "landing.hero.stat_5_roles_label": "Owner → Viewer, sisi server",
+    "landing.hero.stat_1_day": "< 1 hari",
+    "landing.hero.stat_1_day_label": "Waktu onboarding tim",
+    "landing.hero.preview_label": "Pratinjau dasbor Chainventory",
+    "landing.hero.preview_ribbon": "Pratinjau statis ilustratif",
+    "landing.hero.preview_latency": "Sinkronisasi live: latensi 0,12 dtk",
+    "landing.hero.preview_tap": "Ketuk untuk verifikasi",
+    "landing.hero.preview_name": "Gudang",
     "landing.hero.live": "Aktif",
-    "landing.hero.total_products": "Total produk",
+    "landing.hero.total_products": "Total Produk dalam Penitipan",
     "landing.hero.stock_in_30": "Stok Masuk (30h)",
     "landing.hero.stock_out_30": "Stok Keluar (30h)",
-    "landing.hero.chart_label": "Stok Masuk / 7 Hari Terakhir",
+    "landing.hero.chart_label": "Pengiriman Stok Mingguan",
     "landing.hero.blockchain_verified": "Terverifikasi blockchain",
     "landing.hero.base_sepolia": "Base Sepolia",
     "landing.hero.proof_verified": "Bukti terverifikasi",
@@ -415,55 +509,128 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Landing - Problem
     "landing.problem.title": "Inventaris sulit dijaga konsisten",
     "landing.problem.subtitle":
-      "Tim gudang mencatat stok di spreadsheet, chat, dan ingatan. Catatan menyimpang, dan tak ada yang percaya pada angkanya.",
+      "Gudang tradisional berjuang dengan spreadsheet dan jejak kertas. Chainventory menjamin kebenaran tak terbantahkan antara lantai gudang, meja keuangan, dan inspektur kepatuhan.",
+    "landing.problem.without_title": "Tanpa Chainventory",
+    "landing.problem.with_title": "Dengan Chainventory",
+    "landing.problem.verified_cockpit": "Kokpit Terverifikasi",
+    "landing.problem.without_outcome":
+      "Hasil: 4,8 jam habis tiap minggu mengejar hitungan hilang",
+    "landing.problem.with_outcome":
+      "Hasil: Audit instan & nol overhead rekonsiliasi",
     "landing.problem.p1_title": "Spreadsheet usang",
     "landing.problem.p1_desc":
-      "Banyak orang mengedit stok secara paralel menghasilkan hitungan usang dan angka yang bertentangan.",
+      "Banyak edit manual berujung hitungan bertentangan, kehilangan tak terlacak, dan darurat stok kosong.",
     "landing.problem.p2_title": "Sengketa soal siapa yang ubah apa",
     "landing.problem.p2_desc":
-      "Saat stok salah, tidak ada catatan andal tentang apa yang terjadi, kapan, dan oleh siapa.",
+      "Tanpa log anti-rusak tentang siapa yang menyesuaikan, mengapa angka turun, atau siapa yang merilis.",
     "landing.problem.p3_title": "Tim lambat dan tidak sinkron",
     "landing.problem.p3_desc":
-      "Staf gudang, manajer, dan auditor bekerja dari pandangan inventaris yang berbeda.",
+      "Staf lantai, manajer, dan auditor eksternal melihat angka tak cocok, menuntut rekonsiliasi mingguan.",
+    "landing.proof.w1_title": "Satu sumber kebenaran, real-time",
+    "landing.proof.w1_desc":
+      "Tersinkron atomik ke semua perangkat terhubung begitu barcode atau palet dipindai.",
+    "landing.proof.w2_title": "Setiap perubahan punya catatan terverifikasi",
+    "landing.proof.w2_desc":
+      "Bukti ledger anti-rusak kriptografis memverifikasi persis siapa yang memulai dan mencatat event stok.",
+    "landing.proof.w3_title": "Semua melihat angka yang sama",
+    "landing.proof.w3_desc":
+      "Tampilan berbasis peran memastikan staf lantai, lead logistik, dan auditor kepatuhan tanpa selisih.",
     // Landing - Features
     "landing.features.title": "Semua yang gudang modern butuhkan",
     "landing.features.subtitle":
-      "Kelola inventaris seperti SaaS modern seharusnya terasa, dengan kepercayaan dan verifikasi menyatu di bawahnya.",
+      "Direkayasa untuk operasi gudang cepat, transparansi total tim, dan stempel bukti tanpa usaha.",
+    "landing.features.ledger_anchored": "Ditambatkan Ledger",
+    "landing.features.sample_proof": "Lihat contoh catatan bukti",
     "landing.features.f1_title": "Inventaris terpusat",
     "landing.features.f1_desc":
-      "Produk, level stok, dan unit di satu tempat. Tambah satu per satu atau impor massal dari CSV.",
+      "Lacak lokasi multi-lorong, batch SKU, dan ambang kedaluwarsa dari dasbor operasional real-time yang terkonsolidasi.",
+    "landing.features.f1_foot": "Pelacakan Lorong & Rak",
     "landing.features.f2_title": "Stok masuk / stok keluar",
     "landing.features.f2_desc":
-      "Setiap pergerakan dicatat atomik. Tanpa pembaruan hilang atau stok negatif dari edit bersamaan.",
+      "Lakukan penerimaan dan pengiriman keluar dalam dua langkah cepat. Pindai barcode atau cari manifes purchase order langsung.",
+    "landing.features.f2_foot": "Cari Barcode Instan",
     "landing.features.f3_title": "Sinkronisasi real-time",
     "landing.features.f3_desc":
-      "Perubahan langsung menyebar ke setiap anggota tim. Tanpa penyegaran manual.",
+      "Perubahan state terdistribusi latensi rendah langsung tercermin di pemindai genggam, tablet lantai, dan terminal kantor jauh.",
+    "landing.features.f3_foot": "Dorongan Sub-detik",
     "landing.features.f4_title": "Akses berbasis peran",
     "landing.features.f4_desc":
-      "owner, manajer, staf, auditor, dan penonton masing-masing mendapat akses persis yang mereka butuhkan.",
+      "Izin ketat untuk Owner, Manager, Staff, Auditor, dan Viewer memastikan pengguna hanya mengakses kontrol yang mereka butuhkan.",
+    "landing.features.f4_foot": "5 Peran Berbeda",
     "landing.features.f5_title": "Catatan terverifikasi",
     "landing.features.f5_desc":
-      "Pergerakan penting mendapat bukti kriptografis yang bisa Anda verifikasi kapan saja, tanpa menyentuh kripto sendiri.",
+      "Setiap pergerakan pengiriman, penyesuaian, dan penerimaan mendapat sidik jari kriptografis tak berubah yang ditambatkan di Base Sepolia. Bukti tanpa membocorkan harga sensitif atau detail mitra.",
     "landing.features.f6_title": "Keamanan bawaan",
     "landing.features.f6_desc":
       "Otorisasi server-side, riwayat diaudit, dan jejak siapa melakukan apa yang hanya bisa ditambah.",
     "landing.features.verified": "Terverifikasi",
     // Landing - How it works
-    "landing.how.title": "Dari gudang kosong ke tim berjalan dalam menit",
+    "landing.how.eyebrow": "Pipa Eksekusi",
+    "landing.how.title": "Cara Kerja",
     "landing.how.subtitle":
-      "Empat langkah. Tanpa setup kripto, tanpa alamat kontrak, tanpa konfigurasi teknis.",
+      "Setup empat langkah sederhana yang dirancang untuk adopsi langsung oleh kru lantai non-teknis.",
     "landing.how.s1_title": "Buat gudang Anda",
     "landing.how.s1_desc":
-      "Beri nama dan perusahaan. Anda otomatis menjadi owner dengan kode gudang aman.",
+      "Otomatis terdaftar sebagai owner gudang dan hasilkan kode identitas depot yang terisolasi dan aman.",
+    "landing.how.s1_foot": "Butuh 60 detik",
     "landing.how.s2_title": "Undang tim Anda",
     "landing.how.s2_desc":
-      "Bagikan kode atau tautan. Anggota baru meminta akses dan mendapat peran yang sesuai.",
+      "Bagikan kode atau tautan undangan untuk menetapkan peran: Owner, Manager, Staff, Auditor, atau Viewer.",
+    "landing.how.s2_foot": "Akses berbasis peran",
     "landing.how.s3_title": "Kelola stok secara real-time",
     "landing.how.s3_desc":
-      "Tambah produk, catat stok masuk dan keluar, dan lihat pembaruan sampai ke seluruh tim instan.",
+      "Catat batch Stok Masuk / Stok Keluar dan amati hitungan stok tersinkron langsung di seluruh pemindai lantai.",
+    "landing.how.s3_foot": "Sinkronisasi soket real-time",
     "landing.how.s4_title": "Verifikasi saat Anda butuh",
     "landing.how.s4_desc":
       "Setiap pergerakan mendapat catatan bukti. Buka riwayat untuk melihat persis siapa yang lakukan apa, kapan saja.",
+    "landing.how.s4_foot": "Bukti kriptografis",
+    // Landing - Strip / Band / Trust / Pilot (referensi public_2 + public_1)
+    "landing.strip.s1_title": "Pertahanan berlapis",
+    "landing.strip.s1_desc":
+      "Validasi server terisolasi menjaga dari input klien yang tak sah.",
+    "landing.strip.s2_title": "Akses yang Anda kendalikan",
+    "landing.strip.s2_desc":
+      "RBAC sisi server menjaga aksi sensitif per tingkatan tim.",
+    "landing.strip.s3_title": "Riwayat audit hanya-tambah",
+    "landing.strip.s3_desc":
+      "Catatan lama tak bisa dihapus; koreksi butuh entri penyeimbang.",
+    "landing.strip.s4_title": "Verifikasi transparan",
+    "landing.strip.s4_desc":
+      "Status root kriptografis dikonfirmasi publik di testnet Base Sepolia.",
+    "landing.band.badge": "Base Sepolia Layer 2",
+    "landing.band.title": "Verifikasi, tanpa kerumitan",
+    "landing.band.subtitle":
+      "Anda tak butuh token gas, dompet kripto, atau manajemen private key. Chainventory menangani penambatan state langsung di balik layar.",
+    "landing.band.b1_title": "Nol Overhead Gas",
+    "landing.band.b1_desc":
+      "Transaksi di-batch dan disponsori lewat infrastruktur relayer terkelola kami.",
+    "landing.band.b2_title": "Bukti Merkle Anti-Rusak",
+    "landing.band.b2_desc":
+      "Bila baris database lama diubah, ketidakcocokan root kriptografis langsung mengingatkan manajer.",
+    "landing.band.b3_title": "Transparansi Audit Publik",
+    "landing.band.b3_desc":
+      "Auditor eksternal memverifikasi pergerakan inventaris on-chain tanpa membocorkan rahasia dagang.",
+    "landing.band.inspector_title": "Inspektur Bukti Ledger",
+    "landing.band.tx_hash": "Hash Transaksi",
+    "landing.band.dispatched_by": "Dikirim Oleh",
+    "landing.band.role_auth": "Otorisasi Peran",
+    "landing.band.proof_status": "Terverifikasi Kriptografis",
+    "landing.band.view_basescan": "Lihat di BaseScan Sepolia Explorer",
+    "landing.trust.title": "Catatan tepercaya, akuntabilitas jelas",
+    "landing.trust.subtitle":
+      "Arsitektur defense-in-depth yang memadukan standar keamanan web dengan audit ledger kriptografis tak berubah.",
+    "landing.trust.t1_title": "RBAC Ditegakkan Server",
+    "landing.trust.t1_desc":
+      "Setiap izin diverifikasi di server sebelum sampai ke ledger. UI tak pernah memutuskan siapa boleh apa.",
+    "landing.trust.t2_title": "Log Pergerakan Hanya-Tambah",
+    "landing.trust.t2_desc":
+      "Catatan tak pernah bisa diedit atau dihapus. Koreksi lewat transaksi offset Stok Masuk / Keluar yang beralasan.",
+    "landing.trust.t3_title": "Hash Penjaga Privasi",
+    "landing.trust.t3_desc":
+      "Alamat dan harga tetap terenkripsi di database. Hanya bukti Merkle yang naik on-chain.",
+    "landing.pilot.text": "Sedang piloting bersama tim-tim gudang awal.",
+    "landing.pilot.cta": "Gabung daftar tunggu pilot",
     // Landing - Blockchain
     "landing.blockchain.badge": "Mengapa blockchain?",
     "landing.blockchain.title": "Verifikasi, tanpa kerumitan",
@@ -535,11 +702,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Landing - CTA
     "landing.cta.title": "Mulai kelola inventaris dengan catatan terverifikasi",
     "landing.cta.subtitle":
-      "Buat gudang Anda dalam menit. Tim Anda dapat stok real-time, akses berbasis peran, dan bukti yang bisa dipercaya.",
+      "Hilangkan sengketa, percepat audit, dan beri tim logistik Anda satu sumber kebenaran yang tak terbantahkan.",
     "landing.cta.primary": "Buat Gudang",
     "landing.cta.secondary": "Masuk",
     "landing.cta.footnote":
-      "Tanpa perlu tahu kripto. Gratis di jaringan uji Base Sepolia",
+      "Tanpa perlu tahu kripto. Gratis di jaringan uji Base Sepolia.",
     "landing.faq.title": "Pertanyaan yang sering diajukan",
     "landing.faq.subtitle": "Jawaban cepat. Tanpa kosakata blockchain.",
     "landing.faq.q1":
@@ -617,8 +784,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.step_products_count": "{n} produk",
     "dashboard.step_invite": "Undang tim",
     "dashboard.step_invite_desc": "Bagikan kode gudang",
+    "dashboard.step_team_count": "{n} anggota",
     "dashboard.step_movement": "Catat pergerakan stok",
     "dashboard.step_movement_desc": "Stok Masuk / Keluar",
+    "dashboard.step_movement_done": "Pergerakan pertama tercatat",
     "dashboard.setup_hint":
       "Gudang Anda siap. Tambah produk pertama untuk memulai checklist.",
     "dashboard.health_title": "Kesehatan Operasional Gudang",
@@ -634,6 +803,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.manage_invites": "Kelola Undangan",
     "dashboard.health_realtime": "Sinkron Realtime",
     "dashboard.node_code": "Kode Node",
+    "activity.tab_all": "Semua",
+    "activity.tab_inventory": "Inventaris",
+    "activity.tab_members": "Anggota",
+    "activity.tab_audit": "Audit",
+    "activity.filter_label": "Filter aktivitas",
+    "activity.view_all": "Lihat Semua",
+    "activity.empty": "Belum ada yang perlu ditinjau.",
+    "activity.open_notifications": "Buka Notifikasi",
+    "activity.empty_suffix":
+      "untuk melihat permintaan gabung dan event blockchain.",
+    "activity.no_match": "Tidak ada aktivitas {tab}.",
+    "activity.show_all": "Tampilkan Semua",
     "settings.title": "Pengaturan",
     "settings.description": "Profil, dompet, dan detail gudang aktif Anda.",
     "settings.profile": "Profil",

@@ -15,27 +15,21 @@ import { Reveal } from "@/components/marketing/reveal";
 export function Cta() {
   const { t } = useLocale();
   return (
-    <section className="bg-primary relative overflow-hidden py-20 md:py-32">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(50% 45% at 50% 0%, rgb(255 255 255 / 0.08), transparent 70%)",
-        }}
-      />
-      <Reveal className="relative mx-auto flex w-full max-w-3xl flex-col items-center gap-6 px-4 text-center sm:px-6">
-        <h2 className="text-primary-foreground text-4xl font-semibold tracking-tight text-balance md:text-5xl">
+    <section
+      id="get-started"
+      className="bg-primary relative overflow-hidden pt-20 pb-16 text-primary-foreground scroll-mt-24"
+    >
+      <Reveal className="relative mx-auto flex w-full max-w-4xl flex-col items-center gap-6 px-4 text-center sm:px-6">
+        <h2 className="font-display text-2xl font-bold tracking-tight text-balance sm:text-4xl md:text-5xl">
           {t("landing.cta.title")}
         </h2>
-        <p className="text-primary-foreground/90 max-w-xl text-base leading-relaxed text-pretty md:text-lg">
+        <p className="text-primary-foreground/85 max-w-xl text-base leading-relaxed text-pretty">
           {t("landing.cta.subtitle")}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Button
             size="lg"
-            variant="secondary"
-            className="h-12 px-7 text-base"
+            className="bg-white px-8 py-3.5 text-base font-semibold text-primary shadow-md hover:bg-white/90"
             render={<Link href="/signup" />}
           >
             {t("landing.cta.primary")}
@@ -44,13 +38,13 @@ export function Cta() {
           <Button
             size="lg"
             variant="outline"
-            className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground h-12 bg-transparent px-7 text-base"
+            className="border-white/60 bg-transparent px-8 py-3.5 text-base text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
             render={<Link href="/login" />}
           >
             {t("landing.cta.secondary")}
           </Button>
         </div>
-        <p className="text-primary-foreground/90 text-sm">
+        <p className="text-primary-foreground/70 font-mono text-xs">
           {t("landing.cta.footnote")}
         </p>
       </Reveal>
