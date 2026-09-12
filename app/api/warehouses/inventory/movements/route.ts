@@ -180,6 +180,13 @@ export async function POST(request: Request) {
           verified[0]?.address ??
           null;
       }
+      // Tanpa wallet verified tidak ada identitas on-chain yang sah —
+      // tolak eksplisit dengan arahan (bukan gagal obscure di RPC bawah).
+      if (!actorWallet) {
+        return forbidden(
+          "Your wallet is not verified yet. Verify it in Settings → Wallet, then try again."
+        );
+      }
 
       // Data untuk payload proof (hanya bila warehouse sudah di-deploy).
       // NBE-12: via warehouse_summaries (member-visible); tabel dasar

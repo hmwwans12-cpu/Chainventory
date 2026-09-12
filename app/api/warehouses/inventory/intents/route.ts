@@ -17,6 +17,7 @@ import {
 } from "@/lib/blockchain/intent-proof";
 import { buildProofPayload } from "@/lib/proof/payload";
 import { hashProofPayload } from "@/lib/proof/hash";
+import { computeRequestFingerprint } from "@/lib/inventory/fingerprint";
 import { applyMovementSchema } from "@/lib/validators/inventory";
 import {
   invalid,
@@ -40,6 +41,8 @@ const INTENT_RPC_MESSAGES: Record<string, string> = {
   NOT_FOUND: "Stock item or intent not found.",
   INTENT_NOT_ACTIVE:
     "This stock request expired or was already used. Start a new one.",
+  WALLET_NOT_VERIFIED:
+    "Your wallet is not verified yet. Verify it in Settings → Wallet, then try again.",
 };
 
 type IntentRow = {
@@ -170,6 +173,19 @@ export async function POST(request: Request) {
         p_idempotency_key: idempotencyKey,
         p_payload: payload,
         p_payload_hash: payloadHash,
+        // 0057: fingerprint kanonis (format SAMA dengan jalur movements
+        // langsung) — diteruskan saat commit agar guard 0040 lolos.
+        p_request_fingerprint: computeRequestFingerprint({
+          warehouseId: parsed.data.warehouseId,
+          productId: parsed.data.productId,
+          movementType: parsed.data.movementType,
+          quantity: parsed.data.quantity,
+          expectedBalanceVersion: parsed.data.expectedBalanceVersion,
+          reason: parsed.data.reason || null,
+          reference: parsed.data.reference || null,
+          reversalOf: null,
+          actorWallet: parsed.data.actorWallet,
+        }),
       }
     );
     if (rpcError || !data) {
