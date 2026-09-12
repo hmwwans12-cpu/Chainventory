@@ -57,6 +57,8 @@ export const MUTATION_RATE_LIMITS = {
   "ownership-transfer": { user: 3, ip: 10 },
   /** sinkronisasi wallet Privy. */
   "wallet-sync": { user: 10, ip: 30 },
+  /** verifikasi kepemilikan wallet (personal_sign challenge). */
+  "wallet-verify": { user: 10, ip: 30 },
   /** export CSV (products/movements). */
   export: { user: 30, ip: 120 },
 } as const;

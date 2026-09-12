@@ -406,6 +406,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.no_wallet": "No primary wallet connected yet.",
     "settings.wallet_address": "Wallet address",
     "settings.copy_wallet": "Copy wallet address",
+    "settings.wallet_verified": "Verified",
+    "settings.wallet_unverified": "Unverified",
+    "settings.verify_wallet": "Verify wallet",
+    "settings.verify_wallet_hint":
+      "Stock movements need a verified wallet. Sign a free message to prove you own this address — no gas fee.",
+    "settings.verify_wallet_signing": "Waiting for wallet signature…",
+    "settings.verify_wallet_success": "Wallet verified. You can now record stock movements.",
+    "settings.verify_wallet_failed": "Verification failed. Please try again.",
+    "settings.verify_wallet_unavailable":
+      "Wallet not available in this browser session. Reconnect and try again.",
     "settings.contract_address": "Contract address",
     "settings.copy_contract": "Copy contract address",
     "settings.warehouse": "Warehouse",
@@ -826,6 +836,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.no_wallet": "Belum ada dompet utama yang terhubung.",
     "settings.wallet_address": "Alamat dompet",
     "settings.copy_wallet": "Salin alamat dompet",
+    "settings.wallet_verified": "Terverifikasi",
+    "settings.wallet_unverified": "Belum verifikasi",
+    "settings.verify_wallet": "Verifikasi dompet",
+    "settings.verify_wallet_hint":
+      "Pergerakan stok butuh dompet terverifikasi. Tandatangani pesan gratis untuk membuktikan kamu pemilik alamat ini — tanpa gas fee.",
+    "settings.verify_wallet_signing": "Menunggu tanda tangan wallet…",
+    "settings.verify_wallet_success": "Dompet terverifikasi. Kamu kini bisa mencatat pergerakan stok.",
+    "settings.verify_wallet_failed": "Verifikasi gagal. Silakan coba lagi.",
+    "settings.verify_wallet_unavailable":
+      "Dompet tidak tersedia di sesi browser ini. Sambungkan ulang dan coba lagi.",
     "settings.contract_address": "Alamat kontrak",
     "settings.copy_contract": "Salin alamat kontrak",
     "settings.warehouse": "Gudang",

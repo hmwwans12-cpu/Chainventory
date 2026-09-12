@@ -23,6 +23,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CopyButton } from "@/components/shared/copy-button";
 import { DisplayNameEditor } from "@/components/shared/display-name-editor";
 import { WalletBalance } from "@/components/shared/wallet-balance";
+import {
+  VerifiedWalletBadge,
+  VerifyWalletButton,
+} from "@/components/settings/verify-wallet-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NotificationPreferencesPanel } from "@/components/shared/notification-preferences";
@@ -64,7 +68,7 @@ export default async function SettingsPage({
       .maybeSingle(),
     supabase
       .from("wallets")
-      .select("address")
+      .select("address, verification_state")
       .eq("user_id", user.id)
       .eq("is_primary", true)
       .limit(1)
@@ -78,6 +82,9 @@ export default async function SettingsPage({
     (profileRes.data?.email as string | undefined) ?? user.email ?? "";
   const prefs = normalizePreferences(profileRes.data?.notification_preferences);
   const walletAddress = (walletRes.data?.address as string | undefined) ?? null;
+  const walletVerified =
+    (walletRes.data?.verification_state as string | undefined) ===
+    "verified";
   const sp = await searchParams;
   const active = pickActiveWarehouse(warehouses, sp.warehouse);
   const locale = await getLocale();
@@ -153,6 +160,18 @@ export default async function SettingsPage({
                   <p className="bg-surface-low text-foreground rounded-lg border px-3 py-2 font-mono text-sm break-all">
                     {walletAddress}
                   </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {walletVerified ? (
+                      <VerifiedWalletBadge />
+                    ) : (
+                      <>
+                        <VerifyWalletButton address={walletAddress} />
+                        <p className="text-muted-foreground w-full text-xs leading-relaxed">
+                          {t("settings.verify_wallet_hint")}
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
                   <div>
