@@ -1,0 +1,28 @@
+diff --git a/dist/cjs/TransactionDetails-C9JBvV6r.js b/dist/cjs/TransactionDetails-C9JBvV6r.js
+index d901bb297f9e7d9d8db888aa075f435104c28e71..07655612e24e8a82870c28fd00d9619dfd4bdb20 100644
+--- a/dist/cjs/TransactionDetails-C9JBvV6r.js
++++ b/dist/cjs/TransactionDetails-C9JBvV6r.js
+@@ -41,8 +41,8 @@
+   font-size: 14px;
+   line-height: 22.4px;
+   font-weight: 400;
+-`;const f=/*#__PURE__*/o.createContext(void 0),j=/*#__PURE__*/o.createContext(void 0),m=({defaultValue:t,children:i})=>{let[n,r]=o.useState(t||null);/*#__PURE__*/return e.jsx(f.Provider,{value:{activePanel:n,togglePanel:e=>{r(n===e?null:e)}},children:/*#__PURE__*/e.jsx(I,{children:i})})},b=({value:t,children:i})=>{let{activePanel:n,togglePanel:r}=o.useContext(f),l=n===t;/*#__PURE__*/return e.jsx(j.Provider,{value:{onToggle:()=>r(t),value:t},children:/*#__PURE__*/e.jsx(T,{isActive:l?"true":"false","data-open":String(l),children:i})})},w=({children:t})=>{let{activePanel:i}=o.useContext(f),{onToggle:n,value:r}=o.useContext(j),l=i===r;/*#__PURE__*/
+-return e.jsxs(e.Fragment,{children:[/*#__PURE__*/e.jsxs(C,{onClick:n,"data-open":String(l),children:[/*#__PURE__*/e.jsx(A,{children:t}),/*#__PURE__*/e.jsx(D,{isactive:l?"true":"false",children:/*#__PURE__*/e.jsx(a.default,{height:"16px",width:"16px",strokeWidth:"2"})})]}),/*#__PURE__*/e.jsx(S,{})]})},k=({children:t})=>{let{activePanel:i}=o.useContext(f),{value:n}=o.useContext(j);/*#__PURE__*/return e.jsx(q,{"data-open":String(i===n),children:/*#__PURE__*/e.jsx(B,{children:t})})},P=({children:t})=>{let{activePanel:i}=o.useContext(f),{value:n}=o.useContext(j);/*#__PURE__*/return e.jsx(B,{children:"function"==typeof t?t({isActive:i===n}):t})};let I=t.styled.div`
++`;const f=/*#__PURE__*/o.createContext(void 0),j=/*#__PURE__*/o.createContext(void 0),m=({defaultValue:t,children:i})=>{let[n,r]=o.useState(t||null);/*#__PURE__*/return e.jsx(f.Provider,{value:{activePanel:n,togglePanel:e=>{r(n===e?null:e)}},children:/*#__PURE__*/e.jsx(I,{children:i})})},b=({value:t,children:i})=>{let{activePanel:n,togglePanel:r}=o.useContext(f),l=n===t;/*#__PURE__*/return e.jsx(j.Provider,{value:{onToggle:()=>r(t),value:t},children:/*#__PURE__*/e.jsx(T,{"data-open":String(l),children:i})})},w=({children:t})=>{let{activePanel:i}=o.useContext(f),{onToggle:n,value:r}=o.useContext(j),l=i===r;/*#__PURE__*/
++return e.jsxs(e.Fragment,{children:[/*#__PURE__*/e.jsxs(C,{onClick:n,"data-open":String(l),children:[/*#__PURE__*/e.jsx(A,{children:t}),/*#__PURE__*/e.jsx(D,{children:/*#__PURE__*/e.jsx(a.default,{height:"16px",width:"16px",strokeWidth:"2"})})]}),/*#__PURE__*/e.jsx(S,{})]})},k=({children:t})=>{let{activePanel:i}=o.useContext(f),{value:n}=o.useContext(j);/*#__PURE__*/return e.jsx(q,{"data-open":String(i===n),children:/*#__PURE__*/e.jsx(B,{children:t})})},P=({children:t})=>{let{activePanel:i}=o.useContext(f),{value:n}=o.useContext(j);/*#__PURE__*/return e.jsx(B,{children:"function"==typeof t?t({isActive:i===n}):t})};let I=t.styled.div`
+   display: flex;
+   flex-direction: column;
+   width: 100%;
+diff --git a/dist/esm/TransactionDetails-B-EpB9v5.mjs b/dist/esm/TransactionDetails-B-EpB9v5.mjs
+index 77231833dc8804f4facac8ceca78050234e22d59..57dce66336c2c7e54770fc06bc168276cf7e3480 100644
+--- a/dist/esm/TransactionDetails-B-EpB9v5.mjs
++++ b/dist/esm/TransactionDetails-B-EpB9v5.mjs
+@@ -41,7 +41,7 @@ import{jsxs as e,jsx as i,Fragment as t}from"react/jsx-runtime";import{styled as
+   font-size: 14px;
+   line-height: 22.4px;
+   font-weight: 400;
+-`;const P=/*#__PURE__*/s(void 0),I=/*#__PURE__*/s(void 0),S=({defaultValue:e,children:t})=>{let[n,r]=h(e||null);/*#__PURE__*/return i(P.Provider,{value:{activePanel:n,togglePanel:e=>{r(n===e?null:e)}},children:/*#__PURE__*/i(z,{children:t})})},j=({value:e,children:t})=>{let{activePanel:n,togglePanel:r}=p(P),l=n===e;/*#__PURE__*/return i(I.Provider,{value:{onToggle:()=>r(e),value:e},children:/*#__PURE__*/i(C,{isActive:l?"true":"false","data-open":String(l),children:t})})},B=({children:n})=>{let{activePanel:r}=p(P),{onToggle:l,value:o}=p(I),d=r===o;/*#__PURE__*/
++`;const P=/*#__PURE__*/s(void 0),I=/*#__PURE__*/s(void 0),S=({defaultValue:e,children:t})=>{let[n,r]=h(e||null);/*#__PURE__*/return i(P.Provider,{value:{activePanel:n,togglePanel:e=>{r(n===e?null:e)}},children:/*#__PURE__*/i(z,{children:t})})},j=({value:e,children:t})=>{let{activePanel:n,togglePanel:r}=p(P),l=n===e;/*#__PURE__*/return i(I.Provider,{value:{onToggle:()=>r(e),value:e},children:/*#__PURE__*/i(C,{"data-open":String(l),children:t})})},B=({children:n})=>{let{activePanel:r}=p(P),{onToggle:l,value:o}=p(I),d=r===o;/*#__PURE__*/
+ return e(t,{children:[/*#__PURE__*/e(F,{onClick:l,"data-open":String(d),children:[/*#__PURE__*/i(W,{children:n}),/*#__PURE__*/i(V,{isactive:d?"true":"false",children:/*#__PURE__*/i(c,{height:"16px",width:"16px",strokeWidth:"2"})})]}),/*#__PURE__*/i(Q,{})]})},T=({children:e})=>{let{activePanel:t}=p(P),{value:n}=p(I);/*#__PURE__*/return i(D,{"data-open":String(t===n),children:/*#__PURE__*/i(L,{children:e})})},A=({children:e})=>{let{activePanel:t}=p(P),{value:n}=p(I);/*#__PURE__*/return i(L,{children:"function"==typeof e?e({isActive:t===n}):e})};let z=n.div`
+   display: flex;
+   flex-direction: column;
