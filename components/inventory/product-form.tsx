@@ -38,9 +38,52 @@ export type ProductFormValues = {
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
   return (
-    <p id={id} role="alert" className="text-destructive text-sm">
+    <p id={id} role="alert" className="text-destructive text-xs">
       {message}
     </p>
+  );
+}
+
+/**
+ * Kepala field ala referensi: label + bintang merah untuk wajib + pill
+ * konteks di kanan ("(optional)" / "Warning alert" / "Opening").
+ */
+function FieldHead({
+  htmlFor,
+  label,
+  required = false,
+  pill,
+}: {
+  htmlFor: string;
+  label: string;
+  required?: boolean;
+  pill?: { text: string; tone: "muted" | "warning" | "neutral" };
+}) {
+  return (
+    <span className="flex items-center justify-between gap-2">
+      <Label htmlFor={htmlFor} className="text-xs font-semibold">
+        {label}
+        {required ? (
+          <span aria-hidden="true" className="text-destructive">
+            {" "}
+            *
+          </span>
+        ) : null}
+      </Label>
+      {pill ? (
+        <span
+          className={
+            pill.tone === "warning"
+              ? "bg-status-warn-bg text-status-warn-fg border-status-warn-border rounded-full border px-2 py-px font-mono text-[10px] font-medium"
+              : pill.tone === "neutral"
+                ? "bg-muted text-muted-foreground rounded-full px-2 py-px font-mono text-[10px] font-medium"
+                : "text-muted-foreground font-mono text-[10px]"
+          }
+        >
+          {pill.text}
+        </span>
+      ) : null}
+    </span>
   );
 }
 
@@ -94,30 +137,29 @@ export function ProductForm({
   });
 
   return (
-    <form className="flex flex-col gap-6" onSubmit={submit} noValidate>
-      <section aria-label="Product details" className="flex flex-col gap-4">
-        <h3 className="text-foreground text-sm font-semibold">
-          Product details
-        </h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <form className="flex flex-col" onSubmit={submit} noValidate>
+      <div className="flex flex-col gap-3.5 px-6 py-5">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="product-name">Product Name</Label>
+            <FieldHead htmlFor="product-name" label="Product Name" required />
             <Input
               id="product-name"
               autoFocus
               {...register("name")}
               placeholder="e.g. Steel Rod 12mm"
+              className="h-9 px-3 py-2 text-xs"
               aria-invalid={Boolean(errors.name)}
               aria-describedby={errors.name ? "err-product-name" : undefined}
             />
             <FieldError id="err-product-name" message={errors.name?.message} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="product-sku">SKU / Code</Label>
+            <FieldHead htmlFor="product-sku" label="SKU / Code" required />
             <Input
               id="product-sku"
               {...register("sku")}
               placeholder="e.g. SR-12-001"
+              className="h-9 px-3 py-2 font-mono text-xs"
               aria-invalid={Boolean(errors.sku)}
               aria-describedby={errors.sku ? "err-product-sku" : undefined}
             />
@@ -125,13 +167,14 @@ export function ProductForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="product-category">Category</Label>
+            <FieldHead htmlFor="product-category" label="Category" />
             <Input
               id="product-category"
               {...register("category")}
               placeholder="e.g. Raw Material"
+              className="h-9 px-3 py-2 text-xs"
             />
             <FieldError
               message={errors.category?.message}
@@ -139,12 +182,17 @@ export function ProductForm({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="product-unit">Unit</Label>
+            <FieldHead
+              htmlFor="product-unit"
+              label="Unit of Measure"
+              required
+            />
             <Input
               id="product-unit"
               {...register("unit")}
               placeholder="e.g. pcs, kg, m"
               disabled={unitLocked}
+              className="h-9 px-3 py-2 text-xs"
               aria-invalid={Boolean(errors.unit)}
               aria-describedby={errors.unit ? "err-product-unit" : undefined}
             />
@@ -164,32 +212,37 @@ export function ProductForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="product-description">Description</Label>
+          <FieldHead
+            htmlFor="product-description"
+            label="Description"
+            pill={{ text: "(optional)", tone: "muted" }}
+          />
           <Textarea
             id="product-description"
             {...register("description")}
             placeholder="Optional note about this product."
             rows={3}
+            className="px-3 py-2 text-xs"
           />
           <FieldError
             id="err-product-description"
             message={errors.description?.message}
           />
         </div>
-      </section>
 
-      <section aria-label="Stock settings" className="flex flex-col gap-4">
-        <h3 className="text-foreground text-sm font-semibold">
-          Stock settings
-        </h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="product-threshold">Low Stock Threshold</Label>
+            <FieldHead
+              htmlFor="product-threshold"
+              label="Low Stock Threshold"
+              pill={{ text: "Warning alert", tone: "warning" }}
+            />
             <Input
               id="product-threshold"
               inputMode="decimal"
               {...register("lowStockThreshold")}
               placeholder="0"
+              className="h-9 px-3 py-2 font-mono text-xs font-medium"
               aria-invalid={Boolean(errors.lowStockThreshold)}
               aria-describedby={
                 errors.lowStockThreshold ? "err-product-threshold" : undefined
@@ -199,15 +252,25 @@ export function ProductForm({
               id="err-product-threshold"
               message={errors.lowStockThreshold?.message}
             />
+            {!errors.lowStockThreshold?.message ? (
+              <p className="text-muted-foreground text-xs">
+                Triggers reorder indicator on dashboard.
+              </p>
+            ) : null}
           </div>
           {mode === "create" ? (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="product-initial">Initial Quantity</Label>
+              <FieldHead
+                htmlFor="product-initial"
+                label="Initial Quantity"
+                pill={{ text: "Opening", tone: "neutral" }}
+              />
               <Input
                 id="product-initial"
                 inputMode="decimal"
                 {...register("initialQuantity")}
                 placeholder="0"
+                className="h-9 px-3 py-2 font-mono text-xs font-medium"
                 aria-invalid={Boolean(errors.initialQuantity)}
                 aria-describedby={
                   errors.initialQuantity ? "err-product-initial" : undefined
@@ -219,8 +282,11 @@ export function ProductForm({
                   message={errors.initialQuantity.message}
                 />
               ) : (
-                <p className="text-muted-foreground flex items-start gap-1.5 text-sm leading-relaxed">
-                  <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                <p className="text-muted-foreground flex items-start gap-1.5 text-xs leading-relaxed">
+                  <Info
+                    aria-hidden="true"
+                    className="mt-0.5 size-3.5 shrink-0"
+                  />
                   Applied atomically with product creation. If either fails,
                   nothing is saved.
                 </p>
@@ -228,20 +294,27 @@ export function ProductForm({
             </div>
           ) : null}
         </div>
-      </section>
+      </div>
 
-      <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
+      <div className="border-border flex flex-col-reverse gap-2.5 border-t px-6 py-4 sm:flex-row sm:justify-end">
         {onCancel ? (
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={onCancel}
             disabled={busy}
+            className="h-8 w-full px-4 text-xs font-semibold sm:w-auto"
           >
-            Discard
+            Cancel
           </Button>
         ) : null}
-        <Button type="submit" disabled={busy}>
+        <Button
+          type="submit"
+          size="sm"
+          disabled={busy}
+          className="h-8 w-full px-4 text-xs font-semibold sm:w-auto"
+        >
           {busy ? (
             <Loader2 aria-hidden="true" className="animate-spin" />
           ) : null}
