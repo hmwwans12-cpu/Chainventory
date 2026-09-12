@@ -351,7 +351,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.review": "Review",
     "dashboard.review_products": "Review Products",
     "dashboard.review_members": "Review Members",
-    "dashboard.below_threshold_suffix": "below minimum stock threshold",
     "dashboard.pending_approval_suffix":
       "pending join requests awaiting warehouse approval",
     "dashboard.setup_title": "Set up your warehouse",
@@ -781,7 +780,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.review": "Tinjau",
     "dashboard.review_products": "Tinjau Produk",
     "dashboard.review_members": "Tinjau Anggota",
-    "dashboard.below_threshold_suffix": "di bawah ambang stok minimum",
     "dashboard.pending_approval_suffix":
       "permintaan gabung menunggu persetujuan gudang",
     "dashboard.setup_title": "Siapkan gudang Anda",

@@ -383,11 +383,11 @@ export default async function DashboardPage({
                         className="size-1.5 shrink-0 rounded-full bg-red-600"
                       />
                       <span className="truncate">
-                        <strong className="font-semibold">
-                          {lowStockCount}{" "}
-                          {lowStockCount === 1 ? "product" : "products"}
-                        </strong>{" "}
-                        {t("dashboard.below_threshold_suffix")}
+                        {lowStockCount === 1
+                          ? t("dashboard.below_minimum_one")
+                          : t("dashboard.below_minimum_other", {
+                              n: String(lowStockCount),
+                            })}
                       </span>
                     </span>
                     <Link
