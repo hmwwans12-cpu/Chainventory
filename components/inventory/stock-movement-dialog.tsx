@@ -2,7 +2,15 @@
 
 import * as React from "react";
 import { useWallets } from "@privy-io/react-auth";
-import { AlertTriangle, Loader2, Package } from "lucide-react";
+import {
+  AlertTriangle,
+  Inbox,
+  Loader2,
+  Package,
+  RotateCw,
+  ShieldCheck,
+  WifiOff,
+} from "lucide-react";
 
 import { toast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -44,12 +52,39 @@ function ErrorBanner({ message }: { message: string }) {
     <p
       id="movement-form-error"
       role="alert"
-      className="bg-destructive/15 text-destructive flex items-start gap-1.5 rounded-lg px-3 py-2 text-sm"
+      className="bg-status-err-bg/80 border-status-err-border/60 text-status-err-fg flex items-start gap-2.5 rounded-xl border p-3 text-xs leading-snug"
     >
-      <AlertTriangle aria-hidden="true" className="size-4 shrink-0" />
-      {message}
+      <AlertTriangle aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      <span className="flex-1">{message}</span>
     </p>
   );
+}
+
+/**
+ * Header icon badge per movement type (referensi Stitch movement modal).
+ * HANYA token project (DESIGN §84.4) — varian solid rose/amber/stone dari
+ * screenshot TIDAK diadopsi: Stock Out delta = info/secondary, bukan danger.
+ */
+const TYPE_BADGE_STYLES: Record<MovementType, string> = {
+  stock_in: "bg-status-ok-bg text-status-ok-fg border-status-ok-border",
+  stock_out: "bg-status-info-bg text-status-info-fg border-status-info-border",
+  adjustment: "bg-status-warn-bg text-status-warn-fg border-status-warn-border",
+  reversal:
+    "bg-status-neutral-bg text-status-neutral-fg border-status-neutral-border",
+};
+
+const TYPE_DESCRIPTIONS: Record<MovementType, string> = {
+  stock_in: "Add verified physical inventory to warehouse depot.",
+  stock_out: "Dispatch stock for fulfillment, transfer, or client delivery.",
+  adjustment:
+    "Correct stock count. Requires Owner/Manager approval before balance changes.",
+  reversal:
+    "Cancel a previous erroneous movement. Creates a transparent counter-entry.",
+};
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
 }
 
 export function StockMovementDialog({
@@ -94,6 +129,9 @@ export function StockMovementDialog({
   // Reset turunan produk saat ganti produk (pola "adjust state during
   // render" React — bukan setState-in-effect).
   const [targetsFor, setTargetsFor] = React.useState<string | null>(null);
+  // Retry manual untuk state gagal-load (tombol "Retry" di error box) —
+  // menaikkan nonce agar effect fetch jalan ulang tanpa mengubah produk.
+  const [targetsNonce, setTargetsNonce] = React.useState(0);
   // Focus management (a11y): pindahkan fokus ke field yang gagal validasi.
   const quantityRef = React.useRef<HTMLInputElement>(null);
   const reasonRef = React.useRef<HTMLTextAreaElement>(null);
@@ -158,7 +196,7 @@ export function StockMovementDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, movementType, selectedId, warehouseId]);
+  }, [open, movementType, selectedId, warehouseId, targetsNonce]);
 
   const sleep = (ms: number) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -452,73 +490,119 @@ export function StockMovementDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent>
+      <DialogContent className="max-w-[480px] gap-0 rounded-2xl p-0">
         <DialogHeader>
-          <DialogTitle className="text-lg">
-            {movementType === "adjustment"
-              ? "Stock Adjustment"
-              : movementType === "reversal"
-                ? "Reverse Movement"
-                : meta.label}
-            {selected ? (
-              <span className="text-muted-foreground ml-2 font-mono text-sm font-normal">
-                · {selected.name}
+          <div className="flex items-start justify-between gap-3 border-b px-6 pt-5 pb-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <span
+                className={`flex size-10 shrink-0 items-center justify-center rounded-xl border ${TYPE_BADGE_STYLES[movementType]}`}
+              >
+                {meta?.icon ? (
+                  <meta.icon aria-hidden="true" className="size-5" />
+                ) : (
+                  <Package aria-hidden="true" className="size-5" />
+                )}
               </span>
-            ) : null}
-          </DialogTitle>
-          <DialogDescription>
-            {movementType === "stock_in"
-              ? `Add stock to ${selected?.name ?? "this product"}.`
-              : movementType === "stock_out"
-                ? `Remove stock from ${selected?.name ?? "this product"}.`
-                : movementType === "adjustment"
-                  ? "Correct stock count. Requires Owner/Manager approval before balance changes."
-                  : "Reverse a previous movement to restore the balance."}
-          </DialogDescription>
+              <div className="flex min-w-0 flex-col gap-1">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <DialogTitle className="font-bold tracking-tight">
+                    {movementType === "adjustment"
+                      ? "Stock Adjustment"
+                      : movementType === "reversal"
+                        ? "Reverse Movement"
+                        : meta.label}
+                  </DialogTitle>
+                  {selected ? (
+                    <span
+                      title={selected.name}
+                      className="bg-surface-low text-muted-foreground border-border max-w-[170px] truncate rounded border px-2 py-0.5 font-mono text-xs"
+                    >
+                      {selected.name}
+                    </span>
+                  ) : null}
+                </div>
+                <DialogDescription className="text-xs leading-relaxed">
+                  {TYPE_DESCRIPTIONS[movementType]}
+                </DialogDescription>
+              </div>
+            </div>
+          </div>
         </DialogHeader>
 
-        {stale ? (
-          <p
-            role="alert"
-            className="bg-muted text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
-          >
-            <Loader2 aria-hidden="true" className="animate-spin" />
-            Stock updated by another user. Refreshing inventory…
-          </p>
-        ) : null}
-        {error && !stale ? <ErrorBanner message={error} /> : null}
-        {phase ? (
-          <p
-            aria-live="polite"
-            className="bg-muted text-foreground flex flex-col gap-1 rounded-lg px-3 py-2 text-sm"
-          >
-            <span className="flex items-center gap-2">
-              <Loader2 aria-hidden="true" className="animate-spin" />
-              {phase}
-            </span>
-            <span className="text-muted-foreground">
-              You can safely leave this page. We&apos;ll notify you when
-              it&apos;s confirmed.
-            </span>
-          </p>
-        ) : null}
-        {currentBalance != null ? (
-          <p className="text-muted-foreground text-sm">
-            Current balance:{" "}
-            <span className="font-mono tabular-nums">{currentBalance}</span>{" "}
-            {selected?.unit}
-          </p>
-        ) : null}
-
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="movement-product">Product</Label>
-            {product ? (
-              <div className="border-input bg-muted/40 text-muted-foreground flex h-11 items-center gap-2 rounded-lg border px-3 text-sm">
-                <span className="min-w-0 flex-1 truncate" title={product.name}>
-                  {product.name}
+        <div className="flex flex-col gap-4 px-6 py-5">
+          {stale ? (
+            <p
+              role="alert"
+              className="bg-status-warn-bg border-status-warn-border text-status-warn-fg flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium"
+            >
+              <Loader2
+                aria-hidden="true"
+                className="size-4 shrink-0 animate-spin"
+              />
+              Stock updated by another user. Refreshing inventory…
+            </p>
+          ) : null}
+          {error && !stale ? <ErrorBanner message={error} /> : null}
+          {phase ? (
+            <p
+              aria-live="polite"
+              className="bg-status-info-bg border-status-info-border text-status-info-fg flex items-start gap-2.5 rounded-xl border p-3 text-xs leading-snug"
+            >
+              <Loader2
+                aria-hidden="true"
+                className="mt-0.5 size-4 shrink-0 animate-spin"
+              />
+              <span className="flex flex-1 flex-col gap-0.5">
+                <span className="font-semibold">{phase}</span>
+                <span className="opacity-90">
+                  You can safely leave this page. We&apos;ll notify you when
+                  it&apos;s confirmed.
                 </span>
-                <span className="shrink-0 font-mono text-sm">
+              </span>
+            </p>
+          ) : null}
+          {currentBalance != null ? (
+            <p className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
+              <span>Current balance</span>
+              <span className="border-border rounded border px-2 py-0.5 font-mono font-semibold tabular-nums">
+                {currentBalance} {selected?.unit}
+              </span>
+            </p>
+          ) : null}
+          <div className="flex flex-col gap-1.5">
+            <span className="flex items-center justify-between gap-2">
+              <Label
+                htmlFor="movement-product"
+                className="text-xs font-semibold"
+              >
+                Target Product
+              </Label>
+              <span className="text-muted-foreground font-mono text-[10px]">
+                {product ? "Read-only Context" : "Searchable Catalog"}
+              </span>
+            </span>
+            {product ? (
+              <div className="bg-surface-low/70 border-border flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span
+                    aria-hidden="true"
+                    className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
+                  >
+                    {initials(product.name)}
+                  </span>
+                  <div className="flex min-w-0 flex-col">
+                    <span
+                      className="text-foreground block truncate font-semibold"
+                      title={product.name}
+                    >
+                      {product.name}
+                    </span>
+                    <span className="text-muted-foreground block truncate text-[11px]">
+                      {product.category ?? product.unit}
+                    </span>
+                  </div>
+                </div>
+                <span className="bg-card border-border text-foreground shrink-0 rounded border px-2 py-0.5 font-mono text-[11px] font-medium">
                   {product.sku}
                 </span>
               </div>
@@ -540,51 +624,114 @@ export function StockMovementDialog({
           <div className="flex flex-col gap-1.5">
             {movementType === "reversal" ? (
               <>
-                <Label htmlFor="movement-target">Movement to reverse</Label>
+                <span className="flex items-center justify-between gap-2">
+                  <Label
+                    htmlFor="movement-target"
+                    className="text-xs font-semibold"
+                  >
+                    Movement to Reverse{" "}
+                    <span aria-hidden="true" className="text-status-err-fg">
+                      *
+                    </span>
+                  </Label>
+                </span>
                 {targetsLoaded ? (
                   targetsError ? (
-                    <p role="alert" className="text-destructive text-sm">
-                      Could not load movements. Check your connection and reopen
-                      this dialog to retry.
-                    </p>
-                  ) : reversalTargets.length === 0 ? (
-                    <p className="text-muted-foreground text-sm">
-                      No committed movements to reverse for this product.
-                    </p>
-                  ) : (
-                    <Select
-                      value={reversalTarget}
-                      onValueChange={(value) => {
-                        if (value !== null) setReversalTarget(value);
-                      }}
-                    >
-                      <SelectTrigger id="movement-target" className="w-full">
-                        <SelectValue
-                          placeholder="Select a movement"
-                          getLabel={(v) => {
-                            const t = reversalTargets.find((x) => x.id === v);
-                            if (!t) return v;
-                            return `${MOVEMENT_TYPE_META[t.movementType as keyof typeof MOVEMENT_TYPE_META]?.label ?? t.movementType} · ${t.quantity}`;
-                          }}
+                    <div className="bg-status-err-bg/80 border-status-err-border text-status-err-fg flex flex-col gap-1.5 rounded-xl border p-3.5">
+                      <p className="flex items-center gap-2 text-xs font-semibold">
+                        <WifiOff
+                          aria-hidden="true"
+                          className="size-4 shrink-0"
                         />
-                      </SelectTrigger>
-                      <SelectContent layer="modal">
-                        {reversalTargets.map((t) => (
-                          <SelectItem key={t.id} value={t.id}>
-                            {MOVEMENT_TYPE_META[
-                              t.movementType as keyof typeof MOVEMENT_TYPE_META
-                            ]?.label ?? t.movementType}{" "}
-                            · {t.quantity} · {formatDate(t.created_at)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                        Connection or Permission Failure
+                      </p>
+                      <p
+                        role="alert"
+                        className="text-[11px] leading-snug opacity-90"
+                      >
+                        Could not load movements. Check your connection and
+                        reopen this dialog to retry.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTargetsLoaded(false);
+                          setTargetsError(false);
+                          setTargetsNonce((n) => n + 1);
+                        }}
+                        className="inline-flex w-fit items-center gap-1 text-[11px] font-semibold underline underline-offset-2 hover:opacity-80"
+                      >
+                        <RotateCw aria-hidden="true" className="size-3" />
+                        Retry fetching now
+                      </button>
+                    </div>
+                  ) : reversalTargets.length === 0 ? (
+                    <div className="bg-status-neutral-bg/60 border-border flex flex-col items-center gap-1 rounded-xl border p-3.5 text-center">
+                      <span className="bg-status-neutral-border/50 text-status-neutral-fg flex size-7 items-center justify-center rounded-full">
+                        <Inbox aria-hidden="true" className="size-3.5" />
+                      </span>
+                      <p className="text-foreground text-xs font-semibold">
+                        No committed movements to reverse
+                      </p>
+                      <p className="text-muted-foreground mx-auto max-w-xs text-[11px]">
+                        This product has no committed ledger movements to
+                        reverse in this warehouse.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <Select
+                        value={reversalTarget}
+                        onValueChange={(value) => {
+                          if (value !== null) setReversalTarget(value);
+                        }}
+                      >
+                        <SelectTrigger id="movement-target" className="w-full">
+                          <SelectValue
+                            placeholder="Select a movement"
+                            getLabel={(v) => {
+                              const t = reversalTargets.find((x) => x.id === v);
+                              if (!t) return v;
+                              return `${MOVEMENT_TYPE_META[t.movementType as keyof typeof MOVEMENT_TYPE_META]?.label ?? t.movementType} · ${t.quantity}`;
+                            }}
+                          />
+                        </SelectTrigger>
+                        <SelectContent layer="modal">
+                          {reversalTargets.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {MOVEMENT_TYPE_META[
+                                t.movementType as keyof typeof MOVEMENT_TYPE_META
+                              ]?.label ?? t.movementType}{" "}
+                              · {t.quantity} · {formatDate(t.created_at)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="text-muted-foreground flex items-center justify-between gap-2 px-1 text-[11px]">
+                        <span>
+                          Only committed ledger records can be reversed.
+                        </span>
+                        <span className="text-status-ok-fg flex shrink-0 items-center gap-1 font-semibold">
+                          <ShieldCheck aria-hidden="true" className="size-3" />
+                          Proof Verified
+                        </span>
+                      </div>
+                    </>
                   )
                 ) : (
-                  <p className="text-muted-foreground flex items-center gap-2 text-sm">
-                    <Loader2 aria-hidden="true" className="animate-spin" />
-                    Loading recent movements…
-                  </p>
+                  <div className="bg-surface-low/50 border-border flex flex-col gap-2 rounded-xl border border-dashed p-4">
+                    <p className="text-muted-foreground flex items-center justify-center gap-2 text-xs font-medium">
+                      <Loader2
+                        aria-hidden="true"
+                        className="text-primary size-4 animate-spin"
+                      />
+                      Loading recent committed movements…
+                    </p>
+                    <div
+                      aria-hidden="true"
+                      className="bg-border/60 mx-auto h-2.5 w-2/3 animate-pulse rounded-full"
+                    />
+                  </div>
                 )}
                 {selectedTarget ? (
                   <p className="text-muted-foreground text-sm">
@@ -598,27 +745,48 @@ export function StockMovementDialog({
               </>
             ) : (
               <>
-                <Label htmlFor="movement-quantity">Quantity</Label>
-                <Input
-                  id="movement-quantity"
-                  ref={quantityRef}
-                  type="text"
-                  inputMode="decimal"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  placeholder={
-                    movementType === "stock_in" ? "e.g. 100" : "e.g. 25.5"
-                  }
-                  aria-invalid={Boolean(error)}
-                  aria-describedby={error ? "movement-form-error" : undefined}
-                />
+                <span className="flex items-center justify-between gap-2">
+                  <Label
+                    htmlFor="movement-quantity"
+                    className="text-xs font-semibold"
+                  >
+                    Quantity to Move
+                  </Label>
+                  {selected ? (
+                    <span className="text-muted-foreground font-mono text-[11px]">
+                      Unit: {selected.unit}
+                    </span>
+                  ) : null}
+                </span>
+                <div className="relative">
+                  <Input
+                    id="movement-quantity"
+                    ref={quantityRef}
+                    type="text"
+                    inputMode="decimal"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    placeholder={
+                      movementType === "stock_in" ? "e.g. 100" : "e.g. 25.5"
+                    }
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? "movement-form-error" : undefined}
+                    className="pr-12 font-mono font-semibold"
+                  />
+                  {selected ? (
+                    <span
+                      aria-hidden="true"
+                      className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 font-mono text-xs font-medium"
+                    >
+                      {selected.unit}
+                    </span>
+                  ) : null}
+                </div>
                 {selected ? (
-                  <div className="bg-muted/20 flex flex-col gap-1.5 rounded-lg border px-3 py-2.5">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Current stock
-                      </span>
-                      <span className="font-mono font-medium tabular-nums">
+                  <div className="bg-surface-low/60 border-border flex flex-col gap-2 rounded-xl border p-3.5 text-xs">
+                    <div className="text-muted-foreground flex items-center justify-between font-medium">
+                      <span>Current stock</span>
+                      <span className="text-foreground font-mono font-semibold tabular-nums">
                         {selected.quantity ?? "0"} {selected.unit}
                       </span>
                     </div>
@@ -626,22 +794,33 @@ export function StockMovementDialog({
                     /^\d+(\.\d{1,3})?$/.test(quantity.trim()) &&
                     Number(quantity) > 0 ? (
                       <>
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">
                             {movementType === "stock_in"
                               ? "Quantity added"
-                              : "Quantity removed"}
+                              : movementType === "stock_out"
+                                ? "Quantity removed"
+                                : "Quantity adjusted"}
                           </span>
                           <span
-                            className={`font-mono font-medium tabular-nums ${movementType === "stock_in" ? "text-primary" : "text-destructive"}`}
+                            className={`rounded px-1.5 py-0.5 font-mono font-semibold tabular-nums ${
+                              movementType === "stock_in"
+                                ? "bg-status-ok-bg text-status-ok-fg"
+                                : movementType === "stock_out"
+                                  ? "bg-status-err-bg text-status-err-fg"
+                                  : "bg-status-warn-bg text-status-warn-fg"
+                            }`}
                           >
                             {movementType === "stock_in" ? "+" : "−"}
                             {quantity.trim()} {selected.unit}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between border-t pt-1.5 text-sm font-semibold">
-                          <span>New stock</span>
-                          <span className="font-mono tabular-nums">
+                        <div className="border-border/70 border-t" />
+                        <div className="flex items-center justify-between font-semibold">
+                          <span className="text-foreground">
+                            New projected stock
+                          </span>
+                          <span className="text-foreground font-mono text-sm font-bold tabular-nums">
                             {(() => {
                               const cur = Number(selected.quantity ?? 0);
                               const qty = Number(quantity.trim());
@@ -656,12 +835,13 @@ export function StockMovementDialog({
                         {movementType === "stock_out" &&
                         Number(quantity.trim()) >
                           Number(selected.quantity ?? 0) ? (
-                          <p className="text-destructive flex items-center gap-1.5 text-sm font-medium">
+                          <p className="text-status-err-fg border-status-err-border/60 flex items-center gap-1.5 border-t pt-2 text-[11px] font-medium">
                             <AlertTriangle
                               aria-hidden="true"
-                              className="size-4 shrink-0"
+                              className="size-3.5 shrink-0"
                             />
-                            Quantity exceeds current stock
+                            Quantity exceeds current stock (insufficient
+                            balance).
                           </p>
                         ) : null}
                       </>
@@ -673,12 +853,23 @@ export function StockMovementDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="movement-reason">
-              Reason
-              {movementType === "adjustment" || movementType === "reversal"
-                ? " (required)"
-                : " (optional)"}
-            </Label>
+            <span className="flex items-center justify-between gap-2">
+              <Label
+                htmlFor="movement-reason"
+                className="text-xs font-semibold"
+              >
+                Reason for Movement
+              </Label>
+              {movementType === "adjustment" || movementType === "reversal" ? (
+                <span className="text-status-err-fg font-mono text-[10px] font-bold">
+                  (required)
+                </span>
+              ) : (
+                <span className="text-muted-foreground font-mono text-[10px]">
+                  (optional)
+                </span>
+              )}
+            </span>
             <Textarea
               id="movement-reason"
               ref={reasonRef}
@@ -697,31 +888,41 @@ export function StockMovementDialog({
               }
               rows={2}
             />
+            <p className="text-muted-foreground/80 text-[11px]">
+              Appends to the tamper-evident audit record on Base Sepolia.
+            </p>
           </div>
+        </div>
 
-          <div className="border-border flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={busy}
-            >
-              Discard
-            </Button>
-            <Button onClick={submit} disabled={busy || stale}>
-              {busy ? (
-                <Loader2 aria-hidden="true" className="animate-spin" />
-              ) : meta?.icon ? (
-                <meta.icon aria-hidden="true" />
-              ) : (
-                <Package aria-hidden="true" />
-              )}
-              {movementType === "adjustment"
-                ? "Submit Adjustment for Approval"
-                : movementType === "reversal"
-                  ? "Submit Reversal"
-                  : `Record ${meta.label}`}
-            </Button>
-          </div>
+        <div className="border-border flex flex-col-reverse gap-2.5 border-t px-6 py-4 sm:flex-row sm:justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            disabled={busy}
+            className="h-8 w-full px-4 text-xs font-semibold sm:w-auto"
+          >
+            Discard
+          </Button>
+          <Button
+            onClick={submit}
+            disabled={busy || stale}
+            size="sm"
+            className="h-8 w-full px-4 text-xs font-semibold sm:w-auto"
+          >
+            {busy ? (
+              <Loader2 aria-hidden="true" className="animate-spin" />
+            ) : meta?.icon ? (
+              <meta.icon aria-hidden="true" />
+            ) : (
+              <Package aria-hidden="true" />
+            )}
+            {movementType === "adjustment"
+              ? "Submit Adjustment for Approval"
+              : movementType === "reversal"
+                ? "Submit Reversal"
+                : `Record ${meta.label}`}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
