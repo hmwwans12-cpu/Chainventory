@@ -100,6 +100,30 @@ Migration breaking wajib memakai pola **expand–migrate–contract**:
 
 **Jangan** melakukan rename, drop, atau perubahan constraint incompatible dalam satu langkah.
 
+### 4.2 Runbook SUPABASE_MANAGEMENT_TOKEN (temuan audit #27)
+
+Eksekusi SQL live (apply migration manual, verifikasi skema/index via
+Management API, investigasi prod) memakai `SUPABASE_MANAGEMENT_TOKEN`
+di `.env.local` — BUKAN service_role key (itu untuk PostgREST/RLS-bypass
+peran server, tidak bisa DDL).
+
+1. **Generate ulang**: Supabase Dashboard → pilih project → Project
+   Settings → API → "Create new API key" / Access Tokens → salin token.
+2. **Masa berlaku**: catat tanggal generate + expiry di komentar ini
+   atau TODO (token dashboard default berumur terbatas;Expiry terlihat
+   di halaman yang sama).
+3. **Pasang**: tulis ke `.env.local` sebagai `SUPABASE_MANAGEMENT_TOKEN=<token>`
+   — file ini gitignored; JANGAN pernah taruh di `.env.example`,
+   workflow file, atau chat/log.
+4. **Yang berhenti tanpa token valid**: apply migration live manual,
+   verifikasi skema via Management API (`/database/query` → 401),
+   investigasi index/constraint prod.
+5. **Deteksi**: respons Management API `401 Unauthorized` (bukan error
+   SQL) = token mati/ter-revoke → kembali ke langkah 1.
+6. **Rotasi aman**: generate token baru → ganti di `.env.local` →
+   revoke token lama di dashboard → verifikasi dengan satu query
+   read-only (`select 1`).
+
 ## 5. Workflow Smart Contract
 
 1. Buat change request yang menjelaskan invariant yang terdampak.

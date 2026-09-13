@@ -85,9 +85,7 @@ describe("TransactionsPage search", () => {
 
   it("empty state membedakan mode pencarian", () => {
     const { unmount } = renderPage("zzz-tidak-ada");
-    expect(
-      screen.getByText("No transactions match your filters")
-    ).toBeTruthy();
+    expect(screen.getByText("No transactions match your filters")).toBeTruthy();
     unmount();
     renderPage("");
     expect(screen.getByText("No transactions yet")).toBeTruthy();

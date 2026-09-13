@@ -550,7 +550,9 @@ export function MovementsPage({
         <EmptyState
           icon={ArrowDownToLine}
           title={
-            query.trim() ? "No movements match your search" : "No movements recorded yet"
+            query.trim()
+              ? "No movements match your search"
+              : "No movements recorded yet"
           }
           description={
             query.trim()
@@ -678,8 +680,7 @@ export function MovementsPage({
                             "text-emerald-700 dark:text-emerald-400",
                           m.movementType === "stock_out" &&
                             "text-amber-700 dark:text-amber-400",
-                          m.movementType === "reversal" &&
-                            "text-status-err-fg",
+                          m.movementType === "reversal" && "text-status-err-fg",
                           m.movementType === "adjustment" && "text-foreground"
                         )}
                       >

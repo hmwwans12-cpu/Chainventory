@@ -102,7 +102,8 @@ export default async function TransactionsPageRoute({
     : undefined;
   // Temuan audit #25: pencarian server-side (?q=) by reference/reason/
   // wallet aktor/nama/SKU produk. Cap 100 char agar URL/RPC tetap ringan.
-  const rawQ = typeof params.q === "string" ? params.q.trim().slice(0, 100) : "";
+  const rawQ =
+    typeof params.q === "string" ? params.q.trim().slice(0, 100) : "";
 
   const { data, error } = await supabase.rpc("list_transactions", {
     p_warehouse_id: active.id,

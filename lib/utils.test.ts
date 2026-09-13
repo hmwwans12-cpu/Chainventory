@@ -36,10 +36,13 @@ describe("date formatters lock locale + Asia/Jakarta timezone", () => {
     }
   );
 
-  it.each(["UTC", "America/New_York"])("formatChartDay identik di TZ %s", (tz) => {
-    process.env.TZ = tz;
-    expect(formatChartDay("2026-09-13")).toBe("Sep 13");
-  });
+  it.each(["UTC", "America/New_York"])(
+    "formatChartDay identik di TZ %s",
+    (tz) => {
+      process.env.TZ = tz;
+      expect(formatChartDay("2026-09-13")).toBe("Sep 13");
+    }
+  );
 
   it("invalid input tetap em-dash", () => {
     expect(formatDate("bukan-tanggal")).toBe("—");

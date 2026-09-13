@@ -105,8 +105,7 @@ export function TransactionsPage({
     const nextType = params.type === null ? undefined : (params.type ?? type);
     const nextProof =
       params.proof === null ? undefined : (params.proof ?? proof);
-    const nextQuery =
-      params.q === null ? "" : (params.q ?? query);
+    const nextQuery = params.q === null ? "" : (params.q ?? query);
     const nextPage = params.page ?? String(page);
     if (nextType) url.set("type", nextType);
     if (nextProof) url.set("proof", nextProof);
@@ -141,7 +140,10 @@ export function TransactionsPage({
     // back/forward). Tanpa ini, mount di page=3 langsung di-reset ke 1.
     if (searchInput.trim() === query) return;
     const timer = setTimeout(() => {
-      goToRef.current({ q: searchInput.trim() ? searchInput : null, page: "1" });
+      goToRef.current({
+        q: searchInput.trim() ? searchInput : null,
+        page: "1",
+      });
     }, 350);
     return () => clearTimeout(timer);
   }, [searchInput, query]);
@@ -433,8 +435,7 @@ export function TransactionsPage({
                             "text-emerald-700 dark:text-emerald-400",
                           m.movementType === "stock_out" &&
                             "text-amber-700 dark:text-amber-400",
-                          m.movementType === "reversal" &&
-                            "text-status-err-fg",
+                          m.movementType === "reversal" && "text-status-err-fg",
                           m.movementType === "adjustment" && "text-foreground"
                         )}
                       >

@@ -98,9 +98,7 @@ describe("MovementsPage search", () => {
 
   it("empty state membedakan mode pencarian", () => {
     const { unmount } = renderPage("zzz-tidak-ada");
-    expect(
-      screen.getByText("No movements match your search")
-    ).toBeTruthy();
+    expect(screen.getByText("No movements match your search")).toBeTruthy();
     unmount();
     renderPage("");
     expect(screen.getByText("No movements recorded yet")).toBeTruthy();

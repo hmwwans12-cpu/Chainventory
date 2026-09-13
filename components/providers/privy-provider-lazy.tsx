@@ -21,10 +21,6 @@ const PrivyProvider = dynamic(
   { ssr: false }
 );
 
-export function PrivyProviderLazy({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function PrivyProviderLazy({ children }: { children: React.ReactNode }) {
   return <PrivyProvider>{children}</PrivyProvider>;
 }

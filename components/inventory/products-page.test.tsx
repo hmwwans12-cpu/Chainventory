@@ -56,8 +56,10 @@ function namesWith(container: HTMLElement, text: string): string[] {
     .getAllByText(text, { exact: false })
     .map(
       (el) =>
-        el.closest("tr, li")?.querySelector("input")?.getAttribute("aria-label") ??
-        "?"
+        el
+          .closest("tr, li")
+          ?.querySelector("input")
+          ?.getAttribute("aria-label") ?? "?"
     );
 }
 
@@ -67,9 +69,17 @@ describe("ProductsPage low-stock parity desktop/mobile", () => {
       row("low", { status: "active", quantity: "5" }), // rendah: badge + suffix
       row("ok", { status: "active", quantity: "50" }), // aman
       row("archived", { status: "archived", quantity: "0" }), // arsip dikecualikan
-      row("no-threshold", { status: "active", quantity: "1", lowStockThreshold: "0" }),
+      row("no-threshold", {
+        status: "active",
+        quantity: "1",
+        lowStockThreshold: "0",
+      }),
       row("no-balance", { status: "active", quantity: null }),
-      row("decimal", { status: "active", quantity: "10.0", lowStockThreshold: "10" }),
+      row("decimal", {
+        status: "active",
+        quantity: "10.0",
+        lowStockThreshold: "10",
+      }),
     ];
     const { container } = render(
       <ProductsPage

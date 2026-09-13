@@ -30,7 +30,10 @@ const PAGE_SIZE = 25;
 export default async function StockMovementsPageRoute({
   searchParams,
 }: {
-  searchParams: Promise<{ warehouse?: string | string[]; q?: string | string[] }>;
+  searchParams: Promise<{
+    warehouse?: string | string[];
+    q?: string | string[];
+  }>;
 }) {
   const supabase = await createClient();
   const {
@@ -43,7 +46,8 @@ export default async function StockMovementsPageRoute({
     typeof params.warehouse === "string" ? params.warehouse : undefined;
   // Temuan audit #25: pencarian server-side (?q=) by reference/reason/wallet.
   // Escape sama dengan halaman Products; cap 100 char agar URL/DB tetap ringan.
-  const rawQ = typeof params.q === "string" ? params.q.trim().slice(0, 100) : "";
+  const rawQ =
+    typeof params.q === "string" ? params.q.trim().slice(0, 100) : "";
   const q = rawQ.replace(/[%_\\()]/g, " ").trim();
 
   const warehouses = await getMyWarehouses(supabase, user.id);
@@ -73,13 +77,13 @@ export default async function StockMovementsPageRoute({
   const movementsBase = supabase
     .from("stock_movements")
     .select(
-      "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(status, tx_hash, error)"
+      "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(status, tx_hash, error)",
     )
     .eq("warehouse_id", active.id);
   const [movementsResult, productsResult] = await Promise.all([
     (q
       ? movementsBase.or(
-          `reference.ilike.%${q}%,reason.ilike.%${q}%,actor_wallet.ilike.%${q}%`
+          `reference.ilike.%${q}%,reason.ilike.%${q}%,actor_wallet.ilike.%${q}%`,
         )
       : movementsBase
     )
@@ -89,7 +93,7 @@ export default async function StockMovementsPageRoute({
       ? supabase
           .from("products")
           .select(
-            "id, sku, name, category, unit, status, low_stock_threshold, inventory_balances(quantity, version)"
+            "id, sku, name, category, unit, status, low_stock_threshold, inventory_balances(quantity, version)",
           )
           .eq("warehouse_id", active.id)
           .eq("status", "active")
@@ -130,7 +134,7 @@ export default async function StockMovementsPageRoute({
       proofStatus: row.proofs?.[0]?.status ?? null,
       proofTxHash: row.proofs?.[0]?.tx_hash ?? null,
       proofError: row.proofs?.[0]?.error ?? null,
-    })
+    }),
   );
 
   const products: ProductRow[] = (productsResult.data ?? []).map((row) => ({

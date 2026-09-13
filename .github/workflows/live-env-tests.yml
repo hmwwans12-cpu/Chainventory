@@ -1,0 +1,69 @@
+name: Live-env contract tests
+
+# Temuan audit #2/#6.4: 33 test live-env gated (RLS bypass, contract,
+# proof-pipeline on-chain) sebelumnya hanya pernah diverifikasi manual
+# sesekali. Workflow ini menjalankannya otomatis tiap malam terhadap
+# staging env sehingga bukti "security test" terus diperbarui.
+#
+# CATATAN BIAYA: sebagian test mengirim transaksi Base Sepolia nyata
+# (treasury membayar gas testnet). Untuk mematikan jadwal tapi tetap
+# mengizinkan run manual, hapus blok `schedule` di bawah (biarkan
+# workflow_dispatch).
+#
+# Workflow ini SENGAJA bukan required check: kegagalan di sini menandakan
+# masalah live-env (RPC/quota/gas), bukan regresi kode — PR tidak boleh
+# terblokir olehnya. Hasilnya tetap terlihat di tab Actions.
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
+    steps:
+      - name: Evaluate live-env secret availability
+        id: gate
+        run: |
+          if [ -z "${{ secrets.E2E_SUPABASE_URL }}" ]; then
+            echo "::notice::Live-env secrets not configured - contract tests will be skipped."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  contract-tests:
+    runs-on: ubuntu-latest
+    needs: [gate]
+    if: needs.gate.outputs.enabled == 'true'
+    env:
+      SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.E2E_SUPABASE_SECRET_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.E2E_SUPABASE_PUBLISHABLE_KEY }}
+      TREASURY_PRIVATE_KEY: ${{ secrets.E2E_TREASURY_PRIVATE_KEY }}
+      QSTASH_TOKEN: ${{ secrets.E2E_QSTASH_TOKEN }}
+      QSTASH_URL: ${{ secrets.E2E_QSTASH_URL }}
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      BASE_SEPOLIA_RPC_URL: ${{ secrets.E2E_BASE_SEPOLIA_RPC_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run live-env contract tests
+        run: pnpm exec vitest run contract --reporter=verbose
+        timeout-minutes: 30

@@ -65,38 +65,16 @@ export default async function DashboardLayout({
       {/* Temuan audit #26: chunk wallet (Privy/wagmi) hanya dimuat di area
           app yang memakainya — tidak lagi di root layout / landing. */}
       <PrivyProviderLazy>
-      <SidebarProvider defaultOpen={defaultOpen}>
-        <a
-          href="#dashboard-main"
-          className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[var(--z-modal)] focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
-        >
-          Skip to dashboard content
-        </a>
-        <Suspense fallback={null}>
-          <AppSidebar
-            warehouses={warehouses ?? []}
-            user={
-              user
-                ? {
-                    name: profile?.display_name ?? null,
-                    email: profile?.email ?? user.email ?? null,
-                  }
-                : null
-            }
-            isDeveloper={isDeveloper}
-          />
-        </Suspense>
-        <SidebarInset
-          id="dashboard-main"
-          tabIndex={-1}
-          className="outline-none"
-        >
-          <Suspense fallback={<div className="h-14 shrink-0 border-b" />}>
-            <SiteHeader
-              warehouses={(warehouses ?? []).map((w) => ({
-                id: w.id,
-                name: w.name,
-              }))}
+        <SidebarProvider defaultOpen={defaultOpen}>
+          <a
+            href="#dashboard-main"
+            className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[var(--z-modal)] focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
+          >
+            Skip to dashboard content
+          </a>
+          <Suspense fallback={null}>
+            <AppSidebar
+              warehouses={warehouses ?? []}
               user={
                 user
                   ? {
@@ -105,22 +83,44 @@ export default async function DashboardLayout({
                     }
                   : null
               }
+              isDeveloper={isDeveloper}
             />
           </Suspense>
-          <main
-            className="bg-surface-container flex-1"
-            aria-label="Dashboard content"
+          <SidebarInset
+            id="dashboard-main"
+            tabIndex={-1}
+            className="outline-none"
           >
-            {/* Skeleton resmi dashboard-01: container query scope + ritme halaman.
+            <Suspense fallback={<div className="h-14 shrink-0 border-b" />}>
+              <SiteHeader
+                warehouses={(warehouses ?? []).map((w) => ({
+                  id: w.id,
+                  name: w.name,
+                }))}
+                user={
+                  user
+                    ? {
+                        name: profile?.display_name ?? null,
+                        email: profile?.email ?? user.email ?? null,
+                      }
+                    : null
+                }
+              />
+            </Suspense>
+            <main
+              className="bg-surface-container flex-1"
+              aria-label="Dashboard content"
+            >
+              {/* Skeleton resmi dashboard-01: container query scope + ritme halaman.
               max-w 1600px: konten dashboard tidak meregang tak terbatas di
               ultrawide (konsistensi visual, temuan audit UI #9). */}
-            <div className="@container/main mx-auto w-full max-w-[1600px] min-w-0 px-4 py-6 md:p-8">
-              <PageTransition>{children}</PageTransition>
-            </div>
-          </main>
-        </SidebarInset>
-        <CommandMenu isDeveloper={isDeveloper} />
-      </SidebarProvider>
+              <div className="@container/main mx-auto w-full max-w-[1600px] min-w-0 px-4 py-6 md:p-8">
+                <PageTransition>{children}</PageTransition>
+              </div>
+            </main>
+          </SidebarInset>
+          <CommandMenu isDeveloper={isDeveloper} />
+        </SidebarProvider>
       </PrivyProviderLazy>
     </LocaleProvider>
   );
