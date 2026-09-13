@@ -10,6 +10,7 @@ import { isDeveloperAllowed } from "@/lib/console/guard";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CommandMenu } from "@/components/shared/command-menu";
 import { LocaleProvider } from "@/components/providers/locale-provider";
+import { PrivyProviderLazy } from "@/components/providers/privy-provider-lazy";
 import { getLocale } from "@/lib/i18n/server";
 
 // Audit v0.3.11 M-01: per AGENT.md §6, all authenticated pages must be
@@ -61,6 +62,9 @@ export default async function DashboardLayout({
 
   return (
     <LocaleProvider initialLocale={initialLocale}>
+      {/* Temuan audit #26: chunk wallet (Privy/wagmi) hanya dimuat di area
+          app yang memakainya — tidak lagi di root layout / landing. */}
+      <PrivyProviderLazy>
       <SidebarProvider defaultOpen={defaultOpen}>
         <a
           href="#dashboard-main"
@@ -117,6 +121,7 @@ export default async function DashboardLayout({
         </SidebarInset>
         <CommandMenu isDeveloper={isDeveloper} />
       </SidebarProvider>
+      </PrivyProviderLazy>
     </LocaleProvider>
   );
 }

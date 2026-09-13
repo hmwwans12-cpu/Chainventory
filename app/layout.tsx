@@ -3,7 +3,6 @@ import localFont from "next/font/local";
 
 import "./globals.css";
 
-import { PrivyProvider } from "@/components/providers/privy-provider";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -105,11 +104,12 @@ export default function RootLayout({
           }}
         />
         <TooltipProvider delay={150}>
-          <PrivyProvider>
-            <div id="main-content" className="flex min-h-dvh flex-1 flex-col">
-              {children}
-            </div>
-          </PrivyProvider>
+          {/* Temuan audit #26: PrivyProvider TIDAK di root agar chunk
+              wallet tidak ikut ke landing/login/signup — dipasang per-grup
+              via PrivyProviderLazy di (dashboard) + (auth)/onboarding. */}
+          <div id="main-content" className="flex min-h-dvh flex-1 flex-col">
+            {children}
+          </div>
           <Toaster />
         </TooltipProvider>
       </body>

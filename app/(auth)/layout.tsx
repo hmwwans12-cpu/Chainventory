@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/shared/logo";
+import { PrivyProviderLazy } from "@/components/providers/privy-provider-lazy";
 import { APP_NAME } from "@/lib/constants";
 
 /**
@@ -16,6 +17,9 @@ export default function AuthLayout({
   const year = new Date().getFullYear();
 
   return (
+    // Temuan audit #26: onboarding (create/join warehouse) butuh wallet —
+    // chunk Privy dimuat di sini, bukan di root layout / landing.
+    <PrivyProviderLazy>
     <div className="bg-muted flex min-h-dvh flex-col items-center justify-center px-4 py-12">
       <a
         href="#auth-main"
@@ -36,7 +40,7 @@ export default function AuthLayout({
         {children}
       </main>
       <footer className="text-muted-foreground mt-6 text-sm">
-        {"\u00A9"} {year} {APP_NAME}.{" "}
+        {"©"} {year} {APP_NAME}.{" "}
         <Link
           href="/"
           className="hover:text-foreground underline underline-offset-2"
@@ -45,5 +49,6 @@ export default function AuthLayout({
         </Link>
       </footer>
     </div>
+    </PrivyProviderLazy>
   );
 }

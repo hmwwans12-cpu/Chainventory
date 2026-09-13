@@ -7,12 +7,15 @@ import {
   Download,
   ExternalLink,
   Eye,
+  Loader2,
   MoreHorizontal,
+  Search,
   X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,6 +74,7 @@ export function TransactionsPage({
   totalCount,
   type,
   proof,
+  query,
 }: {
   warehouseId: string;
   warehouses: WarehouseSummary[];
@@ -81,10 +85,13 @@ export function TransactionsPage({
   totalCount: number;
   type: "stock_in" | "stock_out" | "adjustment" | "reversal" | undefined;
   proof: "confirmed" | "pending" | "failed" | undefined;
+  /** Kata kunci pencarian server-side (?q=). */
+  query: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = React.useTransition();
 
   const [detailTarget, setDetailTarget] =
     React.useState<MovementListItem | null>(null);
@@ -98,13 +105,46 @@ export function TransactionsPage({
     const nextType = params.type === null ? undefined : (params.type ?? type);
     const nextProof =
       params.proof === null ? undefined : (params.proof ?? proof);
+    const nextQuery =
+      params.q === null ? "" : (params.q ?? query);
     const nextPage = params.page ?? String(page);
     if (nextType) url.set("type", nextType);
     if (nextProof) url.set("proof", nextProof);
+    if (nextQuery.trim()) url.set("q", nextQuery.trim());
     if (nextPage !== "1") url.set("page", nextPage);
     const qs = url.toString();
-    router.replace(`${pathname}${qs ? `?${qs}` : ""}`);
+    startTransition(() => {
+      router.replace(`${pathname}${qs ? `?${qs}` : ""}`);
+    });
   };
+
+  // Search (?q=) mengikuti pola halaman Products/Movements: debounced ke
+  // URL agar pencarian berjalan di server (RPC ilike), bukan filter
+  // frontend. Page di-reset ke 1 untuk query baru (goTo di bawah).
+  // Search (?q=) mengikuti pola halaman Products/Movements: debounced ke
+  // URL agar pencarian berjalan di server (RPC ilike), bukan filter
+  // frontend. Sinkron render-phase (bukan effect) agar lolos aturan
+  // react-hooks/set-state-in-effect; aman dari clobber saat mengetik
+  // karena hanya berjalan saat prop query BERUBAH (back/forward/navigasi).
+  const [searchInput, setSearchInput] = React.useState(query);
+  const [syncedQuery, setSyncedQuery] = React.useState(query);
+  if (syncedQuery !== query) {
+    setSyncedQuery(query);
+    setSearchInput(query);
+  }
+  const goToRef = React.useRef(goTo);
+  React.useEffect(() => {
+    goToRef.current = goTo;
+  });
+  React.useEffect(() => {
+    // Guard: diam bila input sama dengan query ter-commit (mount,
+    // back/forward). Tanpa ini, mount di page=3 langsung di-reset ke 1.
+    if (searchInput.trim() === query) return;
+    const timer = setTimeout(() => {
+      goToRef.current({ q: searchInput.trim() ? searchInput : null, page: "1" });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchInput, query]);
 
   const switchWarehouse = (id: string) => {
     if (id === warehouseId) return;
@@ -116,6 +156,34 @@ export function TransactionsPage({
     <div className="flex flex-col gap-6">
       <div className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 shadow-(--shadow-card)">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <div className="relative w-full sm:w-64">
+            <Search
+              aria-hidden="true"
+              className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
+            />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search reference, reason, wallet, product…"
+              className="pl-8"
+              aria-label="Search transactions"
+            />
+            {isPending ? (
+              <Loader2
+                aria-hidden="true"
+                className="text-muted-foreground absolute top-1/2 right-2 size-3.5 -translate-y-1/2 animate-spin"
+              />
+            ) : searchInput ? (
+              <button
+                type="button"
+                onClick={() => setSearchInput("")}
+                aria-label="Clear search"
+                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded before:absolute before:-inset-[10px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
+              >
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
+            ) : null}
+          </div>
           {warehouses.length > 1 ? (
             <Select
               value={warehouseId}
@@ -221,8 +289,24 @@ export function TransactionsPage({
           ) : null}
         </div>
       </div>
-      {(type || proof) && (
+      {(type || proof || query.trim()) && (
         <div className="flex flex-wrap items-center gap-2">
+          {query.trim() ? (
+            <span className="bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
+              Search: “{query.trim()}”
+              <button
+                type="button"
+                aria-label="Clear search filter"
+                onClick={() => {
+                  setSearchInput("");
+                  goTo({ q: null, page: "1" });
+                }}
+                className="hover:bg-primary/20 relative -mr-1 rounded-full p-1 transition-colors before:absolute before:-inset-[8px] before:content-['']"
+              >
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
+            </span>
+          ) : null}
           {type ? (
             <span className="bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
               Type:{" "}
@@ -258,20 +342,23 @@ export function TransactionsPage({
         <EmptyState
           icon={ArrowLeftRight}
           title={
-            type || proof
+            type || proof || query.trim()
               ? "No transactions match your filters"
               : "No transactions yet"
           }
           description={
-            type || proof
-              ? "Try a different filter combination."
+            type || proof || query.trim()
+              ? "Try a different filter combination or search term."
               : "Stock operations and their blockchain proofs will appear here once you record a movement."
           }
           primaryAction={
-            type || proof
+            type || proof || query.trim()
               ? {
                   label: "Clear filters",
-                  onClick: () => goTo({ type: null, proof: null, page: "1" }),
+                  onClick: () => {
+                    setSearchInput("");
+                    goTo({ type: null, proof: null, q: null, page: "1" });
+                  },
                 }
               : undefined
           }

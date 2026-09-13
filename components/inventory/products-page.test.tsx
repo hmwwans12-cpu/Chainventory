@@ -84,7 +84,7 @@ describe("ProductsPage low-stock parity desktop/mobile", () => {
     const table = container.querySelector("table") as HTMLElement;
     const list = container.querySelector("ul") as HTMLElement;
     expect(table).toBeTruthy();
-    expect(list).toBeTruthy;
+    expect(list).toBeTruthy();
     // Desktop: Badge "Low Stock" — hanya "low" dan "decimal".
     expect(namesWith(table, "Low Stock").sort()).toEqual([
       "Select Product decimal",

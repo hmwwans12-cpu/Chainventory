@@ -30,7 +30,7 @@ const PAGE_SIZE = 25;
 export default async function StockMovementsPageRoute({
   searchParams,
 }: {
-  searchParams: Promise<{ warehouse?: string | string[] }>;
+  searchParams: Promise<{ warehouse?: string | string[]; q?: string | string[] }>;
 }) {
   const supabase = await createClient();
   const {
@@ -41,6 +41,10 @@ export default async function StockMovementsPageRoute({
   const params = await searchParams;
   const warehouseParam =
     typeof params.warehouse === "string" ? params.warehouse : undefined;
+  // Temuan audit #25: pencarian server-side (?q=) by reference/reason/wallet.
+  // Escape sama dengan halaman Products; cap 100 char agar URL/DB tetap ringan.
+  const rawQ = typeof params.q === "string" ? params.q.trim().slice(0, 100) : "";
+  const q = rawQ.replace(/[%_\\()]/g, " ").trim();
 
   const warehouses = await getMyWarehouses(supabase, user.id);
   const active = pickActiveWarehouse(warehouses, warehouseParam);
@@ -66,13 +70,19 @@ export default async function StockMovementsPageRoute({
     active.role === "MANAGER" ||
     active.role === "STAFF";
 
+  const movementsBase = supabase
+    .from("stock_movements")
+    .select(
+      "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(status, tx_hash, error)"
+    )
+    .eq("warehouse_id", active.id);
   const [movementsResult, productsResult] = await Promise.all([
-    supabase
-      .from("stock_movements")
-      .select(
-        "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(status, tx_hash, error)"
-      )
-      .eq("warehouse_id", active.id)
+    (q
+      ? movementsBase.or(
+          `reference.ilike.%${q}%,reason.ilike.%${q}%,actor_wallet.ilike.%${q}%`
+        )
+      : movementsBase
+    )
       .order("created_at", { ascending: false })
       .range(0, PAGE_SIZE - 1),
     canStockMovement
@@ -159,6 +169,7 @@ export default async function StockMovementsPageRoute({
         role={active.role}
         products={products}
         initialMovements={movements}
+        query={rawQ}
       />
     </div>
   );

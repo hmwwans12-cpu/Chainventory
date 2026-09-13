@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   Plus,
   Scale,
+  Search,
   TriangleAlert,
   Undo2,
   X,
@@ -23,6 +24,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -95,18 +97,37 @@ const PAGE_SIZE = MOVEMENTS_PAGE_SIZE;
 
 type FetchResult = { items: MovementListItem[]; error: boolean };
 
+/**
+ * Escape pencarian untuk filter PostgREST .or() — pola yang SAMA dengan
+ * halaman Products: % _ \ ( ) di-netralkan jadi spasi agar tidak merusak
+ * parsing filter maupun menjadi wildcard liar.
+ */
+function escapeSearch(q: string): string {
+  return q.trim().replace(/[%_\\()]/g, " ");
+}
+
 async function fetchPage(
   supabase: ReturnType<typeof createSupabaseClient>,
   warehouseId: string,
   from: number,
-  to: number
+  to: number,
+  query?: string
 ): Promise<FetchResult> {
-  const { data, error } = await supabase
+  const escaped = query?.trim() ? escapeSearch(query) : "";
+  // Temuan audit #25: cari by reference/reason/wallet aktor. Nama aktor
+  // tidak tersimpan (hanya wallet) sehingga tidak bisa difilter.
+  let req = supabase
     .from("stock_movements")
     .select(
       "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(status, tx_hash, error)"
     )
-    .eq("warehouse_id", warehouseId)
+    .eq("warehouse_id", warehouseId);
+  if (escaped) {
+    req = req.or(
+      `reference.ilike.%${escaped}%,reason.ilike.%${escaped}%,actor_wallet.ilike.%${escaped}%`
+    );
+  }
+  const { data, error } = await req
     .order("created_at", { ascending: false })
     .range(from, to);
   // Jangan kembalikan [] sunyi pada error — panggil harus tahu gagal
@@ -145,16 +166,54 @@ export function MovementsPage({
   role,
   products,
   initialMovements,
+  query,
 }: {
   warehouseId: string;
   warehouses: WarehouseSummary[];
   role: Role;
   products: ProductRow[];
   initialMovements: MovementListItem[];
+  /** Kata kunci pencarian server-side (?q=): reference/reason/wallet. */
+  query: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = React.useTransition();
+
+  // Search (?q=) mengikuti pola halaman Products: debounced ke URL agar
+  // pencarian berjalan di server, plus sinkron balik untuk back/forward.
+  const [searchInput, setSearchInput] = React.useState(query);
+  const [syncedQuery, setSyncedQuery] = React.useState(query);
+  if (syncedQuery !== query) {
+    setSyncedQuery(query);
+    setSearchInput(query);
+  }
+  const applySearch = React.useCallback(
+    (nextQuery: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (nextQuery.trim()) params.set("q", nextQuery.trim());
+      else params.delete("q");
+      if (warehouseId) params.set("warehouse", warehouseId);
+      else params.delete("warehouse");
+      const qs = params.toString();
+      if (qs === searchParams.toString()) return;
+      startTransition(() => {
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      });
+    },
+    [pathname, router, searchParams, warehouseId, startTransition]
+  );
+  const applySearchRef = React.useRef(applySearch);
+  React.useEffect(() => {
+    applySearchRef.current = applySearch;
+  });
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      applySearchRef.current(searchInput);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const [movements, setMovements] =
     React.useState<MovementListItem[]>(initialMovements);
@@ -253,7 +312,8 @@ export function MovementsPage({
         supabase,
         warehouseId,
         0,
-        PAGE_SIZE - 1
+        PAGE_SIZE - 1,
+        query
       );
       if (error) throw new Error("refresh failed");
       setMovements(items);
@@ -262,7 +322,7 @@ export function MovementsPage({
     } catch {
       setRealtimeError("Live update failed. Showing the last known movements.");
     }
-  }, [supabase, warehouseId]);
+  }, [supabase, warehouseId, query]);
 
   // P2-05: event beruntun di-debounce — N realtime event → 1 fetch.
   React.useEffect(() => {
@@ -309,7 +369,8 @@ export function MovementsPage({
       supabase,
       warehouseId,
       movements.length,
-      movements.length + PAGE_SIZE - 1
+      movements.length + PAGE_SIZE - 1,
+      query
     );
     if (error) {
       setLoadingMore(false);
@@ -328,7 +389,7 @@ export function MovementsPage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Badge
             variant={liveStatus === "live" ? "success" : "warning"}
             role="status"
@@ -366,6 +427,34 @@ export function MovementsPage({
               </SelectContent>
             </Select>
           ) : null}
+          <div className="relative w-full sm:w-64">
+            <Search
+              aria-hidden="true"
+              className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
+            />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search reference, reason, wallet…"
+              className="pl-8"
+              aria-label="Search movements"
+            />
+            {isPending ? (
+              <Loader2
+                aria-hidden="true"
+                className="text-muted-foreground absolute top-1/2 right-2 size-3.5 -translate-y-1/2 animate-spin"
+              />
+            ) : searchInput ? (
+              <button
+                type="button"
+                onClick={() => setSearchInput("")}
+                aria-label="Clear search"
+                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded before:absolute before:-inset-[10px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
+              >
+                <X aria-hidden="true" className="size-3.5" />
+              </button>
+            ) : null}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {canAdjust || canReversal ? (
@@ -460,8 +549,14 @@ export function MovementsPage({
       {movements.length === 0 ? (
         <EmptyState
           icon={ArrowDownToLine}
-          title="No movements recorded yet"
-          description="Record your first stock in or stock out to start tracking inventory changes."
+          title={
+            query.trim() ? "No movements match your search" : "No movements recorded yet"
+          }
+          description={
+            query.trim()
+              ? `Nothing found for "${query.trim()}". Try a different reference, reason, or wallet.`
+              : "Record your first stock in or stock out to start tracking inventory changes."
+          }
           primaryAction={
             canStockIn
               ? {

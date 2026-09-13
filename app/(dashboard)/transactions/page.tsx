@@ -62,6 +62,7 @@ export default async function TransactionsPageRoute({
     page?: string | string[];
     type?: string | string[];
     proof?: string | string[];
+    q?: string | string[];
   }>;
 }) {
   const supabase = await createClient();
@@ -99,6 +100,9 @@ export default async function TransactionsPageRoute({
   const proofKey = PROOF_KEYS.includes(rawProof as (typeof PROOF_KEYS)[number])
     ? (rawProof as (typeof PROOF_KEYS)[number])
     : undefined;
+  // Temuan audit #25: pencarian server-side (?q=) by reference/reason/
+  // wallet aktor/nama/SKU produk. Cap 100 char agar URL/RPC tetap ringan.
+  const rawQ = typeof params.q === "string" ? params.q.trim().slice(0, 100) : "";
 
   const { data, error } = await supabase.rpc("list_transactions", {
     p_warehouse_id: active.id,
@@ -106,6 +110,7 @@ export default async function TransactionsPageRoute({
     p_proof_bucket: proofKey ?? null,
     p_page: pageNum,
     p_per_page: PER_PAGE,
+    p_search: rawQ || null,
   });
 
   const ledger = data as LedgerResponse | null;
@@ -178,6 +183,7 @@ export default async function TransactionsPageRoute({
         totalCount={totalCount}
         type={type}
         proof={proofKey}
+        query={rawQ}
       />
     </div>
   );
