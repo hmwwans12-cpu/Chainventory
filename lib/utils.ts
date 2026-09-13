@@ -10,8 +10,14 @@ export function cn(...inputs: ClassValue[]) {
  * Formatter tanggal/waktu dengan locale TERKUNCI ("en-US").
  * Alasan: Date.toLocale*() tanpa locale eksplisit memakai locale runtime
  * (Node saat SSR, browser saat hidrasi) sehingga bisa hydration mismatch.
+ *
+ * Temuan audit #18: locale saja tidak cukup — tanpa timeZone eksplisit,
+ * hasilnya memakai timezone runtime (server UTC vs browser WIB/WITA/WIT),
+ * sehingga dekat pergantian hari tanggal tampil bisa beda 1 hari.
+ * TimeZone dikunci ke Asia/Jakarta (target pasar UMKM).
  */
 const FIXED_LOCALE = "en-US";
+const FIXED_TIME_ZONE = "Asia/Jakarta";
 
 export function formatDate(iso: string): string {
   if (Number.isNaN(new Date(iso).getTime())) return "—";
@@ -19,6 +25,7 @@ export function formatDate(iso: string): string {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: FIXED_TIME_ZONE,
   });
 }
 
@@ -29,6 +36,7 @@ export function formatDateTime(iso: string): string {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: FIXED_TIME_ZONE,
   });
 }
 
@@ -51,6 +59,7 @@ export function formatChartDay(isoDay: string): string {
   return new Date(`${isoDay}T00:00:00`).toLocaleDateString(FIXED_LOCALE, {
     month: "short",
     day: "numeric",
+    timeZone: FIXED_TIME_ZONE,
   });
 }
 

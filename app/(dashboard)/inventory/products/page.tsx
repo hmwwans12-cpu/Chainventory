@@ -156,19 +156,26 @@ export default async function ProductsPageRoute({
   }
   // Stitch KPI pills: low-stock count (aturan sama dengan dashboard) +
   // daftar kategori distinct untuk filter. Ringan: kolom sempit + limit.
+  // Temuan audit #17: pola cap+1 seperti endpoint export — bila rows > cap,
+  // tampilkan "+" agar operator tahu angka/filter tidak lengkap, bukan diam.
+  const KPI_ROW_CAP = 5000;
   const [lowStockRes, categoriesRes] = await Promise.all([
     supabase
       .from("products")
       .select("status, low_stock_threshold, inventory_balances(quantity)")
       .eq("warehouse_id", active.id)
       .eq("status", "active")
-      .limit(5000),
+      .limit(KPI_ROW_CAP + 1),
     supabase
       .from("products")
       .select("category")
       .eq("warehouse_id", active.id)
-      .limit(5000),
+      .limit(KPI_ROW_CAP + 1),
   ]);
+  const lowStockTruncated = (lowStockRes.data?.length ?? 0) > KPI_ROW_CAP;
+  const categoriesTruncated = (categoriesRes.data?.length ?? 0) > KPI_ROW_CAP;
+  if (lowStockTruncated) lowStockRes.data?.splice(KPI_ROW_CAP);
+  if (categoriesTruncated) categoriesRes.data?.splice(KPI_ROW_CAP);
   let lowStockCount = 0;
   for (const row of lowStockRes.data ?? []) {
     const balanceRow = Array.isArray(row.inventory_balances)
@@ -234,13 +241,28 @@ export default async function ProductsPageRoute({
             <Badge
               variant={lowStockCount > 0 ? "warning" : "neutral"}
               className="gap-1.5 px-3 py-2"
+              title={
+                lowStockTruncated
+                  ? `Dihitung dari ${KPI_ROW_CAP.toLocaleString()} produk pertama — persempit filter untuk angka pasti`
+                  : undefined
+              }
             >
               <TriangleAlert aria-hidden="true" className="size-3.5" />
-              {lowStockCount} Low Stock Alerts
+              {lowStockCount}
+              {lowStockTruncated ? "+" : ""} Low Stock Alerts
             </Badge>
-            <Badge variant="neutral" className="gap-1.5 px-3 py-1.5">
+            <Badge
+              variant="neutral"
+              className="gap-1.5 px-3 py-1.5"
+              title={
+                categoriesTruncated
+                  ? `Daftar kategori dari ${KPI_ROW_CAP.toLocaleString()} produk pertama — kategori lain mungkin tersembunyi`
+                  : undefined
+              }
+            >
               <LayoutGrid aria-hidden="true" className="size-3.5" />
-              {categories.length} Categories
+              {categories.length}
+              {categoriesTruncated ? "+" : ""} Categories
             </Badge>
           </>
         }

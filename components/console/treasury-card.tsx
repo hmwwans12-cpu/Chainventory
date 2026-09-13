@@ -16,7 +16,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatEthDecimal } from "@/lib/utils";
 import { sanitizeConsoleError } from "@/lib/utils/sanitize-console-error";
-import { basescanTxUrl } from "@/lib/constants";
+import { basescanTxUrl, FAUCET_AMOUNT_ETH } from "@/lib/constants";
 import { shortenAddress } from "@/lib/utils";
 import type { TreasuryData } from "@/lib/console/types";
 
@@ -126,7 +126,7 @@ export function TreasuryCard({
         <CardTitle>Treasury</CardTitle>
         <CardDescription>
           Signer balance on Base Sepolia · faucet policy (
-          {treasury?.faucet?.amountEther ?? "0.001"} ETH / 12h).
+          {treasury?.faucet?.amountEther ?? FAUCET_AMOUNT_ETH} ETH / 12h).
         </CardDescription>
         <CardAction>
           <Button
@@ -197,7 +197,7 @@ export function TreasuryCard({
                     onClick={handleClaim}
                     disabled={claiming || !walletAddress}
                     className="min-h-11"
-                    aria-label={`Claim ${treasury.faucet?.amountEther ?? "0.001"} Base Sepolia ETH`}
+                    aria-label={`Claim ${treasury.faucet?.amountEther ?? FAUCET_AMOUNT_ETH} Base Sepolia ETH`}
                     title={
                       !walletAddress ? "Connect a wallet first" : undefined
                     }
@@ -205,7 +205,7 @@ export function TreasuryCard({
                     <Coins aria-hidden="true" className="size-4" />
                     {claiming
                       ? "Claiming…"
-                      : `Claim ${treasury.faucet?.amountEther ?? "0.001"} Base Sepolia`}
+                      : `Claim ${treasury.faucet?.amountEther ?? FAUCET_AMOUNT_ETH} Base Sepolia`}
                   </Button>
                 )}
                 {!walletAddress ? (

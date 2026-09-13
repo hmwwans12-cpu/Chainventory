@@ -1057,11 +1057,13 @@ export function ProductsPage({
             <ul className="divide-y lg:hidden">
               {products.map((product) => {
                 const archived = product.status === "archived";
-                const low =
-                  !archived &&
-                  product.quantity != null &&
-                  Number(product.lowStockThreshold) > 0 &&
-                  Number(product.quantity) <= Number(product.lowStockThreshold);
+                // FE-23 + temuan audit #19: JANGAN inline ulang logika —
+                // pakai helper yang sama dengan tabel desktop & dashboard.
+                const low = isLowStock({
+                  status: product.status,
+                  quantity: product.quantity,
+                  threshold: product.lowStockThreshold,
+                });
                 return (
                   <li
                     key={product.id}
