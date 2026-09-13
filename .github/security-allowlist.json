@@ -1,0 +1,45 @@
+{
+  "$comment": "Accepted dependency risks for scripts/ci/deps-audit.mjs. An entry exempts ONE advisory ID until `expires` (inclusive). Expired or missing entries for high/critical findings FAIL CI. Re-assess each entry before extending its expiry; prefer upgrading the dependency over extending.",
+  "allowlist": [
+    {
+      "id": "GHSA-w5hq-g745-h8pq",
+      "package": "uuid",
+      "severity": "moderate",
+      "reason": "Only exploitable when the caller passes a `buf` array to uuid v3/v5/v6. The app never calls uuid directly; transitive via @metamask/* utils inside the Privy/wagmi client bundle. No server-side sink.",
+      "addedIn": "v0.5.4",
+      "expires": "2026-12-12"
+    },
+    {
+      "id": "GHSA-vcc3-ghjq-m6fr",
+      "package": "decode-uri-component",
+      "severity": "moderate",
+      "reason": "DoS via malformed percent-encoding, reachable only through WalletConnect URI parsing of user-supplied connection strings in the client bundle. No server-side parsing path in app code.",
+      "addedIn": "v0.5.4",
+      "expires": "2026-12-12"
+    },
+    {
+      "id": "GHSA-gqvv-2mrq-wpjv",
+      "package": "hono",
+      "severity": "moderate",
+      "reason": "toSSG() static-export helper inside @wagmi/connectors>porto (embedded-wallet connector, client-side). The app never calls hono's toSSG; no server-side sink.",
+      "addedIn": "v0.5.4",
+      "expires": "2026-12-12"
+    },
+    {
+      "id": "GHSA-g6gw-c38x-mqfc",
+      "package": "hono",
+      "severity": "moderate",
+      "reason": "parseBody() dot-notation nesting inside @wagmi/connectors>porto (client-side). The app never runs a hono server; no reachable sink.",
+      "addedIn": "v0.5.4",
+      "expires": "2026-12-12"
+    },
+    {
+      "id": "GHSA-crvj-82cr-hjcx",
+      "package": "hono",
+      "severity": "moderate",
+      "reason": "Query-parser fragment handling inside @wagmi/connectors>porto (client-side). Same non-reachability assessment as the other hono entries.",
+      "addedIn": "v0.5.4",
+      "expires": "2026-12-12"
+    }
+  ]
+}

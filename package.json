@@ -11,6 +11,7 @@
     "check:contrast": "node scripts/ci/check-contrast.mjs",
     "preflight": "node scripts/ci/preflight.mjs",
     "secret:scan": "node scripts/ci/secret-scan.mjs",
+  "deps:audit": "node scripts/ci/deps-audit.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",

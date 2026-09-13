@@ -139,11 +139,11 @@ jobs:
 
   # Dependency audit (TECHSTACK ï¿½7 / TODO "dependency audit belum").
   # Gagal bila ada vuln HIGH/critical di dependencies produksi.
+  # BLOCKING (temuan audit #12): scripts/ci/deps-audit.mjs + allow-list berekspirasi.
   deps-audit:
     runs-on: ubuntu-latest
-    # NON-BLOCKING sementara: 2 high saat ini transitive (Privy -> wagmi ->
-    # coinbase cdp-sdk -> axios); butuh keputusan override dependency.
-    continue-on-error: true
+    # NON-BLOCKING dihapus (temuan audit #12): gate kini blocking via
+    # scripts/ci/deps-audit.mjs + .github/security-allowlist.json.
     steps:
       - uses: actions/checkout@v4
 
@@ -153,4 +153,4 @@ jobs:
 
       - uses: actions/setup-node@v4
       - name: Audit production dependencies
-        run: pnpm audit --prod --audit-level high
+        run: pnpm deps:audit

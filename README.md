@@ -128,6 +128,10 @@ corepack pnpm e2e:test
 
 Direct table mutation dari authenticated **ditolak** (INSERT/UPDATE/DELETE revoked).
 
+## Dependency Patches
+
+- `patches/@privy-io__react-auth@3.37.1.patch` (via `pnpm patch`, tercatat di `pnpm-workspace.yaml` → `patchedDependencies`): menghapus prop `isActive` yang bocor ke elemen `<div>` di modal TransactionDetails Privy (React 19 warning, temuan audit eksternal 2026-09-13). Prop tersebut tidak dipakai styling mana pun (gaya accordion memakai `data-open`; chevron memakai `isactive` lowercase) sehingga penghapusan nol-perubahan visual/perilaku. **Saat upgrade Privy SDK**: cek apakah upstream sudah tidak melempar `isActive` (cari di `dist/**/TransactionDetails-*`); bila sudah, hapus patch + entri `patchedDependencies`, bila belum, rebase patch ke versi baru.
+
 ## Dokumentasi
 
 | Dokumen                        | Isi                                 |

@@ -76,6 +76,13 @@ const nextConfig = {
   reactStrictMode: true,
   // CF-04: jangan umumkan framework via header (fingerprinting).
   poweredByHeader: false,
+  // Temuan audit #21: next/image tidak dipakai di mana pun (0 hasil grep),
+  // tapi route Image Optimization bawaan tetap aktif dan jadi permukaan
+  // CVE AVIF (temuan #10b). Matikan eksplisit sebagai defense-in-depth —
+  // independen dari upgrade next, tetap berguna setelahnya.
+  images: {
+    unoptimized: true,
+  },
   async headers() {
     return [
       {

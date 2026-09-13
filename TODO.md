@@ -29,7 +29,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 
 ## P0 — Project Foundation
 
-- [ ] Buat repository private dan branch protection.
+- [ ] Buat repository private dan branch protection (lihat item 8: diklaim aktif 2026-08-24 — verifikasi ulang di Settings → Branches sebelum dicentang; temuan audit #5).
 - [x] Inisialisasi Next.js App Router, TypeScript strict, pnpm, Tailwind, shadcn/ui.
 - [x] Konfigurasi ESLint, Prettier, Vitest, Testing Library, Playwright.
 - [x] Tambahkan `@t3-oss/env-nextjs` + Zod untuk validasi environment.
@@ -259,7 +259,8 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
     - ~~§4 marketing nav active state~~ ✅ dot indicator + bg + aria-current, hover transition-all + scale halus (pointer-fine only), mobile sheet ikut aktif state.
     - ~~§2 CTA micro-interaction~~ ✅ ArrowRight slide + scale 1.02 pada CTA utama; card features/security/features-page dapat hover lift+shadow.
     - ~~§9 duplikasi sign-out~~ ✅ `hooks/use-sign-out.ts`.
-    - **Ditunda (butuh keputusan produk/aset):** screenshot landing, social proof, dark mode wiring (+fix scoping fumadocs), products pagination server-side, mobile card-list tabel, docs content, i18n ID/EN, command palette ⌘K.
+    - **Ditunda (butuh keputusan produk/aset):** screenshot landing, social proof, dark mode wiring (+fix scoping fumadocs), docs content, i18n ID/EN, command palette ⌘K.
+    - ~~products pagination server-side~~ ✅ (temuan audit #20: sudah live — server-side range/count query berparameter page) dan ~~mobile card-list tabel~~ ✅ (`<ul lg:hidden>` lengkap + checkbox/status/stok); keduanya dicoret dari daftar tunda 2026-09-13.
 19. **Follow-up verifikasi audit UI/UX → hotfix 0.1.9.1 (2025-08-25)**:
     - ~~Cursor-spotlight hero & feature cards (§2, sempat kelewat)~~ ✅ `components/marketing/spotlight-card.tsx` — overlay radial mengikuti kursor via **transform translate3d + spring** (compositor-only), opacity gate hover, nonaktif utk reduced-motion & pointer sentuh; dipasang di hero visual, cards Features/Security, dan halaman Features.
     - ~~InactivityBanner pengecualian valid~~ ✅ kini bermigrasi juga: varian baru `PanelCard variant="tinted"` (border solid netral; warna semantik via className) — banner warning/critical memakainya tanpa kehilangan makna warna.
