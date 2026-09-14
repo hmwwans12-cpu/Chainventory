@@ -40,7 +40,6 @@ const defined = new Set(
 );
 
 let missing = 0;
-let dynamic = 0;
 const perNs = new Map();
 for (const file of SRC_DIRS.flatMap((d) => walk(d))) {
   const content = readFileSync(file, "utf8");

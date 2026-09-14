@@ -1,4 +1,8 @@
+import { createPublicClient, type Hex } from "viem";
+
 import { createClient } from "@/lib/supabase/server";
+import { baseSepolia, createChainTransport } from "@/lib/blockchain/chains";
+import { verifyOwnershipTransferTx } from "@/lib/blockchain/ownership-proof";
 import {
   approveJoinSchema,
   cancelJoinSchema,
@@ -7,7 +11,9 @@ import {
   rejectJoinSchema,
   removeMemberSchema,
   requestJoinSchema,
+  transferConfirmSchema,
   transferOwnershipSchema,
+  transferPreviewSchema,
 } from "@/lib/validators/membership";
 import {
   forbidden,
@@ -38,7 +44,9 @@ type Action =
   | "leave"
   | "remove"
   | "change_role"
-  | "transfer";
+  | "transfer"
+  | "transfer_preview"
+  | "transfer_confirm";
 
 const ACTION_VALUES: Action[] = [
   "request",
@@ -49,6 +57,8 @@ const ACTION_VALUES: Action[] = [
   "remove",
   "change_role",
   "transfer",
+  "transfer_preview",
+  "transfer_confirm",
 ];
 
 export async function POST(request: Request) {
@@ -70,7 +80,11 @@ export async function POST(request: Request) {
   // activity cannot exhaust the budget that protects the most
   // sensitive action in this route.
   const rateLimited = await requireRateLimit(
-    action === "transfer" ? "ownership-transfer" : "membership",
+    action === "transfer" ||
+      action === "transfer_preview" ||
+      action === "transfer_confirm"
+      ? "ownership-transfer"
+      : "membership",
     auth.user.id,
     request
   );
@@ -79,7 +93,16 @@ export async function POST(request: Request) {
   const raw = await readJson(request);
   if (!raw.ok) return invalid("Invalid JSON body.");
 
-  const fn: Record<Action, string> = {
+  // Alur on-chain (temuan audit #4): logika kustom, bukan dispatch RPC
+  // generik di bawah — return langsung dari sini.
+  if (action === "transfer_preview" || action === "transfer_confirm") {
+    return handleOnchainTransfer(supabase, auth.user.id, action, raw.body);
+  }
+
+  const fn: Record<
+    Exclude<Action, "transfer_preview" | "transfer_confirm">,
+    string
+  > = {
     request: "request_join",
     approve: "approve_join",
     reject: "reject_join",
@@ -90,7 +113,10 @@ export async function POST(request: Request) {
     transfer: "transfer_ownership",
   };
 
-  const rpcArgs: Record<Action, unknown> = {
+  const rpcArgs: Record<
+    Exclude<Action, "transfer_preview" | "transfer_confirm">,
+    unknown
+  > = {
     request: { p_warehouse_code: undefined },
     approve: { p_request_id: undefined, p_role: undefined },
     reject: { p_request_id: undefined, p_reason: undefined },
@@ -282,4 +308,174 @@ export async function POST(request: Request) {
   }
 
   return ok(data);
+}
+
+const OWNER_READ_ABI = [
+  {
+    type: "function",
+    name: "owner",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ type: "address" }],
+  },
+] as const;
+
+type DbClient = Awaited<ReturnType<typeof createClient>>;
+
+async function requireTransferParties(
+  supabase: DbClient,
+  callerId: string,
+  warehouseId: string,
+  newOwnerId: string
+) {
+  if (newOwnerId === callerId) return { error: invalid("Already the owner.") };
+  const { data: me } = await supabase
+    .from("memberships")
+    .select("role")
+    .eq("warehouse_id", warehouseId)
+    .eq("user_id", callerId)
+    .eq("status", "ACTIVE")
+    .maybeSingle();
+  if (me?.role !== "OWNER") {
+    return { error: forbidden("Only the owner can transfer ownership.") };
+  }
+  const { data: target } = await supabase
+    .from("memberships")
+    .select("user_id, status")
+    .eq("warehouse_id", warehouseId)
+    .eq("user_id", newOwnerId)
+    .maybeSingle();
+  if (!target) return { error: invalid("Target is not a member.") };
+  if (target.status !== "ACTIVE") {
+    return { error: invalid("Target membership is not active.") };
+  }
+  // Wallet primary verified milik target — bukti ia mengendalikan address
+  // yang akan dicatat on-chain (anti lockout, konsisten P1-03).
+  const { data: wallet } = await supabase
+    .from("wallets")
+    .select("address")
+    .eq("user_id", newOwnerId)
+    .eq("is_primary", true)
+    .eq("verification_state", "verified")
+    .maybeSingle();
+  if (!wallet?.address) {
+    return {
+      error: invalid(
+        "Target member has no verified primary wallet yet."
+      ),
+    };
+  }
+  return { wallet: (wallet.address as string).toLowerCase() };
+}
+
+/**
+ * Alur on-chain transfer ownership (temuan audit #4).
+ *
+ * preview: resolve + kembalikan wallet target (tanpa efek samping).
+ * confirm: verifikasi tx on-chain (to/fungsi/from/argumen, ikut pola
+ * verifyIntentProofTx) lalu panggil RPC confirm_ownership_transfer yang
+ * melakukan sinkron DB atomik. Tanpa verifikasi ini, siapa pun bisa
+ * mengklaim tx orang lain untuk mencuri ownership di DB.
+ */
+async function handleOnchainTransfer(
+  supabase: DbClient,
+  callerId: string,
+  action: "transfer_preview" | "transfer_confirm",
+  body: unknown
+) {
+  if (action === "transfer_preview") {
+    const parsed = transferPreviewSchema.safeParse(body);
+    if (!parsed.success) return invalid(parsed.error.issues[0]?.message);
+    const { warehouseId, newOwnerId } = parsed.data;
+    const parties = await requireTransferParties(
+      supabase,
+      callerId,
+      warehouseId,
+      newOwnerId
+    );
+    if ("error" in parties) return parties.error;
+    return ok({ data: { wallet: parties.wallet } });
+  }
+
+  const parsed = transferConfirmSchema.safeParse(body);
+  if (!parsed.success) return invalid(parsed.error.issues[0]?.message);
+  const { warehouseId, newOwnerId, txHash } = parsed.data;
+
+  const parties = await requireTransferParties(
+    supabase,
+    callerId,
+    warehouseId,
+    newOwnerId
+  );
+  if ("error" in parties) return parties.error;
+
+  const { data: warehouse } = await supabase
+    .from("warehouse_summaries")
+    .select("contract_address")
+    .eq("id", warehouseId)
+    .maybeSingle();
+  const contractAddress = warehouse?.contract_address as string | undefined;
+  if (!contractAddress) {
+    return invalid(
+      "This warehouse is not deployed on-chain. Use the off-chain transfer instead."
+    );
+  }
+
+  const client = createPublicClient({
+    chain: baseSepolia,
+    transport: createChainTransport(),
+  });
+  let tx: { to: string | null; from: string; input: Hex };
+  let receiptStatus: string | undefined;
+  let onChainOwner: string;
+  try {
+    const [fetched, receipt, owner] = await Promise.all([
+      client.getTransaction({ hash: txHash as Hex }),
+      client.getTransactionReceipt({ hash: txHash as Hex }),
+      client.readContract({
+        address: contractAddress as Hex,
+        abi: OWNER_READ_ABI,
+        functionName: "owner",
+      }),
+    ]);
+    tx = { to: fetched.to, from: fetched.from, input: fetched.input };
+    receiptStatus = receipt.status;
+    onChainOwner = owner as string;
+  } catch {
+    return json(
+      {
+        ok: false,
+        error: "Transaction not found or still confirming. Try again shortly.",
+        errorCode: "RPC_FAILED",
+      },
+      202
+    );
+  }
+
+  const verdict = verifyOwnershipTransferTx(
+    { ...tx, status: receiptStatus },
+    {
+      contractAddress,
+      currentOwnerWallet: onChainOwner,
+      newOwnerWallet: parties.wallet,
+    }
+  );
+  if (!verdict.ok) {
+    return json(
+      {
+        ok: false,
+        error: `Wallet transaction is not a valid ownership transfer (${verdict.reason}). Nothing was changed.`,
+        errorCode: "RPC_FAILED",
+      },
+      409
+    );
+  }
+
+  const { error } = await supabase.rpc("confirm_ownership_transfer", {
+    p_warehouse_id: warehouseId,
+    p_new_owner_id: newOwnerId,
+    p_tx_hash: txHash,
+  });
+  if (error) return fromPostgrestError(error.message);
+  return ok({ data: { newOwnerWallet: verdict.newOwner } });
 }

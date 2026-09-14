@@ -916,6 +916,38 @@ export const translations: Record<Locale, Record<string, string>> = {
     "members.pending_failed":
       "Could not load pending join requests. New requests may be hidden. Refresh to retry.",
     "members.unknown": "Unknown",
+    // Transfer ownership on-chain (temuan audit #4)
+    "ownership.title": "Transfer ownership",
+    "ownership.choose_hint":
+      "Choose who will own this warehouse. You will become a Manager.",
+    "ownership.review_hint": "Review carefully before confirming.",
+    "ownership.back": "Back",
+    "ownership.keep": "Keep ownership",
+    "ownership.submit": "Transfer ownership",
+    "ownership.continue": "Continue",
+    "ownership.transferring": "Transferring…",
+    "ownership.new_owner": "New owner",
+    "ownership.no_members": "No active members to transfer to.",
+    "ownership.select_placeholder": "Select a member",
+    "ownership.review_prefix": "Transfer ownership to",
+    "ownership.review_warning":
+      "You will become a Manager. Only the new owner can manage ownership from now on. This action cannot be undone by you.",
+    "ownership.select_member_first": "Select a member to transfer ownership to.",
+    "ownership.toast_title": "Ownership transferred",
+    "ownership.toast_desc_offchain": "The selected member is now the owner.",
+    "ownership.toast_desc":
+      "Ownership moved on-chain and the app record is now in sync.",
+    "ownership.onchain_note":
+      "Warehouse contract is live on Base Sepolia. Ownership must move on-chain from the owner wallet before the app record can follow.",
+    "ownership.sign_transfer": "Sign & Transfer",
+    "ownership.loading_wallet": "Loading member wallet…",
+    "ownership.error_no_wallet":
+      "Owner wallet unavailable. Reconnect your wallet and try again.",
+    "ownership.error_signature_cancelled":
+      "Signature cancelled. Nothing was recorded and no gas was spent.",
+    "ownership.error_wallet_send":
+      "The wallet could not send the transaction. Please try again.",
+    "ownership.error_no_tx_hash": "Wallet did not return a transaction hash.",
     // Blockchain / audit explorer
     "chain.live_failed": "Live update failed. Showing the last known proofs.",
     "chain.retry_queued_title": "Retry queued",
@@ -2146,6 +2178,38 @@ export const translations: Record<Locale, Record<string, string>> = {
     "members.pending_failed":
       "Tidak dapat memuat permintaan gabung yang menunggu. Permintaan baru mungkin tersembunyi. Muat ulang untuk mencoba lagi.",
     "members.unknown": "Tidak diketahui",
+    // Transfer ownership on-chain (temuan audit #4)
+    "ownership.title": "Transfer kepemilikan",
+    "ownership.choose_hint":
+      "Pilih siapa yang akan memiliki gudang ini. Anda akan menjadi Manajer.",
+    "ownership.review_hint": "Tinjau dengan cermat sebelum mengonfirmasi.",
+    "ownership.back": "Kembali",
+    "ownership.keep": "Pertahankan kepemilikan",
+    "ownership.submit": "Transfer kepemilikan",
+    "ownership.continue": "Lanjut",
+    "ownership.transferring": "Mentransfer…",
+    "ownership.new_owner": "Pemilik baru",
+    "ownership.no_members": "Tidak ada anggota aktif untuk dialihkan.",
+    "ownership.select_placeholder": "Pilih anggota",
+    "ownership.review_prefix": "Transfer kepemilikan ke",
+    "ownership.review_warning":
+      "Anda akan menjadi Manajer. Hanya pemilik baru yang dapat mengelola kepemilikan mulai sekarang. Tindakan ini tidak dapat Anda batalkan.",
+    "ownership.select_member_first": "Pilih anggota untuk transfer kepemilikan.",
+    "ownership.toast_title": "Kepemilikan dialihkan",
+    "ownership.toast_desc_offchain": "Anggota yang dipilih kini menjadi pemilik.",
+    "ownership.toast_desc":
+      "Kepemilikan berpindah on-chain dan catatan aplikasi kini sinkron.",
+    "ownership.onchain_note":
+      "Kontrak gudang live di Base Sepolia. Kepemilikan harus berpindah on-chain dari dompet owner sebelum catatan aplikasi menyusul.",
+    "ownership.sign_transfer": "Tandatangani & Transfer",
+    "ownership.loading_wallet": "Memuat dompet anggota…",
+    "ownership.error_no_wallet":
+      "Dompet owner tidak tersedia. Sambungkan ulang dompet Anda dan coba lagi.",
+    "ownership.error_signature_cancelled":
+      "Tanda tangan dibatalkan. Tidak ada yang tercatat dan tidak ada gas yang terpakai.",
+    "ownership.error_wallet_send":
+      "Dompet tidak dapat mengirim transaksi. Silakan coba lagi.",
+    "ownership.error_no_tx_hash": "Dompet tidak mengembalikan hash transaksi.",
     // Blockchain / audit explorer
     "chain.live_failed":
       "Pembaruan live gagal. Menampilkan bukti terakhir yang diketahui.",

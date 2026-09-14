@@ -71,6 +71,22 @@ export const transferOwnershipSchema = z.object({
   newOwnerId: z.string().uuid("Invalid user id."),
 });
 
+/**
+ * Alur on-chain (temuan audit #4): preview hanya resolve wallet, confirm
+ * membawa txHash hasil signing owner via Privy. txHash format 0x + 64 hex.
+ */
+export const transferPreviewSchema = z.object({
+  warehouseId: z.string().uuid("Invalid warehouse id."),
+  newOwnerId: z.string().uuid("Invalid user id."),
+});
+
+export const transferConfirmSchema = transferPreviewSchema.extend({
+  txHash: z
+    .string()
+    .trim()
+    .regex(/^0x[0-9a-fA-F]{64}$/, "Invalid transaction hash."),
+});
+
 export type RequestJoinValues = z.infer<typeof requestJoinSchema>;
 export type ApproveJoinValues = z.infer<typeof approveJoinSchema>;
 export type RejectJoinValues = z.infer<typeof rejectJoinSchema>;
@@ -79,3 +95,5 @@ export type LeaveWarehouseValues = z.infer<typeof leaveWarehouseSchema>;
 export type RemoveMemberValues = z.infer<typeof removeMemberSchema>;
 export type ChangeRoleValues = z.infer<typeof changeRoleSchema>;
 export type TransferOwnershipValues = z.infer<typeof transferOwnershipSchema>;
+export type TransferPreviewValues = z.infer<typeof transferPreviewSchema>;
+export type TransferConfirmValues = z.infer<typeof transferConfirmSchema>;

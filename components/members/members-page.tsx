@@ -979,6 +979,10 @@ export function MembersPage({
           isDeployed={Boolean(
             warehouses.find((w) => w.id === warehouseId)?.contractAddress
           )}
+          contractAddress={
+            warehouses.find((w) => w.id === warehouseId)?.contractAddress ??
+            null
+          }
           members={localMembers.filter(
             (m) => m.userId !== myUserId && m.status === "ACTIVE"
           )}

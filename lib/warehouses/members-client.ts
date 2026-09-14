@@ -46,6 +46,42 @@ export async function transferOwnership(
   return parseSuccess<unknown>(status, json);
 }
 
+/**
+ * Alur on-chain (temuan audit #4): preview resolve wallet target
+ * (tanpa efek samping), confirm sinkron DB pasca verifikasi tx.
+ */
+export async function previewTransferTarget(
+  values: { warehouseId: string; newOwnerId: string },
+  fetcher: Fetcher = fetch
+): Promise<ApiResult<{ wallet: string }>> {
+  const { status, json } = await sendJson(
+    `${MEMBERSHIP_ROUTE}?action=transfer_preview`,
+    {
+      body: { warehouseId: values.warehouseId, newOwnerId: values.newOwnerId },
+    },
+    fetcher
+  );
+  return parseSuccess<{ wallet: string }>(status, json);
+}
+
+export async function confirmOwnershipTransfer(
+  values: { warehouseId: string; newOwnerId: string; txHash: string },
+  fetcher: Fetcher = fetch
+): Promise<ApiResult<{ newOwnerWallet: string }>> {
+  const { status, json } = await sendJson(
+    `${MEMBERSHIP_ROUTE}?action=transfer_confirm`,
+    {
+      body: {
+        warehouseId: values.warehouseId,
+        newOwnerId: values.newOwnerId,
+        txHash: values.txHash,
+      },
+    },
+    fetcher
+  );
+  return parseSuccess<{ newOwnerWallet: string }>(status, json);
+}
+
 export async function removeMember(
   values: { warehouseId: string; userId: string },
   fetcher: Fetcher = fetch
