@@ -13,12 +13,7 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { ChartLine } from "lucide-react";
 import { formatChartDay } from "@/lib/utils";
-
-const chartConfig = {
-  stockIn: { label: "Stock In", color: "var(--chart-1)" },
-  // Amber for Stock Out to distinguish from green In for deuteranopia (P3#14)
-  stockOut: { label: "Stock Out", color: "var(--warning)" },
-} satisfies ChartConfig;
+import { useLocale } from "@/components/providers/locale-provider";
 
 const tickLabel = (isoDay: string): string => formatChartDay(isoDay);
 
@@ -42,13 +37,19 @@ export function StockMovementChart({
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const fillIn = `fillStockIn-${uid}`;
   const fillOut = `fillStockOut-${uid}`;
+  const { t } = useLocale();
+  const chartConfig = {
+    stockIn: { label: t("dashboard.stock_in"), color: "var(--chart-1)" },
+    // Amber for Stock Out to distinguish from green In for deuteranopia (P3#14)
+    stockOut: { label: t("dashboard.stock_out"), color: "var(--warning)" },
+  } satisfies ChartConfig;
 
   if (daily.length === 0) {
     return (
       <EmptyState
         icon={ChartLine}
-        title="No movement in this range"
-        description={`No stock movements recorded in the last ${range} days.`}
+        title={t("analytics.empty_title")}
+        description={t("analytics.empty_desc", { n: String(range) })}
       />
     );
   }
@@ -56,7 +57,7 @@ export function StockMovementChart({
   return (
     <div
       role="img"
-      aria-label={`Stock In and Stock Out over the last ${range} days`}
+      aria-label={t("analytics.chart_aria", { n: String(range) })}
       aria-describedby={`chart-table-${uid}`}
       className="w-full"
     >
@@ -128,14 +129,12 @@ export function StockMovementChart({
       </ChartContainer>
       {/* Fallback data untuk screen-reader (chart canvas tidak terbaca). */}
       <table id={`chart-table-${uid}`} className="sr-only">
-        <caption>
-          Daily stock in and stock out over the last {range} days
-        </caption>
+        <caption>{t("analytics.chart_caption", { n: String(range) })}</caption>
         <thead>
           <tr>
-            <th scope="col">Day</th>
-            <th scope="col">Stock In</th>
-            <th scope="col">Stock Out</th>
+            <th scope="col">{t("analytics.th_day")}</th>
+            <th scope="col">{t("dashboard.stock_in")}</th>
+            <th scope="col">{t("dashboard.stock_out")}</th>
           </tr>
         </thead>
         <tbody>

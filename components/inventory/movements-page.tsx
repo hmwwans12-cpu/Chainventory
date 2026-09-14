@@ -92,6 +92,7 @@ import { PanelCard } from "@/components/shared/panel-card";
 import { BaseScanLink } from "@/components/shared/basescan-link";
 import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils";
 import { MOVEMENTS_PAGE_SIZE, REALTIME_DEBOUNCE_MS } from "@/lib/constants";
+import { useLocale } from "@/components/providers/locale-provider";
 
 const PAGE_SIZE = MOVEMENTS_PAGE_SIZE;
 
@@ -155,8 +156,8 @@ async function fetchPage(
   };
 }
 
-function shortWallet(wallet: string | null): string {
-  if (!wallet) return "Member";
+function shortWallet(wallet: string | null, memberLabel: string): string {
+  if (!wallet) return memberLabel;
   return `${wallet.slice(0, 6)}\u2026${wallet.slice(-4)}`;
 }
 
@@ -176,6 +177,11 @@ export function MovementsPage({
   /** Kata kunci pencarian server-side (?q=): reference/reason/wallet. */
   query: string;
 }) {
+  const { t } = useLocale();
+  const unknownProductLabel = t("movements.unknown_product");
+  const memberLabel = t("movements.member_fallback");
+  const resolveProductName = (name: string) =>
+    name === "Unknown product" ? unknownProductLabel : name;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -320,9 +326,9 @@ export function MovementsPage({
       setHasMore(items.length === PAGE_SIZE);
       setRealtimeError(null);
     } catch {
-      setRealtimeError("Live update failed. Showing the last known movements.");
+      setRealtimeError(t("movements.live_update_failed"));
     }
-  }, [supabase, warehouseId, query]);
+  }, [supabase, warehouseId, query, t]);
 
   // P2-05: event beruntun di-debounce — N realtime event → 1 fetch.
   React.useEffect(() => {
@@ -404,7 +410,9 @@ export function MovementsPage({
                   : "animate-pulse bg-current"
               )}
             />
-            {liveStatus === "live" ? "Live" : "Reconnecting"}
+            {liveStatus === "live"
+              ? t("landing.hero.live")
+              : t("movements.reconnecting")}
           </Badge>
           {warehouses.length > 1 ? (
             <Select
@@ -413,7 +421,7 @@ export function MovementsPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger aria-label="Warehouse" className="min-w-36">
+              <SelectTrigger aria-label={t("settings.warehouse")} className="min-w-36">
                 <SelectValue
                   getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
                 />
@@ -435,9 +443,9 @@ export function MovementsPage({
             <Input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search reference, reason, wallet…"
+              placeholder={t("movements.search_placeholder")}
               className="pl-8"
-              aria-label="Search movements"
+              aria-label={t("movements.search_label")}
             />
             {isPending ? (
               <Loader2
@@ -448,7 +456,7 @@ export function MovementsPage({
               <button
                 type="button"
                 onClick={() => setSearchInput("")}
-                aria-label="Clear search"
+                aria-label={t("movements.clear_search")}
                 className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded before:absolute before:-inset-[10px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
               >
                 <X aria-hidden="true" className="size-3.5" />
@@ -461,9 +469,14 @@ export function MovementsPage({
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button variant="outline" aria-label="Special operations">
+                  <Button
+                    variant="outline"
+                    aria-label={t("movements.special_operations")}
+                  >
                     <Lock aria-hidden="true" />
-                    <span className="hidden sm:inline">Special Operations</span>
+                    <span className="hidden sm:inline">
+                      {t("movements.special_operations")}
+                    </span>
                     <ChevronDown
                       aria-hidden="true"
                       className="size-3.5 opacity-60"
@@ -471,7 +484,7 @@ export function MovementsPage({
                   </Button>
                 }
               >
-                <span className="sr-only">More movement types</span>
+                <span className="sr-only">{t("movements.more_types")}</span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {canAdjust ? (
@@ -480,7 +493,7 @@ export function MovementsPage({
                     disabled={suspended}
                   >
                     <Scale aria-hidden="true" />
-                    Adjustment
+                    {t("movements.adjustment")}
                   </DropdownMenuItem>
                 ) : null}
                 {canReversal ? (
@@ -489,7 +502,7 @@ export function MovementsPage({
                     disabled={suspended}
                   >
                     <Undo2 aria-hidden="true" />
-                    Reversal
+                    {t("movements.reversal")}
                   </DropdownMenuItem>
                 ) : null}
               </DropdownMenuContent>
@@ -508,7 +521,7 @@ export function MovementsPage({
               }
             >
               <ArrowDownToLine aria-hidden="true" />
-              Export CSV
+              {t("movements.export_csv")}
             </Button>
           ) : null}
           {canStockIn ? (
@@ -517,7 +530,7 @@ export function MovementsPage({
               disabled={suspended}
             >
               <Plus aria-hidden="true" />
-              Stock In
+              {t("dashboard.stock_in")}
             </Button>
           ) : null}
           {canStockOut ? (
@@ -527,7 +540,7 @@ export function MovementsPage({
               disabled={suspended}
             >
               <ArrowUpFromLine aria-hidden="true" />
-              Stock Out
+              {t("dashboard.stock_out")}
             </Button>
           ) : null}
         </div>
@@ -542,7 +555,7 @@ export function MovementsPage({
           className="border-status-warn-border bg-status-warn-bg text-status-warn-fg flex items-center gap-2 px-4 py-3 text-sm"
         >
           <TriangleAlert aria-hidden="true" className="size-4 shrink-0" />
-          Warehouse Suspended: inventory mutations are temporarily unavailable.
+          {t("movements.suspended_banner")}
         </PanelCard>
       ) : null}
 
@@ -551,18 +564,18 @@ export function MovementsPage({
           icon={ArrowDownToLine}
           title={
             query.trim()
-              ? "No movements match your search"
-              : "No movements recorded yet"
+              ? t("movements.empty_search_title")
+              : t("movements.empty_title")
           }
           description={
             query.trim()
-              ? `Nothing found for "${query.trim()}". Try a different reference, reason, or wallet.`
-              : "Record your first stock in or stock out to start tracking inventory changes."
+              ? t("movements.empty_search_desc", { query: query.trim() })
+              : t("movements.empty_desc")
           }
           primaryAction={
             canStockIn
               ? {
-                  label: "Record Stock In",
+                  label: t("movements.record_stock_in"),
                   onClick: () => setMovementDialog({ type: "stock_in" }),
                 }
               : undefined
@@ -570,7 +583,7 @@ export function MovementsPage({
           secondaryAction={
             canStockOut
               ? {
-                  label: "Record Stock Out",
+                  label: t("movements.record_stock_out"),
                   onClick: () => setMovementDialog({ type: "stock_out" }),
                 }
               : undefined
@@ -581,7 +594,7 @@ export function MovementsPage({
           {realtimeError ? (
             movements.length === 0 ? (
               <ErrorState
-                title="Couldn't load movements"
+                title={t("movements.load_failed_title")}
                 description={realtimeError}
                 onRetry={refreshMovements}
               />
@@ -595,15 +608,21 @@ export function MovementsPage({
             <Table className="lg:min-w-[860px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Timestamp</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Quantity</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden lg:table-cell">Actor</TableHead>
-                  <TableHead className="hidden lg:table-cell">Proof</TableHead>
+                  <TableHead>{t("movements.col_timestamp")}</TableHead>
+                  <TableHead>{t("landing.blockchain.col_product")}</TableHead>
+                  <TableHead>{t("movements.col_type")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("movements.col_quantity")}
+                  </TableHead>
+                  <TableHead>{t("movements.col_status")}</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    {t("movements.col_actor")}
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    {t("landing.blockchain.proof")}
+                  </TableHead>
                   <TableHead className="w-12">
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">{t("movements.col_actions")}</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -639,8 +658,8 @@ export function MovementsPage({
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
-                          <EntityName title={m.productName}>
-                            {m.productName}
+                          <EntityName title={resolveProductName(m.productName)}>
+                            {resolveProductName(m.productName)}
                           </EntityName>
                           <span className="flex flex-wrap items-center gap-1">
                             <span className="t-code text-primary bg-surface-container rounded border px-1.5 py-px">
@@ -703,17 +722,17 @@ export function MovementsPage({
                         />
                       </TableCell>
                       <TableCell className="text-muted-foreground hidden font-mono text-sm lg:table-cell">
-                        {shortWallet(m.actorWallet)}
+                        {shortWallet(m.actorWallet, memberLabel)}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         {m.proofTxHash && m.proofStatus === "confirmed" ? (
                           <span className="flex flex-col gap-0.5">
                             <BaseScanLink
                               href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
-                              ariaLabel="View transaction on BaseScan"
+                              ariaLabel={t("movements.view_tx_basescan")}
                               className="before:-inset-[9px]"
                             >
-                              Verified
+                              {t("landing.blockchain.verified")}
                             </BaseScanLink>
                             <span className="text-muted-foreground font-mono text-xs">
                               {m.proofTxHash.slice(0, 6)}…
@@ -738,7 +757,9 @@ export function MovementsPage({
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                aria-label={`Actions for ${typeMeta.label}`}
+                                aria-label={t("movements.actions_for", {
+                                  type: typeMeta.label,
+                                })}
                               />
                             }
                           >
@@ -749,7 +770,7 @@ export function MovementsPage({
                               onClick={() => setDetailTarget(m)}
                             >
                               <Eye aria-hidden="true" />
-                              View details
+                              {t("movements.view_details")}
                             </DropdownMenuItem>
                             {m.status === "pending_approval" &&
                             canApprove &&
@@ -759,14 +780,14 @@ export function MovementsPage({
                                   onClick={() => setApproveTarget(m)}
                                 >
                                   <Check aria-hidden="true" />
-                                  Approve
+                                  {t("movements.approve")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   variant="destructive"
                                   onClick={() => setRejectTarget(m)}
                                 >
                                   <X aria-hidden="true" />
-                                  Reject
+                                  {t("movements.reject")}
                                 </DropdownMenuItem>
                               </>
                             ) : null}
@@ -796,8 +817,11 @@ export function MovementsPage({
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <EntityName title={m.productName} className="min-w-0">
-                        {m.productName}
+                      <EntityName
+                        title={resolveProductName(m.productName)}
+                        className="min-w-0"
+                      >
+                        {resolveProductName(m.productName)}
                       </EntityName>
                       <StatusBadge
                         tone={statusMeta.tone}
@@ -821,7 +845,7 @@ export function MovementsPage({
                       </span>
                     </p>
                     <p className="text-muted-foreground mt-1 text-sm tabular-nums">
-                      {shortWallet(m.actorWallet)} ·{" "}
+                      {shortWallet(m.actorWallet, memberLabel)} ·{" "}
                       <Tooltip>
                         <TooltipTrigger
                           render={
@@ -842,10 +866,10 @@ export function MovementsPage({
                     {m.proofTxHash && m.proofStatus === "confirmed" ? (
                       <BaseScanLink
                         href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
-                        ariaLabel="View transaction on BaseScan"
+                        ariaLabel={t("movements.view_tx_basescan")}
                         className="mt-1 before:-inset-[9px]"
                       >
-                        Verified
+                        {t("landing.blockchain.verified")}
                       </BaseScanLink>
                     ) : proofMeta ? (
                       <p className="text-muted-foreground mt-1 text-sm">
@@ -859,7 +883,9 @@ export function MovementsPage({
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={`Actions for ${typeMeta.label}`}
+                          aria-label={t("movements.actions_for", {
+                            type: typeMeta.label,
+                          })}
                         />
                       }
                     >
@@ -868,7 +894,7 @@ export function MovementsPage({
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => setDetailTarget(m)}>
                         <Eye aria-hidden="true" />
-                        View details
+                        {t("movements.view_details")}
                       </DropdownMenuItem>
                       {m.status === "pending_approval" &&
                       canApprove &&
@@ -876,14 +902,14 @@ export function MovementsPage({
                         <>
                           <DropdownMenuItem onClick={() => setApproveTarget(m)}>
                             <Check aria-hidden="true" />
-                            Approve
+                            {t("movements.approve")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             variant="destructive"
                             onClick={() => setRejectTarget(m)}
                           >
                             <X aria-hidden="true" />
-                            Reject
+                            {t("movements.reject")}
                           </DropdownMenuItem>
                         </>
                       ) : null}
@@ -899,8 +925,8 @@ export function MovementsPage({
       {loadError ? (
         <ErrorState
           icon={ArrowLeftRight}
-          title="Couldn't load more movements"
-          description="The request failed. Retry to fetch the next page."
+          title={t("movements.load_more_failed_title")}
+          description={t("movements.load_more_failed_desc")}
           onRetry={loadMore}
         />
       ) : (
@@ -989,10 +1015,15 @@ function ApproveDialog({
   onDone: () => void;
   onOptimisticStatus?: (status: MovementListItem["status"]) => void;
 }) {
+  const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [, startTransition] = React.useTransition();
   const meta = MOVEMENT_TYPE_META[movement.movementType];
+  const displayProductName =
+    movement.productName === "Unknown product"
+      ? t("movements.unknown_product")
+      : movement.productName;
 
   const approve = async () => {
     setBusy(true);
@@ -1009,8 +1040,13 @@ function ApproveDialog({
     if (result.ok) {
       toast.add({
         type: "success",
-        title: "Movement approved",
-        description: `${meta.label} · ${movement.quantity} ${movement.unit} for ${movement.productName}.`,
+        title: t("movements.approve_toast_title"),
+        description: t("movements.approve_toast_desc", {
+          type: meta.label,
+          quantity: movement.quantity,
+          unit: movement.unit,
+          product: displayProductName,
+        }),
       });
       onOpenChange(false);
       onDone();
@@ -1025,11 +1061,15 @@ function ApproveDialog({
       open={open}
       onOpenChange={onOpenChange}
       busy={busy}
-      title={`Approve ${meta.label}?`}
-      description={`This will change the stock balance of ${movement.productName} by ${movement.quantity} ${movement.unit}.`}
+      title={t("movements.approve_title", { type: meta.label })}
+      description={t("movements.approve_desc", {
+        product: displayProductName,
+        quantity: movement.quantity,
+        unit: movement.unit,
+      })}
       error={error}
-      cancelLabel="Cancel"
-      primaryLabel="Approve"
+      cancelLabel={t("common.cancel")}
+      primaryLabel={t("movements.approve")}
       primaryIcon={
         busy ? (
           <Loader2 aria-hidden="true" className="animate-spin" />
@@ -1055,16 +1095,21 @@ function RejectDialog({
   onDone: () => void;
   onOptimisticStatus?: (status: MovementListItem["status"]) => void;
 }) {
+  const { t } = useLocale();
   const [reason, setReason] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const reasonRef = React.useRef<HTMLTextAreaElement>(null);
   const [, startTransition] = React.useTransition();
   const meta = MOVEMENT_TYPE_META[movement.movementType];
+  const displayProductName =
+    movement.productName === "Unknown product"
+      ? t("movements.unknown_product")
+      : movement.productName;
 
   const reject = async () => {
     if (!reason.trim()) {
-      setError("Reason is required to reject.");
+      setError(t("movements.reject_reason_required"));
       reasonRef.current?.focus();
       return;
     }
@@ -1080,8 +1125,11 @@ function RejectDialog({
     if (result.ok) {
       toast.add({
         type: "success",
-        title: "Movement rejected",
-        description: `${meta.label} for ${movement.productName} was rejected.`,
+        title: t("movements.reject_toast_title"),
+        description: t("movements.reject_toast_desc", {
+          type: meta.label,
+          product: displayProductName,
+        }),
       });
       onOpenChange(false);
       onDone();
@@ -1095,11 +1143,11 @@ function RejectDialog({
       open={open}
       onOpenChange={onOpenChange}
       busy={busy}
-      title={`Reject ${meta.label}?`}
-      description={`The movement will not be applied to ${movement.productName} stock.`}
+      title={t("movements.reject_title", { type: meta.label })}
+      description={t("movements.reject_desc", { product: displayProductName })}
       error={error}
-      cancelLabel="Cancel"
-      primaryLabel="Reject"
+      cancelLabel={t("common.cancel")}
+      primaryLabel={t("movements.reject")}
       primaryVariant="destructive"
       primaryIcon={
         busy ? (
@@ -1111,13 +1159,15 @@ function RejectDialog({
       onConfirm={reject}
     >
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="reject-reason">Reason (required)</Label>
+        <Label htmlFor="reject-reason">
+          {t("movements.reject_reason_label")}
+        </Label>
         <Textarea
           id="reject-reason"
           ref={reasonRef}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Why is this movement being rejected?"
+          placeholder={t("movements.reject_reason_placeholder")}
           rows={2}
           aria-invalid={Boolean(error)}
         />

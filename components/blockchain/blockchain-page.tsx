@@ -1,6 +1,5 @@
 "use client";
 
-/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -59,6 +58,7 @@ import {
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { useSwitchWarehouse } from "@/lib/warehouses/use-switch-warehouse";
 import { useLiveStatus } from "@/hooks/use-live-status";
+import { useLocale } from "@/components/providers/locale-provider";
 import { openChannel } from "@/lib/realtime/channel";
 import { debounce } from "@/lib/realtime/debounce";
 import { cn, formatDateTime } from "@/lib/utils";
@@ -110,6 +110,7 @@ export function BlockchainPage({
   totalProofs: number;
 }) {
   const router = useRouter();
+  const { t } = useLocale();
 
   const [proofsState, setProofsState] = React.useState<ProofRow[]>(proofs);
   const [totalProofsState, setTotalProofsState] = React.useState(totalProofs);
@@ -147,9 +148,9 @@ export function BlockchainPage({
       setTotalProofsState(next.total);
       setRealtimeError(null);
     } catch {
-      setRealtimeError("Live update failed. Showing the last known proofs.");
+      setRealtimeError(t("chain.live_failed"));
     }
-  }, [supabase, warehouseId]);
+  }, [supabase, warehouseId, t]);
 
   React.useEffect(() => {
     const refreshDebounced = debounce(() => {
@@ -187,15 +188,14 @@ export function BlockchainPage({
     if (result.ok) {
       toast.add({
         type: "success",
-        title: "Retry queued",
-        description:
-          "This proof has been re-queued and will be re-submitted automatically.",
+        title: t("chain.retry_queued_title"),
+        description: t("chain.retry_queued_desc"),
       });
       router.refresh();
     } else {
       toast.add({
         type: "error",
-        title: "Retry failed",
+        title: t("chain.retry_failed_title"),
         description: result.error,
       });
     }
@@ -235,7 +235,7 @@ export function BlockchainPage({
                   : "animate-pulse bg-current"
               )}
             />
-            {liveStatus === "live" ? "Live" : "Reconnecting"}
+            {liveStatus === "live" ? t("chain.live") : t("chain.reconnecting")}
           </Badge>
           {warehouses.length > 1 ? (
             <Select
@@ -244,7 +244,10 @@ export function BlockchainPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger aria-label="Warehouse" className="min-w-36">
+              <SelectTrigger
+                aria-label={t("settings.warehouse")}
+                className="min-w-36"
+              >
                 <SelectValue
                   getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
                 />
@@ -275,8 +278,7 @@ export function BlockchainPage({
           role="alert"
           className="border-status-warn-border bg-status-warn-bg text-status-warn-fg rounded-xl border px-4 py-3 text-sm"
         >
-          Could not load deployment status. Contract info below may be outdated.
-          Refresh to retry.
+          {t("chain.deployment_error")}
         </p>
       ) : null}
 
@@ -286,7 +288,7 @@ export function BlockchainPage({
           <div className="flex min-w-0 flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="t-headline-sm text-foreground">
-                Warehouse Contract
+                {t("chain.contract_title")}
               </span>
               {deploymentMeta ? (
                 <StatusBadge
@@ -297,13 +299,15 @@ export function BlockchainPage({
             </div>
             {deploymentAddress ? (
               <span className="flex flex-wrap items-center gap-1.5">
-                <span className="text-muted-foreground text-sm">Address:</span>
+                <span className="text-muted-foreground text-sm">
+                  {t("chain.address_label")}
+                </span>
                 <code className="t-code bg-surface-low rounded-md border px-2 py-1">
                   {shortHash(deploymentAddress, 14, 10)}
                 </code>
                 <BaseScanLink
                   href={`${BASESCAN_URL}/address/${deploymentAddress}`}
-                  ariaLabel="View warehouse contract on BaseScan"
+                  ariaLabel={t("chain.view_contract_aria")}
                   withIcon={false}
                   className="min-h-9"
                 >
@@ -313,17 +317,19 @@ export function BlockchainPage({
             ) : (
               <span className="text-muted-foreground text-sm">
                 {contractAddress
-                  ? "Contract deployed; waiting for confirmation."
-                  : "No contract deployed yet."}
+                  ? t("chain.waiting_confirmation")
+                  : t("settings.no_contract")}
               </span>
             )}
             {deployment?.tx_hash ? (
               <BaseScanLink
                 href={`${BASESCAN_URL}/tx/${deployment.tx_hash}`}
-                ariaLabel="View deployment transaction on BaseScan"
+                ariaLabel={t("chain.view_deployment_aria")}
                 className="text-sm"
               >
-                Deployment tx {shortHash(deployment.tx_hash)}
+                {t("chain.deployment_tx", {
+                  hash: shortHash(deployment.tx_hash),
+                })}
                 <ExternalLink aria-hidden="true" className="size-3.5" />
               </BaseScanLink>
             ) : null}
@@ -334,20 +340,24 @@ export function BlockchainPage({
                 {totalProofsState.toLocaleString()}
               </span>
               <span className="text-muted-foreground text-sm">
-                Total Proofs
+                {t("chain.total_proofs")}
               </span>
             </div>
             <div className="flex flex-col md:items-end">
               <span className="text-foreground font-display text-2xl font-bold tabular-nums">
                 {confirmedCount}
               </span>
-              <span className="text-muted-foreground text-sm">confirmed</span>
+              <span className="text-muted-foreground text-sm">
+                {t("chain.confirmed")}
+              </span>
             </div>
             <div className="flex flex-col md:items-end">
               <span className="text-status-warn-fg font-display text-2xl font-bold tabular-nums">
                 {pendingCount}
               </span>
-              <span className="text-muted-foreground text-sm">pending</span>
+              <span className="text-muted-foreground text-sm">
+                {t("chain.pending")}
+              </span>
             </div>
             {failedProofs.length > 0 ? (
               <div className="flex flex-col md:items-end">
@@ -355,7 +365,7 @@ export function BlockchainPage({
                   {failedProofs.length}
                 </span>
                 <span className="text-muted-foreground text-sm">
-                  need attention
+                  {t("chain.need_attention")}
                 </span>
               </div>
             ) : null}
@@ -373,14 +383,13 @@ export function BlockchainPage({
               </span>
               <div className="flex flex-col gap-0.5">
                 <h3 className="text-foreground text-sm font-semibold">
-                  Blockchain confirmation failed.
+                  {t("chain.confirm_failed_title")}
                 </h3>
                 <p className="text-muted-foreground text-sm text-pretty">
-                  Your inventory data was not lost.{" "}
+                  {t("chain.data_not_lost")}{" "}
                   {failedProofs.length > 1
-                    ? "These proofs are"
-                    : "This proof is"}{" "}
-                  waiting to be re-queued.
+                    ? t("chain.waiting_plural")
+                    : t("chain.waiting_single")}
                 </p>
               </div>
             </div>
@@ -423,14 +432,16 @@ export function BlockchainPage({
                       ) : null}
                       {terminal ? (
                         <span className="text-muted-foreground text-sm">
-                          Manual review required
+                          {t("chain.manual_review_required")}
                         </span>
                       ) : (
                         <Button
                           size="sm"
                           onClick={() => retry(proof)}
                           disabled={busyProof !== null}
-                          aria-label={`Retry proof ${shortHash(proof.payload_hash)}`}
+                          aria-label={t("chain.retry_proof_aria", {
+                            hash: shortHash(proof.payload_hash),
+                          })}
                         >
                           <RefreshCcw
                             aria-hidden="true"
@@ -438,7 +449,7 @@ export function BlockchainPage({
                               busyProof === proof.id && "animate-spin"
                             )}
                           />
-                          Retry
+                          {t("chain.retry")}
                         </Button>
                       )}
                     </div>
@@ -454,21 +465,21 @@ export function BlockchainPage({
       {proofsState.length === 0 ? (
         <EmptyState
           icon={Link2}
-          title="No on-chain proofs yet"
-          description="Proofs are generated automatically for committed stock operations. They will appear here with their Base Sepolia transaction hash."
+          title={t("chain.no_proofs_title")}
+          description={t("chain.no_proofs_desc")}
         />
       ) : (
         <Card className="overflow-hidden">
           <CardHeader className="border-b">
-            <CardTitle className="t-headline-sm">Proofs</CardTitle>
-            <CardDescription>
-              Verification proof history per movement.
-            </CardDescription>
+            <CardTitle className="t-headline-sm">
+              {t("chain.proofs_title")}
+            </CardTitle>
+            <CardDescription>{t("chain.proofs_desc")}</CardDescription>
           </CardHeader>
           {realtimeError ? (
             proofsState.length === 0 ? (
               <ErrorState
-                title="Couldn't load proofs"
+                title={t("chain.load_failed_title")}
                 description={realtimeError}
                 onRetry={refreshProofsSafe}
               />
@@ -484,11 +495,13 @@ export function BlockchainPage({
             <Table className="lg:min-w-[720px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Proof</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Blockchain</TableHead>
-                  <TableHead className="text-right">Attempts</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>{t("chain.th_proof")}</TableHead>
+                  <TableHead>{t("chain.th_status")}</TableHead>
+                  <TableHead>{t("chain.th_blockchain")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("chain.th_attempts")}
+                  </TableHead>
+                  <TableHead>{t("chain.th_date")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -523,7 +536,7 @@ export function BlockchainPage({
                         {confirmed && proof.tx_hash ? (
                           <BaseScanLink
                             href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
-                            ariaLabel="View transaction on BaseScan"
+                            ariaLabel={t("chain.view_tx_aria")}
                             className="font-mono text-sm"
                           >
                             {shortHash(proof.tx_hash, 10, 6)}
@@ -587,15 +600,19 @@ export function BlockchainPage({
                   </div>
                   {proof.movement_id ? (
                     <p className="text-muted-foreground font-mono text-sm">
-                      movement {proof.movement_id.slice(0, 8)}
+                      {t("chain.movement_prefix", {
+                        id: proof.movement_id.slice(0, 8),
+                      })}
                     </p>
                   ) : null}
                   <div className="flex items-center justify-between gap-2 text-sm">
-                    <span className="text-muted-foreground">Blockchain</span>
+                    <span className="text-muted-foreground">
+                      {t("chain.th_blockchain")}
+                    </span>
                     {confirmed && proof.tx_hash ? (
                       <BaseScanLink
                         href={`${BASESCAN_URL}/tx/${proof.tx_hash}`}
-                        ariaLabel="View transaction on BaseScan"
+                        ariaLabel={t("chain.view_tx_aria")}
                         className="font-mono"
                       >
                         {shortHash(proof.tx_hash, 10, 6)}
@@ -612,7 +629,9 @@ export function BlockchainPage({
                     )}
                   </div>
                   <div className="flex items-center justify-between gap-2 text-sm">
-                    <span className="text-muted-foreground">Attempts</span>
+                    <span className="text-muted-foreground">
+                      {t("chain.th_attempts")}
+                    </span>
                     <span className="text-muted-foreground font-mono tabular-nums">
                       {proof.attempt_count}
                     </span>
@@ -626,8 +645,10 @@ export function BlockchainPage({
           </ul>
           <div className="bg-surface-low/30 border-t px-4 py-3 text-sm sm:px-6">
             <span className="text-muted-foreground tabular-nums">
-              Showing {proofsState.length} of{" "}
-              {totalProofsState.toLocaleString()} proofs
+              {t("chain.showing_footer", {
+                n: String(proofsState.length),
+                total: totalProofsState.toLocaleString(),
+              })}
             </span>
           </div>
         </Card>

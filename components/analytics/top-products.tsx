@@ -2,13 +2,15 @@ import { BarChart3 } from "lucide-react";
 
 import type { TopProduct } from "@/lib/analytics/aggregate";
 import { EmptyState } from "@/components/shared/empty-state";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
 /**
  * Top products (DESIGN §33) — 5-7 item, urut aktivitas (in+out) terbanyak.
  * Bar tumpuk CSS (bukan library chart): baris nol tidak dirender, jadi tidak
  * ada teks panjang/baris kosong; tetap SSR dan ringan.
  */
-export function TopProducts({
+export async function TopProducts({
   products,
   warehouseId,
 }: {
@@ -16,6 +18,9 @@ export function TopProducts({
   /** NFE-09: warehouse aktif agar CTA tidak jatuh ke warehouse lain. */
   warehouseId?: string | null;
 }) {
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   const max = Math.max(
     1,
     ...products.map((p) => Number(p.inQty) + Number(p.outQty))
@@ -25,10 +30,10 @@ export function TopProducts({
     return (
       <EmptyState
         icon={BarChart3}
-        title="No stock activity yet"
-        description="Record your first stock in or out to see which products move the most in this period."
+        title={t("analytics.top_empty_title")}
+        description={t("analytics.top_empty_desc")}
         primaryAction={{
-          label: "Record Stock In",
+          label: t("analytics.record_stock_in"),
           href: warehouseId
             ? `/inventory/movements?warehouse=${encodeURIComponent(warehouseId)}&action=stock_in`
             : `/inventory/movements?action=stock_in`,
@@ -58,13 +63,18 @@ export function TopProducts({
                 {p.name}
               </span>
               <span className="text-primary shrink-0 font-mono text-xs font-bold tabular-nums">
-                {(inQty + outQty).toLocaleString()} units
+                {t("analytics.units_count", {
+                  n: (inQty + outQty).toLocaleString(),
+                })}
               </span>
             </div>
             <div className="text-muted-foreground mt-0.5 flex items-center justify-between font-mono text-[11px]">
               <span className="truncate">{p.sku}</span>
               <span className="shrink-0 tabular-nums">
-                In: {inQty} · Out: {outQty}
+                {t("analytics.in_out", {
+                  in: String(inQty),
+                  out: String(outQty),
+                })}
               </span>
             </div>
             <div

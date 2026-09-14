@@ -26,13 +26,14 @@ import { PROOF_STATUS_META as SHARED_PROOF_STATUS_META } from "@/lib/blockchain/
 import type { MovementListItem } from "@/lib/inventory/types";
 import { cn, formatDateTime } from "@/lib/utils";
 import { BASESCAN_URL } from "@/lib/constants";
+import { useLocale } from "@/components/providers/locale-provider";
 
 export { BASESCAN_URL };
 
 export const PROOF_STATUS_META = SHARED_PROOF_STATUS_META;
 
-function shortWallet(wallet: string | null): string {
-  if (!wallet) return "Member";
+function shortWallet(wallet: string | null, memberLabel: string): string {
+  if (!wallet) return memberLabel;
   return `${wallet.slice(0, 6)}\u2026${wallet.slice(-4)}`;
 }
 
@@ -45,10 +46,16 @@ export function MovementDetailSheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useLocale();
   if (!movement) return null;
 
   const typeMeta = MOVEMENT_TYPE_META[movement.movementType];
   const statusMeta = MOVEMENT_STATUS_META[movement.status];
+  const memberLabel = t("movements.member_fallback");
+  const displayProductName =
+    movement.productName === "Unknown product"
+      ? t("movements.unknown_product")
+      : movement.productName;
 
   // DESIGN §39 — timeline Submitted → Database → Blockchain → Confirmed/Failed.
   const steps: {
@@ -58,24 +65,27 @@ export function MovementDetailSheet({
   }[] = [];
 
   steps.push({
-    label: "Submitted",
-    detail: `${shortWallet(movement.actorWallet)} \u00b7 ${formatDateTime(movement.created_at)}`,
+    label: t("movements.timeline_submitted"),
+    detail: `${shortWallet(movement.actorWallet, memberLabel)} \u00b7 ${formatDateTime(movement.created_at)}`,
     tone: "done",
   });
 
   if (movement.status === "pending_approval") {
     steps.push({
-      label: "Awaiting approval",
-      detail: "Owner or Manager needs to approve this movement.",
+      label: t("movements.timeline_awaiting"),
+      detail: t("movements.timeline_awaiting_detail"),
       tone: "pending",
     });
   } else {
     steps.push({
-      label: movement.status === "committed" ? "Inventory updated" : "Rejected",
+      label:
+        movement.status === "committed"
+          ? t("movements.timeline_updated")
+          : t("movements.timeline_rejected"),
       detail:
         movement.status === "rejected"
-          ? movement.reason || "Rejected by approver."
-          : "Stock balance updated securely.",
+          ? movement.reason || t("movements.timeline_rejected_fallback")
+          : t("movements.timeline_updated_detail"),
       tone: movement.status === "committed" ? "done" : "failed",
     });
   }
@@ -85,7 +95,7 @@ export function MovementDetailSheet({
       movement.proofStatus === "failed" ||
       movement.proofStatus === "manual_review";
     steps.push({
-      label: "Blockchain confirmation",
+      label: t("movements.timeline_blockchain"),
       detail:
         movement.proofError ||
         PROOF_STATUS_META[movement.proofStatus]?.label ||
@@ -94,14 +104,14 @@ export function MovementDetailSheet({
     });
   } else if (movement.proofStatus === "confirmed" && movement.proofTxHash) {
     steps.push({
-      label: "Blockchain confirmed",
-      detail: "Proof anchored on Base. Verify on BaseScan.",
+      label: t("movements.timeline_blockchain_done"),
+      detail: t("movements.timeline_blockchain_done_detail"),
       tone: "done",
     });
   } else if (movement.status === "committed") {
     steps.push({
-      label: "Blockchain confirmation",
-      detail: "Proof will be generated and anchored automatically.",
+      label: t("movements.timeline_blockchain"),
+      detail: t("movements.timeline_blockchain_pending_detail"),
       tone: "pending",
     });
   }
@@ -118,14 +128,16 @@ export function MovementDetailSheet({
             </span>
           </SheetTitle>
           <SheetDescription>
-            {movement.productName} ({movement.productSku})
+            {displayProductName} ({movement.productSku})
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex flex-col gap-5 overflow-y-auto px-4 pb-4">
           <div className="flex items-center justify-between rounded-lg py-2">
             <div className="flex flex-col gap-0.5">
-              <span className="text-muted-foreground text-sm">Quantity</span>
+              <span className="text-muted-foreground text-sm">
+                {t("movements.col_quantity")}
+              </span>
               <span className="text-foreground text-2xl font-semibold tabular-nums">
                 {movement.quantity}
                 <span className="text-muted-foreground ml-1 text-sm font-normal">
@@ -138,13 +150,17 @@ export function MovementDetailSheet({
 
           {movement.reason ? (
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-sm">Reason</span>
+              <span className="text-muted-foreground text-sm">
+                {t("movements.reason_label")}
+              </span>
               <p className="text-sm text-balance">{movement.reason}</p>
             </div>
           ) : null}
           {movement.reference ? (
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-sm">Reference</span>
+              <span className="text-muted-foreground text-sm">
+                {t("movements.reference_label")}
+              </span>
               <p className="text-muted-foreground font-mono text-sm">
                 {movement.reference}
               </p>
@@ -153,7 +169,7 @@ export function MovementDetailSheet({
 
           <div className="flex flex-col gap-1">
             <h3 className="text-muted-foreground text-sm font-medium">
-              Timeline
+              {t("movements.timeline_title")}
             </h3>
             <ol className="mt-1 flex flex-col">
               {steps.map((step, i) => (
@@ -200,13 +216,13 @@ export function MovementDetailSheet({
           {movement.proofStatus && movement.proofTxHash ? (
             <details className="ring-foreground/10 rounded-lg ring-1">
               <summary className="text-muted-foreground flex cursor-pointer items-center justify-between px-3 py-2.5 text-sm">
-                Technical details
+                {t("movements.tech_details")}
                 <span className="text-sm">▼</span>
               </summary>
               <div className="flex flex-col gap-2 border-t px-3 py-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-muted-foreground text-sm">
-                    Proof status
+                    {t("movements.proof_status")}
                   </span>
                   <StatusBadge
                     tone={
@@ -235,18 +251,18 @@ export function MovementDetailSheet({
                   }
                 >
                   <ExternalLink aria-hidden="true" className="size-4" />
-                  View blockchain proof
+                  {t("movements.view_proof")}
                 </Button>
               </div>
             </details>
           ) : movement.proofStatus ? (
             <details className="ring-foreground/10 rounded-lg ring-1">
               <summary className="text-muted-foreground flex cursor-pointer items-center justify-between px-3 py-2.5 text-sm">
-                Technical details <span className="text-sm">▼</span>
+                {t("movements.tech_details")} <span className="text-sm">▼</span>
               </summary>
               <div className="flex flex-col gap-1 border-t px-3 py-3">
                 <span className="text-muted-foreground text-sm">
-                  Proof status:{" "}
+                  {t("movements.proof_status")}:{" "}
                   {PROOF_STATUS_META[movement.proofStatus]?.label ??
                     movement.proofStatus}
                 </span>
@@ -260,10 +276,7 @@ export function MovementDetailSheet({
                 aria-hidden="true"
                 className="mt-0.5 size-3.5 shrink-0"
               />
-              <p className="text-pretty">
-                Blockchain confirmation failed. Your inventory data was not
-                lost. This proof will be retried automatically.
-              </p>
+              <p className="text-pretty">{t("movements.proof_failed_notice")}</p>
             </div>
           ) : null}
         </div>

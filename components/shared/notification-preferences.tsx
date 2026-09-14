@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "@/components/ui/toast";
+import { useLocale } from "@/components/providers/locale-provider";
 import {
   NOTIFICATION_CATEGORIES,
   type NotificationCategory,
@@ -23,6 +24,7 @@ export function NotificationPreferencesPanel({
 }: {
   initial: NotificationPreferences;
 }) {
+  const { t } = useLocale();
   const [prefs, setPrefs] = React.useState<NotificationPreferences>(initial);
   const [saving, setSaving] = React.useState(false);
 
@@ -45,14 +47,15 @@ export function NotificationPreferencesPanel({
       });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        throw new Error(json?.error ?? "Failed to save preferences.");
+        throw new Error(json?.error ?? t("settings.pref_save_failed"));
       }
       lastKnownGoodRef.current = toPersist;
     } catch (err) {
       toast.add({
         type: "error",
-        title: "Could not save preferences",
-        description: err instanceof Error ? err.message : "Try again.",
+        title: t("settings.pref_save_title"),
+        description:
+          err instanceof Error ? err.message : t("settings.pref_retry"),
       });
       // Revert to the last server-confirmed snapshot (not the render start).
       pendingRef.current = lastKnownGoodRef.current;
@@ -66,7 +69,7 @@ export function NotificationPreferencesPanel({
         setSaving(false);
       }
     }
-  }, []);
+  }, [t]);
 
   const toggle = (
     channel: NotificationChannel,
@@ -87,20 +90,19 @@ export function NotificationPreferencesPanel({
       <CardHeader>
         <CardTitle className="t-headline-sm flex items-center gap-2">
           <Bell aria-hidden="true" className="text-primary size-4" />
-          Notifications
+          {t("nav./notifications")}
         </CardTitle>
-        <CardDescription>
-          Choose which events you hear about, and where. Changes save
-          automatically.
-        </CardDescription>
+        <CardDescription>{t("settings.pref_desc")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-1">
         <div className="text-muted-foreground hidden grid-cols-[1fr_auto_auto] items-center gap-4 px-1 pb-1 text-sm font-medium sm:grid">
-          <span>Event</span>
-          <span className="w-20 text-center">In-app</span>
+          <span>{t("settings.pref_th_event")}</span>
+          <span className="w-20 text-center">
+            {t("settings.pref_th_inapp")}
+          </span>
           <span className="flex w-20 items-center justify-center gap-1">
             <Mail aria-hidden="true" className="size-3.5" />
-            Email
+            {t("settings.pref_th_email")}
           </span>
         </div>
         {NOTIFICATION_CATEGORIES.map((cat) => (
@@ -117,17 +119,17 @@ export function NotificationPreferencesPanel({
             <ToggleCell
               checked={prefs.in_app[cat.key]}
               onChange={() => toggle("in_app", cat.key)}
-              label={`In-app notifications for ${cat.label}`}
+              label={t("settings.pref_inapp_aria", { label: cat.label })}
             />
             <ToggleCell
               checked={prefs.email[cat.key]}
               onChange={() => toggle("email", cat.key)}
-              label={`Email notifications for ${cat.label}`}
+              label={t("settings.pref_email_aria", { label: cat.label })}
             />
           </div>
         ))}
         <p className="text-muted-foreground mt-1 text-sm" aria-live="polite">
-          {saving ? "Saving…" : " "}
+          {saving ? t("settings.saving") : " "}
         </p>
       </CardContent>
     </Card>

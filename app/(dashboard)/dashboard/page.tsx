@@ -215,7 +215,7 @@ export default async function DashboardPage({
       movementType: row.movement_type,
       quantity: String(row.quantity),
       status: String(row.status),
-      productName: product?.name ?? "Unknown product",
+      productName: product?.name ?? t("dashboard.unknown_product"),
       unit: product?.unit ?? "",
       createdAt: String(row.created_at),
     };
@@ -239,7 +239,7 @@ export default async function DashboardPage({
     id: String(row.id),
     movementType: row.movement_type,
     quantity: String(row.quantity),
-    productName: row.product?.name ?? "Unknown product",
+    productName: row.product?.name ?? t("dashboard.unknown_product"),
     unit: row.product?.unit ?? "",
     proofStatus:
       row.proof?.status === "confirmed" ||
@@ -268,7 +268,7 @@ export default async function DashboardPage({
   const displayName =
     (profileRes.data?.display_name as string | undefined) ||
     (profileRes.data?.email as string | undefined) ||
-    "Your profile";
+    t("dashboard.profile_fallback");
 
   const inactiveDays = daysSince(active.lastActivityAt);
 
@@ -502,10 +502,10 @@ export default async function DashboardPage({
                   <div className="flex items-center justify-between">
                     <span className="bg-primary text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full">
                       <Check aria-hidden="true" className="size-4" />
-                      <span className="sr-only">Done</span>
+                      <span className="sr-only">{t("dashboard.done")}</span>
                     </span>
                     <span className="text-muted-foreground font-mono text-[10px]">
-                      STEP 01
+                      {t("dashboard.step_label", { n: "01" })}
                     </span>
                   </div>
                   <p className="text-foreground mt-3 text-sm font-bold">
@@ -526,7 +526,7 @@ export default async function DashboardPage({
                       2
                     </span>
                     <span className="text-muted-foreground font-mono text-[10px]">
-                      STEP 02
+                      {t("dashboard.step_label", { n: "02" })}
                     </span>
                   </div>
                   <p className="text-foreground mt-3 text-sm font-bold">
@@ -550,7 +550,9 @@ export default async function DashboardPage({
                     {inviteDone && pendingCount === 0 ? (
                       <span className="bg-primary text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full">
                         <Check aria-hidden="true" className="size-4" />
-                        <span className="sr-only">Done</span>
+                        <span className="sr-only">
+                          {t("dashboard.done")}
+                        </span>
                       </span>
                     ) : (
                       <span className="bg-primary-container text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold">
@@ -563,7 +565,7 @@ export default async function DashboardPage({
                       </span>
                     ) : (
                       <span className="text-muted-foreground font-mono text-[10px]">
-                        STEP 03
+                        {t("dashboard.step_label", { n: "03" })}
                       </span>
                     )}
                   </div>
@@ -608,7 +610,9 @@ export default async function DashboardPage({
                     {movementDone ? (
                       <span className="bg-primary text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full">
                         <Check aria-hidden="true" className="size-4" />
-                        <span className="sr-only">Done</span>
+                        <span className="sr-only">
+                          {t("dashboard.done")}
+                        </span>
                       </span>
                     ) : (
                       <span className="text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-current text-xs font-bold">
@@ -616,7 +620,7 @@ export default async function DashboardPage({
                       </span>
                     )}
                     <span className="text-muted-foreground font-mono text-[10px]">
-                      STEP 04
+                      {t("dashboard.step_label", { n: "04" })}
                     </span>
                   </div>
                   <p className="text-foreground mt-3 text-sm font-bold">
@@ -678,7 +682,7 @@ className="text-primary size-4 shrink-0"
                     className="bg-primary size-3 rounded-full"
                   />
                   <span className="text-foreground text-xs font-semibold">
-                    Stock In (+
+                    {t("dashboard.stock_in")} (+
                     {Number(analytics.period.stockIn).toLocaleString()})
                   </span>
                 </span>
@@ -688,7 +692,7 @@ className="text-primary size-4 shrink-0"
                     className="size-3 rounded-full bg-[#D97706]"
                   />
                   <span className="text-foreground text-xs font-semibold">
-                    Stock Out (−
+                    {t("dashboard.stock_out")} (−
                     {Number(analytics.period.stockOut).toLocaleString()})
                   </span>
                 </span>
@@ -767,7 +771,10 @@ className="text-primary size-4 shrink-0"
           <code className="t-code bg-surface-low rounded-md border px-2 py-1">
             {active.code}
           </code>
-          <CopyButton text={active.code} label="Copy warehouse code" />
+          <CopyButton
+            text={active.code}
+            label={t("dashboard.copy_warehouse_code")}
+          />
         </div>
       </PanelCard>
 

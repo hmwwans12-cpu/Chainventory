@@ -1,3 +1,5 @@
+"use client";
+
 import { FileWarning } from "lucide-react";
 
 import {
@@ -23,6 +25,7 @@ import {
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import type { ErrorEntry } from "@/lib/console/types";
+import { useLocale } from "@/components/providers/locale-provider";
 
 function shortHash(value: string, head = 8, tail = 6): string {
   if (value.length <= head + tail + 3) return value;
@@ -31,34 +34,35 @@ function shortHash(value: string, head = 8, tail = 6): string {
 
 /** Error summary terstruktur + korelasi request (movement) / proof / tx. */
 export function ErrorSummary({ errors }: { errors: ErrorEntry[] }) {
+  const { t } = useLocale();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent errors</CardTitle>
-        <CardDescription>
-          Correlation: proof → movement (request) → transaction hash.
-        </CardDescription>
+        <CardTitle>{t("console.errors_title")}</CardTitle>
+        <CardDescription>{t("console.errors_desc")}</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         {errors.length === 0 ? (
           <EmptyState
             icon={FileWarning}
             bare
-            title="No recent proof errors"
-            description="Failed and manual-review proofs show up here for correlation."
+            title={t("console.errors_empty_title")}
+            description={t("console.errors_empty_desc")}
           />
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Proof</TableHead>
-                  <TableHead>Movement</TableHead>
-                  <TableHead>Warehouse</TableHead>
-                  <TableHead>Tx hash</TableHead>
-                  <TableHead>Error</TableHead>
-                  <TableHead className="text-right">Attempts</TableHead>
+                  <TableHead>{t("console.th_status")}</TableHead>
+                  <TableHead>{t("console.th_proof")}</TableHead>
+                  <TableHead>{t("console.th_movement")}</TableHead>
+                  <TableHead>{t("settings.warehouse")}</TableHead>
+                  <TableHead>{t("console.th_tx")}</TableHead>
+                  <TableHead>{t("console.th_error")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("console.th_attempts")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -73,8 +77,8 @@ export function ErrorSummary({ errors }: { errors: ErrorEntry[] }) {
                         }
                         label={
                           entry.status === "manual_review"
-                            ? "Manual review"
-                            : "Failed"
+                            ? t("console.status_manual")
+                            : t("console.status_failed")
                         }
                       />
                     </TableCell>

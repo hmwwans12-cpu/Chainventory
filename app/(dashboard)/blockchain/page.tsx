@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { Link2 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
@@ -28,6 +30,9 @@ export default async function BlockchainPageRoute({
   searchParams: Promise<{ warehouse?: string | string[] }>;
 }) {
   const supabase = await createClient();
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -44,10 +49,10 @@ export default async function BlockchainPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Audit Explorer"
-          description="Verification proofs, transaction hashes, and Base Sepolia status."
+          title={t("nav./blockchain")}
+          description={t("chain.page_desc")}
         />
-        <NoWarehouse description="Create a warehouse to see its on-chain proof status, or join one with a warehouse code." />
+        <NoWarehouse description={t("chain.empty_desc")} />
       </div>
     );
   }
@@ -80,13 +85,13 @@ export default async function BlockchainPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Audit Explorer"
-          description={`${active.name} · on-chain status.`}
+          title={t("nav./blockchain")}
+          description={t("chain.status_suffix", { name: active.name })}
         />
         <RetryErrorState
           icon={Link2}
-          title="Unable to load audit trail."
-          description="Something went wrong while retrieving proof data. Please try again."
+          title={t("chain.load_failed_title")}
+          description={t("chain.load_failed_desc")}
         />
       </div>
     );
@@ -95,8 +100,8 @@ export default async function BlockchainPageRoute({
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Audit Explorer"
-        description={`${active.name} · blockchain auditability and transaction proof on Base Sepolia.`}
+        title={t("nav./blockchain")}
+        description={t("chain.audit_desc", { name: active.name })}
         actions={
           <Badge variant="neutral" className="gap-1.5 px-3 py-1.5 font-mono">
             <span

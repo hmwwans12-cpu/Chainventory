@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { sanitizeConsoleError } from "@/lib/utils/sanitize-console-error";
 import type { DependencyStatus } from "@/lib/console/types";
+import { useLocale } from "@/components/providers/locale-provider";
 
 function Dot({ ok, configured }: { ok: boolean; configured: boolean }) {
   return (
@@ -33,13 +34,16 @@ function Dot({ ok, configured }: { ok: boolean; configured: boolean }) {
 }
 
 function Row({ dep }: { dep: DependencyStatus }) {
+  const { t } = useLocale();
   return (
     <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3">
       <div className="flex min-w-0 items-center gap-2.5">
         <Dot ok={dep.ok} configured={dep.configured} />
         <span className="text-foreground text-sm font-medium">{dep.label}</span>
         {!dep.configured ? (
-          <span className="text-muted-foreground text-sm">not configured</span>
+          <span className="text-muted-foreground text-sm">
+            {t("console.dep_unconfigured")}
+          </span>
         ) : null}
         {dep.latencyMs !== undefined ? (
           <span className="text-muted-foreground font-mono text-sm tabular-nums">
@@ -49,8 +53,9 @@ function Row({ dep }: { dep: DependencyStatus }) {
       </div>
       <span className="text-muted-foreground min-w-0 truncate font-mono text-sm">
         {dep.error
-          ? sanitizeConsoleError(dep.error, "Probe error")
-          : (dep.detail ?? (dep.ok ? "ok" : "down"))}
+          ? sanitizeConsoleError(dep.error, t("console.dep_probe_error"))
+          : (dep.detail ??
+            (dep.ok ? t("console.dep_ok") : t("console.dep_down")))}
       </span>
     </li>
   );
@@ -70,13 +75,12 @@ export function DependenciesCard({
   onRefresh: () => void;
   loading: boolean;
 }) {
+  const { t } = useLocale();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Dependencies</CardTitle>
-        <CardDescription>
-          Live probes: Supabase, Upstash, QStash, RPC, Base Sepolia.
-        </CardDescription>
+        <CardTitle>{t("console.deps_title")}</CardTitle>
+        <CardDescription>{t("console.deps_desc")}</CardDescription>
         <CardAction>
           <Button
             variant="outline"
@@ -84,13 +88,13 @@ export function DependenciesCard({
             onClick={onRefresh}
             disabled={loading}
             className="min-h-11"
-            aria-label="Refresh dependency status"
+            aria-label={t("console.refresh_deps")}
           >
             <RefreshCcw
               aria-hidden="true"
               className={cn(loading && "animate-spin")}
             />
-            Refresh
+            {t("console.refresh")}
           </Button>
         </CardAction>
       </CardHeader>

@@ -1,3 +1,5 @@
+"use client";
+
 import { ScrollText } from "lucide-react";
 
 import {
@@ -18,6 +20,7 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import type { AuditEntry } from "@/lib/console/types";
 import { formatDateTime } from "@/lib/utils";
+import { useLocale } from "@/components/providers/locale-provider";
 
 function shortId(value: string | null): string {
   if (!value) return "—";
@@ -28,32 +31,33 @@ function shortId(value: string | null): string {
 
 /** Trail audit (append-only) — termasuk log setiap manual retry proof. */
 export function AuditTrail({ entries }: { entries: AuditEntry[] }) {
+  const { t } = useLocale();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Audit trail</CardTitle>
-        <CardDescription>
-          Append-only ledger: who did what, when (incl. manual proof retries).
-        </CardDescription>
+        <CardTitle>{t("console.audit_title")}</CardTitle>
+        <CardDescription>{t("console.audit_desc")}</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         {entries.length === 0 ? (
           <EmptyState
             icon={ScrollText}
             bare
-            title="No audit entries yet"
-            description="Actions will be recorded here as they happen."
+            title={t("console.audit_empty_title")}
+            description={t("console.audit_empty_desc")}
           />
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Actor</TableHead>
-                  <TableHead>Entity</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">When</TableHead>
+                  <TableHead>{t("console.th_action")}</TableHead>
+                  <TableHead>{t("console.th_actor")}</TableHead>
+                  <TableHead>{t("console.th_entity")}</TableHead>
+                  <TableHead>{t("console.th_status")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("console.th_when")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

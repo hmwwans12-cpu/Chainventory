@@ -81,7 +81,8 @@ export function useLocale(): LocaleContextValue {
     return {
       locale: "en",
       setLocale: () => {},
-      t: (key: string) => translate("en", key),
+      t: (key: string, params?: Record<string, string>) =>
+        translate("en", key, params),
     };
   }
   return ctx;

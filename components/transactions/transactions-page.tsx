@@ -57,10 +57,11 @@ import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { hasPermission, PERMISSIONS, type Role } from "@/lib/auth/permissions";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import { PanelCard } from "@/components/shared/panel-card";
+import { useLocale } from "@/components/providers/locale-provider";
 import { cn, formatDateTime } from "@/lib/utils";
 
-function shortWallet(wallet: string | null): string {
-  if (!wallet) return "Member";
+function shortWallet(wallet: string | null, fallback: string): string {
+  if (!wallet) return fallback;
   return `${wallet.slice(0, 6)}\u2026${wallet.slice(-4)}`;
 }
 
@@ -88,6 +89,7 @@ export function TransactionsPage({
   /** Kata kunci pencarian server-side (?q=). */
   query: string;
 }) {
+  const { t } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -166,9 +168,9 @@ export function TransactionsPage({
             <Input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search reference, reason, wallet, product…"
+              placeholder={t("tx.search_placeholder")}
               className="pl-8"
-              aria-label="Search transactions"
+              aria-label={t("tx.search_label")}
             />
             {isPending ? (
               <Loader2
@@ -179,7 +181,7 @@ export function TransactionsPage({
               <button
                 type="button"
                 onClick={() => setSearchInput("")}
-                aria-label="Clear search"
+                aria-label={t("tx.clear_search")}
                 className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded before:absolute before:-inset-[10px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
               >
                 <X aria-hidden="true" className="size-3.5" />
@@ -193,7 +195,7 @@ export function TransactionsPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger aria-label="Warehouse" className="min-w-36">
+              <SelectTrigger aria-label={t("settings.warehouse")} className="min-w-36">
                 <SelectValue
                   getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
                 />
@@ -217,19 +219,19 @@ export function TransactionsPage({
               }
             }}
           >
-            <SelectTrigger aria-label="Filter by type" className="min-w-32">
+            <SelectTrigger aria-label={t("tx.filter_type_label")} className="min-w-32">
               <SelectValue
-                placeholder="All types"
+                placeholder={t("tx.filter_all_types")}
                 getLabel={(v) =>
                   v === "all"
-                    ? "All types"
+                    ? t("tx.filter_all_types")
                     : MOVEMENT_TYPE_META[v as keyof typeof MOVEMENT_TYPE_META]
                         ?.label
                 }
               />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="all">{t("tx.filter_all_types")}</SelectItem>
               {(
                 Object.keys(
                   MOVEMENT_TYPE_META
@@ -250,29 +252,37 @@ export function TransactionsPage({
             }}
           >
             <SelectTrigger
-              aria-label="Filter by blockchain status"
+              aria-label={t("tx.filter_proof_label")}
               className="min-w-44"
             >
               <SelectValue
-                placeholder="All blockchain status"
+                placeholder={t("tx.filter_all_proof")}
                 getLabel={(v) =>
                   v === "all"
-                    ? "All blockchain status"
-                    : v.charAt(0).toUpperCase() + v.slice(1)
+                    ? t("tx.filter_all_proof")
+                    : v === "confirmed"
+                      ? t("tx.proof_confirmed")
+                      : v === "pending"
+                        ? t("tx.proof_pending")
+                        : v === "failed"
+                          ? t("tx.proof_failed")
+                          : v.charAt(0).toUpperCase() + v.slice(1)
                 }
               />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All blockchain status</SelectItem>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value="all">{t("tx.filter_all_proof")}</SelectItem>
+              <SelectItem value="confirmed">{t("tx.proof_confirmed")}</SelectItem>
+              <SelectItem value="pending">{t("tx.proof_pending")}</SelectItem>
+              <SelectItem value="failed">{t("tx.proof_failed")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground hidden text-sm tabular-nums sm:inline">
-            {totalCount} transaction{totalCount === 1 ? "" : "s"}
+            {totalCount === 1
+              ? t("tx.count_one", { count: String(totalCount) })
+              : t("tx.count_other", { count: String(totalCount) })}
           </span>
           {hasPermission(role, PERMISSIONS.MOVEMENT_READ) ? (
             <Button
@@ -286,7 +296,7 @@ export function TransactionsPage({
               }
             >
               <Download aria-hidden="true" />
-              Export CSV
+              {t("tx.export_csv")}
             </Button>
           ) : null}
         </div>
@@ -295,10 +305,10 @@ export function TransactionsPage({
         <div className="flex flex-wrap items-center gap-2">
           {query.trim() ? (
             <span className="bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
-              Search: “{query.trim()}”
+              {t("tx.chip_search", { query: query.trim() })}
               <button
                 type="button"
-                aria-label="Clear search filter"
+                aria-label={t("tx.clear_search_filter")}
                 onClick={() => {
                   setSearchInput("");
                   goTo({ q: null, page: "1" });
@@ -311,12 +321,14 @@ export function TransactionsPage({
           ) : null}
           {type ? (
             <span className="bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
-              Type:{" "}
-              {MOVEMENT_TYPE_META[type as keyof typeof MOVEMENT_TYPE_META]
-                ?.label ?? type}
+              {t("tx.chip_type", {
+                type:
+                  MOVEMENT_TYPE_META[type as keyof typeof MOVEMENT_TYPE_META]
+                    ?.label ?? type,
+              })}
               <button
                 type="button"
-                aria-label="Clear type filter"
+                aria-label={t("tx.clear_type_filter")}
                 onClick={() => goTo({ type: null, page: "1" })}
                 className="hover:bg-primary/20 relative -mr-1 rounded-full p-1 transition-colors before:absolute before:-inset-[8px] before:content-['']"
               >
@@ -326,10 +338,17 @@ export function TransactionsPage({
           ) : null}
           {proof ? (
             <span className="bg-secondary/20 text-secondary-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
-              Status: {proof.charAt(0).toUpperCase() + proof.slice(1)}
+              {t("tx.chip_status", {
+                status:
+                  proof === "confirmed"
+                    ? t("tx.proof_confirmed")
+                    : proof === "pending"
+                      ? t("tx.proof_pending")
+                      : t("tx.proof_failed"),
+              })}
               <button
                 type="button"
-                aria-label="Clear proof filter"
+                aria-label={t("tx.clear_proof_filter")}
                 onClick={() => goTo({ proof: null, page: "1" })}
                 className="hover:bg-secondary/30 relative -mr-1 rounded-full p-1 transition-colors before:absolute before:-inset-[8px] before:content-['']"
               >
@@ -345,18 +364,18 @@ export function TransactionsPage({
           icon={ArrowLeftRight}
           title={
             type || proof || query.trim()
-              ? "No transactions match your filters"
-              : "No transactions yet"
+              ? t("tx.empty_filtered_title")
+              : t("tx.empty_title")
           }
           description={
             type || proof || query.trim()
-              ? "Try a different filter combination or search term."
-              : "Stock operations and their blockchain proofs will appear here once you record a movement."
+              ? t("tx.empty_filtered_desc")
+              : t("tx.empty_desc")
           }
           primaryAction={
             type || proof || query.trim()
               ? {
-                  label: "Clear filters",
+                  label: t("tx.clear_filters"),
                   onClick: () => {
                     setSearchInput("");
                     goTo({ type: null, proof: null, q: null, page: "1" });
@@ -371,19 +390,19 @@ export function TransactionsPage({
             <Table className="lg:min-w-[720px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Transaction</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Quantity</TableHead>
-                  <TableHead>Workflow</TableHead>
+                  <TableHead>{t("tx.col_transaction")}</TableHead>
+                  <TableHead>{t("tx.col_type")}</TableHead>
+                  <TableHead className="text-right">{t("tx.col_quantity")}</TableHead>
+                  <TableHead>{t("tx.col_workflow")}</TableHead>
                   <TableHead className="hidden lg:table-cell">
-                    Proof / Blockchain
+                    {t("tx.col_proof")}
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell">Actor</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t("tx.col_actor")}</TableHead>
                   <TableHead className="hidden text-right lg:table-cell">
-                    Date
+                    {t("tx.col_date")}
                   </TableHead>
                   <TableHead className="w-12">
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">{t("tx.actions")}</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -465,13 +484,13 @@ export function TransactionsPage({
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-primary hover:text-primary-hover focus-visible:ring-ring inline-flex min-h-11 items-center gap-1 rounded-md px-1 py-2.5 text-sm font-semibold focus-visible:ring-3 focus-visible:outline-none"
-                              aria-label="View transaction on BaseScan"
+                              aria-label={t("tx.view_basescan")}
                             >
                               <ExternalLink
                                 aria-hidden="true"
                                 className="size-3.5"
                               />
-                              Verified
+                              {t("settings.wallet_verified")}
                             </a>
                             <span className="text-muted-foreground font-mono text-xs">
                               {m.proofTxHash.slice(0, 6)}…
@@ -490,7 +509,7 @@ export function TransactionsPage({
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground hidden font-mono text-sm lg:table-cell">
-                        {shortWallet(m.actorWallet)}
+                        {shortWallet(m.actorWallet, t("tx.member"))}
                       </TableCell>
                       <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
                         {formatDateTime(m.created_at)}
@@ -502,7 +521,9 @@ export function TransactionsPage({
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                aria-label={`Actions for ${m.productName}`}
+                                aria-label={t("tx.actions_for", {
+                                  name: m.productName,
+                                })}
                               />
                             }
                           >
@@ -513,7 +534,7 @@ export function TransactionsPage({
                               onClick={() => setDetailTarget(m)}
                             >
                               <Eye aria-hidden="true" />
-                              View details
+                              {t("tx.view_details")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -566,16 +587,16 @@ export function TransactionsPage({
                       </span>
                     </p>
                     <p className="text-muted-foreground mt-1 text-sm tabular-nums">
-                      {shortWallet(m.actorWallet)} ·{" "}
+                      {shortWallet(m.actorWallet, t("tx.member"))} ·{" "}
                       {formatDateTime(m.created_at)}
                     </p>
                     {m.proofTxHash && m.proofStatus === "confirmed" ? (
                       <BaseScanLink
                         href={`${BASESCAN_URL}/tx/${m.proofTxHash}`}
-                        ariaLabel="View transaction on BaseScan"
+                        ariaLabel={t("tx.view_basescan")}
                         className="mt-1"
                       >
-                        Verified
+                        {t("settings.wallet_verified")}
                       </BaseScanLink>
                     ) : proofMeta ? (
                       <p className="text-muted-foreground mt-1 text-sm">
@@ -589,7 +610,9 @@ export function TransactionsPage({
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={`Actions for ${typeMeta.label}`}
+                          aria-label={t("tx.actions_for", {
+                            name: typeMeta.label,
+                          })}
                         />
                       }
                     >
@@ -598,7 +621,7 @@ export function TransactionsPage({
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => setDetailTarget(m)}>
                         <Eye aria-hidden="true" />
-                        View details
+                        {t("tx.view_details")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

@@ -40,6 +40,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: i18n key references
+        run: pnpm i18n:check
+
       - name: Build
         run: pnpm build
 

@@ -26,6 +26,7 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn, formatDateTime } from "@/lib/utils";
 import type { ManualReviewProof } from "@/lib/console/types";
+import { useLocale } from "@/components/providers/locale-provider";
 
 function shortHash(value: string, head = 10, tail = 6): string {
   if (value.length <= head + tail + 3) return value;
@@ -51,6 +52,7 @@ export function ManualReviewTable({
   busyId: string | null;
   onRequestRetry: (proof: ManualReviewProof) => void;
 }) {
+  const { t } = useLocale();
   return (
     <Card className="border-warning/30 bg-warning/5">
       <CardHeader>
@@ -59,11 +61,8 @@ export function ManualReviewTable({
             <AlertTriangle aria-hidden="true" className="size-4" />
           </span>
           <div className="flex flex-col gap-1">
-            <CardTitle>Manual review queue</CardTitle>
-            <CardDescription>
-              Proofs that exhausted automatic retries. Re-queue from here. It is
-              the only place this is allowed.
-            </CardDescription>
+            <CardTitle>{t("console.review_title")}</CardTitle>
+            <CardDescription>{t("console.review_desc")}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -72,20 +71,24 @@ export function ManualReviewTable({
           <EmptyState
             icon={AlertTriangle}
             bare
-            title="No proofs in manual review"
-            description="The queue is clear. Proofs that fail here appear for re-queueing."
+            title={t("console.review_empty_title")}
+            description={t("console.review_empty_desc")}
           />
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Warehouse</TableHead>
-                  <TableHead>Proof</TableHead>
-                  <TableHead>Attempts</TableHead>
-                  <TableHead>Error</TableHead>
-                  <TableHead className="text-right">Stuck since</TableHead>
-                  <TableHead className="sr-only">Action</TableHead>
+                  <TableHead>{t("settings.warehouse")}</TableHead>
+                  <TableHead>{t("console.th_proof")}</TableHead>
+                  <TableHead>{t("console.th_attempts")}</TableHead>
+                  <TableHead>{t("console.th_error")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("console.th_stuck")}
+                  </TableHead>
+                  <TableHead className="sr-only">
+                    {t("console.th_action")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -108,7 +111,9 @@ export function ManualReviewTable({
                         </span>
                         {proof.movementId ? (
                           <span className="text-muted-foreground font-mono text-sm">
-                            movement {proof.movementId.slice(0, 8)}
+                            {t("console.movement_prefix", {
+                              id: proof.movementId.slice(0, 8),
+                            })}
                           </span>
                         ) : null}
                       </div>
@@ -146,13 +151,15 @@ export function ManualReviewTable({
                         onClick={() => onRequestRetry(proof)}
                         disabled={busyId !== null}
                         className="min-h-11 min-w-24"
-                        aria-label={`Re-queue proof ${shortHash(proof.payloadHash)}`}
+                        aria-label={t("console.requeue_aria", {
+                          hash: shortHash(proof.payloadHash),
+                        })}
                       >
                         <RefreshCcw
                           aria-hidden="true"
                           className={cn(busyId === proof.id && "animate-spin")}
                         />
-                        Retry
+                        {t("console.retry")}
                       </Button>
                     </TableCell>
                   </TableRow>

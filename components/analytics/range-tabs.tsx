@@ -5,13 +5,8 @@ import {
   type AnalyticsRange,
 } from "@/lib/analytics/aggregate";
 import { cn } from "@/lib/utils";
-
-/**
- * Pluralization defensif: siap kalau nanti ada range 1 hari (audit #7).
- */
-function rangeLabel(days: number): string {
-  return `${days} ${days === 1 ? "day" : "days"}`;
-}
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
 /**
  * Range selector chart Stock In/Out (DESIGN §32: 7/30/90 hari).
@@ -19,7 +14,7 @@ function rangeLabel(days: number): string {
  * server-render + dapat di-share. `basePath` memungkinkan dipakai di halaman
  * lain (dashboard) tanpa mengubah perilaku default halaman Analytics.
  */
-export function RangeTabs({
+export async function RangeTabs({
   warehouseId,
   range,
   basePath = "/analytics",
@@ -28,10 +23,20 @@ export function RangeTabs({
   range: AnalyticsRange;
   basePath?: string;
 }) {
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
+  /**
+   * Pluralization defensif: siap kalau nanti ada range 1 hari (audit #7).
+   */
+  const rangeLabel = (days: number): string =>
+    days === 1
+      ? t("analytics.range_days_one", { n: String(days) })
+      : t("analytics.range_days_other", { n: String(days) });
   return (
     <div
       role="group"
-      aria-label="Analytics time range"
+      aria-label={t("analytics.range_label")}
       className="bg-surface-container flex items-center gap-0.5 rounded-lg border p-1"
     >
       {ANALYTICS_RANGES.map((r) => {

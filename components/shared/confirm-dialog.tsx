@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ErrorAlert } from "@/components/shared/error-alert";
+import { useLocale } from "@/components/providers/locale-provider";
 
 /**
  * Single source of truth for confirmation dialogs.
@@ -46,7 +47,7 @@ export function ConfirmDialog({
   primaryVariant = "default",
   primaryIcon,
   primaryDisabled = false,
-  cancelLabel = "Cancel",
+  cancelLabel,
   onConfirm,
   onCancel,
   children,
@@ -66,6 +67,7 @@ export function ConfirmDialog({
   onCancel?: () => void;
   children?: React.ReactNode;
 }) {
+  const { t } = useLocale();
   return (
     <Dialog
       open={open}
@@ -92,7 +94,7 @@ export function ConfirmDialog({
               onClick={onCancel ?? (() => onOpenChange(false))}
               disabled={busy}
             >
-              {cancelLabel}
+              {cancelLabel ?? t("common.cancel")}
             </Button>
             <Button
               variant={primaryVariant}

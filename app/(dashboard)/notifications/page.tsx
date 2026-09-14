@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import type { NotificationRow } from "@/lib/notifications/types";
 import { PageHeader } from "@/components/shared/page-header";
 import { RetryErrorState } from "@/components/shared/retry-error-state";
@@ -22,6 +24,9 @@ const PAGE_SIZE = NOTIFICATIONS_PAGE_SIZE;
 
 export default async function NotificationsPage() {
   const supabase = await createClient();
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -44,12 +49,12 @@ export default async function NotificationsPage() {
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Notifications"
-          description="Activity across your warehouses: requests, adjustments, and blockchain events."
+          title={t("nav./notifications")}
+          description={t("notif.page_desc")}
         />
         <RetryErrorState
-          title="Could not load notifications"
-          description="We could not load your notifications right now. Please refresh the page to try again."
+          title={t("notif.load_failed_title")}
+          description={t("notif.load_failed_desc")}
         />
       </div>
     );
@@ -65,16 +70,15 @@ export default async function NotificationsPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Notifications"
-        description="Activity across your warehouses: requests, adjustments, and blockchain events."
+        title={t("nav./notifications")}
+        description={t("notif.page_desc")}
       />
       {partialError ? (
         <p
           role="alert"
           className="border-status-warn-border bg-status-warn-bg text-status-warn-fg rounded-xl border px-4 py-3 text-sm"
         >
-          Some notification data failed to load. Unread counts may be outdated.
-          Refresh to retry.
+          {t("notif.partial_failed")}
         </p>
       ) : null}
       <NotificationsPageView

@@ -46,6 +46,7 @@ import {
   MOVEMENT_TYPE_META as SHARED_MOVEMENT_TYPE_META,
 } from "@/lib/inventory/status-meta";
 import { ErrorAlert } from "@/components/shared/error-alert";
+import { useLocale } from "@/components/providers/locale-provider";
 
 // Re-export from canonical source (audit A — single source of truth)
 export const MOVEMENT_TYPE_META = SHARED_MOVEMENT_TYPE_META;
@@ -77,6 +78,7 @@ export function CreateProductDialog({
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
 }) {
+  const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -100,13 +102,21 @@ export function CreateProductDialog({
     }
     onOpenChange(false);
     onCreated();
-    const qtyNote = result.data.initialStockApplied
-      ? ` ${values.initialQuantity} ${values.unit} initial stock recorded.`
-      : " Ready for stock in.";
+    const warehouseShort = warehouseId.slice(0, 6);
     toast.add({
       type: "success",
-      title: `${values.name} added`,
-      description: `${values.sku} is now in ${warehouseId.slice(0, 6)}… inventory.${qtyNote}`,
+      title: t("dialogs.create_product.toast_title", { name: values.name }),
+      description: result.data.initialStockApplied
+        ? t("dialogs.create_product.toast_desc_with_stock", {
+            sku: values.sku,
+            warehouse: warehouseShort,
+            quantity: values.initialQuantity,
+            unit: values.unit,
+          })
+        : t("dialogs.create_product.toast_desc_ready", {
+            sku: values.sku,
+            warehouse: warehouseShort,
+          }),
     });
   };
 
@@ -121,10 +131,13 @@ export function CreateProductDialog({
               </span>
               <div className="flex min-w-0 flex-col gap-0.5">
                 <DialogTitle className="font-bold tracking-tight">
-                  Add Product
+                  {t("dialogs.create_product.title")}
                 </DialogTitle>
                 <DialogDescription className="text-xs">
-                  Register a new SKU to {warehouseName ?? "this warehouse"}.
+                  {t("dialogs.create_product.description", {
+                    warehouse:
+                      warehouseName ?? t("dialogs.create_product.this_warehouse"),
+                  })}
                 </DialogDescription>
               </div>
             </div>
@@ -137,7 +150,7 @@ export function CreateProductDialog({
         ) : null}
         <ProductForm
           mode="create"
-          submitLabel="Add product"
+          submitLabel={t("dialogs.create_product.submit")}
           busy={busy}
           onCancel={() => onOpenChange(false)}
           onSubmit={handleSubmit}
@@ -158,6 +171,7 @@ export function EditProductDialog({
   onOpenChange: (open: boolean) => void;
   onUpdated: () => void;
 }) {
+  const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const unitLocked = product.movementCount > 0;
@@ -183,8 +197,8 @@ export function EditProductDialog({
     onUpdated();
     toast.add({
       type: "success",
-      title: `${values.name} saved`,
-      description: `${values.sku}. Changes applied.`,
+      title: t("dialogs.edit_product.toast_title", { name: values.name }),
+      description: t("dialogs.edit_product.toast_desc", { sku: values.sku }),
     });
   };
 
@@ -199,7 +213,7 @@ export function EditProductDialog({
               </span>
               <div className="flex min-w-0 flex-col gap-0.5">
                 <DialogTitle className="font-bold tracking-tight">
-                  Edit Product
+                  {t("dialogs.edit_product.title")}
                 </DialogTitle>
                 <DialogDescription className="text-xs">
                   {product.name}
@@ -215,7 +229,11 @@ export function EditProductDialog({
           {product.category ? <span>{product.category}</span> : null}
           <span>{product.unit}</span>
           {product.updatedAt ? (
-            <span>Updated {formatDate(product.updatedAt)}</span>
+            <span>
+              {t("dialogs.edit_product.updated", {
+                date: formatDate(product.updatedAt),
+              })}
+            </span>
           ) : null}
         </p>
         {error ? (
@@ -234,7 +252,7 @@ export function EditProductDialog({
             lowStockThreshold: product.lowStockThreshold,
           }}
           unitLocked={unitLocked}
-          submitLabel="Save changes"
+          submitLabel={t("dialogs.edit_product.submit")}
           busy={busy}
           onCancel={() => onOpenChange(false)}
           onSubmit={handleSubmit}
@@ -257,6 +275,7 @@ export function ArchiveProductDialog({
   onOpenChange: (open: boolean) => void;
   onArchived: () => void;
 }) {
+  const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -273,8 +292,11 @@ export function ArchiveProductDialog({
     onArchived();
     toast.add({
       type: "success",
-      title: `“${product.name}” archived`,
-      description: `${product.quantity ?? 0} ${product.unit} hidden from active inventory. History preserved. View archived to restore.`,
+      title: t("dialogs.archive_product.toast_title", { name: product.name }),
+      description: t("dialogs.archive_product.toast_desc", {
+        quantity: String(product.quantity ?? 0),
+        unit: product.unit,
+      }),
     });
   };
 
@@ -288,7 +310,7 @@ export function ArchiveProductDialog({
             </span>
             <div className="flex min-w-0 flex-col gap-1">
               <DialogTitle className="text-base font-bold tracking-tight">
-                Archive Product
+                {t("dialogs.archive_product.title")}
               </DialogTitle>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <span className="bg-surface-low text-muted-foreground border-border rounded border px-2 py-0.5 font-mono text-[11px] font-semibold">
@@ -305,15 +327,15 @@ export function ArchiveProductDialog({
         </DialogHeader>
         <div className="flex flex-col gap-3 px-6 pb-5">
           <p className="text-foreground/80 text-xs leading-relaxed">
-            <span className="font-medium">{product.name}</span> will disappear
-            from active inventory. Its movement history and proofs remain.
+            <span className="font-medium">{product.name}</span>{" "}
+            {t("dialogs.archive_product.body")}
           </p>
           <p className="bg-status-err-bg text-status-err-fg border-status-err-border flex items-start gap-2 rounded-lg border px-3 py-2 text-[11px] leading-snug">
             <AlertTriangle
               aria-hidden="true"
               className="mt-px size-3.5 shrink-0"
             />
-            This can be restored from archived products.
+            {t("dialogs.archive_product.restorable")}
           </p>
           {error ? <ErrorBanner message={error} /> : null}
         </div>
@@ -325,7 +347,7 @@ export function ArchiveProductDialog({
             disabled={busy}
             className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant="destructive"
@@ -339,7 +361,7 @@ export function ArchiveProductDialog({
             ) : (
               <Ban aria-hidden="true" />
             )}
-            Archive product
+            {t("dialogs.archive_product.submit")}
           </Button>
         </div>
       </DialogContent>
@@ -364,6 +386,7 @@ export function ProductDetailSheet({
   /** Buka dialog Stock In dengan produk ini terpilih (opsional). */
   onRecordMovement?: (product: ProductRow) => void;
 }) {
+  const { t } = useLocale();
   const [movements, setMovements] = React.useState<StockMovementRow[] | null>(
     null
   );
@@ -420,7 +443,11 @@ export function ProductDetailSheet({
     product.status === "archived" ? "inactive" : low ? "warning" : "success"
   ) as "inactive" | "warning" | "success";
   const statusLabel =
-    product.status === "archived" ? "Archived" : low ? "Low stock" : "Active";
+    product.status === "archived"
+      ? t("dialogs.detail.status_archived")
+      : low
+        ? t("dialogs.detail.status_low_stock")
+        : t("dialogs.detail.status_active");
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -446,7 +473,7 @@ export function ProductDetailSheet({
                 className="h-9 px-3.5 text-[13px] font-semibold"
               >
                 <Pencil aria-hidden="true" />
-                Edit Details
+                {t("dialogs.detail.edit_details")}
               </Button>
             </div>
           ) : null}
@@ -458,7 +485,7 @@ export function ProductDetailSheet({
             <div className="bg-surface-low border-border rounded-xl border p-4">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-muted-foreground font-mono text-[11px] font-semibold tracking-[0.08em] uppercase">
-                  Current stock
+                  {t("dialogs.detail.current_stock")}
                 </span>
                 <StatusBadge tone={statusTone} label={statusLabel} />
               </div>
@@ -471,9 +498,12 @@ export function ProductDetailSheet({
             </div>
 
             {product.description ? (
-              <section aria-label="Description" className="flex flex-col gap-2">
+              <section
+                aria-label={t("dialogs.detail.description")}
+                className="flex flex-col gap-2"
+              >
                 <h3 className="text-muted-foreground font-mono text-[11px] font-semibold tracking-[0.08em] uppercase">
-                  Description
+                  {t("dialogs.detail.description")}
                 </h3>
                 <p className="border-border rounded-xl border px-4 py-3 text-sm leading-relaxed">
                   {product.description}
@@ -482,28 +512,30 @@ export function ProductDetailSheet({
             ) : null}
 
             <section
-              aria-label="Specifications"
+              aria-label={t("dialogs.detail.specifications")}
               className="flex flex-col gap-2"
             >
               <h3 className="text-muted-foreground font-mono text-[11px] font-semibold tracking-[0.08em] uppercase">
-                Specifications
+                {t("dialogs.detail.specifications")}
               </h3>
               <dl className="border-border grid grid-cols-2 gap-x-4 rounded-xl border px-4 py-2">
                 <div className="border-border flex flex-col gap-0.5 border-b py-2.5">
                   <dt className="text-muted-foreground text-[13px]">
-                    Category
+                    {t("dialogs.detail.category")}
                   </dt>
                   <dd className="text-sm font-medium">
                     {product.category ?? "—"}
                   </dd>
                 </div>
                 <div className="border-border flex flex-col gap-0.5 border-b py-2.5">
-                  <dt className="text-muted-foreground text-[13px]">Unit</dt>
+                  <dt className="text-muted-foreground text-[13px]">
+                    {t("dialogs.detail.unit")}
+                  </dt>
                   <dd className="text-sm font-medium">{product.unit}</dd>
                 </div>
                 <div className="flex flex-col gap-0.5 py-2.5">
                   <dt className="text-muted-foreground text-[13px]">
-                    Low Stock Threshold
+                    {t("dialogs.detail.threshold")}
                   </dt>
                   <dd className="text-primary font-mono text-sm font-semibold tabular-nums">
                     {product.lowStockThreshold} {product.unit}
@@ -511,32 +543,34 @@ export function ProductDetailSheet({
                 </div>
                 <div className="flex flex-col gap-0.5 py-2.5">
                   <dt className="text-muted-foreground text-[13px]">
-                    Movements
+                    {t("dialogs.detail.movements")}
                   </dt>
                   <dd className="text-primary font-mono text-sm font-semibold tabular-nums">
-                    {product.movementCount} total
+                    {t("dialogs.detail.movements_total", {
+                      count: String(product.movementCount),
+                    })}
                   </dd>
                 </div>
               </dl>
             </section>
 
             <section
-              aria-label="Recent movements"
+              aria-label={t("dialogs.detail.recent_movements")}
               className="flex flex-col gap-2"
             >
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-primary flex items-center gap-1.5 text-sm font-semibold">
                   <History aria-hidden="true" className="size-4" />
-                  Recent movements
+                  {t("dialogs.detail.recent_movements")}
                 </h3>
               </div>
               {loading ? (
                 <p className="text-muted-foreground text-sm">
-                  Loading movements…
+                  {t("dialogs.detail.loading")}
                 </p>
               ) : loadError ? (
                 <p role="alert" className="text-destructive text-sm">
-                  Could not load movements. Reopen this panel to retry.
+                  {t("dialogs.detail.load_error")}
                 </p>
               ) : movements && movements.length > 0 ? (
                 <ul className="flex flex-col">
@@ -576,7 +610,7 @@ export function ProductDetailSheet({
                           <span className="text-muted-foreground truncate font-mono text-xs">
                             {m.actorWallet
                               ? `${m.actorWallet.slice(0, 6)}…${m.actorWallet.slice(-4)}`
-                              : "Unknown actor"}
+                              : t("dialogs.detail.unknown_actor")}
                           </span>
                           <StatusBadge
                             tone={statusMeta.tone}
@@ -589,7 +623,7 @@ export function ProductDetailSheet({
                 </ul>
               ) : (
                 <p className="text-muted-foreground text-sm">
-                  No movements recorded yet
+                  {t("dialogs.detail.empty")}
                 </p>
               )}
             </section>
@@ -605,7 +639,9 @@ export function ProductDetailSheet({
                 className="h-10 min-w-0 flex-1 px-3 text-[13px] font-semibold"
               >
                 <Pencil aria-hidden="true" className="size-4 shrink-0" />
-                <span className="truncate">Edit Details</span>
+                <span className="truncate">
+                  {t("dialogs.detail.edit_details")}
+                </span>
               </Button>
             ) : null}
             {onRecordMovement ? (
@@ -614,7 +650,9 @@ export function ProductDetailSheet({
                 className="h-10 min-w-0 flex-1 px-3 text-[13px] font-semibold"
               >
                 <Plus aria-hidden="true" className="size-4 shrink-0" />
-                <span className="truncate">Record Movement</span>
+                <span className="truncate">
+                  {t("dialogs.detail.record_movement")}
+                </span>
               </Button>
             ) : null}
           </SheetFooter>

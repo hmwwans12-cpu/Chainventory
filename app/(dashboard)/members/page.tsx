@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { Users } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
@@ -27,6 +29,9 @@ export default async function MembersPageRoute({
   searchParams: Promise<{ warehouse?: string | string[] }>;
 }) {
   const supabase = await createClient();
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -43,10 +48,10 @@ export default async function MembersPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Members"
-          description="Warehouse team and role-based access."
+          title={t("nav./members")}
+          description={t("members.page_desc")}
         />
-        <NoWarehouse description="Create a warehouse to build your team, or join one with a warehouse code." />
+        <NoWarehouse description={t("members.empty_desc")} />
       </div>
     );
   }
@@ -62,11 +67,14 @@ export default async function MembersPageRoute({
   if (error) {
     return (
       <div className="flex flex-col gap-6">
-        <PageHeader title="Members" description={`${active.name} · team.`} />
+        <PageHeader
+          title={t("nav./members")}
+          description={t("members.team_suffix", { name: active.name })}
+        />
         <RetryErrorState
           icon={Users}
-          title="Unable to load members."
-          description="Something went wrong while retrieving your team. Please try again."
+          title={t("members.load_failed_title")}
+          description={t("members.load_failed_desc")}
         />
       </div>
     );
@@ -83,7 +91,7 @@ export default async function MembersPageRoute({
       status: row.status,
       joinedAt: row.joined_at,
       displayName: profile?.display_name ?? null,
-      email: profile?.email ?? "Unknown",
+      email: profile?.email ?? t("members.unknown"),
     };
   });
 
@@ -111,7 +119,7 @@ export default async function MembersPageRoute({
         requestId: row.id,
         userId: row.user_id,
         displayName: profile?.display_name ?? null,
-        email: profile?.email ?? "Unknown",
+        email: profile?.email ?? t("members.unknown"),
         requestedAt: row.created_at,
       };
     }
@@ -120,16 +128,15 @@ export default async function MembersPageRoute({
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Members"
-        description={`${active.name} · team members and role-based permissions.`}
+        title={t("nav./members")}
+        description={t("members.team_desc", { name: active.name })}
       />
       {pendingError ? (
         <p
           role="alert"
           className="border-status-warn-border bg-status-warn-bg text-status-warn-fg rounded-xl border px-4 py-3 text-sm"
         >
-          Could not load pending join requests. New requests may be hidden.
-          Refresh to retry.
+          {t("members.pending_failed")}
         </p>
       ) : null}
       <MembersPage

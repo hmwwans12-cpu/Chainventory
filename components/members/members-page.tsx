@@ -1,6 +1,5 @@
 "use client";
 
-/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -78,6 +77,7 @@ import { LeaveWarehouseDialog } from "@/components/members/dialogs/leave-warehou
 import { RejectJoinDialog } from "@/components/members/dialogs/reject-join-dialog";
 import { RemoveMemberDialog } from "@/components/members/dialogs/remove-member-dialog";
 import { TransferOwnershipDialog } from "@/components/members/dialogs/transfer-ownership-dialog";
+import { useLocale } from "@/components/providers/locale-provider";
 
 /**
  * FE-25: normalisasi invite link — API mengembalikan path relatif
@@ -108,6 +108,7 @@ export function MembersPage({
   pendingRequests: PendingJoinRequest[];
 }) {
   const router = useRouter();
+  const { t } = useLocale();
 
   const [changing, setChanging] = React.useState<Set<string>>(new Set());
   // Audit v0.4.5: useOptimistic for member role changes. We sync the
@@ -164,7 +165,7 @@ export function MembersPage({
 
   const handleInvite = async () => {
     if (!isValidEmail(inviteEmail)) {
-      setInviteError("Enter a valid email address.");
+      setInviteError(t("members.invite_invalid_email"));
       inviteEmailRef.current?.focus();
       return;
     }
@@ -182,21 +183,21 @@ export function MembersPage({
       });
       const json = await res.json();
       if (!res.ok || !json?.data?.acceptUrl) {
-        setInviteError(json?.error ?? "Could not create invitation.");
+        setInviteError(json?.error ?? t("members.invite_create_failed"));
       } else {
         setInviteSent(Boolean(json.data.emailSent));
         setInviteUrl(json.data.acceptUrl);
         setInviteEmail("");
         toast.add({
           type: "success",
-          title: "Invitation created",
+          title: t("members.invite_created_title"),
           description: json.data.emailSent
-            ? "Invitation sent by email."
-            : "Share the link with the invitee.",
+            ? t("members.invite_sent_email")
+            : t("members.invite_share_link"),
         });
       }
     } catch {
-      setInviteError("Network error. Try again.");
+      setInviteError(t("members.network_error"));
     } finally {
       setInviteBusy(false);
     }
@@ -232,16 +233,17 @@ export function MembersPage({
     if (result.ok) {
       toast.add({
         type: "success",
-        title: "Join request approved",
-        description: `${request.displayName ?? request.email} joined as ${
-          ROLE_META[chosenRole].label
-        }.`,
+        title: t("members.approve_success_title"),
+        description: t("members.approve_success_desc", {
+          name: request.displayName ?? request.email,
+          role: ROLE_META[chosenRole].label,
+        }),
       });
       refresh();
     } else {
       toast.add({
         type: "error",
-        title: "Could not approve request",
+        title: t("members.approve_failed_title"),
         description: result.error,
       });
     }
@@ -254,14 +256,14 @@ export function MembersPage({
       await navigator.clipboard.writeText(inviteCode);
       toast.add({
         type: "success",
-        title: "Invite code copied",
-        description: `Share "${inviteCode}" to invite a member.`,
+        title: t("members.invite_code_copied_title"),
+        description: t("members.invite_code_copied_desc", { code: inviteCode }),
       });
     } catch {
       toast.add({
         type: "error",
-        title: "Could not copy",
-        description: "Copy the code manually.",
+        title: t("members.copy_failed_title"),
+        description: t("members.copy_manual"),
       });
     }
   };
@@ -292,14 +294,17 @@ export function MembersPage({
     if (result.ok) {
       toast.add({
         type: "success",
-        title: "Role updated",
-        description: `${member.displayName ?? member.email} is now ${ROLE_META[newRole].label}.`,
+        title: t("members.role_updated_title"),
+        description: t("members.role_updated_desc", {
+          name: member.displayName ?? member.email,
+          role: ROLE_META[newRole].label,
+        }),
       });
       refresh();
     } else {
       toast.add({
         type: "error",
-        title: "Could not update role",
+        title: t("members.role_update_failed_title"),
         description: result.error,
       });
     }
@@ -316,7 +321,7 @@ export function MembersPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger aria-label="Warehouse" className="min-w-36">
+              <SelectTrigger aria-label={t("settings.warehouse")} className="min-w-36">
                 <SelectValue
                   getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
                 />
@@ -333,14 +338,18 @@ export function MembersPage({
           {isOwner ? (
             <Button variant="outline" onClick={() => setTransferOpen(true)}>
               <Crown aria-hidden="true" />
-              <span className="hidden sm:inline">Transfer Ownership</span>
-              <span className="sm:hidden">Transfer</span>
+              <span className="hidden sm:inline">
+                {t("members.transfer_ownership")}
+              </span>
+              <span className="sm:hidden">{t("members.transfer_short")}</span>
             </Button>
           ) : null}
         </div>
         {canInvite ? (
           <div className="sm:border-border flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-1 py-2 sm:gap-2 sm:border sm:px-3">
-            <span className="text-muted-foreground text-sm">Invite code</span>
+            <span className="text-muted-foreground text-sm">
+              {t("members.invite_code_label")}
+            </span>
             <span className="truncate font-mono text-sm tracking-wide">
               {inviteCode}
             </span>
@@ -348,7 +357,7 @@ export function MembersPage({
               variant="ghost"
               size="icon-sm"
               onClick={copyInvite}
-              aria-label="Copy invite code"
+              aria-label={t("members.copy_invite_code_aria")}
             >
               <Copy aria-hidden="true" />
             </Button>
@@ -362,7 +371,7 @@ export function MembersPage({
               }}
             >
               <UserPlus aria-hidden="true" />
-              Invite by email
+              {t("members.invite_by_email")}
             </Button>
           </div>
         ) : null}
@@ -377,16 +386,16 @@ export function MembersPage({
           >
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Invite by email</DialogTitle>
+                <DialogTitle>{t("members.invite_by_email")}</DialogTitle>
                 <DialogDescription>
-                  Creates a single-use invite link bound to the email address.
-                  The recipient opens it while signed in with that email to
-                  join.
+                  {t("members.invite_dialog_desc")}
                 </DialogDescription>
               </DialogHeader>
               {inviteUrl ? (
                 <div className="flex flex-col gap-3">
-                  <Label htmlFor="invite-link">Invite link</Label>
+                  <Label htmlFor="invite-link">
+                    {t("members.invite_link_label")}
+                  </Label>
                   <div className="flex items-center gap-2">
                     <code
                       id="invite-link"
@@ -396,19 +405,21 @@ export function MembersPage({
                     </code>
                     <CopyButton
                       text={resolveInviteLink(inviteUrl)}
-                      label="Copy invite link"
+                      label={t("members.copy_invite_link_aria")}
                     />
                   </div>
                   <p className="text-muted-foreground text-sm">
                     {inviteSent
-                      ? "Invitation sent. They'll also get this link by email."
-                      : "Email delivery is not configured in this environment. Share the link directly."}
+                      ? t("members.invite_sent_with_email")
+                      : t("members.invite_no_delivery")}
                   </p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="invite-email">Email</Label>
+                    <Label htmlFor="invite-email">
+                      {t("members.email_label")}
+                    </Label>
                     <Input
                       id="invite-email"
                       ref={inviteEmailRef}
@@ -426,7 +437,9 @@ export function MembersPage({
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="invite-role">Role</Label>
+                    <Label htmlFor="invite-role">
+                      {t("settings.role")}
+                    </Label>
                     <Select
                       value={inviteRole}
                       onValueChange={(value) => {
@@ -435,7 +448,7 @@ export function MembersPage({
                     >
                       <SelectTrigger id="invite-role" className="w-full">
                         <SelectValue
-                          placeholder="Select role"
+                          placeholder={t("members.select_role")}
                           getLabel={(v) => ROLE_META[v as Role]?.label ?? v}
                         />
                       </SelectTrigger>
@@ -461,7 +474,9 @@ export function MembersPage({
               )}
               <DialogFooter>
                 {inviteUrl ? (
-                  <Button onClick={() => setInviteOpen(false)}>Done</Button>
+                  <Button onClick={() => setInviteOpen(false)}>
+                    {t("members.done")}
+                  </Button>
                 ) : (
                   <>
                     <Button
@@ -469,7 +484,7 @@ export function MembersPage({
                       onClick={() => setInviteOpen(false)}
                       disabled={inviteBusy}
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </Button>
                     <Button onClick={handleInvite} disabled={inviteBusy}>
                       {inviteBusy ? (
@@ -477,7 +492,7 @@ export function MembersPage({
                       ) : (
                         <UserPlus aria-hidden="true" />
                       )}
-                      Create invite
+                      {t("members.create_invite")}
                     </Button>
                   </>
                 )}
@@ -498,10 +513,12 @@ export function MembersPage({
                 id="join-requests-heading"
                 className="t-headline-sm text-foreground"
               >
-                Join Requests
+                {t("members.join_requests_title")}
               </h2>
               <Badge variant="warning" className="ms-1">
-                {pendingRequests.length} Pending
+                {t("members.pending_badge", {
+                  n: String(pendingRequests.length),
+                })}
               </Badge>
             </div>
             <ul className="divide-border divide-y">
@@ -515,12 +532,14 @@ export function MembersPage({
                   >
                     <div className="min-w-0">
                       <p className="text-foreground truncate text-sm font-medium">
-                        {request.displayName ?? "Unnamed user"}
+                        {request.displayName ?? t("members.unnamed_user")}
                       </p>
                       <p className="text-muted-foreground truncate text-sm">
                         {request.email}
                         {request.requestedAt
-                          ? ` · requested ${formatDate(request.requestedAt)}`
+                          ? ` · ${t("members.requested_at", {
+                              date: formatDate(request.requestedAt),
+                            })}`
                           : ""}
                       </p>
                     </div>
@@ -538,11 +557,13 @@ export function MembersPage({
                       >
                         <SelectTrigger
                           className="w-36"
-                          aria-label={`Role for ${request.displayName ?? request.email}`}
+                          aria-label={t("members.role_for_aria", {
+                            name: request.displayName ?? request.email,
+                          })}
                           disabled={busy}
                         >
                           <SelectValue
-                            placeholder="Select role"
+                            placeholder={t("members.select_role")}
                             getLabel={(v) => ROLE_META[v as Role]?.label ?? v}
                           />
                         </SelectTrigger>
@@ -558,10 +579,12 @@ export function MembersPage({
                         size="sm"
                         onClick={() => handleApprove(request)}
                         disabled={!chosen || busy}
-                        title={!chosen ? "Select a role first" : undefined}
+                        title={
+                          !chosen ? t("members.select_role_first") : undefined
+                        }
                       >
                         <Check aria-hidden="true" />
-                        Approve
+                        {t("members.approve")}
                       </Button>
                       <Button
                         variant="outline"
@@ -570,7 +593,7 @@ export function MembersPage({
                         disabled={busy}
                       >
                         <X aria-hidden="true" />
-                        Reject
+                        {t("members.reject")}
                       </Button>
                     </div>
                   </li>
@@ -584,12 +607,12 @@ export function MembersPage({
       {localMembers.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="No teammates yet"
-          description="Invite teammates with the warehouse code, or share the invite link above to get started."
+          title={t("members.no_teammates_title")}
+          description={t("members.no_teammates_desc")}
           primaryAction={
             canInvite
               ? {
-                  label: "Invite member",
+                  label: t("members.invite_member"),
                   onClick: () => setInviteOpen(true),
                 }
               : undefined
@@ -598,21 +621,25 @@ export function MembersPage({
       ) : (
         <Card className="overflow-hidden">
           <CardHeader className="border-b">
-            <CardTitle className="t-headline-sm">Team Members</CardTitle>
+            <CardTitle className="t-headline-sm">
+              {t("members.team_title")}
+            </CardTitle>
             <CardDescription>
-              {localMembers.length} of {localMembers.length} members.
+              {t("members.team_count", { n: String(localMembers.length) })}
             </CardDescription>
           </CardHeader>
           <div className="hidden overflow-x-auto lg:block">
             <Table className="lg:min-w-[720px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Member</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden lg:table-cell">Joined</TableHead>
+                  <TableHead>{t("members.th_member")}</TableHead>
+                  <TableHead>{t("settings.role")}</TableHead>
+                  <TableHead>{t("members.th_status")}</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    {t("members.th_joined")}
+                  </TableHead>
                   <TableHead className="w-12">
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">{t("members.th_actions")}</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -640,13 +667,13 @@ export function MembersPage({
                       <TableCell>
                         <div className="flex flex-col gap-0.5">
                           <EntityName
-                            title={`${member.displayName ?? "Unnamed member"}${isSelf ? " (you)" : ""}`}
+                            title={`${member.displayName ?? t("members.unnamed_member")}${isSelf ? ` ${t("members.you_suffix")}` : ""}`}
                           >
-                            {member.displayName ?? "Unnamed member"}
+                            {member.displayName ?? t("members.unnamed_member")}
                             {isSelf ? (
                               <span className="text-muted-foreground font-normal">
                                 {" "}
-                                (you)
+                                {t("members.you_suffix")}
                               </span>
                             ) : null}
                           </EntityName>
@@ -711,10 +738,10 @@ export function MembersPage({
                           }
                           label={
                             member.status === "ACTIVE"
-                              ? "Active"
+                              ? t("members.status_active")
                               : member.status === "PENDING"
-                                ? "Pending"
-                                : "Suspended"
+                                ? t("members.status_pending")
+                                : t("members.status_suspended")
                           }
                         />
                       </TableCell>
@@ -729,7 +756,10 @@ export function MembersPage({
                                 <Button
                                   variant="ghost"
                                   size="icon-sm"
-                                  aria-label={`Actions for ${member.displayName ?? member.email}`}
+                                  aria-label={t("members.actions_for_aria", {
+                                    name:
+                                      member.displayName ?? member.email,
+                                  })}
                                 />
                               }
                             >
@@ -742,7 +772,7 @@ export function MembersPage({
                                   onClick={() => setLeaveTarget(member)}
                                 >
                                   <LogOut aria-hidden="true" />
-                                  Leave warehouse
+                                  {t("members.leave_warehouse")}
                                 </DropdownMenuItem>
                               ) : null}
                               {manageable ? (
@@ -751,7 +781,7 @@ export function MembersPage({
                                   onClick={() => setRemoveTarget(member)}
                                 >
                                   <UserMinus aria-hidden="true" />
-                                  Remove member
+                                  {t("members.remove_member")}
                                 </DropdownMenuItem>
                               ) : null}
                             </DropdownMenuContent>
@@ -785,10 +815,10 @@ export function MembersPage({
                     : "suspended";
               const statusLabel =
                 member.status === "ACTIVE"
-                  ? "Active"
+                  ? t("members.status_active")
                   : member.status === "PENDING"
-                    ? "Pending"
-                    : "Suspended";
+                    ? t("members.status_pending")
+                    : t("members.status_suspended");
               return (
                 <li
                   key={member.membershipId}
@@ -797,13 +827,13 @@ export function MembersPage({
                   <div className="min-w-0 flex-1">
                     <EntityName
                       className="min-w-0"
-                      title={`${member.displayName ?? "Unnamed member"}${isSelf ? " (you)" : ""}`}
+                      title={`${member.displayName ?? t("members.unnamed_member")}${isSelf ? ` ${t("members.you_suffix")}` : ""}`}
                     >
-                      {member.displayName ?? "Unnamed member"}
+                      {member.displayName ?? t("members.unnamed_member")}
                       {isSelf ? (
                         <span className="text-muted-foreground font-normal">
                           {" "}
-                          (you)
+                          {t("members.you_suffix")}
                         </span>
                       ) : null}
                     </EntityName>
@@ -865,7 +895,9 @@ export function MembersPage({
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            aria-label={`Actions for ${member.displayName ?? member.email}`}
+                            aria-label={t("members.actions_for_aria", {
+                              name: member.displayName ?? member.email,
+                            })}
                           />
                         }
                       >
@@ -878,7 +910,7 @@ export function MembersPage({
                             onClick={() => setLeaveTarget(member)}
                           >
                             <LogOut aria-hidden="true" />
-                            Leave warehouse
+                            {t("members.leave_warehouse")}
                           </DropdownMenuItem>
                         ) : null}
                         {manageable ? (
@@ -887,7 +919,7 @@ export function MembersPage({
                             onClick={() => setRemoveTarget(member)}
                           >
                             <UserMinus aria-hidden="true" />
-                            Remove member
+                            {t("members.remove_member")}
                           </DropdownMenuItem>
                         ) : null}
                       </DropdownMenuContent>
@@ -899,7 +931,7 @@ export function MembersPage({
           </ul>
           <div className="bg-surface-low/30 border-t px-4 py-3 text-sm sm:px-6">
             <span className="text-muted-foreground tabular-nums">
-              Showing 1–{localMembers.length} of {localMembers.length} members
+              {t("members.showing_footer", { n: String(localMembers.length) })}
             </span>
           </div>
         </Card>

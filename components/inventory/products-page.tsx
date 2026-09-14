@@ -1,6 +1,5 @@
 "use client";
 
-/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -73,6 +72,7 @@ import { archiveProduct } from "@/lib/inventory/products-client";
 import { isLowStock } from "@/lib/inventory/low-stock";
 import { toast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/utils";
+import { useLocale } from "@/components/providers/locale-provider";
 
 export function ProductsPage({
   warehouseId,
@@ -105,6 +105,7 @@ export function ProductsPage({
    */
   paginationDisabled?: boolean;
 }) {
+  const { t } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -217,24 +218,35 @@ export function ProductsPage({
     if (failed === 0) {
       toast.add({
         type: "success",
-        title: "Products archived",
-        description: `${succeeded} product(s) archived.`,
+        title: t("products.toast_archived_title"),
+        description: t("products.toast_archived_desc", {
+          count: String(succeeded),
+        }),
       });
       clearSelection();
       refresh();
     } else if (succeeded > 0) {
       toast.add({
         type: "warning",
-        title: "Partial archive",
-        description: `${succeeded} archived, ${failed} failed. ${failed === 1 ? "One product" : `${failed} products`} could not be archived.`,
+        title: t("products.toast_partial_title"),
+        description:
+          failed === 1
+            ? t("products.toast_partial_desc_one", {
+                succeeded: String(succeeded),
+                failed: String(failed),
+              })
+            : t("products.toast_partial_desc_other", {
+                succeeded: String(succeeded),
+                failed: String(failed),
+              }),
       });
       // Keep selection for retry, but refresh to reflect partial success
       refresh();
     } else {
       toast.add({
         type: "error",
-        title: "Could not archive products",
-        description: "No products were archived. Try again.",
+        title: t("products.toast_archive_failed_title"),
+        description: t("products.toast_archive_failed_desc"),
       });
     }
     setBulkBusy(false);
@@ -249,8 +261,15 @@ export function ProductsPage({
     window.open(url, "_blank");
     toast.add({
       type: "info",
-      title: "Export started",
-      description: `${ids.length} product${ids.length === 1 ? "" : "s"} exporting. If no download begins, allow popups for this site and retry.`,
+      title: t("products.toast_export_title"),
+      description:
+        ids.length === 1
+          ? t("products.toast_export_desc_one", {
+              count: String(ids.length),
+            })
+          : t("products.toast_export_desc_other", {
+              count: String(ids.length),
+            }),
     });
   };
 
@@ -292,16 +311,23 @@ export function ProductsPage({
     if (failed === 0) {
       toast.add({
         type: "success",
-        title: `${ids.length} products updated`,
-        description: `Category → ${bulkCategoryValue.trim()}`,
+        title: t("products.toast_bulk_updated_title", {
+          count: String(ids.length),
+        }),
+        description: t("products.toast_bulk_updated_desc", {
+          category: bulkCategoryValue.trim(),
+        }),
       });
       clearSelection();
       refresh();
     } else {
       toast.add({
         type: "warning",
-        title: "Partial update",
-        description: `${ids.length - failed} updated, ${failed} failed.`,
+        title: t("products.toast_partial_update_title"),
+        description: t("products.toast_partial_update_desc", {
+          updated: String(ids.length - failed),
+          failed: String(failed),
+        }),
       });
       refresh();
     }
@@ -334,10 +360,12 @@ export function ProductsPage({
             <Button
               size="sm"
               onClick={() => setStockTarget({ product, type: "stock_in" })}
-              aria-label={`Stock In for ${product.name}`}
+              aria-label={t("products.stock_in_aria", {
+                name: product.name,
+              })}
             >
               <ArrowDownToLine aria-hidden="true" />
-              Stock In
+              {t("products.stock_in")}
             </Button>
           ) : null}
           {canStockOut && !archived ? (
@@ -345,10 +373,12 @@ export function ProductsPage({
               variant="outline"
               size="sm"
               onClick={() => setStockTarget({ product, type: "stock_out" })}
-              aria-label={`Stock Out for ${product.name}`}
+              aria-label={t("products.stock_out_aria", {
+                name: product.name,
+              })}
             >
               <ArrowUpFromLine aria-hidden="true" />
-              Stock Out
+              {t("products.stock_out")}
             </Button>
           ) : null}
           <DropdownMenu>
@@ -357,7 +387,9 @@ export function ProductsPage({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={`More actions for ${product.name}`}
+                  aria-label={t("products.more_actions_for_aria", {
+                    name: product.name,
+                  })}
                 />
               }
             >
@@ -366,12 +398,12 @@ export function ProductsPage({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setDetailTarget(product)}>
                 <Eye aria-hidden="true" />
-                View
+                {t("products.view")}
               </DropdownMenuItem>
               {canEdit ? (
                 <DropdownMenuItem onClick={() => setEditTarget(product)}>
                   <Pencil aria-hidden="true" />
-                  Edit
+                  {t("products.edit")}
                 </DropdownMenuItem>
               ) : null}
               {canArchive && !archived ? (
@@ -380,7 +412,7 @@ export function ProductsPage({
                   onClick={() => setArchiveTarget(product)}
                 >
                   <Trash2 aria-hidden="true" />
-                  Archive
+                  {t("products.archive")}
                 </DropdownMenuItem>
               ) : null}
             </DropdownMenuContent>
@@ -395,7 +427,9 @@ export function ProductsPage({
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label={`Actions for ${product.name}`}
+              aria-label={t("products.actions_for_aria", {
+                name: product.name,
+              })}
             />
           }
         >
@@ -404,12 +438,12 @@ export function ProductsPage({
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setDetailTarget(product)}>
             <Eye aria-hidden="true" />
-            View
+            {t("products.view")}
           </DropdownMenuItem>
           {canEdit ? (
             <DropdownMenuItem onClick={() => setEditTarget(product)}>
               <Pencil aria-hidden="true" />
-              Edit
+              {t("products.edit")}
             </DropdownMenuItem>
           ) : null}
           {!archived && canStockIn ? (
@@ -417,7 +451,7 @@ export function ProductsPage({
               onClick={() => setStockTarget({ product, type: "stock_in" })}
             >
               <ArrowDownToLine aria-hidden="true" />
-              Stock In
+              {t("products.stock_in")}
             </DropdownMenuItem>
           ) : null}
           {!archived && canStockOut ? (
@@ -425,7 +459,7 @@ export function ProductsPage({
               onClick={() => setStockTarget({ product, type: "stock_out" })}
             >
               <ArrowUpFromLine aria-hidden="true" />
-              Stock Out
+              {t("products.stock_out")}
             </DropdownMenuItem>
           ) : null}
           {!archived && canArchive ? (
@@ -434,7 +468,7 @@ export function ProductsPage({
               onClick={() => setArchiveTarget(product)}
             >
               <Trash2 aria-hidden="true" />
-              Archive
+              {t("products.archive")}
             </DropdownMenuItem>
           ) : null}
         </DropdownMenuContent>
@@ -508,7 +542,7 @@ export function ProductsPage({
     } catch {}
   };
   const saveCurrentView = () => {
-    const name = saveName.trim() || `${query || "All"} · ${statusFilter}`;
+    const name = saveName.trim() || `${query || t("products.filter_all")} · ${statusFilter}`;
     // FE-18: randomUUID (bukan Date.now) — dua klik simpan dalam 1ms
     // tidak boleh menghasilkan id kembar.
     const next: SavedView = {
@@ -523,8 +557,8 @@ export function ProductsPage({
     setShowSave(false);
     toast.add({
       type: "success",
-      title: `View “${name}” saved`,
-      description: "Quick access below.",
+      title: t("products.toast_view_saved_title", { name }),
+      description: t("products.toast_view_saved_desc"),
     });
   };
   const applySavedView = (v: SavedView) => {
@@ -550,9 +584,9 @@ export function ProductsPage({
             <Input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search products…"
+              placeholder={t("products.search_placeholder")}
               className="pl-8"
-              aria-label="Search products"
+              aria-label={t("products.search_aria")}
             />
             {isPending ? (
               <Loader2
@@ -563,7 +597,7 @@ export function ProductsPage({
               <button
                 type="button"
                 onClick={() => setSearchInput("")}
-                aria-label="Clear search"
+                aria-label={t("products.clear_search_aria")}
                 className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded before:absolute before:-inset-[10px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
               >
                 <X aria-hidden="true" className="size-3.5" />
@@ -577,7 +611,7 @@ export function ProductsPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger aria-label="Warehouse" className="min-w-36">
+              <SelectTrigger aria-label={t("settings.warehouse")} className="min-w-36">
                 <SelectValue
                   getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
                 />
@@ -599,28 +633,32 @@ export function ProductsPage({
             }}
           >
             <SelectTrigger
-              aria-label="Product status filter"
+              aria-label={t("products.status_filter_aria")}
               className="min-w-32"
             >
               <span className="text-muted-foreground mr-1 hidden sm:inline">
-                Status:
+                {t("products.status_label")}
               </span>
               <SelectValue
                 getLabel={(v) =>
                   v === "active"
-                    ? "Active"
+                    ? t("products.status_active")
                     : v === "archived"
-                      ? "Archived"
+                      ? t("products.status_archived")
                       : v === "all"
-                        ? "All"
+                        ? t("products.filter_all")
                         : v
                 }
               />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="archived">Archived</SelectItem>
-              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">
+                {t("products.status_active")}
+              </SelectItem>
+              <SelectItem value="archived">
+                {t("products.status_archived")}
+              </SelectItem>
+              <SelectItem value="all">{t("products.filter_all")}</SelectItem>
             </SelectContent>
           </Select>
           {categories.length > 0 ? (
@@ -631,16 +669,20 @@ export function ProductsPage({
               }}
             >
               <SelectTrigger
-                aria-label="Product category filter"
+                aria-label={t("products.category_filter_aria")}
                 className="min-w-32"
               >
                 <span className="text-muted-foreground mr-1 hidden sm:inline">
-                  Category:
+                  {t("products.category_label_prefix")}
                 </span>
-                <SelectValue getLabel={(v) => (v === "all" ? "All" : v)} />
+                <SelectValue
+                  getLabel={(v) =>
+                    v === "all" ? t("products.filter_all") : v
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="all">{t("products.filter_all")}</SelectItem>
                 {categories.map((c) => (
                   <SelectItem key={c} value={c}>
                     {c}
@@ -664,7 +706,7 @@ export function ProductsPage({
               }
             >
               <ArrowDownToLine aria-hidden="true" />
-              Export CSV
+              {t("products.export_csv")}
             </Button>
           ) : null}
           {canBulk ? (
@@ -675,7 +717,7 @@ export function ProductsPage({
               onClick={() => setBulkOpen(true)}
             >
               <FileUp aria-hidden="true" />
-              Bulk Add
+              {t("products.bulk_add")}
             </Button>
           ) : null}
           {canExport || canBulk ? (
@@ -686,7 +728,7 @@ export function ProductsPage({
                     variant="outline"
                     size="icon-sm"
                     className="sm:hidden"
-                    aria-label="More actions"
+                    aria-label={t("products.more_actions_aria")}
                   />
                 }
               >
@@ -703,13 +745,13 @@ export function ProductsPage({
                     }
                   >
                     <ArrowDownToLine aria-hidden="true" />
-                    Export CSV
+                    {t("products.export_csv")}
                   </DropdownMenuItem>
                 ) : null}
                 {canBulk ? (
                   <DropdownMenuItem onClick={() => setBulkOpen(true)}>
                     <FileUp aria-hidden="true" />
-                    Bulk Add
+                    {t("products.bulk_add")}
                   </DropdownMenuItem>
                 ) : null}
               </DropdownMenuContent>
@@ -718,7 +760,7 @@ export function ProductsPage({
           {canCreate ? (
             <Button onClick={() => setCreateOpen(true)}>
               <Plus aria-hidden="true" />
-              Add Product
+              {t("products.add_product")}
             </Button>
           ) : null}
         </div>
@@ -727,14 +769,14 @@ export function ProductsPage({
       {(query.trim() || statusFilter !== "active" || categoryFilter) && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-muted-foreground t-label-md uppercase">
-            Active Filters:
+            {t("products.active_filters")}
           </span>
           {query.trim() && (
             <span className="bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
-              Search: “{query.trim()}”
+              {t("products.chip_search", { query: query.trim() })}
               <button
                 type="button"
-                aria-label="Clear search filter"
+                aria-label={t("products.clear_search_filter_aria")}
                 onClick={() => setSearchInput("")}
                 className="hover:bg-primary/20 relative -mr-1 rounded-full p-1 transition-colors before:absolute before:-inset-[8px] before:content-['']"
               >
@@ -744,10 +786,15 @@ export function ProductsPage({
           )}
           {statusFilter !== "active" && (
             <span className="bg-secondary/20 text-secondary-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
-              Status: {statusFilter === "archived" ? "Archived" : "All"}
+              {t("products.chip_status", {
+                status:
+                  statusFilter === "archived"
+                    ? t("products.status_archived")
+                    : t("products.filter_all"),
+              })}
               <button
                 type="button"
-                aria-label="Clear status filter"
+                aria-label={t("products.clear_status_filter_aria")}
                 onClick={() => setStatus("active")}
                 className="hover:bg-secondary/30 relative -mr-1 rounded-full p-1 transition-colors before:absolute before:-inset-[8px] before:content-['']"
               >
@@ -757,10 +804,10 @@ export function ProductsPage({
           )}
           {categoryFilter ? (
             <span className="bg-card text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
-              Category: {categoryFilter}
+              {t("products.chip_category", { category: categoryFilter })}
               <button
                 type="button"
-                aria-label="Clear category filter"
+                aria-label={t("products.clear_category_filter_aria")}
                 onClick={() => setCategory("")}
                 className="hover:bg-muted relative -mr-1 rounded-full p-1 transition-colors before:absolute before:-inset-[8px] before:content-['']"
               >
@@ -777,7 +824,7 @@ export function ProductsPage({
             }}
             className="text-muted-foreground hover:text-foreground text-sm font-medium underline-offset-4 hover:underline"
           >
-            Clear all filters
+            {t("products.clear_all_filters")}
           </button>
           <span className="text-border hidden sm:inline">|</span>
           {!showSave ? (
@@ -786,26 +833,26 @@ export function ProductsPage({
               size="sm"
               onClick={() => setShowSave(true)}
             >
-              Save View
+              {t("products.save_view")}
             </Button>
           ) : (
             <span className="flex items-center gap-1.5">
               <Input
                 value={saveName}
                 onChange={(e) => setSaveName(e.target.value)}
-                placeholder="e.g. Low-stock items"
+                placeholder={t("products.saved_view_placeholder")}
                 className="h-11 w-40"
-                aria-label="Saved view name"
+                aria-label={t("products.saved_view_name_aria")}
               />
               <Button size="sm" onClick={saveCurrentView}>
-                Save
+                {t("products.save")}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowSave(false)}
               >
-                Discard
+                {t("products.discard")}
               </Button>
             </span>
           )}
@@ -814,7 +861,9 @@ export function ProductsPage({
       {/* Saved views — F05 repeat-work efficiency, local first (no backend) */}
       {savedViews.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-muted-foreground text-sm">Saved views:</span>
+          <span className="text-muted-foreground text-sm">
+            {t("products.saved_views")}
+          </span>
           {savedViews.map((v) => (
             <span
               key={v.id}
@@ -828,17 +877,17 @@ export function ProductsPage({
                 {v.name}
               </button>
               <span className="text-muted-foreground text-sm">
-                · {v.q || "All"} ·{" "}
+                · {v.q || t("products.filter_all")} ·{" "}
                 {v.status === "active"
-                  ? "Active"
+                  ? t("products.status_active")
                   : v.status === "archived"
-                    ? "Archived"
-                    : "All"}
+                    ? t("products.status_archived")
+                    : t("products.filter_all")}
                 {v.category ? ` · ${v.category}` : ""}
               </span>
               <button
                 type="button"
-                aria-label={`Delete ${v.name}`}
+                aria-label={t("products.delete_view_aria", { name: v.name })}
                 onClick={() => deleteView(v.id)}
                 className="hover:text-destructive hover:bg-destructive/10 -mr-1 rounded-full p-1 transition-colors"
               >
@@ -849,7 +898,7 @@ export function ProductsPage({
           {savedViews.length > 0 &&
             (query.trim() || statusFilter !== "active") && (
               <span className="text-muted-foreground hidden text-sm sm:inline">
-                → one click to reapply
+                {t("products.reapply_hint")}
               </span>
             )}
         </div>
@@ -860,30 +909,42 @@ export function ProductsPage({
           icon={Package}
           title={
             query
-              ? "No products found"
+              ? t("products.empty_search_title")
               : statusFilter === "archived"
-                ? "No archived products"
-                : "Your inventory is empty"
+                ? t("products.empty_archived_title")
+                : t("products.empty_title")
           }
           description={
             query
-              ? `Nothing matches "${query}". Try a different search or clear filters.`
+              ? t("products.empty_search_desc", { query })
               : statusFilter === "archived"
-                ? "Nothing here with this filter. Clear it to see everything."
-                : "Add your first product to start tracking stock for this warehouse."
+                ? t("products.empty_archived_desc")
+                : t("products.empty_desc")
           }
           primaryAction={
             query
-              ? { label: "Clear Search", onClick: () => setSearchInput("") }
+              ? {
+                  label: t("products.clear_search"),
+                  onClick: () => setSearchInput(""),
+                }
               : statusFilter === "archived"
-                ? { label: "Clear Filter", onClick: () => setStatus("active") }
+                ? {
+                    label: t("products.clear_filter"),
+                    onClick: () => setStatus("active"),
+                  }
                 : canCreate
-                  ? { label: "Add Product", onClick: () => setCreateOpen(true) }
+                  ? {
+                      label: t("products.add_product"),
+                      onClick: () => setCreateOpen(true),
+                    }
                   : undefined
           }
           secondaryAction={
             !query && statusFilter !== "archived" && canBulk
-              ? { label: "Import Products", onClick: () => setBulkOpen(true) }
+              ? {
+                  label: t("products.import_products"),
+                  onClick: () => setBulkOpen(true),
+                }
               : undefined
           }
         />
@@ -895,7 +956,7 @@ export function ProductsPage({
                 {selected.size}
               </Badge>
               <span className="text-muted-foreground hidden text-sm sm:inline">
-                products selected — ready for batch operations.
+                {t("products.selected_hint")}
               </span>
               <div className="ml-auto flex flex-wrap items-center gap-2">
                 {canEdit && (
@@ -906,13 +967,13 @@ export function ProductsPage({
                     disabled={bulkBusy}
                   >
                     <Pencil aria-hidden="true" />
-                    Category
+                    {t("products.category_label")}
                   </Button>
                 )}
                 {canExport ? (
                   <Button variant="outline" size="sm" onClick={exportSelected}>
                     <Download aria-hidden="true" />
-                    Export
+                    {t("products.export")}
                   </Button>
                 ) : null}
                 {canArchive ? (
@@ -927,12 +988,12 @@ export function ProductsPage({
                     ) : (
                       <Trash2 aria-hidden="true" />
                     )}
-                    Archive
+                    {t("products.archive")}
                   </Button>
                 ) : null}
                 <Button variant="ghost" size="sm" onClick={clearSelection}>
                   <X aria-hidden="true" />
-                  Clear
+                  {t("products.clear")}
                 </Button>
               </div>
             </div>
@@ -949,22 +1010,28 @@ export function ProductsPage({
                         type="checkbox"
                         checked={allVisibleSelected}
                         onChange={toggleSelectAll}
-                        aria-label="Toggle selection for all products on this page"
+                        aria-label={t("products.select_all_aria")}
                         className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:-inset-[12px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
                       />
                     </TableHead>
-                    <TableHead>Product</TableHead>
+                    <TableHead>{t("products.col_product")}</TableHead>
                     <TableHead className="hidden xl:table-cell">
-                      Category
+                      {t("products.category_label")}
                     </TableHead>
-                    <TableHead className="hidden lg:table-cell">Unit</TableHead>
-                    <TableHead className="text-right">Current Stock</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead className="hidden lg:table-cell">
-                      Updated
+                      {t("products.col_unit")}
+                    </TableHead>
+                    <TableHead className="text-right">
+                      {t("products.col_stock")}
+                    </TableHead>
+                    <TableHead>{t("products.col_status")}</TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      {t("products.col_updated")}
                     </TableHead>
                     <TableHead className="w-12">
-                      <span className="sr-only">Actions</span>
+                      <span className="sr-only">
+                        {t("products.col_actions")}
+                      </span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -988,7 +1055,9 @@ export function ProductsPage({
                             type="checkbox"
                             checked={selected.has(product.id)}
                             onChange={() => toggleSelect(product.id)}
-                            aria-label={`Select ${product.name}`}
+                            aria-label={t("products.select_aria", {
+                              name: product.name,
+                            })}
                             className="border-border focus-visible:ring-ring relative size-5 cursor-pointer rounded accent-[var(--primary)] before:absolute before:-inset-[12px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
                           />
                         </TableCell>
@@ -1019,7 +1088,11 @@ export function ProductsPage({
                             </span>
                             {Number(product.lowStockThreshold) > 0 ? (
                               <span className="text-muted-foreground font-mono text-xs tabular-nums">
-                                min alert: {product.lowStockThreshold}
+                                {t("products.min_alert", {
+                                  threshold: String(
+                                    product.lowStockThreshold ?? ""
+                                  ),
+                                })}
                               </span>
                             ) : null}
                             {low ? (
@@ -1033,7 +1106,11 @@ export function ProductsPage({
                         <TableCell>
                           <StatusBadge
                             tone={archived ? "inactive" : "success"}
-                            label={archived ? "Archived" : "Active"}
+                            label={
+                              archived
+                                ? t("products.status_archived")
+                                : t("products.status_active")
+                            }
                           />
                         </TableCell>
                         <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
@@ -1073,7 +1150,9 @@ export function ProductsPage({
                       type="checkbox"
                       checked={selected.has(product.id)}
                       onChange={() => toggleSelect(product.id)}
-                      aria-label={`Select ${product.name}`}
+                      aria-label={t("products.select_aria", {
+                        name: product.name,
+                      })}
                       className="border-border focus-visible:ring-ring relative mt-1 size-5 shrink-0 cursor-pointer rounded accent-[var(--primary)] before:absolute before:-inset-[12px] before:content-[''] focus-visible:ring-3 focus-visible:outline-none"
                     />
                     <div className="min-w-0 flex-1">
@@ -1083,7 +1162,11 @@ export function ProductsPage({
                         </EntityName>
                         <StatusBadge
                           tone={archived ? "inactive" : "success"}
-                          label={archived ? "Archived" : "Active"}
+                          label={
+                            archived
+                              ? t("products.status_archived")
+                              : t("products.status_active")
+                          }
                         />
                       </div>
                       <p className="text-muted-foreground mt-0.5 font-mono text-sm">
@@ -1103,7 +1186,7 @@ export function ProductsPage({
                           {product.quantity ?? "0"}
                         </span>{" "}
                         <span className="text-muted-foreground text-sm">
-                          in stock
+                          {t("products.in_stock")}
                         </span>
                         {low ? (
                           <span className="text-warning text-sm font-medium">
@@ -1121,7 +1204,7 @@ export function ProductsPage({
                                 setStockTarget({ product, type: "stock_in" })
                               }
                             >
-                              Stock In
+                              {t("products.stock_in")}
                             </Button>
                           ) : null}
                           {canStockOut ? (
@@ -1132,7 +1215,7 @@ export function ProductsPage({
                                 setStockTarget({ product, type: "stock_out" })
                               }
                             >
-                              Stock Out
+                              {t("products.stock_out")}
                             </Button>
                           ) : null}
                         </div>
@@ -1159,7 +1242,7 @@ export function ProductsPage({
               role="alert"
               className="bg-destructive/15 text-destructive rounded-lg px-3 py-2 text-sm"
             >
-              Unable to count products. Try refreshing the page.
+              {t("products.count_failed")}
             </p>
           )}
         </>
@@ -1238,11 +1321,13 @@ export function ProductsPage({
       <Dialog open={confirmBulkArchive} onOpenChange={setConfirmBulkArchive}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Archive {selected.size} product(s)?</DialogTitle>
+            <DialogTitle>
+              {t("products.bulk_archive_title", {
+                count: String(selected.size),
+              })}
+            </DialogTitle>
             <DialogDescription>
-              Archiving moves these products out of active inventory. This
-              action cannot be undone. Products are hidden from stock; their
-              movements and audits remain.
+              {t("products.bulk_archive_desc")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -1250,7 +1335,7 @@ export function ProductsPage({
               variant="outline"
               onClick={() => setConfirmBulkArchive(false)}
             >
-              Keep active
+              {t("products.keep_active")}
             </Button>
             <Button
               variant="destructive"
@@ -1263,7 +1348,7 @@ export function ProductsPage({
               {bulkBusy ? (
                 <Loader2 aria-hidden="true" className="animate-spin" />
               ) : (
-                "Archive products"
+                t("products.archive_products")
               )}
             </Button>
           </DialogFooter>
@@ -1279,22 +1364,23 @@ export function ProductsPage({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Change category for {selected.size} products?
+              {t("products.bulk_category_title", {
+                count: String(selected.size),
+              })}
             </DialogTitle>
             <DialogDescription>
-              Set a new category for all selected products. SKU, unit and stock
-              unaffected.
+              {t("products.bulk_category_desc")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="bulk-cat" className="text-sm font-medium">
-              Category
+              {t("products.category_label")}
             </label>
             <Input
               id="bulk-cat"
               value={bulkCategoryValue}
               onChange={(e) => setBulkCategoryValue(e.target.value)}
-              placeholder="e.g. Packaging"
+              placeholder={t("products.bulk_category_placeholder")}
               aria-invalid={Boolean(
                 bulkCategoryValue && !bulkCategoryValue.trim()
               )}
@@ -1306,7 +1392,7 @@ export function ProductsPage({
             />
             {bulkCategoryValue && !bulkCategoryValue.trim() ? (
               <p id="err-bulk-cat" className="text-destructive text-sm">
-                Category cannot be empty.
+                {t("products.bulk_category_error")}
               </p>
             ) : null}
           </div>
@@ -1315,7 +1401,7 @@ export function ProductsPage({
               variant="outline"
               onClick={() => setBulkCategoryOpen(false)}
             >
-              Keep current
+              {t("products.keep_current")}
             </Button>
             <Button
               onClick={bulkChangeCategory}
@@ -1326,7 +1412,9 @@ export function ProductsPage({
               ) : (
                 <Pencil aria-hidden="true" />
               )}
-              Update {selected.size} products
+              {t("products.bulk_update", {
+                count: String(selected.size),
+              })}
             </Button>
           </DialogFooter>
         </DialogContent>

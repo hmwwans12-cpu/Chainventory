@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useLocale } from "@/components/providers/locale-provider";
 import {
   productFormSchema,
   type ProductFormInput,
@@ -104,6 +105,36 @@ export function ProductForm({
   onSubmit: (values: ProductFormValues) => void;
   onCancel?: () => void;
 }) {
+  const { t } = useLocale();
+  const translateError = (message?: string): string | undefined => {
+    if (!message) return undefined;
+    switch (message) {
+      case "Enter a product name.":
+        return t("dialogs.product_form.error_name_required");
+      case "Name is too long.":
+        return t("dialogs.product_form.error_name_too_long");
+      case "Enter a SKU.":
+        return t("dialogs.product_form.error_sku_required");
+      case "SKU is too long.":
+        return t("dialogs.product_form.error_sku_too_long");
+      case "Category is too long.":
+        return t("dialogs.product_form.error_category_too_long");
+      case "Enter a unit.":
+        return t("dialogs.product_form.error_unit_required");
+      case "Unit is too long.":
+        return t("dialogs.product_form.error_unit_too_long");
+      case "Enter a valid non-negative number (max 3 decimals).":
+        return t("dialogs.product_form.error_decimal_invalid");
+      case "Value is too large.":
+        return t("dialogs.product_form.error_too_large");
+      case "Value is too long.":
+        return t("dialogs.product_form.error_too_long");
+      case "Description is too long.":
+        return t("dialogs.product_form.error_description_too_long");
+      default:
+        return message;
+    }
+  };
   // FE-03: RHF + zodResolver(productFormSchema) — batas validasi client
   // IDENTIK dengan server (single source of truth di lib/validators).
   const {
@@ -141,56 +172,73 @@ export function ProductForm({
       <div className="flex flex-col gap-3.5 px-6 py-5">
         <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <FieldHead htmlFor="product-name" label="Product Name" required />
+            <FieldHead
+              htmlFor="product-name"
+              label={t("dialogs.product_form.name_label")}
+              required
+            />
             <Input
               id="product-name"
               autoFocus
               {...register("name")}
-              placeholder="e.g. Steel Rod 12mm"
+              placeholder={t("dialogs.product_form.name_placeholder")}
               className="h-9 px-3 py-2 text-xs"
               aria-invalid={Boolean(errors.name)}
               aria-describedby={errors.name ? "err-product-name" : undefined}
             />
-            <FieldError id="err-product-name" message={errors.name?.message} />
+            <FieldError
+              id="err-product-name"
+              message={translateError(errors.name?.message)}
+            />
           </div>
           <div className="flex flex-col gap-1.5">
-            <FieldHead htmlFor="product-sku" label="SKU / Code" required />
+            <FieldHead
+              htmlFor="product-sku"
+              label={t("dialogs.product_form.sku_label")}
+              required
+            />
             <Input
               id="product-sku"
               {...register("sku")}
-              placeholder="e.g. SR-12-001"
+              placeholder={t("dialogs.product_form.sku_placeholder")}
               className="h-9 px-3 py-2 font-mono text-xs"
               aria-invalid={Boolean(errors.sku)}
               aria-describedby={errors.sku ? "err-product-sku" : undefined}
             />
-            <FieldError id="err-product-sku" message={errors.sku?.message} />
+            <FieldError
+              id="err-product-sku"
+              message={translateError(errors.sku?.message)}
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <FieldHead htmlFor="product-category" label="Category" />
+            <FieldHead
+              htmlFor="product-category"
+              label={t("dialogs.product_form.category_label")}
+            />
             <Input
               id="product-category"
               {...register("category")}
-              placeholder="e.g. Raw Material"
+              placeholder={t("dialogs.product_form.category_placeholder")}
               className="h-9 px-3 py-2 text-xs"
             />
             <FieldError
-              message={errors.category?.message}
+              message={translateError(errors.category?.message)}
               id="err-product-category"
             />
           </div>
           <div className="flex flex-col gap-1.5">
             <FieldHead
               htmlFor="product-unit"
-              label="Unit of Measure"
+              label={t("dialogs.product_form.unit_label")}
               required
             />
             <Input
               id="product-unit"
               {...register("unit")}
-              placeholder="e.g. pcs, kg, m"
+              placeholder={t("dialogs.product_form.unit_placeholder")}
               disabled={unitLocked}
               className="h-9 px-3 py-2 text-xs"
               aria-invalid={Boolean(errors.unit)}
@@ -199,13 +247,12 @@ export function ProductForm({
             {unitLocked ? (
               <p className="text-muted-foreground flex items-center gap-1.5 text-sm leading-relaxed">
                 <Lock aria-hidden="true" className="size-4 shrink-0" />
-                Unit is locked after the first stock movement to keep inventory
-                records consistent.
+                {t("dialogs.product_form.unit_locked_hint")}
               </p>
             ) : (
               <FieldError
                 id="err-product-unit"
-                message={errors.unit?.message}
+                message={translateError(errors.unit?.message)}
               />
             )}
           </div>
@@ -214,19 +261,22 @@ export function ProductForm({
         <div className="flex flex-col gap-1.5">
           <FieldHead
             htmlFor="product-description"
-            label="Description"
-            pill={{ text: "(optional)", tone: "muted" }}
+            label={t("dialogs.product_form.description_label")}
+            pill={{
+              text: t("dialogs.product_form.optional_pill"),
+              tone: "muted",
+            }}
           />
           <Textarea
             id="product-description"
             {...register("description")}
-          placeholder="Optional note about this product."
-          rows={3}
-          className="px-3 py-2 text-sm"
+            placeholder={t("dialogs.product_form.description_placeholder")}
+            rows={3}
+            className="px-3 py-2 text-sm"
           />
           <FieldError
             id="err-product-description"
-            message={errors.description?.message}
+            message={translateError(errors.description?.message)}
           />
         </div>
 
@@ -234,8 +284,11 @@ export function ProductForm({
           <div className="flex flex-col gap-1.5">
             <FieldHead
               htmlFor="product-threshold"
-              label="Low Stock Threshold"
-              pill={{ text: "Warning alert", tone: "warning" }}
+              label={t("dialogs.product_form.threshold_label")}
+              pill={{
+                text: t("dialogs.product_form.warning_pill"),
+                tone: "warning",
+              }}
             />
             <Input
               id="product-threshold"
@@ -250,11 +303,11 @@ export function ProductForm({
             />
             <FieldError
               id="err-product-threshold"
-              message={errors.lowStockThreshold?.message}
+              message={translateError(errors.lowStockThreshold?.message)}
             />
             {!errors.lowStockThreshold?.message ? (
               <p className="text-muted-foreground text-xs">
-                Triggers reorder indicator on dashboard.
+                {t("dialogs.product_form.threshold_hint")}
               </p>
             ) : null}
           </div>
@@ -262,8 +315,11 @@ export function ProductForm({
             <div className="flex flex-col gap-1.5">
               <FieldHead
                 htmlFor="product-initial"
-                label="Initial Quantity"
-                pill={{ text: "Opening", tone: "neutral" }}
+                label={t("dialogs.product_form.initial_label")}
+                pill={{
+                  text: t("dialogs.product_form.opening_pill"),
+                  tone: "neutral",
+                }}
               />
               <Input
                 id="product-initial"
@@ -279,7 +335,7 @@ export function ProductForm({
               {errors.initialQuantity ? (
                 <FieldError
                   id="err-product-initial"
-                  message={errors.initialQuantity.message}
+                  message={translateError(errors.initialQuantity.message)}
                 />
               ) : (
                 <p className="text-muted-foreground flex items-start gap-1.5 text-xs leading-relaxed">
@@ -287,8 +343,7 @@ export function ProductForm({
                     aria-hidden="true"
                     className="mt-0.5 size-3.5 shrink-0"
                   />
-                  Applied atomically with product creation. If either fails,
-                  nothing is saved.
+                  {t("dialogs.product_form.initial_hint")}
                 </p>
               )}
             </div>
@@ -306,7 +361,7 @@ export function ProductForm({
             disabled={busy}
             className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
         ) : null}
         <Button

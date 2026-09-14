@@ -32,6 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { unreadStore } from "@/lib/notifications/unread-store";
 import { openChannel } from "@/lib/realtime/channel";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/components/providers/locale-provider";
 import { FLASH_MESSAGE_MS, NOTIFICATION_PANEL_LIMIT } from "@/lib/constants";
 
 const PANEL_LIMIT = NOTIFICATION_PANEL_LIMIT;
@@ -49,6 +50,7 @@ const PANEL_LIMIT = NOTIFICATION_PANEL_LIMIT;
  */
 export function NotificationBell() {
   const router = useRouter();
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   // P2-06: unread count dibagi via store — badge sidebar ikut segar instan.
   const unreadCount = useSyncExternalStore(
@@ -147,7 +149,7 @@ export function NotificationBell() {
             if (added) {
               setFlashId(added.id);
               setBadgePop(true);
-              setAnnouncement("New notification");
+              setAnnouncement(t("notif.new_one"));
               if (popTimer.current) clearTimeout(popTimer.current);
               popTimer.current = setTimeout(() => {
                 setFlashId(null);
@@ -183,9 +185,7 @@ export function NotificationBell() {
       if (channel) void supabase.removeChannel(channel).catch(() => {});
       if (popTimer.current) clearTimeout(popTimer.current);
     };
-    // setUnreadCount stabil (useCallback []).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [t, setNotifications, setUnreadCount]);
 
   const refresh = useCallback(async () => {
     const supabase = supabaseRef.current;
@@ -239,14 +239,16 @@ export function NotificationBell() {
       const now = new Date().toISOString();
       setUnreadCount(0);
       setNotifications((rows) => rows.map((r) => ({ ...r, read_at: now })));
-      setAnnouncement("All notifications marked as read");
+      setAnnouncement(t("notif.all_read"));
     }
-  }, [unreadCount, setUnreadCount, setNotifications]);
+  }, [unreadCount, setUnreadCount, setNotifications, t]);
 
   const manyWarehouses = Object.keys(warehouseNames).length > 1;
 
   const triggerLabel =
-    unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications";
+    unreadCount > 0
+      ? t("notif.bell_label_unread", { n: String(unreadCount) })
+      : t("nav./notifications");
 
   return (
     <>
@@ -289,10 +291,12 @@ export function NotificationBell() {
                     id="notif-heading"
                     className="text-foreground text-sm font-semibold"
                   >
-                    Notifications
+                    {t("nav./notifications")}
                   </h2>
                   {unreadCount > 0 ? (
-                    <Badge variant="secondary">{unreadCount} new</Badge>
+                    <Badge variant="secondary">
+                      {t("notif.new_count", { n: String(unreadCount) })}
+                    </Badge>
                   ) : null}
                 </div>
                 <Button
@@ -303,7 +307,7 @@ export function NotificationBell() {
                   className="text-muted-foreground"
                 >
                   <CheckCheck aria-hidden="true" />
-                  Mark All Read
+                  {t("notif.mark_all_read")}
                 </Button>
               </div>
 
@@ -326,11 +330,10 @@ export function NotificationBell() {
                       <Inbox aria-hidden="true" className="size-5" />
                     </span>
                     <p className="text-foreground mt-2 text-sm font-semibold">
-                      You&apos;re all caught up
+                      {t("notif.caught_up")}
                     </p>
                     <p className="text-muted-foreground max-w-52 text-sm text-pretty">
-                      Join requests, blockchain updates, and warehouse events
-                      will appear here.
+                      {t("notif.empty_desc")}
                     </p>
                   </div>
                 ) : (
@@ -402,7 +405,9 @@ export function NotificationBell() {
                                 ) : null}
                                 {n.times > 1 ? (
                                   <span className="bg-muted text-muted-foreground rounded-sm px-1">
-                                    ×{n.times} · {n.times} updates
+                                    {t("notif.times_updates", {
+                                      n: String(n.times),
+                                    })}
                                   </span>
                                 ) : null}
                               </span>
@@ -433,7 +438,7 @@ export function NotificationBell() {
                   render={<Link href="/notifications" />}
                   onClick={() => setOpen(false)}
                 >
-                  View all notifications
+                  {t("notif.view_all")}
                   <ChevronRight aria-hidden="true" className="size-3.5" />
                 </Button>
               </div>

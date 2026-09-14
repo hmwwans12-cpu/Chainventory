@@ -39,6 +39,7 @@ import {
 } from "@/lib/inventory/products-client";
 import { MAX_CSV_BYTES, parseProductsCsv } from "@/lib/inventory/csv";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/components/providers/locale-provider";
 
 /**
  * Bulk Add Products (DESIGN §36).
@@ -87,9 +88,45 @@ export function BulkAddDialog({
   const [invalid, setInvalid] = React.useState<
     { index: number; reason: string }[]
   >([]);
+  const { t } = useLocale();
   const [results, setResults] = React.useState<BulkCreateResult | null>(null);
   const [busy, setBusy] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
+  const translateCsvError = (message: string): string => {
+    switch (message) {
+      case "CSV is empty.":
+        return t("dialogs.bulk.error_csv_empty");
+      case "Missing product name.":
+        return t("dialogs.bulk.error_missing_name");
+      case "Missing SKU.":
+        return t("dialogs.bulk.error_missing_sku");
+      case "Missing unit.":
+        return t("dialogs.bulk.error_missing_unit");
+      case "SKU is too long.":
+        return t("dialogs.bulk.error_sku_too_long");
+      case "Product name is too long.":
+        return t("dialogs.bulk.error_name_too_long");
+      case "Category is too long.":
+        return t("dialogs.bulk.error_category_too_long");
+      case "Description is too long.":
+        return t("dialogs.bulk.error_description_too_long");
+      case "Unit is too long.":
+        return t("dialogs.bulk.error_unit_too_long");
+      case "Low stock threshold must be a non-negative number (max 3 decimals).":
+        return t("dialogs.bulk.error_threshold_invalid");
+      case "Initial quantity must be greater than 0 (max 3 decimals), or empty.":
+        return t("dialogs.bulk.error_initial_invalid");
+      default:
+        if (message.startsWith("Missing required column(s):")) {
+          const columns = message.replace(
+            "Missing required column(s): ",
+            ""
+          );
+          return t("dialogs.bulk.error_missing_columns", { columns });
+        }
+        return message;
+    }
+  };
 
   const goToPreview = () => {
     if (mode === "manual") {
@@ -100,17 +137,17 @@ export function BulkAddDialog({
         if (!row.name)
           return bad.push({
             index: valid.length + bad.length + 1,
-            reason: "Missing product name.",
+            reason: t("dialogs.bulk.error_missing_name"),
           });
         if (!row.sku)
           return bad.push({
             index: valid.length + bad.length + 1,
-            reason: "Missing SKU.",
+            reason: t("dialogs.bulk.error_missing_sku"),
           });
         if (!row.unit)
           return bad.push({
             index: valid.length + bad.length + 1,
-            reason: "Missing unit.",
+            reason: t("dialogs.bulk.error_missing_unit"),
           });
         valid.push(row);
       });
@@ -120,17 +157,19 @@ export function BulkAddDialog({
       const parsed = parseProductsCsv(pasteText);
       const parsedInvalid = parsed.errors.map((e) => ({
         index: e.index,
-        reason: e.message,
+        reason: translateCsvError(e.message),
       }));
       if (parsed.overflow) {
         parsedInvalid.unshift({
           index: 0,
-          reason: `Only first ${parsed.rows.length} rows imported. File exceeds 1,000 row limit. Remainder was truncated.`,
+          reason: t("dialogs.bulk.error_overflow", {
+            count: String(parsed.rows.length),
+          }),
         });
         toast.add({
           type: "warning",
-          title: "CSV truncated",
-          description: `Only first 1,000 rows were imported. Your file has more than 1,000 rows.`,
+          title: t("dialogs.bulk.toast_truncated_title"),
+          description: t("dialogs.bulk.toast_truncated_desc"),
         });
       }
       setRows(
@@ -164,7 +203,7 @@ export function BulkAddDialog({
       setBusy(false);
       toast.add({
         type: "error",
-        title: "Import failed",
+        title: t("dialogs.bulk.toast_import_failed_title"),
         description: result.error,
       });
       setStep("input");
@@ -178,15 +217,19 @@ export function BulkAddDialog({
     if (result.data.failed === 0) {
       toast.add({
         type: "success",
-        title: `${result.data.created} products added`,
-        description: "All products are now in your inventory.",
+        title: t("dialogs.bulk.toast_success_title", {
+          count: String(result.data.created),
+        }),
+        description: t("dialogs.bulk.toast_success_desc"),
       });
     } else {
       toast.add({
         type: "warning",
-        title: `Import partial: ${result.data.created} added, ${result.data.failed} failed`,
-        description:
-          "Review the failed rows below, or download them as CSV before closing.",
+        title: t("dialogs.bulk.toast_partial_title", {
+          created: String(result.data.created),
+          failed: String(result.data.failed),
+        }),
+        description: t("dialogs.bulk.toast_partial_desc"),
       });
     }
   };
@@ -213,8 +256,8 @@ export function BulkAddDialog({
     if (file.size > MAX_CSV_BYTES) {
       toast.add({
         type: "error",
-        title: "File too large",
-        description: "Maximum CSV size is 1 MB.",
+        title: t("dialogs.bulk.toast_file_too_large_title"),
+        description: t("dialogs.bulk.toast_file_too_large_desc"),
       });
       return;
     }
@@ -234,16 +277,31 @@ export function BulkAddDialog({
     shortLabel: string;
     icon: typeof Plus;
   }[] = [
-    { id: "manual", label: "Manual Table", shortLabel: "Manual", icon: Plus },
-    { id: "paste", label: "Paste Data", shortLabel: "Paste", icon: Sparkles },
-    { id: "upload", label: "Upload CSV", shortLabel: "Upload", icon: FileUp },
+    {
+      id: "manual",
+      label: t("dialogs.bulk.mode_manual"),
+      shortLabel: t("dialogs.bulk.mode_manual_short"),
+      icon: Plus,
+    },
+    {
+      id: "paste",
+      label: t("dialogs.bulk.mode_paste"),
+      shortLabel: t("dialogs.bulk.mode_paste_short"),
+      icon: Sparkles,
+    },
+    {
+      id: "upload",
+      label: t("dialogs.bulk.mode_upload"),
+      shortLabel: t("dialogs.bulk.mode_upload_short"),
+      icon: FileUp,
+    },
   ];
 
   const stepIndex = step === "input" ? 0 : step === "preview" ? 1 : 2;
   const stepMeta = [
-    { n: 1, label: "Add data" },
-    { n: 2, label: "Review" },
-    { n: 3, label: "Complete" },
+    { n: 1, label: t("dialogs.bulk.step_add") },
+    { n: 2, label: t("dashboard.review") },
+    { n: 3, label: t("dialogs.bulk.step_complete") },
   ];
 
   return (
@@ -311,14 +369,16 @@ export function BulkAddDialog({
               </span>
               <div className="flex min-w-0 flex-col gap-0.5">
                 <DialogTitle className="font-bold tracking-tight">
-                  Bulk Add Products
+                  {t("dialogs.bulk.title")}
                 </DialogTitle>
                 <DialogDescription className="text-xs leading-relaxed">
                   {step === "input"
-                    ? "Add multiple SKUs at once via manual table entry, direct CSV paste, or file upload."
+                    ? t("dialogs.bulk.desc_input")
                     : step === "preview"
-                      ? `Review ${rows.length} products before importing.`
-                      : "Import complete. Review results."}
+                      ? t("dialogs.bulk.desc_preview", {
+                          count: String(rows.length),
+                        })
+                      : t("dialogs.bulk.desc_result")}
                 </DialogDescription>
               </div>
             </div>
@@ -332,7 +392,7 @@ export function BulkAddDialog({
                 tabpanel/arrow-nav) — role group + pressed. */}
               <div
                 role="group"
-                aria-label="Bulk add mode"
+                aria-label={t("dialogs.bulk.mode_label")}
                 className="bg-surface-low/70 border-border flex w-full items-center gap-1 rounded-xl border p-1"
               >
                 {modes.map((m) => {
@@ -364,25 +424,25 @@ export function BulkAddDialog({
                   <div className="border-border bg-card overflow-hidden rounded-xl border">
                     <div className="bg-surface-low/60 border-border hidden grid-cols-12 gap-2 border-b px-3 py-2 sm:grid">
                       <span className="text-primary col-span-5 text-[11px] font-semibold tracking-wider uppercase">
-                        Product Name{" "}
+                        {t("dialogs.product_form.name_label")}{" "}
                         <span aria-hidden="true" className="text-status-err-fg">
                           *
                         </span>
                       </span>
                       <span className="text-primary col-span-3 text-[11px] font-semibold tracking-wider uppercase">
-                        SKU / Code{" "}
+                        {t("dialogs.product_form.sku_label")}{" "}
                         <span aria-hidden="true" className="text-status-err-fg">
                           *
                         </span>
                       </span>
                       <span className="text-primary col-span-2 text-[11px] font-semibold tracking-wider uppercase">
-                        Unit{" "}
+                        {t("dialogs.detail.unit")}{" "}
                         <span aria-hidden="true" className="text-status-err-fg">
                           *
                         </span>
                       </span>
                       <span className="text-primary col-span-2 text-[11px] font-semibold tracking-wider uppercase">
-                        Category
+                        {t("dialogs.product_form.category_label")}
                       </span>
                     </div>
                     <div className="divide-border/60 divide-y">
@@ -397,7 +457,7 @@ export function BulkAddDialog({
                               htmlFor={`bulk-name-${row.id}`}
                               className="sm:sr-only"
                             >
-                              Product name
+                              {t("dialogs.bulk.field_name")}
                             </Label>
                             <Input
                               id={`bulk-name-${row.id}`}
@@ -405,7 +465,9 @@ export function BulkAddDialog({
                               onChange={(e) =>
                                 updateManualRow(i, "name", e.target.value)
                               }
-                              placeholder="e.g. Steel Rod 12mm"
+                              placeholder={t(
+                                "dialogs.product_form.name_placeholder"
+                              )}
                               className="h-9 text-xs"
                             />
                           </div>
@@ -414,7 +476,7 @@ export function BulkAddDialog({
                               htmlFor={`bulk-sku-${row.id}`}
                               className="sm:sr-only"
                             >
-                              SKU
+                              {t("dialogs.bulk.field_sku")}
                             </Label>
                             <Input
                               id={`bulk-sku-${row.id}`}
@@ -422,7 +484,9 @@ export function BulkAddDialog({
                               onChange={(e) =>
                                 updateManualRow(i, "sku", e.target.value)
                               }
-                              placeholder="e.g. SR-12-001"
+                              placeholder={t(
+                                "dialogs.product_form.sku_placeholder"
+                              )}
                               className="h-9 font-mono text-xs"
                             />
                           </div>
@@ -431,7 +495,7 @@ export function BulkAddDialog({
                               htmlFor={`bulk-unit-${row.id}`}
                               className="sm:sr-only"
                             >
-                              Unit
+                              {t("dialogs.detail.unit")}
                             </Label>
                             <Input
                               id={`bulk-unit-${row.id}`}
@@ -439,7 +503,7 @@ export function BulkAddDialog({
                               onChange={(e) =>
                                 updateManualRow(i, "unit", e.target.value)
                               }
-                              placeholder="e.g. pcs"
+                              placeholder={t("dialogs.bulk.placeholder_unit")}
                               className="h-9 text-xs"
                             />
                           </div>
@@ -449,7 +513,7 @@ export function BulkAddDialog({
                                 htmlFor={`bulk-cat-${row.id}`}
                                 className="sm:sr-only"
                               >
-                                Category
+                                {t("dialogs.product_form.category_label")}
                               </Label>
                               <Input
                                 id={`bulk-cat-${row.id}`}
@@ -457,15 +521,17 @@ export function BulkAddDialog({
                                 onChange={(e) =>
                                   updateManualRow(i, "category", e.target.value)
                                 }
-                                placeholder="Optional"
+                                placeholder={t(
+                                  "dialogs.bulk.placeholder_category"
+                                )}
                                 className="h-9 text-xs"
                               />
                             </div>
                             {manualRows.length > 1 ? (
                               <button
                                 type="button"
-                                aria-label="Remove row"
-                                title="Delete row"
+                                aria-label={t("dialogs.bulk.remove_row")}
+                                title={t("dialogs.bulk.delete_row")}
                                 onClick={() =>
                                   setManualRows((prev) =>
                                     prev.filter((_, idx) => idx !== i)
@@ -499,11 +565,16 @@ export function BulkAddDialog({
                       }
                     >
                       <Plus aria-hidden="true" />
-                      Add row
+                      {t("dialogs.bulk.add_row")}
                     </Button>
                     <span className="text-muted-foreground text-sm tabular-nums">
-                      {manualRows.length} row
-                      {manualRows.length === 1 ? "" : "s"}
+                      {manualRows.length === 1
+                        ? t("dialogs.bulk.rows_count_one", {
+                            count: String(manualRows.length),
+                          })
+                        : t("dialogs.bulk.rows_count_other", {
+                            count: String(manualRows.length),
+                          })}
                     </span>
                   </div>
                 </div>
@@ -513,7 +584,7 @@ export function BulkAddDialog({
                     <div
                       role="button"
                       tabIndex={0}
-                      aria-label="Choose CSV file or drag and drop"
+                      aria-label={t("dialogs.bulk.dropzone_label")}
                       onClick={() => fileRef.current?.click()}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
@@ -541,14 +612,16 @@ export function BulkAddDialog({
                         <FileUp aria-hidden="true" className="size-5" />
                       </span>
                       <span className="text-primary block text-xs font-semibold">
-                        Choose CSV file or drag &amp; drop
+                        {t("dialogs.bulk.dropzone_title")}
                       </span>
                       <span className="text-muted-foreground mt-0.5 block text-[11px]">
-                        Comma-separated .csv up to 1 MB (max 1,000 SKUs)
+                        {t("dialogs.bulk.dropzone_hint")}
                       </span>
                     </div>
                   ) : null}
-                  <Label htmlFor="bulk-paste">CSV data</Label>
+                  <Label htmlFor="bulk-paste">
+                    {t("dialogs.bulk.csv_label")}
+                  </Label>
                   <Textarea
                     id="bulk-paste"
                     value={pasteText}
@@ -556,15 +629,15 @@ export function BulkAddDialog({
                     rows={8}
                     placeholder={
                       mode === "upload"
-                        ? "Paste CSV content here if the file did not load."
-                        : "Paste CSV data, one product per line.\n\nname,sku,unit,initial_qty\nSteel Rod 12mm,SR-12-001,pcs,100"
+                        ? t("dialogs.bulk.paste_placeholder_upload")
+                        : t("dialogs.bulk.paste_placeholder_default")
                     }
                     className="font-mono text-xs leading-relaxed"
                   />
                   <div className="border-border bg-surface-low/60 flex flex-col gap-2 rounded-xl border p-3.5 text-xs">
                     <span className="flex items-center justify-between gap-2">
                       <span className="text-primary font-display font-semibold">
-                        Supported CSV Schema:
+                        {t("dialogs.bulk.schema_title")}
                       </span>
                       <a
                         className="text-primary hover:text-primary/80 inline-flex items-center gap-1 font-medium underline underline-offset-2"
@@ -572,13 +645,13 @@ export function BulkAddDialog({
                         download
                       >
                         <FileUp aria-hidden="true" className="size-3" />
-                        Download template
+                        {t("dialogs.bulk.download_template")}
                       </a>
                     </span>
                     <span className="flex flex-col gap-1.5 text-[11px] leading-relaxed">
                       <span>
                         <span className="text-foreground font-medium">
-                          Required:
+                          {t("dialogs.bulk.required_label")}
                         </span>{" "}
                         {["name", "sku", "unit"].map((c) => (
                           <code
@@ -591,7 +664,7 @@ export function BulkAddDialog({
                       </span>
                       <span>
                         <span className="text-foreground font-medium">
-                          Optional:
+                          {t("dialogs.bulk.optional_label")}
                         </span>{" "}
                         {[
                           "category",
@@ -608,8 +681,7 @@ export function BulkAddDialog({
                         ))}
                       </span>
                       <span className="text-muted-foreground">
-                        Header row is detected, column order is free. Max 1.000
-                        rows / 1 MB.
+                        {t("dialogs.bulk.schema_hint")}
                       </span>
                     </span>
                   </div>
@@ -623,14 +695,14 @@ export function BulkAddDialog({
                   onClick={() => onOpenChange(false)}
                   className="relative h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={goToPreview}
                   size="sm"
                   className="relative h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
                 >
-                  Continue to review
+                  {t("dialogs.bulk.continue_review")}
                 </Button>
               </div>
             </>
@@ -646,10 +718,12 @@ export function BulkAddDialog({
                     </span>
                     <span className="flex flex-col">
                       <span className="text-status-ok-fg font-mono text-base font-bold tracking-tight tabular-nums">
-                        {rows.length} Valid
+                        {t("dialogs.bulk.valid_count", {
+                          count: String(rows.length),
+                        })}
                       </span>
                       <span className="text-status-ok-fg text-[11px] font-medium opacity-90">
-                        Ready for ledger registration
+                        {t("dialogs.bulk.valid_hint")}
                       </span>
                     </span>
                   </div>
@@ -659,10 +733,12 @@ export function BulkAddDialog({
                     </span>
                     <span className="flex flex-col">
                       <span className="text-status-err-fg font-mono text-base font-bold tracking-tight tabular-nums">
-                        {invalid.length} Invalid
+                        {t("dialogs.bulk.invalid_count", {
+                          count: String(invalid.length),
+                        })}
                       </span>
                       <span className="text-status-err-fg text-[11px] font-medium opacity-90">
-                        Will be skipped automatically
+                        {t("dialogs.bulk.invalid_hint")}
                       </span>
                     </span>
                   </div>
@@ -670,15 +746,25 @@ export function BulkAddDialog({
                 <p className="border-border/60 text-muted-foreground flex flex-wrap items-center justify-between gap-1 border-t pt-2 text-xs">
                   <span>
                     <strong className="text-foreground font-semibold">
-                      {rows.length} product{rows.length === 1 ? "" : "s"}
+                      {rows.length === 1
+                        ? t("dialogs.bulk.summary_products_one", {
+                            count: String(rows.length),
+                          })
+                        : t("dialogs.bulk.summary_products_other", {
+                            count: String(rows.length),
+                          })}
                     </strong>{" "}
-                    will be registered
+                    {t("dialogs.bulk.summary_registered")}
                     {rows.some((r) => r.initialQty)
-                      ? ` · ${rows.filter((r) => r.initialQty).length} with initial stock-in`
+                      ? t("dialogs.bulk.summary_with_stock", {
+                          count: String(
+                            rows.filter((r) => r.initialQty).length
+                          ),
+                        })
                       : ""}
                   </span>
                   <span className="text-[11px] italic">
-                    Invalid rows are skipped, not rejected.
+                    {t("dialogs.bulk.invalid_skipped_note")}
                   </span>
                 </p>
               </div>
@@ -686,18 +772,28 @@ export function BulkAddDialog({
               {rows.length > 0 ? (
                 <div className="flex flex-col gap-1.5">
                   <span className="text-primary text-xs font-semibold">
-                    Valid Rows Preview
                     {rows.length > 5
-                      ? ` (first 5 of ${rows.length})`
-                      : ` (${rows.length})`}
-                    :
+                      ? t("dialogs.bulk.preview_title_truncated", {
+                          count: String(rows.length),
+                        })
+                      : t("dialogs.bulk.preview_title_full", {
+                          count: String(rows.length),
+                        })}
                   </span>
                   <div className="border-border divide-border/60 bg-card overflow-hidden rounded-xl border text-xs">
                     <div className="bg-surface-low/60 grid grid-cols-12 gap-2 px-3 py-2 text-[11px] font-semibold">
-                      <span className="col-span-5">Product</span>
-                      <span className="col-span-3">SKU</span>
-                      <span className="col-span-2">Unit</span>
-                      <span className="col-span-2 text-right">Initial Qty</span>
+                      <span className="col-span-5">
+                        {t("dialogs.bulk.col_product")}
+                      </span>
+                      <span className="col-span-3">
+                        {t("dialogs.bulk.field_sku")}
+                      </span>
+                      <span className="col-span-2">
+                        {t("dialogs.detail.unit")}
+                      </span>
+                      <span className="col-span-2 text-right">
+                        {t("dialogs.bulk.col_initial_qty")}
+                      </span>
                     </div>
                     <div className="divide-border/60 divide-y">
                       {rows.slice(0, 5).map((r) => (
@@ -733,8 +829,13 @@ export function BulkAddDialog({
                       aria-hidden="true"
                       className="text-status-err-fg size-3.5"
                     />
-                    Issues detected in {invalid.length} row
-                    {invalid.length === 1 ? "" : "s"}:
+                    {invalid.length === 1
+                      ? t("dialogs.bulk.issues_title_one", {
+                          count: String(invalid.length),
+                        })
+                      : t("dialogs.bulk.issues_title_other", {
+                          count: String(invalid.length),
+                        })}
                   </span>
                   <ul className="bg-status-err-bg/60 border-status-err-border/60 flex max-h-40 flex-col gap-1 overflow-y-auto rounded-xl border p-2">
                     {invalid.map((item) => (
@@ -743,7 +844,9 @@ export function BulkAddDialog({
                         className="text-status-err-fg flex items-center gap-2 text-xs"
                       >
                         <span className="bg-status-err-bg rounded px-1.5 py-0.5 font-mono text-[11px] font-semibold">
-                          Row {item.index}
+                          {t("dialogs.bulk.row_label", {
+                            index: String(item.index),
+                          })}
                         </span>
                         <span>{item.reason}</span>
                       </li>
@@ -760,7 +863,7 @@ export function BulkAddDialog({
                   disabled={busy}
                   className="relative h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
                 >
-                  Back to edit
+                  {t("dialogs.bulk.back_to_edit")}
                 </Button>
                 <Button
                   onClick={importRows}
@@ -773,7 +876,13 @@ export function BulkAddDialog({
                   ) : (
                     <CheckCircle2 aria-hidden="true" />
                   )}
-                  Import {rows.length} product{rows.length === 1 ? "" : "s"}
+                  {rows.length === 1
+                    ? t("dialogs.bulk.import_count_one", {
+                        count: String(rows.length),
+                      })
+                    : t("dialogs.bulk.import_count_other", {
+                        count: String(rows.length),
+                      })}
                 </Button>
               </div>
             </>
@@ -799,17 +908,22 @@ export function BulkAddDialog({
                       className={`text-base font-bold tracking-tight ${results.failed === 0 ? "text-status-ok-fg" : results.created === 0 ? "text-status-err-fg" : "text-status-warn-fg"}`}
                     >
                       {results.failed === 0
-                        ? `Import complete: ${results.created} products added`
+                        ? t("dialogs.bulk.result_success_title", {
+                            created: String(results.created),
+                          })
                         : results.created === 0
-                          ? "Import failed: no products added"
-                          : `Import complete: ${results.created} added, ${results.failed} need attention`}
+                          ? t("dialogs.bulk.result_fail_title")
+                          : t("dialogs.bulk.result_partial_title", {
+                              created: String(results.created),
+                              failed: String(results.failed),
+                            })}
                     </span>
                     <span className="text-muted-foreground text-xs leading-relaxed">
                       {results.failed === 0
-                        ? "All products are now in your inventory."
+                        ? t("dialogs.bulk.toast_success_desc")
                         : results.created === 0
-                          ? "Check errors below and try again."
-                          : "Review failed rows below. Successful imports are already saved."}
+                          ? t("dialogs.bulk.result_fail_desc")
+                          : t("dialogs.bulk.result_partial_desc")}
                     </span>
                   </span>
                 </span>
@@ -823,8 +937,13 @@ export function BulkAddDialog({
                         aria-hidden="true"
                         className="text-status-warn-fg size-4 shrink-0"
                       />
-                      {results.failed} row{results.failed === 1 ? "" : "s"} need
-                      {results.failed === 1 ? "s" : ""} attention:
+                      {results.failed === 1
+                        ? t("dialogs.bulk.failed_attention_one", {
+                            count: String(results.failed),
+                          })
+                        : t("dialogs.bulk.failed_attention_other", {
+                            count: String(results.failed),
+                          })}
                     </span>
                     <Button
                       variant="outline"
@@ -852,7 +971,7 @@ export function BulkAddDialog({
                       }}
                       className="relative h-8 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
                     >
-                      Download failed rows (CSV)
+                      {t("dialogs.bulk.download_failed")}
                     </Button>
                   </span>
                   <ul className="bg-card border-border flex max-h-48 flex-col gap-1 overflow-y-auto rounded-lg border p-2">
@@ -865,7 +984,9 @@ export function BulkAddDialog({
                         >
                           <span className="flex min-w-0 items-center gap-2">
                             <span className="text-status-err-fg shrink-0 font-mono text-[11px] font-semibold">
-                              Row {r.index + 1}
+                              {t("dialogs.bulk.row_label", {
+                                index: String(r.index + 1),
+                              })}
                             </span>
                             <span className="truncate">{r.error}</span>
                           </span>
@@ -883,7 +1004,7 @@ export function BulkAddDialog({
                     onClick={() => setStep("input")}
                     className="relative h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
                   >
-                    Fix and re-upload
+                    {t("dialogs.bulk.fix_reupload")}
                   </Button>
                 ) : (
                   <Button
@@ -892,7 +1013,7 @@ export function BulkAddDialog({
                     onClick={() => setStep("input")}
                     className="relative h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
                   >
-                    Import more
+                    {t("dialogs.bulk.import_more")}
                   </Button>
                 )}
                 {/* APP-09: label jujur — tombol ini MENUTUP dialog (daftar
@@ -903,7 +1024,9 @@ export function BulkAddDialog({
                   size="sm"
                   className="relative h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
                 >
-                  {results.failed > 0 ? "Close" : "Done"}
+                  {results.failed > 0
+                    ? t("common.close")
+                    : t("dialogs.bulk.done")}
                 </Button>
               </div>
             </>

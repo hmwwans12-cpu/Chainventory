@@ -46,6 +46,7 @@ import type { ProductRow } from "@/lib/inventory/types";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { formatDate } from "@/lib/utils";
 import { MOVEMENT_TYPE_META } from "@/lib/inventory/status-meta";
+import { useLocale } from "@/components/providers/locale-provider";
 
 function ErrorBanner({ message }: { message: string }) {
   return (
@@ -73,15 +74,6 @@ const TYPE_BADGE_STYLES: Record<MovementType, string> = {
     "bg-status-neutral-bg text-status-neutral-fg border-status-neutral-border",
 };
 
-const TYPE_DESCRIPTIONS: Record<MovementType, string> = {
-  stock_in: "Add verified physical inventory to warehouse depot.",
-  stock_out: "Dispatch stock for fulfillment, transfer, or client delivery.",
-  adjustment:
-    "Correct stock count. Requires Owner/Manager approval before balance changes.",
-  reversal:
-    "Cancel a previous erroneous movement. Creates a transparent counter-entry.",
-};
-
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
@@ -104,6 +96,7 @@ export function StockMovementDialog({
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }) {
+  const { t } = useLocale();
   const [selectedId, setSelectedId] = React.useState(product?.id ?? "");
   const [quantity, setQuantity] = React.useState("");
   const [reason, setReason] = React.useState("");
@@ -164,6 +157,15 @@ export function StockMovementDialog({
   const selected = products.find((p) => p.id === selectedId);
   const meta = MOVEMENT_TYPE_META[movementType];
   const selectedTarget = reversalTargets.find((t) => t.id === reversalTarget);
+  const typeLabel =
+    movementType === "stock_in"
+      ? t("dashboard.stock_in")
+      : movementType === "stock_out"
+        ? t("dashboard.stock_out")
+        : movementType === "adjustment"
+          ? t("dialogs.movement.type_adjustment")
+          : t("dialogs.movement.type_reversal");
+  const typeDescription = t(`dialogs.movement.desc_${movementType}`);
 
   React.useEffect(() => {
     if (!open || movementType !== "reversal" || !selectedId) return;
@@ -208,9 +210,7 @@ export function StockMovementDialog({
       wallets.find((w) => w.address && w.walletClientType !== "guest") ??
       wallets[0];
     if (!wallet?.address) {
-      setError(
-        "Connect a Base Sepolia wallet first. Your signature pays for this record's on-chain proof."
-      );
+      setError(t("dialogs.movement.error_wallet_connect"));
       return { handled: true };
     }
 
@@ -218,7 +218,7 @@ export function StockMovementDialog({
       idempotencyKey.current = newIdempotencyKey();
     }
 
-    setPhase("Preparing proof…");
+    setPhase(t("dialogs.movement.phase_preparing"));
     const prep = await prepareStockIntent({
       warehouseId,
       productId: selected!.id,
@@ -238,7 +238,7 @@ export function StockMovementDialog({
       return { handled: true };
     }
 
-    setPhase("Sign the transaction in your wallet…");
+    setPhase(t("dialogs.movement.phase_sign"));
     const provider = await wallet.getEthereumProvider();
     let txHash: string;
     try {
@@ -258,19 +258,19 @@ export function StockMovementDialog({
       setPhase(null);
       setError(
         code === 4001
-          ? "Signature cancelled. Nothing was recorded and no gas was spent."
-          : "The wallet could not send the transaction. Please try again."
+          ? t("dialogs.movement.error_signature_cancelled")
+          : t("dialogs.movement.error_wallet_send")
       );
       return { handled: true };
     }
     if (!txHash || typeof txHash !== "string") {
       idempotencyKey.current = null;
       setPhase(null);
-      setError("Wallet did not return a transaction hash.");
+      setError(t("dialogs.movement.error_no_tx_hash"));
       return { handled: true };
     }
 
-    setPhase("Submitting transaction hash…");
+    setPhase(t("dialogs.movement.phase_submitting"));
     const submitted = await submitStockIntent(prep.data.intentId, txHash);
     // Audit v0.3.9 H-14: short-circuit when submitStockIntent says "the
     // intent is already past submit". Without this, the code below would
@@ -296,14 +296,34 @@ export function StockMovementDialog({
         idempotencyKey.current = null;
         onOpenChange(false);
         onSuccess();
-        const verb = movementType === "stock_in" ? "added to" : "removed from";
         const newMovementId = direct.data.movementId;
         toast.add({
           type: "success",
-          title: meta.label,
-          description: newMovementId
-            ? `${qty} ${selected!.unit} ${verb} ${selected!.name}. New balance saved. Proof signed by your wallet.`
-            : `${qty} ${selected!.unit} ${verb} ${selected!.name}. Proof signed by your wallet.`,
+          title: typeLabel,
+          description:
+            movementType === "stock_in"
+              ? newMovementId
+                ? t("dialogs.movement.toast_stock_in_with_id", {
+                    qty,
+                    unit: selected!.unit,
+                    name: selected!.name,
+                  })
+                : t("dialogs.movement.toast_stock_in_simple", {
+                    qty,
+                    unit: selected!.unit,
+                    name: selected!.name,
+                  })
+              : newMovementId
+                ? t("dialogs.movement.toast_stock_out_with_id", {
+                    qty,
+                    unit: selected!.unit,
+                    name: selected!.name,
+                  })
+                : t("dialogs.movement.toast_stock_out_simple", {
+                    qty,
+                    unit: selected!.unit,
+                    name: selected!.name,
+                  }),
         });
         return { handled: true };
       }
@@ -312,7 +332,7 @@ export function StockMovementDialog({
       return { handled: true };
     }
 
-    setPhase("Waiting for Base Sepolia confirmation…");
+    setPhase(t("dialogs.movement.phase_waiting"));
     for (let attempt = 0; attempt < 15; attempt++) {
       const fin = await finalizeStockIntent(prep.data.intentId);
       if (fin.ok && fin.data.status === "committed") {
@@ -320,21 +340,41 @@ export function StockMovementDialog({
         idempotencyKey.current = null;
         onOpenChange(false);
         onSuccess();
-        const verb = movementType === "stock_in" ? "added to" : "removed from";
         const newMovementId = fin.data.movementId;
         toast.add({
           type: "success",
-          title: meta.label,
-          description: newMovementId
-            ? `${qty} ${selected!.unit} ${verb} ${selected!.name}. New balance saved. Proof signed by your wallet.`
-            : `${qty} ${selected!.unit} ${verb} ${selected!.name}. Proof signed by your wallet.`,
+          title: typeLabel,
+          description:
+            movementType === "stock_in"
+              ? newMovementId
+                ? t("dialogs.movement.toast_stock_in_with_id", {
+                    qty,
+                    unit: selected!.unit,
+                    name: selected!.name,
+                  })
+                : t("dialogs.movement.toast_stock_in_simple", {
+                    qty,
+                    unit: selected!.unit,
+                    name: selected!.name,
+                  })
+              : newMovementId
+                ? t("dialogs.movement.toast_stock_out_with_id", {
+                    qty,
+                    unit: selected!.unit,
+                    name: selected!.name,
+                  })
+                : t("dialogs.movement.toast_stock_out_simple", {
+                    qty,
+                    unit: selected!.unit,
+                    name: selected!.name,
+                  }),
         });
         return { handled: true };
       }
       if (!fin.ok) {
         if (fin.errorCode === "STALE_STOCK") {
           setStale(true);
-          setError("Stock updated by another user. Refreshing inventory…");
+          setError(t("dialogs.movement.error_stale"));
           setTimeout(() => {
             idempotencyKey.current = null;
             onOpenChange(false);
@@ -350,7 +390,7 @@ export function StockMovementDialog({
           if (fin.errorCode === "INSUFFICIENT_STOCK") {
             const balance = await readCurrentBalance(warehouseId, selected!.id);
             setCurrentBalance(balance);
-            setError("Not enough stock available for this stock out.");
+            setError(t("dialogs.movement.error_insufficient"));
           } else {
             setError(fin.error);
           }
@@ -361,22 +401,20 @@ export function StockMovementDialog({
     }
 
     setPhase(null);
-    setError(
-      "Still waiting for confirmation. Your inventory updates automatically once the transaction is confirmed. You can safely close this."
-    );
+    setError(t("dialogs.movement.error_still_waiting"));
     return { handled: true };
   };
 
   const submit = async () => {
     if (!selected) {
-      setError("Select a product first.");
+      setError(t("dialogs.movement.error_select_product"));
       return;
     }
 
     let qty: string;
     if (movementType === "reversal") {
       if (!selectedTarget) {
-        setError("Select a movement to reverse.");
+        setError(t("dialogs.movement.error_select_target"));
         return;
       }
       qty = selectedTarget.quantity;
@@ -387,9 +425,7 @@ export function StockMovementDialog({
         Number(candidate) <= 0 ||
         Number(candidate) > 1_000_000_000_000
       ) {
-        setError(
-          "Enter a valid quantity greater than 0 (max 3 decimals, within a reasonable range)."
-        );
+        setError(t("dialogs.movement.error_invalid_quantity"));
         quantityRef.current?.focus();
         return;
       }
@@ -401,7 +437,7 @@ export function StockMovementDialog({
       movementType !== "stock_out" &&
       !reason.trim()
     ) {
-      setError("Reason is required for this movement type.");
+      setError(t("dialogs.movement.error_reason_required"));
       reasonRef.current?.focus();
       return;
     }
@@ -447,14 +483,22 @@ export function StockMovementDialog({
       if (movementType === "adjustment") {
         toast.add({
           type: "success",
-          title: "Adjustment submitted",
-          description: `${qty} ${selected.unit} adjustment for ${selected.name} is awaiting Owner/Manager approval. Stock balance is unchanged until approved.`,
+          title: t("dialogs.movement.toast_adjustment_title"),
+          description: t("dialogs.movement.toast_adjustment_desc", {
+            qty,
+            unit: selected.unit,
+            name: selected.name,
+          }),
         });
       } else {
         toast.add({
           type: "success",
-          title: meta.label,
-          description: `${qty} ${selected.unit} reversed on ${selected.name}.`,
+          title: typeLabel,
+          description: t("dialogs.movement.toast_reversal_desc", {
+            qty,
+            unit: selected.unit,
+            name: selected.name,
+          }),
         });
       }
       return;
@@ -462,7 +506,7 @@ export function StockMovementDialog({
 
     if (result.errorCode === "STALE_STOCK") {
       setStale(true);
-      setError("Stock updated by another user. Refreshing inventory…");
+      setError(t("dialogs.movement.error_stale"));
       setTimeout(() => {
         onOpenChange(false);
         onSuccess();
@@ -473,7 +517,7 @@ export function StockMovementDialog({
     if (result.errorCode === "INSUFFICIENT_STOCK") {
       const balance = await readCurrentBalance(warehouseId, selected.id);
       setCurrentBalance(balance);
-      setError("Not enough stock available for this stock out.");
+      setError(t("dialogs.movement.error_insufficient"));
       return;
     }
 
@@ -507,10 +551,10 @@ export function StockMovementDialog({
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
                   <DialogTitle className="font-bold tracking-tight">
                     {movementType === "adjustment"
-                      ? "Stock Adjustment"
+                      ? t("dialogs.movement.title_adjustment")
                       : movementType === "reversal"
-                        ? "Reverse Movement"
-                        : meta.label}
+                        ? t("dialogs.movement.title_reversal")
+                        : typeLabel}
                   </DialogTitle>
                   {selected ? (
                     <span
@@ -522,7 +566,7 @@ export function StockMovementDialog({
                   ) : null}
                 </div>
                 <DialogDescription className="text-xs leading-relaxed">
-                  {TYPE_DESCRIPTIONS[movementType]}
+                  {typeDescription}
                 </DialogDescription>
               </div>
             </div>
@@ -539,7 +583,7 @@ export function StockMovementDialog({
                 aria-hidden="true"
                 className="size-4 shrink-0 animate-spin"
               />
-              Stock updated by another user. Refreshing inventory…
+              {t("dialogs.movement.error_stale")}
             </p>
           ) : null}
           {error && !stale ? <ErrorBanner message={error} /> : null}
@@ -555,15 +599,14 @@ export function StockMovementDialog({
               <span className="flex flex-1 flex-col gap-0.5">
                 <span className="font-semibold">{phase}</span>
                 <span className="opacity-90">
-                  You can safely leave this page. We&apos;ll notify you when
-                  it&apos;s confirmed.
+                  {t("dialogs.movement.phase_leave_hint")}
                 </span>
               </span>
             </p>
           ) : null}
           {currentBalance != null ? (
             <p className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
-              <span>Current balance</span>
+              <span>{t("dialogs.movement.current_balance")}</span>
               <span className="border-border rounded border px-2 py-0.5 font-mono font-semibold tabular-nums">
                 {currentBalance} {selected?.unit}
               </span>
@@ -575,10 +618,12 @@ export function StockMovementDialog({
                 htmlFor="movement-product"
                 className="text-xs font-semibold"
               >
-                Target Product
+                {t("dialogs.movement.target_product")}
               </Label>
               <span className="text-muted-foreground font-mono text-[10px]">
-                {product ? "Read-only Context" : "Searchable Catalog"}
+                {product
+                  ? t("dialogs.movement.context_readonly")
+                  : t("dialogs.movement.context_searchable")}
               </span>
             </span>
             {product ? (
@@ -629,7 +674,7 @@ export function StockMovementDialog({
                     htmlFor="movement-target"
                     className="text-xs font-semibold"
                   >
-                    Movement to Reverse{" "}
+                    {t("dialogs.movement.target_reverse")}{" "}
                     <span aria-hidden="true" className="text-status-err-fg">
                       *
                     </span>
@@ -643,14 +688,13 @@ export function StockMovementDialog({
                           aria-hidden="true"
                           className="size-4 shrink-0"
                         />
-                        Connection or Permission Failure
+                        {t("dialogs.movement.targets_error_title")}
                       </p>
                       <p
                         role="alert"
                         className="text-[11px] leading-snug opacity-90"
                       >
-                        Could not load movements. Check your connection and
-                        reopen this dialog to retry.
+                        {t("dialogs.movement.targets_error_desc")}
                       </p>
                       <button
                         type="button"
@@ -662,7 +706,7 @@ export function StockMovementDialog({
                         className="inline-flex w-fit items-center gap-1 text-[11px] font-semibold underline underline-offset-2 hover:opacity-80"
                       >
                         <RotateCw aria-hidden="true" className="size-3" />
-                        Retry fetching now
+                        {t("dialogs.movement.targets_retry")}
                       </button>
                     </div>
                   ) : reversalTargets.length === 0 ? (
@@ -671,11 +715,10 @@ export function StockMovementDialog({
                         <Inbox aria-hidden="true" className="size-3.5" />
                       </span>
                       <p className="text-foreground text-xs font-semibold">
-                        No committed movements to reverse
+                        {t("dialogs.movement.targets_empty_title")}
                       </p>
                       <p className="text-muted-foreground mx-auto max-w-xs text-[11px]">
-                        This product has no committed ledger movements to
-                        reverse in this warehouse.
+                        {t("dialogs.movement.targets_empty_desc")}
                       </p>
                     </div>
                   ) : (
@@ -688,32 +731,35 @@ export function StockMovementDialog({
                       >
                         <SelectTrigger id="movement-target" className="w-full">
                           <SelectValue
-                            placeholder="Select a movement"
+                            placeholder={t(
+                              "dialogs.movement.target_placeholder"
+                            )}
                             getLabel={(v) => {
-                              const t = reversalTargets.find((x) => x.id === v);
-                              if (!t) return v;
-                              return `${MOVEMENT_TYPE_META[t.movementType as keyof typeof MOVEMENT_TYPE_META]?.label ?? t.movementType} · ${t.quantity}`;
+                              const found = reversalTargets.find(
+                                (x) => x.id === v
+                              );
+                              if (!found) return v;
+                              return `${MOVEMENT_TYPE_META[found.movementType as keyof typeof MOVEMENT_TYPE_META]?.label ?? found.movementType} · ${found.quantity}`;
                             }}
                           />
                         </SelectTrigger>
                         <SelectContent layer="modal">
-                          {reversalTargets.map((t) => (
-                            <SelectItem key={t.id} value={t.id}>
+                          {reversalTargets.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
                               {MOVEMENT_TYPE_META[
-                                t.movementType as keyof typeof MOVEMENT_TYPE_META
-                              ]?.label ?? t.movementType}{" "}
-                              · {t.quantity} · {formatDate(t.created_at)}
+                                item.movementType as keyof typeof MOVEMENT_TYPE_META
+                              ]?.label ?? item.movementType}{" "}
+                              · {item.quantity} ·{" "}
+                              {formatDate(item.created_at)}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                       <div className="text-muted-foreground flex items-center justify-between gap-2 px-1 text-[11px]">
-                        <span>
-                          Only committed ledger records can be reversed.
-                        </span>
+                        <span>{t("dialogs.movement.only_committed_hint")}</span>
                         <span className="text-status-ok-fg flex shrink-0 items-center gap-1 font-semibold">
                           <ShieldCheck aria-hidden="true" className="size-3" />
-                          Proof Verified
+                          {t("dialogs.movement.proof_verified")}
                         </span>
                       </div>
                     </>
@@ -725,7 +771,7 @@ export function StockMovementDialog({
                         aria-hidden="true"
                         className="text-primary size-4 shrink-0 animate-spin"
                       />
-                      Loading recent committed movements…
+                      {t("dialogs.movement.targets_loading")}
                     </p>
                     <div
                       aria-hidden="true"
@@ -735,11 +781,11 @@ export function StockMovementDialog({
                 )}
                 {selectedTarget ? (
                   <p className="text-muted-foreground text-sm">
-                    Reversing{" "}
+                    {t("dialogs.movement.reversing_prefix")}{" "}
                     <span className="font-mono tabular-nums">
                       {selectedTarget.quantity}
                     </span>{" "}
-                    {selected?.unit} from stock.
+                    {selected?.unit} {t("dialogs.movement.reversing_suffix")}
                   </p>
                 ) : null}
               </>
@@ -750,11 +796,13 @@ export function StockMovementDialog({
                     htmlFor="movement-quantity"
                     className="text-xs font-semibold"
                   >
-                    Quantity to Move
+                    {t("dialogs.movement.quantity_label")}
                   </Label>
                   {selected ? (
                     <span className="text-muted-foreground font-mono text-[11px]">
-                      Unit: {selected.unit}
+                      {t("dialogs.movement.unit_suffix", {
+                        unit: selected.unit,
+                      })}
                     </span>
                   ) : null}
                 </span>
@@ -767,7 +815,9 @@ export function StockMovementDialog({
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
                     placeholder={
-                      movementType === "stock_in" ? "e.g. 100" : "e.g. 25.5"
+                      movementType === "stock_in"
+                        ? t("dialogs.movement.qty_placeholder_in")
+                        : t("dialogs.movement.qty_placeholder_out")
                     }
                     aria-invalid={Boolean(error)}
                     aria-describedby={error ? "movement-form-error" : undefined}
@@ -785,7 +835,7 @@ export function StockMovementDialog({
                 {selected ? (
                   <div className="bg-surface-low/60 border-border flex flex-col gap-2 rounded-xl border p-3.5 text-xs">
                     <div className="text-muted-foreground flex items-center justify-between font-medium">
-                      <span>Current stock</span>
+                      <span>{t("dialogs.detail.current_stock")}</span>
                       <span className="text-foreground font-mono font-semibold tabular-nums">
                         {selected.quantity ?? "0"} {selected.unit}
                       </span>
@@ -797,10 +847,10 @@ export function StockMovementDialog({
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">
                             {movementType === "stock_in"
-                              ? "Quantity added"
+                              ? t("dialogs.movement.qty_added")
                               : movementType === "stock_out"
-                                ? "Quantity removed"
-                                : "Quantity adjusted"}
+                                ? t("dialogs.movement.qty_removed")
+                                : t("dialogs.movement.qty_adjusted")}
                           </span>
                           <span
                             className={`rounded px-1.5 py-0.5 font-mono font-semibold tabular-nums ${
@@ -818,7 +868,7 @@ export function StockMovementDialog({
                         <div className="border-border/70 border-t" />
                         <div className="flex items-center justify-between font-semibold">
                           <span className="text-foreground">
-                            New projected stock
+                            {t("dialogs.movement.new_projected")}
                           </span>
                           <span className="text-foreground font-mono text-sm font-bold tabular-nums">
                             {(() => {
@@ -840,8 +890,7 @@ export function StockMovementDialog({
                               aria-hidden="true"
                               className="size-3.5 shrink-0"
                             />
-                            Quantity exceeds current stock (insufficient
-                            balance).
+                            {t("dialogs.movement.qty_exceeds")}
                           </p>
                         ) : null}
                       </>
@@ -858,15 +907,15 @@ export function StockMovementDialog({
                 htmlFor="movement-reason"
                 className="text-xs font-semibold"
               >
-                Reason for Movement
+                {t("dialogs.movement.reason_label")}
               </Label>
               {movementType === "adjustment" || movementType === "reversal" ? (
                 <span className="text-status-err-fg font-mono text-[10px] font-bold">
-                  (required)
+                  {t("dialogs.movement.reason_required")}
                 </span>
               ) : (
                 <span className="text-muted-foreground font-mono text-[10px]">
-                  (optional)
+                  {t("dialogs.product_form.optional_pill")}
                 </span>
               )}
             </span>
@@ -879,17 +928,17 @@ export function StockMovementDialog({
               aria-describedby={error ? "movement-form-error" : undefined}
               placeholder={
                 movementType === "adjustment"
-                  ? "Explain why the stock balance must be adjusted (e.g. damaged, miscounted)…"
+                  ? t("dialogs.movement.reason_ph_adjustment")
                   : movementType === "reversal"
-                    ? "Explain why this movement must be reversed…"
+                    ? t("dialogs.movement.reason_ph_reversal")
                     : movementType === "stock_out"
-                      ? "Why is this stock being removed? (optional)"
-                      : "Why is this stock being added? (optional)"
+                      ? t("dialogs.movement.reason_ph_out")
+                      : t("dialogs.movement.reason_ph_in")
               }
               rows={2}
             />
             <p className="text-muted-foreground/80 text-[11px]">
-              Appends to the tamper-evident audit record on Base Sepolia.
+              {t("dialogs.movement.reason_hint")}
             </p>
           </div>
         </div>
@@ -902,7 +951,7 @@ export function StockMovementDialog({
             disabled={busy}
             className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
           >
-            Discard
+            {t("dialogs.movement.discard")}
           </Button>
           <Button
             onClick={submit}
@@ -918,10 +967,12 @@ export function StockMovementDialog({
               <Package aria-hidden="true" />
             )}
             {movementType === "adjustment"
-              ? "Submit Adjustment for Approval"
+              ? t("dialogs.movement.submit_adjustment")
               : movementType === "reversal"
-                ? "Submit Reversal"
-                : `Record ${meta.label}`}
+                ? t("dialogs.movement.submit_reversal")
+                : movementType === "stock_in"
+                  ? t("dialogs.movement.submit_record_in")
+                  : t("dialogs.movement.submit_record_out")}
           </Button>
         </div>
       </DialogContent>

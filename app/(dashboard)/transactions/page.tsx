@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { ArrowLeftRight } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
@@ -80,15 +82,23 @@ export default async function TransactionsPageRoute({
 
   const warehouses = await getMyWarehouses(supabase, user.id);
   const active = pickActiveWarehouse(warehouses, warehouseParam);
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
 
   if (!active) {
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Transactions"
-          description="Stock operations and their blockchain proof status."
+          title={t("tx.title")}
+          description={t("tx.description")}
         />
-        <NoWarehouse description="Create a warehouse to start recording transactions, or join one with a warehouse code." />
+        <NoWarehouse
+          title={t("dashboard.empty_title")}
+          description={t("tx.no_warehouse_desc")}
+          createLabel={t("dashboard.create_warehouse")}
+          joinLabel={t("dashboard.join_warehouse")}
+        />
       </div>
     );
   }
@@ -120,13 +130,13 @@ export default async function TransactionsPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Transactions"
-          description={`${active.name} · ledger.`}
+          title={t("tx.title")}
+          description={t("tx.header_ledger", { name: active.name })}
         />
         <RetryErrorState
           icon={ArrowLeftRight}
-          title="Unable to load transactions."
-          description="Something went wrong while retrieving the ledger. Please try again."
+          title={t("tx.error_title")}
+          description={t("tx.error_desc")}
         />
       </div>
     );
@@ -146,7 +156,7 @@ export default async function TransactionsPageRoute({
     actorWallet: row.actor_wallet,
     expectedBalanceVersion: row.expected_balance_version,
     created_at: row.created_at,
-    productName: row.product?.name ?? "Unknown product",
+    productName: row.product?.name ?? t("tx.unknown_product"),
     productSku: row.product?.sku ?? "",
     unit: row.product?.unit ?? "",
     proofStatus: row.proof?.status ?? null,
@@ -157,11 +167,11 @@ export default async function TransactionsPageRoute({
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Transactions"
-        description={`${active.name} · on-chain ledger and verifiable proof trail.`}
+        title={t("tx.title")}
+        description={t("tx.header_desc", { name: active.name })}
         pill={
           <Badge variant="success" className="font-mono">
-            Live Ledger
+            {t("tx.live_ledger")}
           </Badge>
         }
         actions={
@@ -170,7 +180,7 @@ export default async function TransactionsPageRoute({
               aria-hidden="true"
               className="bg-primary size-1.5 animate-pulse rounded-full"
             />
-            Base Sepolia · Chain ID {BASE_SEPOLIA_CHAIN_ID}
+            {t("tx.chain_badge", { chainId: String(BASE_SEPOLIA_CHAIN_ID) })}
           </Badge>
         }
       />

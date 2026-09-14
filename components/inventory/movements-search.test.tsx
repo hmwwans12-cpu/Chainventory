@@ -3,6 +3,7 @@ import { act } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MovementsPage } from "@/components/inventory/movements-page";
+import { LocaleProvider } from "@/components/providers/locale-provider";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 
 const replace = vi.fn();
@@ -102,5 +103,29 @@ describe("MovementsPage search", () => {
     unmount();
     renderPage("");
     expect(screen.getByText("No movements recorded yet")).toBeTruthy();
+  });
+
+  it("locale id merender empty-state ID dengan param tersubstitusi", () => {
+    document.cookie = "locale=id";
+    try {
+      render(
+        <LocaleProvider initialLocale="id">
+          <MovementsPage
+            warehouseId="w1"
+            warehouses={warehouses}
+            role="OWNER"
+            products={[]}
+            initialMovements={[]}
+            query="PO-9"
+          />
+        </LocaleProvider>
+      );
+      expect(
+        screen.getByText("Tidak ada pergerakan yang cocok dengan pencarian Anda")
+      ).toBeTruthy();
+      expect(screen.queryByText(/\{query\}/)).toBeNull();
+    } finally {
+      document.cookie = "locale=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    }
   });
 });

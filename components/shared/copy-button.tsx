@@ -6,6 +6,7 @@ import { Check, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COPY_FEEDBACK_MS } from "@/lib/constants";
 import { toast } from "@/components/ui/toast";
+import { useLocale } from "@/components/providers/locale-provider";
 
 /**
  * Copy-to-clipboard affordance untuk alamat/kode (wallet, contract, invite).
@@ -43,6 +44,7 @@ export function CopyButton({
   className?: string;
   size?: "icon-xs" | "icon-sm";
 }) {
+  const { t } = useLocale();
   const [copied, setCopied] = React.useState(false);
 
   return (
@@ -61,8 +63,8 @@ export function CopyButton({
         if (!ok) {
           toast.add({
             type: "error",
-            title: "Could not copy",
-            description: "Copy failed. Select the text manually and retry.",
+            title: t("common.copy_error_title"),
+            description: t("common.copy_error_desc"),
           });
           return;
         }
@@ -77,7 +79,7 @@ export function CopyButton({
       )}
     >
       <span aria-live="polite" className="sr-only">
-        {copied ? "Copied!" : ""}
+        {copied ? t("common.copied") : ""}
       </span>
       {copied ? (
         <Check aria-hidden="true" className="text-primary size-3.5" />

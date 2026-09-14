@@ -5,6 +5,7 @@ import { Check, Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/components/providers/locale-provider";
 
 /**
  * Searchable product picker (DESIGN §37 form).
@@ -20,7 +21,7 @@ export function SearchableProductSelect({
   products,
   value,
   onChange,
-  placeholder = "Search product…",
+  placeholder,
   id,
 }: {
   products: { id: string; name: string; sku: string; unit: string }[];
@@ -30,6 +31,9 @@ export function SearchableProductSelect({
   /** NFE-06: id untuk <Label htmlFor> pemanggil. */
   id?: string;
 }) {
+  const { t } = useLocale();
+  const effectivePlaceholder =
+    placeholder ?? t("movements.product_search_placeholder");
   const [query, setQuery] = React.useState("");
   const [open, setOpen] = React.useState(false);
   const [activeIndex, setActiveIndex] = React.useState(-1);
@@ -150,9 +154,9 @@ export function SearchableProductSelect({
             setOpen(true);
           }}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+          placeholder={effectivePlaceholder}
           className="pl-8"
-          aria-label="Select product"
+          aria-label={t("movements.select_product_aria")}
           role="combobox"
           aria-expanded={open}
           aria-controls={open ? listboxId : undefined}
@@ -168,7 +172,7 @@ export function SearchableProductSelect({
             role="status"
             className="bg-popover text-popover-foreground ring-foreground/10 absolute z-[var(--z-dropdown)] mt-1 w-full rounded-lg p-2 text-sm shadow-(--shadow-elevated) ring-1"
           >
-            No products found.
+            {t("movements.no_products_found")}
           </div>
         ) : (
           <ul

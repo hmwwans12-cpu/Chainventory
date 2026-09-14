@@ -6,6 +6,7 @@ import { RefreshCcw } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useLocale } from "@/components/providers/locale-provider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -48,6 +49,7 @@ function shortWallet(wallet: string): string {
  *  - Konfirmasi sebelum aksi berdampak (manual re-queue).
  */
 export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
+  const { t } = useLocale();
   const [summary, setSummary] = React.useState<ConsoleSummary>(initial.summary);
   const [manualReview, setManualReview] = React.useState<ManualReviewProof[]>(
     initial.manualReview
@@ -142,11 +144,11 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
     if (!(sb.ok || pb.ok || eb.ok || ab.ok)) {
       toast.add({
         type: "error",
-        title: "Live data unavailable",
-        description: "Console feeds did not respond. Showing last known state.",
+        title: t("console.live_unavailable_title"),
+        description: t("console.live_unavailable_desc"),
       });
     }
-  }, []);
+  }, [t]);
 
   const confirmRetry = async () => {
     if (!pendingProof) return;
@@ -161,23 +163,22 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
       if (res.ok && body.ok) {
         toast.add({
           type: "success",
-          title: "Proof re-queued",
-          description:
-            "Back in the delivery queue; the processor will re-submit on-chain.",
+          title: t("console.requeued_title"),
+          description: t("console.requeued_desc"),
         });
         await loadLive();
       } else {
         toast.add({
           type: "error",
-          title: "Re-queue failed",
-          description: body.error ?? "Unexpected error.",
+          title: t("console.requeue_failed_title"),
+          description: body.error ?? t("console.unexpected_error"),
         });
       }
     } catch {
       toast.add({
         type: "error",
-        title: "Re-queue failed",
-        description: "Network error.",
+        title: t("console.requeue_failed_title"),
+        description: t("console.network_error"),
       });
     } finally {
       setBusyId(null);
@@ -191,19 +192,17 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
     <div className="flex flex-col gap-6">
       <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
         <span>
-          Signed in as{" "}
+          {t("console.signed_in_as")}{" "}
           <span className="text-foreground font-medium">{signedInAs}</span>
         </span>
         <Badge variant="secondary">
-          access via{" "}
+          {t("console.access_via")}{" "}
           {initial.session.matchedVia === "email"
-            ? "email allowlist"
-            : "wallet allowlist"}
+            ? t("console.via_email")
+            : t("console.via_wallet")}
         </Badge>
         <span aria-hidden="true">·</span>
-        <span>
-          Developer Console is platform-scoped: data from all warehouses.
-        </span>
+        <span>{t("console.platform_scoped")}</span>
       </div>
 
       <SummaryCards summary={summary} />
@@ -216,9 +215,13 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
       */}
       <Tabs defaultValue="overview">
         <TabsList className="h-11 w-full justify-start overflow-x-auto sm:w-auto">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="health">Health</TabsTrigger>
-          <TabsTrigger value="forensics">Forensics</TabsTrigger>
+          <TabsTrigger value="overview">
+            {t("nav./dashboard")}
+          </TabsTrigger>
+          <TabsTrigger value="health">{t("console.tab_health")}</TabsTrigger>
+          <TabsTrigger value="forensics">
+            {t("console.tab_forensics")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent
@@ -267,11 +270,11 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Re-queue proof for delivery?</DialogTitle>
+            <DialogTitle>{t("console.requeue_dialog_title")}</DialogTitle>
             <DialogDescription>
-              Proof {pendingProof ? pendingProof.id.slice(0, 8) : ""} (manual
-              review) will return to the delivery queue and be re-submitted
-              on-chain. Its attempt budget is preserved.
+              {t("console.requeue_dialog_desc", {
+                id: pendingProof ? pendingProof.id.slice(0, 8) : "",
+              })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -281,7 +284,7 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
               className="min-h-11"
               disabled={busyId !== null}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={confirmRetry}
@@ -292,7 +295,7 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
                 aria-hidden="true"
                 className={busyId !== null ? "animate-spin" : undefined}
               />
-              Confirm retry
+              {t("console.confirm_retry")}
             </Button>
           </DialogFooter>
         </DialogContent>

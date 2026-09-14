@@ -18,12 +18,13 @@ import { cn, formatEthDecimal } from "@/lib/utils";
 import { sanitizeConsoleError } from "@/lib/utils/sanitize-console-error";
 import { basescanTxUrl, FAUCET_AMOUNT_ETH } from "@/lib/constants";
 import { shortenAddress } from "@/lib/utils";
+import { useLocale } from "@/components/providers/locale-provider";
 import type { TreasuryData } from "@/lib/console/types";
 
 const shortAddress = (address: string) => shortenAddress(address, 8, 6);
 
-function formatCooldown(ms: number): string {
-  if (ms <= 0) return "Available now";
+function formatCooldown(ms: number, availableNow: string): string {
+  if (ms <= 0) return availableNow;
   const hours = Math.floor(ms / (1000 * 60 * 60));
   const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((ms % (1000 * 60)) / 1000);
@@ -34,8 +35,8 @@ function formatCooldown(ms: number): string {
  * Audit v0.3.4 §2.19: sanitasi pesan error dari server untuk konsol.
  * viem/RPC error dapat memuat URL RPC + chain id.
  */
-const formatTreasuryError = (raw: string | undefined) =>
-  sanitizeConsoleError(raw, "Treasury unavailable.");
+const formatTreasuryError = (raw: string | undefined, fallback: string) =>
+  sanitizeConsoleError(raw, fallback);
 
 interface ClaimResponse {
   ok: boolean;
@@ -56,6 +57,7 @@ export function TreasuryCard({
   loading: boolean;
   walletAddress?: string;
 }) {
+  const { t } = useLocale();
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimTxHash, setClaimTxHash] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export function TreasuryCard({
 
   const handleClaim = useCallback(async () => {
     if (!walletAddress) {
-      setClaimError("No wallet connected.");
+      setClaimError(t("console.no_wallet"));
       return;
     }
 
@@ -100,7 +102,7 @@ export function TreasuryCard({
       const data = (await res.json()) as ClaimResponse;
 
       if (!data.ok) {
-        setClaimError(data.error ?? "Claim failed.");
+        setClaimError(data.error ?? t("console.claim_failed"));
         if (data.cooldownMs) {
           setCooldownRemaining(data.cooldownMs);
         }
@@ -114,19 +116,22 @@ export function TreasuryCard({
       // Refresh treasury balance after successful claim
       onRefresh();
     } catch {
-      setClaimError("Network error. Please try again.");
+      setClaimError(t("console.network_retry"));
     } finally {
       setClaiming(false);
     }
-  }, [walletAddress, onRefresh]);
+  }, [walletAddress, onRefresh, t]);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Treasury</CardTitle>
+        <CardTitle>{t("console.treasury_title")}</CardTitle>
         <CardDescription>
-          Signer balance on Base Sepolia · faucet policy (
-          {treasury?.faucet?.amountEther ?? FAUCET_AMOUNT_ETH} ETH / 12h).
+          {t("console.treasury_desc", {
+            amount: String(
+              treasury?.faucet?.amountEther ?? FAUCET_AMOUNT_ETH
+            ),
+          })}
         </CardDescription>
         <CardAction>
           <Button
@@ -135,13 +140,13 @@ export function TreasuryCard({
             onClick={onRefresh}
             disabled={loading}
             className="min-h-11"
-            aria-label="Refresh treasury balance"
+            aria-label={t("console.refresh_treasury_aria")}
           >
             <RefreshCcw
               aria-hidden="true"
               className={cn(loading && "animate-spin")}
             />
-            Refresh
+            {t("console.refresh")}
           </Button>
         </CardAction>
       </CardHeader>
@@ -168,14 +173,20 @@ export function TreasuryCard({
                   tone={treasury.faucet.eligible ? "success" : "warning"}
                   label={
                     treasury.faucet.eligible
-                      ? "Faucet eligible"
-                      : "Below faucet minimum"
+                      ? t("console.faucet_eligible")
+                      : t("console.below_minimum")
                   }
                 />
                 <span className="text-muted-foreground text-sm">
                   {treasury.faucet.affordableClaims > 0
-                    ? `\u2248 ${treasury.faucet.affordableClaims} more claim${treasury.faucet.affordableClaims === 1 ? "" : "s"} at current balance`
-                    : "no faucet claims available"}
+                    ? treasury.faucet.affordableClaims === 1
+                      ? t("console.more_claims_one", {
+                          n: String(treasury.faucet.affordableClaims),
+                        })
+                      : t("console.more_claims_other", {
+                          n: String(treasury.faucet.affordableClaims),
+                        })
+                    : t("console.no_claims")}
                 </span>
               </div>
             ) : null}
@@ -185,9 +196,17 @@ export function TreasuryCard({
               <div className="flex flex-col gap-2">
                 {cooldownRemaining !== null ? (
                   <div className="flex items-center gap-2">
-                    <StatusBadge tone="warning" label="Cooldown active" />
+                    <StatusBadge
+                      tone="warning"
+                      label={t("console.cooldown_active")}
+                    />
                     <span className="text-muted-foreground text-sm tabular-nums">
-                      Available in {formatCooldown(cooldownRemaining)}
+                      {t("console.available_in", {
+                        time: formatCooldown(
+                          cooldownRemaining,
+                          t("console.available_now")
+                        ),
+                      })}
                     </span>
                   </div>
                 ) : (
@@ -197,31 +216,41 @@ export function TreasuryCard({
                     onClick={handleClaim}
                     disabled={claiming || !walletAddress}
                     className="min-h-11"
-                    aria-label={`Claim ${treasury.faucet?.amountEther ?? FAUCET_AMOUNT_ETH} Base Sepolia ETH`}
+                    aria-label={t("console.claim_aria", {
+                      amount: String(
+                        treasury.faucet?.amountEther ?? FAUCET_AMOUNT_ETH
+                      ),
+                    })}
                     title={
-                      !walletAddress ? "Connect a wallet first" : undefined
+                      !walletAddress
+                        ? t("console.connect_wallet_first")
+                        : undefined
                     }
                   >
                     <Coins aria-hidden="true" className="size-4" />
                     {claiming
-                      ? "Claiming…"
-                      : `Claim ${treasury.faucet?.amountEther ?? FAUCET_AMOUNT_ETH} Base Sepolia`}
+                      ? t("console.claiming")
+                      : t("console.claim_amount", {
+                          amount: String(
+                            treasury.faucet?.amountEther ?? FAUCET_AMOUNT_ETH
+                          ),
+                        })}
                   </Button>
                 )}
                 {!walletAddress ? (
                   <p className="text-muted-foreground text-sm">
-                    Connect a wallet in Settings to claim.
+                    {t("console.connect_in_settings")}
                   </p>
                 ) : null}
 
                 {claimTxHash && (
                   <span className="text-muted-foreground text-sm">
-                    Tx:{" "}
+                    {t("console.tx_prefix")}{" "}
                     <a
                       href={basescanTxUrl(claimTxHash)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label="View claim transaction on BaseScan"
+                      aria-label={t("console.view_claim_aria")}
                       className="text-primary hover:text-primary/80 underline"
                     >
                       {shortAddress(claimTxHash)}
@@ -239,7 +268,10 @@ export function TreasuryCard({
           </>
         ) : (
           <p className="text-destructive text-sm">
-            {formatTreasuryError(treasury?.error)}
+            {formatTreasuryError(
+              treasury?.error,
+              t("console.treasury_unavailable")
+            )}
           </p>
         )}
       </CardContent>

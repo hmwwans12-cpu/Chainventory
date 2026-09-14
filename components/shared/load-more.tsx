@@ -3,6 +3,7 @@
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/components/providers/locale-provider";
 
 /**
  * Standard "Load more" control (audit #5). Satu implementasi bersama untuk
@@ -14,7 +15,7 @@ export function LoadMore({
   onClick,
   loading = false,
   hasMore = true,
-  label = "Load more",
+  label,
   className,
 }: {
   onClick: () => void;
@@ -23,6 +24,8 @@ export function LoadMore({
   label?: string;
   className?: string;
 }) {
+  const { t } = useLocale();
+  const resolvedLabel = label ?? t("common.load_more");
   if (!hasMore) return null;
   return (
     <div className={`flex justify-center ${className ?? ""}`}>
@@ -35,10 +38,10 @@ export function LoadMore({
         {loading ? (
           <>
             <Loader2 aria-hidden="true" className="size-4 animate-spin" />
-            Loading…
+            {t("common.loading")}
           </>
         ) : (
-          label
+          resolvedLabel
         )}
       </Button>
     </div>

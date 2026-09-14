@@ -1,3 +1,5 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
 import { ArrowDownRight, ArrowUpRight, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -15,6 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/components/providers/locale-provider";
 
 type Delta = { pct: number; kind: "up" | "down" | "new" };
 
@@ -35,12 +38,12 @@ function computeDelta(current: string, previous: string): Delta | null {
   return { pct: rounded, kind: rounded > 0 ? "up" : "down" };
 }
 
-function DeltaBadge({ delta }: { delta: Delta }) {
+function DeltaBadge({ delta, newLabel }: { delta: Delta; newLabel: string }) {
   if (delta.kind === "new") {
     return (
       <Badge variant="neutral" data-icon="inline-start">
         <Sparkles aria-hidden="true" />
-        New
+        {newLabel}
       </Badge>
     );
   }
@@ -80,6 +83,7 @@ export function StatCard({
   delta?: { current: string; previous: string };
   href?: string;
 }) {
+  const { t } = useLocale();
   const d = delta ? computeDelta(delta.current, delta.previous) : null;
 
   const deltaPill = d ? (
@@ -87,9 +91,9 @@ export function StatCard({
       <TooltipTrigger
         render={<span className="flex cursor-help items-center" />}
       >
-        <DeltaBadge delta={d} />
+        <DeltaBadge delta={d} newLabel={t("analytics.delta_new")} />
       </TooltipTrigger>
-      <TooltipContent>Compared to the previous period</TooltipContent>
+      <TooltipContent>{t("analytics.compared_previous")}</TooltipContent>
     </Tooltip>
   ) : null;
 
@@ -120,7 +124,7 @@ export function StatCard({
       {href ? (
         <div className="border-border mt-4 flex items-center justify-between border-t px-(--card-spacing) pt-3">
           <span className="text-primary inline-flex items-center gap-1 text-xs font-bold">
-            View Details <span aria-hidden="true">→</span>
+            {t("analytics.view_details")} <span aria-hidden="true">→</span>
           </span>
         </div>
       ) : null}
@@ -135,7 +139,7 @@ export function StatCard({
   return (
     <Link
       href={href}
-      aria-label={`${label}: ${value}. View Details`}
+      aria-label={t("analytics.card_link_label", { label, value })}
       className={cn(
         "focus-visible:ring-ring block rounded-xl transition-shadow",
         "hover:ring-ring/40 hover:ring-2",

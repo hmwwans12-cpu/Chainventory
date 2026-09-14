@@ -6,12 +6,14 @@ import { Check, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLocale } from "@/components/providers/locale-provider";
 import {
   updateDisplayNameAction,
   type UpdateProfileState,
 } from "@/app/actions/update-profile";
 
 function SubmitButton({ pending }: { pending: boolean }) {
+  const { t } = useLocale();
   return (
     <Button type="submit" size="sm" disabled={pending} aria-busy={pending}>
       {pending ? (
@@ -19,7 +21,7 @@ function SubmitButton({ pending }: { pending: boolean }) {
       ) : (
         <Check aria-hidden="true" />
       )}
-      Save name
+      {t("settings.save_name")}
     </Button>
   );
 }
@@ -30,6 +32,7 @@ function SubmitButton({ pending }: { pending: boolean }) {
  * full page reload; announces errors via role="alert".
  */
 export function DisplayNameEditor({ currentName }: { currentName: string }) {
+  const { t } = useLocale();
   const [editing, setEditing] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   const [state, setState] = React.useState<UpdateProfileState>({ error: null });
@@ -85,7 +88,7 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label="Edit display name"
+            aria-label={t("settings.edit_name_aria")}
             onClick={startEdit}
             ref={editBtnRef}
           >
@@ -94,7 +97,7 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
         </div>
         {saved ? (
           <p role="status" className="text-primary text-sm">
-            Name updated.
+            {t("settings.name_updated")}
           </p>
         ) : null}
       </div>
@@ -104,7 +107,9 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2" noValidate>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="display-name-input">Display name</Label>
+        <Label htmlFor="display-name-input">
+          {t("settings.display_name_label")}
+        </Label>
         <div className="flex flex-wrap items-center gap-2">
           <Input
             id="display-name-input"
@@ -124,7 +129,7 @@ export function DisplayNameEditor({ currentName }: { currentName: string }) {
             onClick={cancelEdit}
             disabled={pending}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
         {state.error ? (

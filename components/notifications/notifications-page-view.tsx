@@ -27,6 +27,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
 import { LoadMore } from "@/components/shared/load-more";
+import { useLocale } from "@/components/providers/locale-provider";
 
 /**
  * Notifications halaman penuh (DESIGN §15). Mirip logika panel bell namun
@@ -45,6 +46,7 @@ export function NotificationsPageView({
   pageSize: number;
 }) {
   const router = useRouter();
+  const { t } = useLocale();
   const [notifications, setNotifications] = useState(initialNotifications);
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const [warehouseNames, setWarehouseNames] = useState(initialWarehouseNames);
@@ -97,7 +99,7 @@ export function NotificationsPageView({
       setHasMore(newRows.length >= limit);
       if (added) {
         setFlashId(added.id);
-        setAnnouncement("New notification");
+        setAnnouncement(t("notif.new_one"));
         if (popTimer.current) clearTimeout(popTimer.current);
         popTimer.current = setTimeout(() => setFlashId(null), FLASH_MESSAGE_MS);
       }
@@ -151,7 +153,7 @@ export function NotificationsPageView({
       if (channel) void supabase.removeChannel(channel).catch(() => {});
       if (popTimer.current) clearTimeout(popTimer.current);
     };
-  }, [pageSize]);
+  }, [pageSize, t]);
 
   const handleRowClick = useCallback(
     async (n: NotificationRow) => {
@@ -181,9 +183,9 @@ export function NotificationsPageView({
       const now = new Date().toISOString();
       setUnreadCount(0);
       setNotifications((rows) => rows.map((r) => ({ ...r, read_at: now })));
-      setAnnouncement("All notifications marked as read");
+      setAnnouncement(t("notif.all_read"));
     }
-  }, [unreadCount]);
+  }, [unreadCount, t]);
 
   const handleLoadMore = useCallback(async () => {
     const supabase = supabaseRef.current;
@@ -203,10 +205,10 @@ export function NotificationsPageView({
       setNotifications((rows) => [...rows, ...(data as NotificationRow[])]);
       setHasMore(data.length >= pageSize);
     } else {
-      setAnnouncement("Could not load more notifications. Try again.");
+      setAnnouncement(t("notif.load_more_failed"));
     }
     setLoadingMore(false);
-  }, [loadingMore, pageSize]);
+  }, [loadingMore, pageSize, t]);
 
   const manyWarehouses = Object.keys(warehouseNames).length > 1;
 
@@ -226,8 +228,10 @@ export function NotificationsPageView({
             )}
           />
           {unreadCount > 0
-            ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
-            : "You're all caught up"}
+            ? unreadCount === 1
+              ? t("notif.unread_one", { n: String(unreadCount) })
+              : t("notif.unread_other", { n: String(unreadCount) })
+            : t("notif.caught_up")}
         </p>
         <Button
           variant="outline"
@@ -236,15 +240,15 @@ export function NotificationsPageView({
           disabled={unreadCount === 0}
         >
           <CheckCheck aria-hidden="true" />
-          Mark all read
+          {t("notif.mark_all_read")}
         </Button>
       </div>
 
       {notifications.length === 0 ? (
         <EmptyState
           icon={Inbox}
-          title="You're all caught up"
-          description="Join requests, blockchain updates, and warehouse events will appear here."
+          title={t("notif.caught_up")}
+          description={t("notif.empty_desc")}
         />
       ) : (
         <Card className="overflow-hidden">
@@ -305,7 +309,7 @@ export function NotificationsPageView({
                       n.type === "adjustment_pending" ||
                       n.type === "proof_failed" ? (
                         <span className="text-primary text-sm font-medium">
-                          Review →
+                          {t("dashboard.review")} →
                         </span>
                       ) : null}
                       <span className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2 text-sm">
@@ -331,7 +335,7 @@ export function NotificationsPageView({
                             >
                               ×{n.times}
                             </Badge>
-                            <span>updates in last 10 minutes</span>
+                            <span>{t("notif.updates_recent")}</span>
                           </span>
                         ) : null}
                       </span>

@@ -1,3 +1,5 @@
+"use client";
+
 import { AlertTriangle, Building2, Users, WalletCards } from "lucide-react";
 
 import {
@@ -9,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { ConsoleSummary } from "@/lib/console/types";
+import { useLocale } from "@/components/providers/locale-provider";
 
 function StatCard({
   icon: Icon,
@@ -52,36 +55,50 @@ function StatCard({
 }
 
 export function SummaryCards({ summary }: { summary: ConsoleSummary }) {
+  const { t } = useLocale();
   const needsAttention = summary.proofs.manual_review + summary.proofs.failed;
 
   return (
     <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <StatCard
         icon={Building2}
-        title="Warehouses"
+        title={t("console.warehouses_title")}
         value={summary.warehouses.active}
-        description={`${summary.warehouses.total} total · ${summary.warehouses.suspended} suspended`}
+        description={t("console.warehouses_desc", {
+          total: String(summary.warehouses.total),
+          suspended: String(summary.warehouses.suspended),
+        })}
       />
       <StatCard
         icon={Users}
-        title="Members"
+        title={t("nav./members")}
         value={summary.members}
-        description="across all warehouses"
+        description={t("console.members_desc")}
       />
       <StatCard
         icon={WalletCards}
-        title="Proofs"
+        title={t("console.proofs_title")}
         value={summary.proofs.confirmed}
-        description={`${summary.proofs.total} total · ${summary.proofs.pending + summary.proofs.retrying} in flight`}
+        description={t("console.proofs_desc", {
+          total: String(summary.proofs.total),
+          inflight: String(
+            summary.proofs.pending + summary.proofs.retrying
+          ),
+        })}
       />
       <StatCard
         icon={AlertTriangle}
-        title="Need attention"
+        title={t("console.attention_title")}
         value={needsAttention}
         description={
           summary.proofs.manual_review > 0
-            ? `${summary.proofs.manual_review} manual review · ${summary.proofs.failed} failed`
-            : `${summary.proofs.failed} failed proofs`
+            ? t("console.attention_desc_both", {
+                mr: String(summary.proofs.manual_review),
+                failed: String(summary.proofs.failed),
+              })
+            : t("console.attention_desc_failed", {
+                failed: String(summary.proofs.failed),
+              })
         }
         accent={needsAttention > 0 ? "destructive" : "default"}
       />
