@@ -130,8 +130,12 @@ test.describe.serial("developer console", () => {
       html.includes("sb_secret_"),
       "supabase secret key prefix must never render"
     ).toBe(false);
+    // Stripe-style key: cek prefix PENUH sk_live_/sk_test_, bukan "sk_" telanjang —
+    // font Hanken Grotesk (Stitch redesign v0.5.0) menaruh "sk_" di DOM secara
+    // sah: class CSS-module `...grotesk_<hash>-module__...` dan file font
+    // `HankenGrotesk_400-s.p.<hash>.woff2`. Cek telanjang jadi false positive.
     expect(
-      html.includes("sk_"),
+      html.includes("sk_live_") || html.includes("sk_test_"),
       "stripe-style secret prefix must never render"
     ).toBe(false);
     await page.close();

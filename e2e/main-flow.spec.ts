@@ -163,25 +163,23 @@ test.describe.serial("main-flow", () => {
     });
 
     const page = await ctx.newPage();
+    const submitData = {
+      name: `E2E Warehouse ${RUN}`,
+      companyName: "Chainventory E2E",
+      warehouseType: "general",
+      idempotencyKey,
+      warehouseCode: state.warehouseCode,
+      signature,
+      owner,
+      warehouseCodeHash,
+      deploymentNonce,
+      expiry,
+    };
     const res = await page.request.post(
       "/api/warehouses/create?action=submit",
-      {
-        data: {
-          name: `E2E Warehouse ${RUN}`,
-          companyName: "Chainventory E2E",
-          warehouseType: "general",
-          idempotencyKey,
-          warehouseCode: state.warehouseCode,
-          signature,
-          owner,
-          warehouseCodeHash,
-          deploymentNonce,
-          expiry,
-        },
-      }
+      { data: submitData }
     );
     const body = await res.json();
-    await page.close();
 
     // 200 (confirmed) atau 202 (submitted, finalisasi async).
     expect(body.ok).toBe(true);
@@ -190,18 +188,28 @@ test.describe.serial("main-flow", () => {
     const warehouseId: string = body.data.warehouseId;
     state.warehouseId = warehouseId;
 
-    // Poll sampai contract_address terisi + status confirmed.
-    const deadline = Date.now() + 150_000;
+    // Submit async (202, sejak Fix A4 v0.4.6): konfirmasi TIDAK terjadi sendiri
+    // — lifecycle cron tidak jalan di CI. Client asli melakukan poll dengan
+    // idempotencyKey yang sama → cabang `existing` → finalizeIfMined menunggu
+    // receipt ≤45s lalu mencatat contract_address + confirmed. Uji meniru
+    // persis perilaku client itu sampai contract_address terisi.
+    const deadline = Date.now() + 300_000;
     let wh: {
       contract_address: string | null;
       status: string;
       on_chain_owner_wallet: string | null;
     } | null = null;
     while (Date.now() < deadline) {
+      const retry = await page.request.post(
+        "/api/warehouses/create?action=submit",
+        { data: submitData }
+      );
+      expect((await retry.json()).ok).toBe(true);
       wh = await getWarehouse(warehouseId);
       if (wh?.contract_address && wh?.status === "active") break;
-      await new Promise((r) => setTimeout(r, 3_000));
+      await new Promise((r) => setTimeout(r, 5_000));
     }
+    await page.close();
     expect(wh?.contract_address, JSON.stringify(wh)).toBeTruthy();
     expect(wh?.status).toBe("active");
     expect(wh?.on_chain_owner_wallet?.toLowerCase()).toBe(
