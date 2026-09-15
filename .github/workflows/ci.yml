@@ -103,6 +103,10 @@ jobs:
       # (lib/security/rate-limit.ts) — E2E stock movement ditolak bila kosong.
       UPSTASH_REDIS_REST_URL: ${{ secrets.E2E_UPSTASH_REDIS_REST_URL }}
       UPSTASH_REDIS_REST_TOKEN: ${{ secrets.E2E_UPSTASH_REDIS_REST_TOKEN }}
+      # Console E2E login sebagai dev-verify@chainventory.test — bukan secret
+      # (alamat test fiktif), tapi server butuh di allowlist (lib/console/guard).
+      # serve.mjs hanya membaca ini dari .env.e2e.local yang tak ada di CI.
+      DEVELOPER_ALLOWLIST: dev-verify@chainventory.test
     steps:
       - uses: actions/checkout@v4
 
