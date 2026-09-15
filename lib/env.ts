@@ -95,10 +95,15 @@ export const env = createEnv({
     // CI bypass for builds without live secrets
     SKIP_ENV_VALIDATION: z.preprocess(emptyToUndefined, z.string().optional()),
 
-    // Observability
-    LOG_LEVEL: z
-      .enum(["fatal", "error", "warn", "info", "debug", "trace"])
-      .default("info"),
+    // Observability (emptyToUndefined seperti var opsional lain — write-env
+    // CI menulis LOG_LEVEL= kosong bila secret tak di-set; tanpa preprocess,
+    // enum menolak "" dan server E2E gagal boot sebelum test pertama).
+    LOG_LEVEL: z.preprocess(
+      emptyToUndefined,
+      z
+        .enum(["fatal", "error", "warn", "info", "debug", "trace"])
+        .default("info")
+    ),
   },
 
   client: {
