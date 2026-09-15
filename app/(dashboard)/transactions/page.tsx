@@ -89,10 +89,7 @@ export default async function TransactionsPageRoute({
   if (!active) {
     return (
       <div className="flex flex-col gap-6">
-        <PageHeader
-          title={t("tx.title")}
-          description={t("tx.description")}
-        />
+        <PageHeader title={t("tx.title")} description={t("tx.description")} />
         <NoWarehouse
           title={t("dashboard.empty_title")}
           description={t("tx.no_warehouse_desc")}

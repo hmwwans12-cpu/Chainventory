@@ -82,7 +82,7 @@ export function BulkAddDialog({
   ]);
   const [pasteText, setPasteText] = React.useState("");
   const [step, setStep] = React.useState<"input" | "preview" | "result">(
-    "input"
+    "input",
   );
   const [rows, setRows] = React.useState<DialogRow[]>([]);
   const [invalid, setInvalid] = React.useState<
@@ -118,10 +118,7 @@ export function BulkAddDialog({
         return t("dialogs.bulk.error_initial_invalid");
       default:
         if (message.startsWith("Missing required column(s):")) {
-          const columns = message.replace(
-            "Missing required column(s): ",
-            ""
-          );
+          const columns = message.replace("Missing required column(s): ", "");
           return t("dialogs.bulk.error_missing_columns", { columns });
         }
         return message;
@@ -176,7 +173,7 @@ export function BulkAddDialog({
         parsed.rows.map((r, idx) => ({
           ...r,
           id: `parsed-${idx}-${Date.now()}`,
-        }))
+        })),
       );
       setInvalid(parsedInvalid);
     }
@@ -197,7 +194,7 @@ export function BulkAddDialog({
         description: r.description,
         lowStockThreshold: r.lowStockThreshold,
         initialQuantity: r.initialQty ?? undefined,
-      }))
+      })),
     );
     if (!result.ok) {
       setBusy(false);
@@ -237,10 +234,10 @@ export function BulkAddDialog({
   const updateManualRow = (
     index: number,
     field: keyof BulkProductRow,
-    value: string
+    value: string,
   ) => {
     setManualRows((prev) =>
-      prev.map((r, i) => (i === index ? { ...r, [field]: value } : r))
+      prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)),
     );
   };
 
@@ -335,7 +332,7 @@ export function BulkAddDialog({
                       done || active
                         ? "bg-primary text-primary-foreground"
                         : "bg-card text-muted-foreground border-border border-2",
-                      active && "ring-primary/20 ring-4"
+                      active && "ring-primary/20 ring-4",
                     )}
                   >
                     {done ? (
@@ -351,7 +348,7 @@ export function BulkAddDialog({
                         ? "text-primary font-bold tracking-tight"
                         : done
                           ? "text-primary font-semibold"
-                          : "text-muted-foreground font-medium"
+                          : "text-muted-foreground font-medium",
                     )}
                   >
                     {s.label}
@@ -408,7 +405,7 @@ export function BulkAddDialog({
                         "focus-visible:ring-ring relative flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium whitespace-nowrap transition-all before:absolute before:-inset-y-1 before:content-[''] focus-visible:ring-3 focus-visible:outline-none sm:px-3",
                         active
                           ? "bg-card text-primary font-semibold shadow-(--shadow-card)"
-                          : "text-muted-foreground hover:text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
                       )}
                     >
                       <Icon aria-hidden="true" className="size-3.5 shrink-0" />
@@ -466,7 +463,7 @@ export function BulkAddDialog({
                                 updateManualRow(i, "name", e.target.value)
                               }
                               placeholder={t(
-                                "dialogs.product_form.name_placeholder"
+                                "dialogs.product_form.name_placeholder",
                               )}
                               className="h-9 text-xs"
                             />
@@ -485,7 +482,7 @@ export function BulkAddDialog({
                                 updateManualRow(i, "sku", e.target.value)
                               }
                               placeholder={t(
-                                "dialogs.product_form.sku_placeholder"
+                                "dialogs.product_form.sku_placeholder",
                               )}
                               className="h-9 font-mono text-xs"
                             />
@@ -522,7 +519,7 @@ export function BulkAddDialog({
                                   updateManualRow(i, "category", e.target.value)
                                 }
                                 placeholder={t(
-                                  "dialogs.bulk.placeholder_category"
+                                  "dialogs.bulk.placeholder_category",
                                 )}
                                 className="h-9 text-xs"
                               />
@@ -534,7 +531,7 @@ export function BulkAddDialog({
                                 title={t("dialogs.bulk.delete_row")}
                                 onClick={() =>
                                   setManualRows((prev) =>
-                                    prev.filter((_, idx) => idx !== i)
+                                    prev.filter((_, idx) => idx !== i),
                                   )
                                 }
                                 className="text-muted-foreground hover:text-status-err-fg hover:bg-status-err-bg focus-visible:ring-ring mt-5 shrink-0 rounded-md p-1.5 transition-colors focus-visible:ring-3 focus-visible:outline-none sm:mt-0"
@@ -605,7 +602,7 @@ export function BulkAddDialog({
                       }}
                       className={cn(
                         "border-status-ok-border bg-status-ok-bg/40 hover:bg-status-ok-bg/70 group cursor-pointer rounded-xl border-2 border-dashed p-5 text-center transition-colors",
-                        dragOver && "bg-status-ok-bg ring-primary/30 ring-4"
+                        dragOver && "bg-status-ok-bg ring-primary/30 ring-4",
                       )}
                     >
                       <span className="bg-card border-border text-primary mx-auto mb-2 flex size-10 items-center justify-center rounded-full border shadow-(--shadow-card) transition-transform group-hover:scale-105">
@@ -758,7 +755,7 @@ export function BulkAddDialog({
                     {rows.some((r) => r.initialQty)
                       ? t("dialogs.bulk.summary_with_stock", {
                           count: String(
-                            rows.filter((r) => r.initialQty).length
+                            rows.filter((r) => r.initialQty).length,
                           ),
                         })
                       : ""}
@@ -954,7 +951,7 @@ export function BulkAddDialog({
                           "row,error",
                           ...failedRows.map(
                             (r) =>
-                              `${r.index + 1},"${(r.error ?? "").replace(/"/g, '""')}"`
+                              `${r.index + 1},"${(r.error ?? "").replace(/"/g, '""')}"`,
                           ),
                         ].join("\n");
                         const blob = new Blob([csv], { type: "text/csv" });

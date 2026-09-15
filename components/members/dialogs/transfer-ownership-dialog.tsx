@@ -113,7 +113,7 @@ export function TransferOwnershipDialog({
           setTargetWallet(null);
           setError(result.error);
         }
-      }
+      },
     );
     return () => {
       cancelled = true;
@@ -161,7 +161,7 @@ export function TransferOwnershipDialog({
         setError(
           code === 4001
             ? t("ownership.error_signature_cancelled")
-            : t("ownership.error_wallet_send")
+            : t("ownership.error_wallet_send"),
         );
         return;
       }
@@ -221,9 +221,7 @@ export function TransferOwnershipDialog({
       onCancel={confirming ? handleCancelConfirm : undefined}
       title={t("ownership.title")}
       description={
-        confirming
-          ? t("ownership.review_hint")
-          : t("ownership.choose_hint")
+        confirming ? t("ownership.review_hint") : t("ownership.choose_hint")
       }
       error={error}
       cancelLabel={confirming ? t("ownership.back") : t("ownership.keep")}
@@ -236,7 +234,9 @@ export function TransferOwnershipDialog({
               : t("ownership.submit")
             : t("ownership.continue")
       }
-      primaryDisabled={!targetId || members.length === 0 || (confirming && !reviewReady)}
+      primaryDisabled={
+        !targetId || members.length === 0 || (confirming && !reviewReady)
+      }
       primaryIcon={
         busy ? (
           <Loader2 aria-hidden="true" className="animate-spin" />

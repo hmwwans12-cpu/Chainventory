@@ -19,7 +19,7 @@ vi.mock("next/navigation", () => ({
  */
 function row(
   id: string,
-  patch: Partial<ProductRow> & { status: ProductRow["status"] }
+  patch: Partial<ProductRow> & { status: ProductRow["status"] },
 ): ProductRow {
   return {
     id,
@@ -59,7 +59,7 @@ function namesWith(container: HTMLElement, text: string): string[] {
         el
           .closest("tr, li")
           ?.querySelector("input")
-          ?.getAttribute("aria-label") ?? "?"
+          ?.getAttribute("aria-label") ?? "?",
     );
 }
 
@@ -89,7 +89,7 @@ describe("ProductsPage low-stock parity desktop/mobile", () => {
         products={products}
         query=""
         statusFilter="all"
-      />
+      />,
     );
     const table = container.querySelector("table") as HTMLElement;
     const list = container.querySelector("ul") as HTMLElement;

@@ -146,6 +146,7 @@ deployment BARU ke v2 — warehouse eksisting (kontrak immutable) tetap
 dilayani jalur treasury v1, tidak perlu migrasi data.
 
 Verifikasi pra-switch (tercatat, jangan diulang buta):
+
 1. `eth_getCode` kedua factory non-kosong; `proofRecorder()` keduanya =
    treasury `0x4638…` (terverifikasi on-chain 2026-09-13).
 2. Broadcast receipt `contracts/broadcast/DeployFactory.s.sol/84532/run-latest.json`
@@ -154,14 +155,15 @@ Verifikasi pra-switch (tercatat, jangan diulang buta):
    v2) → bytecode v2 berasal dari source ini.
 
 Langkah:
+
 1. Update `WAREHOUSE_FACTORY_ADDRESS=0x3811b69b5eBC07DDA11DB72412cCd8Ec68a8Bf48`
    di `.env.local` (dev) DAN Vercel Project → Settings → Environment
    Variables → Production (butuh redeploy agar berlaku).
 2. Smoke test: buat warehouse baru di staging/dev → pastikan deployment
    tercatat di registry + E2E main-flow hijau.
 3. Rollback: kembalikan env ke `0x5e44f80585Ec50CBB64a76b3ffD099A156502e10`
-   + redeploy. Warehouse yang sudah terlanjur deploy via v2 TETAP valid
-   (immutable, dilayani jalur member-paid).
+   - redeploy. Warehouse yang sudah terlanjur deploy via v2 TETAP valid
+     (immutable, dilayani jalur member-paid).
 
 Yang TIDAK berubah: kontrak/warehouse lama, treasury signer, proof
 pipeline v1, RLS/RPC, ABI (`out/` kompatibel — interface factory sama).

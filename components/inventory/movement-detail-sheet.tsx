@@ -199,7 +199,7 @@ export function MovementDetailSheet({
                     <span
                       className={cn(
                         "text-sm font-medium",
-                        step.tone === "failed" && "text-destructive"
+                        step.tone === "failed" && "text-destructive",
                       )}
                     >
                       {step.label}
@@ -276,7 +276,9 @@ export function MovementDetailSheet({
                 aria-hidden="true"
                 className="mt-0.5 size-3.5 shrink-0"
               />
-              <p className="text-pretty">{t("movements.proof_failed_notice")}</p>
+              <p className="text-pretty">
+                {t("movements.proof_failed_notice")}
+              </p>
             </div>
           ) : null}
         </div>

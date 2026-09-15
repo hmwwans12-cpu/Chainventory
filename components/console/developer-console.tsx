@@ -54,7 +54,7 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
   const { t } = useLocale();
   const [summary, setSummary] = React.useState<ConsoleSummary>(initial.summary);
   const [manualReview, setManualReview] = React.useState<ManualReviewProof[]>(
-    initial.manualReview
+    initial.manualReview,
   );
   const [errors, setErrors] = React.useState<ErrorEntry[]>(initial.errors);
   const [audit, setAudit] = React.useState<AuditEntry[]>(initial.audit);
@@ -64,7 +64,7 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
   >(null);
   const [depLoading, setDepLoading] = React.useState(false);
   const [treasury, setTreasury] = React.useState<TreasuryData | null>(
-    initial.treasury
+    initial.treasury,
   );
   const [treasuryLoading, setTreasuryLoading] = React.useState(false);
 
@@ -83,7 +83,7 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
     fetch("/api/console/dependencies")
       .then(
         (res) =>
-          res.json() as Promise<{ ok: boolean; data?: DependencyStatus[] }>
+          res.json() as Promise<{ ok: boolean; data?: DependencyStatus[] }>,
       )
       .then((body) => {
         if (cancelled) return;
@@ -104,7 +104,7 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
     let cancelled = false;
     fetch("/api/console/treasury")
       .then(
-        (res) => res.json() as Promise<{ ok: boolean; data?: TreasuryData }>
+        (res) => res.json() as Promise<{ ok: boolean; data?: TreasuryData }>,
       )
       .then((body) => {
         if (cancelled) return;
@@ -134,12 +134,12 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
   React.useEffect(() => {
     let cancelled = false;
     fetch("/api/console/usage")
-      .then(
-        (res) => res.json() as Promise<{ ok: boolean; data?: UsageReport }>
-      )
+      .then((res) => res.json() as Promise<{ ok: boolean; data?: UsageReport }>)
       .then((body) => {
         if (cancelled) return;
-        setUsage(body.ok && body.data ? body.data : { items: [], complete: false });
+        setUsage(
+          body.ok && body.data ? body.data : { items: [], complete: false },
+        );
       })
       .catch(() => {
         if (!cancelled) setUsage({ items: [], complete: false });
@@ -246,9 +246,7 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
       */}
       <Tabs defaultValue="overview">
         <TabsList className="h-11 w-full justify-start overflow-x-auto sm:w-auto">
-          <TabsTrigger value="overview">
-            {t("nav./dashboard")}
-          </TabsTrigger>
+          <TabsTrigger value="overview">{t("nav./dashboard")}</TabsTrigger>
           <TabsTrigger value="health">{t("console.tab_health")}</TabsTrigger>
           <TabsTrigger value="forensics">
             {t("console.tab_forensics")}

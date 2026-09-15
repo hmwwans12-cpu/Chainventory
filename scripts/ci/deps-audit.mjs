@@ -44,7 +44,10 @@ function runAudit() {
   // lewat shell; di ubuntu shell juga default aman untuk argumen statis ini.
   // Fallback ke `corepack pnpm` untuk shell tanpa pnpm di PATH (dev lokal
   // Windows); di CI, pnpm sudah di PATH via pnpm/action-setup.
-  const commands = ["pnpm audit --prod --json", "corepack pnpm audit --prod --json"];
+  const commands = [
+    "pnpm audit --prod --json",
+    "corepack pnpm audit --prod --json",
+  ];
   let lastError = null;
   for (const cmd of commands) {
     try {
@@ -53,7 +56,7 @@ function runAudit() {
           cwd: ROOT,
           encoding: "utf8",
           stdio: ["ignore", "pipe", "pipe"],
-        })
+        }),
       );
     } catch (err) {
       lastError = err;
@@ -90,29 +93,35 @@ for (const advisory of Object.values(advisories)) {
   const severity = advisory.severity || "unknown";
   const title = (advisory.title || "").slice(0, 90);
   if (!GATING.has(severity)) {
-    console.log(` - ${severity}: ${id} (${advisory.module_name}) — reported only`);
+    console.log(
+      ` - ${severity}: ${id} (${advisory.module_name}) — reported only`,
+    );
     continue;
   }
   const entry = allowlist.get(id);
   if (entry && entry.expires >= today) {
     console.log(
-      ` - ${severity}: ${id} (${advisory.module_name}) — ACCEPTED until ${entry.expires}: ${entry.reason.slice(0, 80)}`
+      ` - ${severity}: ${id} (${advisory.module_name}) — ACCEPTED until ${entry.expires}: ${entry.reason.slice(0, 80)}`,
     );
     continue;
   }
   failed = true;
   console.error(`❌ ${severity}: ${id} (${advisory.module_name}) — ${title}`);
   if (entry) {
-    console.error(`   allow-list entry EXPIRED on ${entry.expires}; re-assess, do not blindly extend.`);
+    console.error(
+      `   allow-list entry EXPIRED on ${entry.expires}; re-assess, do not blindly extend.`,
+    );
   } else {
     console.error(
-      "   no allow-list entry; upgrade the dependency or add an assessed entry with expiry to .github/security-allowlist.json"
+      "   no allow-list entry; upgrade the dependency or add an assessed entry with expiry to .github/security-allowlist.json",
     );
   }
 }
 
 if (failed) {
-  console.error("❌ deps-audit: unaccepted high/critical vulnerabilities — see above");
+  console.error(
+    "❌ deps-audit: unaccepted high/critical vulnerabilities — see above",
+  );
   process.exit(1);
 }
 console.log("✅ deps-audit: no unaccepted high/critical vulnerabilities");

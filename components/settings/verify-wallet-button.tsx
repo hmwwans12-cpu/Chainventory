@@ -30,7 +30,11 @@ export function VerifyWalletButton({ address }: { address: string }) {
     const wallet =
       wallets.find((w) => w.address?.toLowerCase() === target) ?? wallets[0];
     if (!wallet?.address) {
-      toast.add({ type: "error", title: t("settings.verify_wallet_failed"), description: t("settings.verify_wallet_unavailable") });
+      toast.add({
+        type: "error",
+        title: t("settings.verify_wallet_failed"),
+        description: t("settings.verify_wallet_unavailable"),
+      });
       return;
     }
     setBusy(true);
@@ -95,7 +99,9 @@ export function VerifyWalletButton({ address }: { address: string }) {
         ) : (
           <ShieldCheck aria-hidden="true" />
         )}
-        {busy ? t("settings.verify_wallet_signing") : t("settings.verify_wallet")}
+        {busy
+          ? t("settings.verify_wallet_signing")
+          : t("settings.verify_wallet")}
       </Button>
     </span>
   );

@@ -78,7 +78,7 @@ export default async function ProductsPageRoute({
     1,
     typeof params.page === "string" && /^\d+$/.test(params.page)
       ? Number(params.page)
-      : 1
+      : 1,
   );
   const PER_PAGE = PRODUCTS_PER_PAGE;
 
@@ -93,7 +93,7 @@ export default async function ProductsPageRoute({
   const listQuery = supabase
     .from("products")
     .select(
-      "id, sku, name, category, unit, status, low_stock_threshold, description, created_at, updated_at, inventory_balances(quantity, version), stock_movements(count)"
+      "id, sku, name, category, unit, status, low_stock_threshold, description, created_at, updated_at, inventory_balances(quantity, version), stock_movements(count)",
     )
     .eq("warehouse_id", active.id)
     .order("updated_at", { ascending: false });
@@ -106,13 +106,13 @@ export default async function ProductsPageRoute({
     // hanya %,() sehingga pola "_" over-match.
     const escaped = q.replace(/[%_\\()]/g, " ");
     listQuery.or(
-      `name.ilike.%${escaped}%,sku.ilike.%${escaped}%,category.ilike.%${escaped}%`
+      `name.ilike.%${escaped}%,sku.ilike.%${escaped}%,category.ilike.%${escaped}%`,
     );
   }
 
   const { data, error } = await listQuery.range(
     (pageNum - 1) * PER_PAGE,
-    pageNum * PER_PAGE - 1
+    pageNum * PER_PAGE - 1,
   );
 
   if (error) {
@@ -141,7 +141,7 @@ export default async function ProductsPageRoute({
   if (q) {
     const escaped = q.replace(/[%_\\()]/g, " ");
     countQuery.or(
-      `name.ilike.%${escaped}%,sku.ilike.%${escaped}%,category.ilike.%${escaped}%`
+      `name.ilike.%${escaped}%,sku.ilike.%${escaped}%,category.ilike.%${escaped}%`,
     );
   }
   const { count: totalCount, error: countError } = await countQuery;
@@ -151,7 +151,7 @@ export default async function ProductsPageRoute({
   if (countError) {
     logger.warn(
       { err: countError.message, warehouseId: active.id },
-      "products count query failed"
+      "products count query failed",
     );
   }
   // Stitch KPI pills: low-stock count (aturan sama dengan dashboard) +
@@ -194,7 +194,7 @@ export default async function ProductsPageRoute({
     ...new Set(
       (categoriesRes.data ?? [])
         .map((r) => (r.category ?? "").trim())
-        .filter((c) => c !== "")
+        .filter((c) => c !== ""),
     ),
   ].sort((a, b) => a.localeCompare(b));
   const safeTotal = countError ? null : (totalCount ?? 0);

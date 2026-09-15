@@ -17,10 +17,6 @@ export async function GET() {
     const report = await getUsageProximity();
     return ok(report);
   } catch (err) {
-    return safeError(
-      err,
-      { route: "console/usage" },
-      "usage probe failed"
-    );
+    return safeError(err, { route: "console/usage" }, "usage probe failed");
   }
 }

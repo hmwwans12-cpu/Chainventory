@@ -81,9 +81,7 @@ export function SummaryCards({ summary }: { summary: ConsoleSummary }) {
         value={summary.proofs.confirmed}
         description={t("console.proofs_desc", {
           total: String(summary.proofs.total),
-          inflight: String(
-            summary.proofs.pending + summary.proofs.retrying
-          ),
+          inflight: String(summary.proofs.pending + summary.proofs.retrying),
         })}
       />
       <StatCard

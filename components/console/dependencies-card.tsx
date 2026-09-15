@@ -27,7 +27,7 @@ function Dot({ ok, configured }: { ok: boolean; configured: boolean }) {
           ? "bg-muted-foreground/40"
           : ok
             ? "bg-primary"
-            : "bg-destructive animate-pulse"
+            : "bg-destructive animate-pulse",
       )}
     />
   );

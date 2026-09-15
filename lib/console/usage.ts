@@ -17,7 +17,8 @@ import { createProofServiceClient } from "@/lib/proof/supabase";
  */
 
 export const SUPABASE_FREE_DB_BYTES = 500 * 1024 * 1024;
-export const SUPABASE_FREE_DB_REF = "paket Supabase Free (±500MB, cek dashboard bila paket berubah)";
+export const SUPABASE_FREE_DB_REF =
+  "paket Supabase Free (±500MB, cek dashboard bila paket berubah)";
 
 export interface UsageItem {
   key: string;
@@ -30,12 +31,18 @@ export interface UsageItem {
   unavailableReason?: string;
 }
 
-export function usagePct(used: number | null, limit: number | null): number | null {
+export function usagePct(
+  used: number | null,
+  limit: number | null,
+): number | null {
   if (used === null || limit === null || limit <= 0 || used < 0) return null;
   return Math.min(100, Math.round((used / limit) * 100));
 }
 
-export function formatUsageValue(value: number, unit: UsageItem["unit"]): string {
+export function formatUsageValue(
+  value: number,
+  unit: UsageItem["unit"],
+): string {
   if (unit === "bytes") {
     if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
     if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
@@ -59,9 +66,11 @@ async function fetchDbSizeBytes(): Promise<number | null> {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query: "select pg_database_size(current_database()) as bytes" }),
+        body: JSON.stringify({
+          query: "select pg_database_size(current_database()) as bytes",
+        }),
         signal: AbortSignal.timeout(MGMT_TIMEOUT_MS),
-      }
+      },
     );
     if (!res.ok) return null;
     const rows = (await res.json()) as Array<{ bytes?: string | number }>;
@@ -97,7 +106,7 @@ async function countRows(): Promise<Record<string, number | null>> {
         logger.warn({ err, table }, "console usage row-count failed");
         return [table, null] as const;
       }
-    })
+    }),
   );
   return Object.fromEntries(entries);
 }
@@ -109,7 +118,10 @@ export interface UsageReport {
 }
 
 export async function getUsageProximity(): Promise<UsageReport> {
-  const [dbBytes, counts] = await Promise.all([fetchDbSizeBytes(), countRows()]);
+  const [dbBytes, counts] = await Promise.all([
+    fetchDbSizeBytes(),
+    countRows(),
+  ]);
   const items: UsageItem[] = [
     {
       key: "supabase_db_size",

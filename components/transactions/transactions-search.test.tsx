@@ -39,7 +39,7 @@ function renderPage(query: string) {
       type={undefined}
       proof={undefined}
       query={query}
-    />
+    />,
   );
 }
 

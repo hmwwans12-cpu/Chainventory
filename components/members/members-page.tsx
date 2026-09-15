@@ -127,13 +127,13 @@ export function MembersPage({
     MemberListItem[],
     { membershipId: string; role: Role }
   >(localMembers, (current, { membershipId, role }) =>
-    current.map((m) => (m.membershipId === membershipId ? { ...m, role } : m))
+    current.map((m) => (m.membershipId === membershipId ? { ...m, role } : m)),
   );
   const [removeTarget, setRemoveTarget] = React.useState<MemberListItem | null>(
-    null
+    null,
   );
   const [leaveTarget, setLeaveTarget] = React.useState<MemberListItem | null>(
-    null
+    null,
   );
   const [transferOpen, setTransferOpen] = React.useState(false);
 
@@ -141,7 +141,7 @@ export function MembersPage({
   // approve, opsi dibatasi matrix canManageRole(actor) — OWNER tidak pernah
   // ditawarkan (AGENT.md §3).
   const [roleChoice, setRoleChoice] = React.useState<Record<string, Role | "">>(
-    {}
+    {},
   );
   const [processing, setProcessing] = React.useState<Set<string>>(new Set());
   const [rejectTarget, setRejectTarget] =
@@ -156,7 +156,7 @@ export function MembersPage({
   const [inviteEmail, setInviteEmail] = React.useState("");
   const inviteEmailRef = React.useRef<HTMLInputElement>(null);
   const [inviteRole, setInviteRole] = React.useState<Role>(
-    assignableRoles[0] ?? "STAFF"
+    assignableRoles[0] ?? "STAFF",
   );
   const [inviteBusy, setInviteBusy] = React.useState(false);
   const [inviteUrl, setInviteUrl] = React.useState<string | null>(null);
@@ -321,7 +321,10 @@ export function MembersPage({
                 if (value !== null) switchWarehouse(value);
               }}
             >
-              <SelectTrigger aria-label={t("settings.warehouse")} className="min-w-36">
+              <SelectTrigger
+                aria-label={t("settings.warehouse")}
+                className="min-w-36"
+              >
                 <SelectValue
                   getLabel={(v) => warehouses.find((w) => w.id === v)?.name}
                 />
@@ -437,9 +440,7 @@ export function MembersPage({
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="invite-role">
-                      {t("settings.role")}
-                    </Label>
+                    <Label htmlFor="invite-role">{t("settings.role")}</Label>
                     <Select
                       value={inviteRole}
                       onValueChange={(value) => {
@@ -654,7 +655,7 @@ export function MembersPage({
                     (r) =>
                       r !== "OWNER" &&
                       canAssignRole(role, r) &&
-                      r !== member.role
+                      r !== member.role,
                   );
                   const roleMeta = ROLE_META[member.role];
                   return (
@@ -757,8 +758,7 @@ export function MembersPage({
                                   variant="ghost"
                                   size="icon-sm"
                                   aria-label={t("members.actions_for_aria", {
-                                    name:
-                                      member.displayName ?? member.email,
+                                    name: member.displayName ?? member.email,
                                   })}
                                 />
                               }
@@ -804,7 +804,7 @@ export function MembersPage({
                 canAssignRole(role, member.role);
               const assignable = ROLES.filter(
                 (r) =>
-                  r !== "OWNER" && canAssignRole(role, r) && r !== member.role
+                  r !== "OWNER" && canAssignRole(role, r) && r !== member.role,
               );
               const roleMeta = ROLE_META[member.role];
               const statusTone =
@@ -977,14 +977,14 @@ export function MembersPage({
         <TransferOwnershipDialog
           warehouseId={warehouseId}
           isDeployed={Boolean(
-            warehouses.find((w) => w.id === warehouseId)?.contractAddress
+            warehouses.find((w) => w.id === warehouseId)?.contractAddress,
           )}
           contractAddress={
             warehouses.find((w) => w.id === warehouseId)?.contractAddress ??
             null
           }
           members={localMembers.filter(
-            (m) => m.userId !== myUserId && m.status === "ACTIVE"
+            (m) => m.userId !== myUserId && m.status === "ACTIVE",
           )}
           open
           onOpenChange={setTransferOpen}

@@ -75,7 +75,7 @@ export function CopyButton({
       className={cn(
         "text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-ring relative inline-flex shrink-0 items-center justify-center rounded-lg transition-colors outline-none before:absolute before:-inset-[9px] before:content-[''] focus-visible:ring-3",
         size === "icon-xs" ? "size-7" : "size-8",
-        className
+        className,
       )}
     >
       <span aria-live="polite" className="sr-only">

@@ -91,7 +91,7 @@ export default async function DashboardPage({
   const warehouseParam =
     typeof params.warehouse === "string" ? params.warehouse : undefined;
   const range = parseRange(
-    typeof params.range === "string" ? params.range : undefined
+    typeof params.range === "string" ? params.range : undefined,
   );
 
   // Tahap 1: konteks user + profil + wallet utama (paralel).
@@ -550,9 +550,7 @@ export default async function DashboardPage({
                     {inviteDone && pendingCount === 0 ? (
                       <span className="bg-primary text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full">
                         <Check aria-hidden="true" className="size-4" />
-                        <span className="sr-only">
-                          {t("dashboard.done")}
-                        </span>
+                        <span className="sr-only">{t("dashboard.done")}</span>
                       </span>
                     ) : (
                       <span className="bg-primary-container text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold">
@@ -610,9 +608,7 @@ export default async function DashboardPage({
                     {movementDone ? (
                       <span className="bg-primary text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full">
                         <Check aria-hidden="true" className="size-4" />
-                        <span className="sr-only">
-                          {t("dashboard.done")}
-                        </span>
+                        <span className="sr-only">{t("dashboard.done")}</span>
                       </span>
                     ) : (
                       <span className="text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-current text-xs font-bold">
@@ -659,7 +655,7 @@ export default async function DashboardPage({
               <CardTitle className="t-headline-sm flex items-center gap-2">
                 <ChartNoAxesCombined
                   aria-hidden="true"
-className="text-primary size-4 shrink-0"
+                  className="text-primary size-4 shrink-0"
                 />
                 {t("dashboard.stock_velocity")}
               </CardTitle>

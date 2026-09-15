@@ -75,12 +75,12 @@ function shortHash(hash: string, head = 10, tail = 8): string {
 
 async function fetchProofs(
   supabase: ReturnType<typeof createSupabaseClient>,
-  warehouseId: string
+  warehouseId: string,
 ): Promise<{ rows: ProofRow[]; total: number; error: boolean }> {
   const { data, error } = await supabase
     .from("proofs")
     .select(
-      "id, movement_id, payload_hash, status, tx_hash, error, attempt_count, confirmation_count, created_at"
+      "id, movement_id, payload_hash, status, tx_hash, error, attempt_count, confirmation_count, created_at",
     )
     .eq("warehouse_id", warehouseId)
     .order("created_at", { ascending: false })
@@ -167,7 +167,7 @@ export function BlockchainPage({
           table: "proofs",
           filter: `warehouse_id=eq.${warehouseId}`,
         },
-        refreshDebounced
+        refreshDebounced,
       )
       .subscribe((status) => {
         reportLive(status === "SUBSCRIBED");
@@ -202,10 +202,10 @@ export function BlockchainPage({
   };
 
   const failedProofs = proofsState.filter(
-    (p) => p.status === "failed" || p.status === "manual_review"
+    (p) => p.status === "failed" || p.status === "manual_review",
   );
   const confirmedCount = proofsState.filter(
-    (p) => p.status === "confirmed"
+    (p) => p.status === "confirmed",
   ).length;
   const pendingCount =
     proofsState.length - confirmedCount - failedProofs.length;
@@ -232,7 +232,7 @@ export function BlockchainPage({
                 "size-1.5 rounded-full",
                 liveStatus === "live"
                   ? "bg-current"
-                  : "animate-pulse bg-current"
+                  : "animate-pulse bg-current",
               )}
             />
             {liveStatus === "live" ? t("chain.live") : t("chain.reconnecting")}
@@ -403,7 +403,7 @@ export function BlockchainPage({
                       "flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 ring-1",
                       terminal
                         ? "ring-warning/40 bg-warning/5"
-                        : "ring-foreground/10"
+                        : "ring-foreground/10",
                     )}
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
@@ -446,7 +446,7 @@ export function BlockchainPage({
                           <RefreshCcw
                             aria-hidden="true"
                             className={cn(
-                              busyProof === proof.id && "animate-spin"
+                              busyProof === proof.id && "animate-spin",
                             )}
                           />
                           {t("chain.retry")}

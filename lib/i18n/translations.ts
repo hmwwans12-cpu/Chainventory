@@ -411,7 +411,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.verify_wallet_hint":
       "Stock movements need a verified wallet. Sign a free message to prove you own this address — no gas fee.",
     "settings.verify_wallet_signing": "Waiting for wallet signature…",
-    "settings.verify_wallet_success": "Wallet verified. You can now record stock movements.",
+    "settings.verify_wallet_success":
+      "Wallet verified. You can now record stock movements.",
     "settings.verify_wallet_failed": "Verification failed. Please try again.",
     "settings.verify_wallet_unavailable":
       "Wallet not available in this browser session. Reconnect and try again.",
@@ -461,7 +462,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.clear_proof_filter": "Clear proof filter",
     "tx.empty_filtered_title": "No transactions match your filters",
     "tx.empty_title": "No transactions yet",
-    "tx.empty_filtered_desc": "Try a different filter combination or search term.",
+    "tx.empty_filtered_desc":
+      "Try a different filter combination or search term.",
     "tx.empty_desc":
       "Stock operations and their blockchain proofs will appear here once you record a movement.",
     "tx.clear_filters": "Clear filters",
@@ -507,7 +509,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "movements.empty_search_title": "No movements match your search",
     "movements.empty_title": "No movements recorded yet",
     "movements.empty_search_desc":
-      "Nothing found for \"{query}\". Try a different reference, reason, or wallet.",
+      'Nothing found for "{query}". Try a different reference, reason, or wallet.',
     "movements.empty_desc":
       "Record your first stock in or stock out to start tracking inventory changes.",
     "movements.record_stock_in": "Record Stock In",
@@ -539,7 +541,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "movements.reject_desc":
       "The movement will not be applied to {product} stock.",
     "movements.reject_reason_label": "Reason (required)",
-    "movements.reject_reason_placeholder": "Why is this movement being rejected?",
+    "movements.reject_reason_placeholder":
+      "Why is this movement being rejected?",
     "movements.timeline_submitted": "Submitted",
     "movements.timeline_awaiting": "Awaiting approval",
     "movements.timeline_awaiting_detail":
@@ -643,7 +646,8 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Enter a valid non-negative number (max 3 decimals).",
     "dialogs.product_form.error_too_large": "Value is too large.",
     "dialogs.product_form.error_too_long": "Value is too long.",
-    "dialogs.product_form.error_description_too_long": "Description is too long.",
+    "dialogs.product_form.error_description_too_long":
+      "Description is too long.",
     // Stock movement dialog
     "dialogs.movement.type_adjustment": "Adjustment",
     "dialogs.movement.type_reversal": "Reversal",
@@ -755,7 +759,8 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Low stock threshold must be a non-negative number (max 3 decimals).",
     "dialogs.bulk.error_initial_invalid":
       "Initial quantity must be greater than 0 (max 3 decimals), or empty.",
-    "dialogs.bulk.error_missing_columns": "Missing required column(s): {columns}.",
+    "dialogs.bulk.error_missing_columns":
+      "Missing required column(s): {columns}.",
     "dialogs.bulk.error_overflow":
       "Only first {count} rows imported. File exceeds 1,000 row limit. Remainder was truncated.",
     "dialogs.bulk.toast_truncated_title": "CSV truncated",
@@ -763,7 +768,8 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Only first 1,000 rows were imported. Your file has more than 1,000 rows.",
     "dialogs.bulk.toast_import_failed_title": "Import failed",
     "dialogs.bulk.toast_success_title": "{count} products added",
-    "dialogs.bulk.toast_success_desc": "All products are now in your inventory.",
+    "dialogs.bulk.toast_success_desc":
+      "All products are now in your inventory.",
     "dialogs.bulk.toast_partial_title":
       "Import partial: {created} added, {failed} failed",
     "dialogs.bulk.toast_partial_desc":
@@ -932,7 +938,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "ownership.review_prefix": "Transfer ownership to",
     "ownership.review_warning":
       "You will become a Manager. Only the new owner can manage ownership from now on. This action cannot be undone by you.",
-    "ownership.select_member_first": "Select a member to transfer ownership to.",
+    "ownership.select_member_first":
+      "Select a member to transfer ownership to.",
     "ownership.toast_title": "Ownership transferred",
     "ownership.toast_desc_offchain": "The selected member is now the owner.",
     "ownership.toast_desc":
@@ -1016,8 +1023,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "analytics.empty_title": "No movements yet",
     "analytics.empty_desc": "No stock movements in the last {n} days.",
     "analytics.chart_aria": "Stock movement chart for the last {n} days",
-    "analytics.chart_caption":
-      "Daily stock in and out for the last {n} days",
+    "analytics.chart_caption": "Daily stock in and out for the last {n} days",
     "analytics.th_day": "Day",
     // Developer console
     "console.warehouses_title": "Warehouses",
@@ -1061,8 +1067,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "console.audit_title": "Audit trail",
     "console.audit_desc": "Append-only log of console actions.",
     "console.audit_empty_title": "No audit entries",
-    "console.audit_empty_desc":
-      "Manual retries and actions will appear here.",
+    "console.audit_empty_desc": "Manual retries and actions will appear here.",
     "console.th_actor": "Actor",
     "console.th_entity": "Entity",
     "console.th_when": "When",
@@ -1158,7 +1163,8 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Some notification data failed to load. Unread counts may be outdated. Refresh to retry.",
     // Shared bits
     "common.copy_error_title": "Could not copy",
-    "common.copy_error_desc": "Copy failed. Select the text manually and retry.",
+    "common.copy_error_desc":
+      "Copy failed. Select the text manually and retry.",
     "common.copied": "Copied!",
     "common.load_more": "Load more",
     "common.loading": "Loading…",
@@ -1235,7 +1241,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "products.empty_archived_title": "No archived products",
     "products.empty_title": "Your inventory is empty",
     "products.empty_search_desc":
-      "Nothing matches \"{query}\". Try a different search or clear filters.",
+      'Nothing matches "{query}". Try a different search or clear filters.',
     "products.empty_archived_desc":
       "Nothing here with this filter. Clear it to see everything.",
     "products.empty_desc":
@@ -1247,7 +1253,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "products.export": "Export",
     "products.archive": "Archive",
     "products.clear": "Clear",
-    "products.select_all_aria": "Toggle selection for all products on this page",
+    "products.select_all_aria":
+      "Toggle selection for all products on this page",
     "products.col_product": "Product",
     "products.col_unit": "Unit",
     "products.col_stock": "Current Stock",
@@ -1265,7 +1272,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "products.actions_for_aria": "Actions for {name}",
     "products.view": "View",
     "products.edit": "Edit",
-    "products.count_failed": "Unable to count products. Try refreshing the page.",
+    "products.count_failed":
+      "Unable to count products. Try refreshing the page.",
     "products.bulk_archive_title": "Archive {count} product(s)?",
     "products.bulk_archive_desc":
       "Archiving moves these products out of active inventory. This action cannot be undone. Products are hidden from stock; their movements and audits remain.",
@@ -1680,7 +1688,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.verify_wallet_hint":
       "Pergerakan stok butuh dompet terverifikasi. Tandatangani pesan gratis untuk membuktikan kamu pemilik alamat ini — tanpa gas fee.",
     "settings.verify_wallet_signing": "Menunggu tanda tangan wallet…",
-    "settings.verify_wallet_success": "Dompet terverifikasi. Kamu kini bisa mencatat pergerakan stok.",
+    "settings.verify_wallet_success":
+      "Dompet terverifikasi. Kamu kini bisa mencatat pergerakan stok.",
     "settings.verify_wallet_failed": "Verifikasi gagal. Silakan coba lagi.",
     "settings.verify_wallet_unavailable":
       "Dompet tidak tersedia di sesi browser ini. Sambungkan ulang dan coba lagi.",
@@ -1728,7 +1737,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.clear_type_filter": "Hapus filter tipe",
     "tx.chip_status": "Status: {status}",
     "tx.clear_proof_filter": "Hapus filter bukti",
-    "tx.empty_filtered_title": "Tidak ada transaksi yang cocok dengan filter Anda",
+    "tx.empty_filtered_title":
+      "Tidak ada transaksi yang cocok dengan filter Anda",
     "tx.empty_title": "Belum ada transaksi",
     "tx.empty_filtered_desc": "Coba kombinasi filter atau kata kunci lain.",
     "tx.empty_desc":
@@ -1773,10 +1783,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "movements.export_csv": "Ekspor CSV",
     "movements.suspended_banner":
       "Gudang Ditangguhkan: mutasi inventaris sementara tidak tersedia.",
-    "movements.empty_search_title": "Tidak ada pergerakan yang cocok dengan pencarian Anda",
+    "movements.empty_search_title":
+      "Tidak ada pergerakan yang cocok dengan pencarian Anda",
     "movements.empty_title": "Belum ada pergerakan tercatat",
     "movements.empty_search_desc":
-      "Tidak ditemukan hasil untuk \"{query}\". Coba referensi, alasan, atau wallet lain.",
+      'Tidak ditemukan hasil untuk "{query}". Coba referensi, alasan, atau wallet lain.',
     "movements.empty_desc":
       "Catat stok masuk atau stok keluar pertama Anda untuk mulai melacak perubahan inventaris.",
     "movements.record_stock_in": "Catat Stok Masuk",
@@ -1797,7 +1808,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "movements.load_more_failed_desc":
       "Permintaan gagal. Coba lagi untuk mengambil halaman berikutnya.",
     "movements.approve_toast_title": "Pergerakan disetujui",
-    "movements.approve_toast_desc": "{type} · {quantity} {unit} untuk {product}.",
+    "movements.approve_toast_desc":
+      "{type} · {quantity} {unit} untuk {product}.",
     "movements.approve_title": "Setujui {type}?",
     "movements.approve_desc":
       "Ini akan mengubah saldo stok {product} sebesar {quantity} {unit}.",
@@ -1912,7 +1924,8 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Masukkan angka non-negatif yang valid (maks 3 desimal).",
     "dialogs.product_form.error_too_large": "Nilai terlalu besar.",
     "dialogs.product_form.error_too_long": "Nilai terlalu panjang.",
-    "dialogs.product_form.error_description_too_long": "Deskripsi terlalu panjang.",
+    "dialogs.product_form.error_description_too_long":
+      "Deskripsi terlalu panjang.",
     // Dialog pergerakan stok
     "dialogs.movement.type_adjustment": "Penyesuaian",
     "dialogs.movement.type_reversal": "Reversal",
@@ -2004,12 +2017,12 @@ export const translations: Record<Locale, Record<string, string>> = {
       "Jelaskan mengapa pergerakan ini harus dibatalkan…",
     "dialogs.movement.reason_ph_out":
       "Mengapa stok ini dikeluarkan? (opsional)",
-    "dialogs.movement.reason_ph_in":
-      "Mengapa stok ini ditambahkan? (opsional)",
+    "dialogs.movement.reason_ph_in": "Mengapa stok ini ditambahkan? (opsional)",
     "dialogs.movement.reason_hint":
       "Ditambahkan ke catatan audit anti-rusak di Base Sepolia.",
     "dialogs.movement.discard": "Buang",
-    "dialogs.movement.submit_adjustment": "Ajukan Penyesuaian untuk Persetujuan",
+    "dialogs.movement.submit_adjustment":
+      "Ajukan Penyesuaian untuk Persetujuan",
     "dialogs.movement.submit_reversal": "Ajukan Reversal",
     "dialogs.movement.submit_record_in": "Catat Stok Masuk",
     "dialogs.movement.submit_record_out": "Catat Stok Keluar",
@@ -2105,10 +2118,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dialogs.bulk.import_count_other": "Impor {count} produk",
     "dialogs.bulk.result_success_title":
       "Impor selesai: {created} produk ditambahkan",
-    "dialogs.bulk.result_fail_title": "Impor gagal: tidak ada produk ditambahkan",
+    "dialogs.bulk.result_fail_title":
+      "Impor gagal: tidak ada produk ditambahkan",
     "dialogs.bulk.result_partial_title":
       "Impor selesai: {created} ditambahkan, {failed} perlu perhatian",
-    "dialogs.bulk.result_fail_desc": "Periksa kesalahan di bawah dan coba lagi.",
+    "dialogs.bulk.result_fail_desc":
+      "Periksa kesalahan di bawah dan coba lagi.",
     "dialogs.bulk.result_partial_desc":
       "Tinjau baris gagal di bawah. Impor yang berhasil sudah tersimpan.",
     "dialogs.bulk.failed_attention_one": "{count} baris perlu perhatian:",
@@ -2206,9 +2221,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "ownership.review_prefix": "Transfer kepemilikan ke",
     "ownership.review_warning":
       "Anda akan menjadi Manajer. Hanya pemilik baru yang dapat mengelola kepemilikan mulai sekarang. Tindakan ini tidak dapat Anda batalkan.",
-    "ownership.select_member_first": "Pilih anggota untuk transfer kepemilikan.",
+    "ownership.select_member_first":
+      "Pilih anggota untuk transfer kepemilikan.",
     "ownership.toast_title": "Kepemilikan dialihkan",
-    "ownership.toast_desc_offchain": "Anggota yang dipilih kini menjadi pemilik.",
+    "ownership.toast_desc_offchain":
+      "Anggota yang dipilih kini menjadi pemilik.",
     "ownership.toast_desc":
       "Kepemilikan berpindah on-chain dan catatan aplikasi kini sinkron.",
     "ownership.onchain_note":
@@ -2288,7 +2305,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "analytics.units_count": "{n} unit",
     "analytics.in_out": "Masuk {in} · Keluar {out}",
     "analytics.empty_title": "Belum ada pergerakan",
-    "analytics.empty_desc": "Tidak ada pergerakan stok dalam {n} hari terakhir.",
+    "analytics.empty_desc":
+      "Tidak ada pergerakan stok dalam {n} hari terakhir.",
     "analytics.chart_aria": "Grafik pergerakan stok {n} hari terakhir",
     "analytics.chart_caption":
       "Stok masuk dan keluar harian selama {n} hari terakhir",
@@ -2303,7 +2321,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "console.attention_desc_both": "{mr} tinjauan manual · {failed} gagal",
     "console.attention_desc_failed": "{failed} gagal",
     "console.review_title": "Antrean tinjauan manual",
-    "console.review_desc": "Bukti yang perlu tindakan manual untuk diantrekan ulang.",
+    "console.review_desc":
+      "Bukti yang perlu tindakan manual untuk diantrekan ulang.",
     "console.review_empty_title": "Tidak ada tinjauan manual",
     "console.review_empty_desc":
       "Bukti gagal yang kehabisan percobaan akan muncul di sini.",
@@ -2387,7 +2406,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "console.connect_wallet_first": "Hubungkan dompet terlebih dahulu",
     "console.claiming": "Mengklaim…",
     "console.claim_amount": "Klaim {amount} Base Sepolia",
-    "console.connect_in_settings": "Hubungkan dompet di Pengaturan untuk mengklaim.",
+    "console.connect_in_settings":
+      "Hubungkan dompet di Pengaturan untuk mengklaim.",
     "console.view_claim_aria": "Lihat transaksi klaim di BaseScan",
     "console.tx_prefix": "Tx:",
     "console.usage_title": "Proximitas pemakaian",
@@ -2472,7 +2492,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "products.toast_bulk_updated_title": "{count} produk diperbarui",
     "products.toast_bulk_updated_desc": "Kategori → {category}",
     "products.toast_partial_update_title": "Pembaruan sebagian",
-    "products.toast_partial_update_desc": "{updated} diperbarui, {failed} gagal.",
+    "products.toast_partial_update_desc":
+      "{updated} diperbarui, {failed} gagal.",
     "products.filter_all": "Semua",
     "products.toast_view_saved_title": "Tampilan “{name}” disimpan",
     "products.toast_view_saved_desc": "Akses cepat di bawah.",
@@ -2510,7 +2531,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "products.empty_archived_title": "Tidak ada produk yang diarsipkan",
     "products.empty_title": "Inventaris Anda kosong",
     "products.empty_search_desc":
-      "Tidak ada yang cocok dengan \"{query}\". Coba pencarian lain atau hapus filter.",
+      'Tidak ada yang cocok dengan "{query}". Coba pencarian lain atau hapus filter.',
     "products.empty_archived_desc":
       "Tidak ada di sini dengan filter ini. Hapus filter untuk melihat semuanya.",
     "products.empty_desc":
@@ -2522,7 +2543,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "products.export": "Ekspor",
     "products.archive": "Arsipkan",
     "products.clear": "Hapus",
-    "products.select_all_aria": "Alihkan pilihan untuk semua produk di halaman ini",
+    "products.select_all_aria":
+      "Alihkan pilihan untuk semua produk di halaman ini",
     "products.col_product": "Produk",
     "products.col_unit": "Satuan",
     "products.col_stock": "Stok Saat Ini",
@@ -2560,7 +2582,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 export function translate(
   locale: Locale,
   key: string,
-  params?: Record<string, string>
+  params?: Record<string, string>,
 ): string {
   const localized = translations[locale]?.[key];
   const fallback = translations.en[key];

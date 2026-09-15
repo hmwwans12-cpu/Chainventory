@@ -18,12 +18,7 @@ export function SignOutButton({
 }: {
   label?: string;
   variant?:
-    | "default"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | "destructive"
-    | "link";
+    "default" | "outline" | "secondary" | "ghost" | "destructive" | "link";
   showIcon?: boolean;
 }) {
   const { t } = useLocale();

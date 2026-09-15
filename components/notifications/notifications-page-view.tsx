@@ -52,7 +52,7 @@ export function NotificationsPageView({
   const [warehouseNames, setWarehouseNames] = useState(initialWarehouseNames);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(
-    initialNotifications.length >= pageSize
+    initialNotifications.length >= pageSize,
   );
   const [flashId, setFlashId] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
@@ -87,14 +87,14 @@ export function NotificationsPageView({
       ]);
       if (cancelled) return;
       const added = newRows.find(
-        (r) => !notificationsRef.current.some((n) => n.id === r.id)
+        (r) => !notificationsRef.current.some((n) => n.id === r.id),
       );
       setUnreadCount(newCount);
       setNotifications(newRows);
       setWarehouseNames(
         Object.fromEntries(
-          (names.data ?? []).map((w) => [w.id, w.name as string])
-        )
+          (names.data ?? []).map((w) => [w.id, w.name as string]),
+        ),
       );
       setHasMore(newRows.length >= limit);
       if (added) {
@@ -127,7 +127,7 @@ export function NotificationsPageView({
           },
           () => {
             void refreshFromRealtime();
-          }
+          },
         )
         // M-07: UPDATE (mark-as-read di tab lain) ikut disinkronkan —
         // lewat debounce yang sama (burst mark-all-read = 1 refetch).
@@ -141,7 +141,7 @@ export function NotificationsPageView({
           },
           () => {
             refreshFromRealtime();
-          }
+          },
         )
         .subscribe();
     }
@@ -164,14 +164,14 @@ export function NotificationsPageView({
           setUnreadCount((c) => Math.max(0, c - 1));
           setNotifications((rows) =>
             rows.map((r) =>
-              r.id === n.id ? { ...r, read_at: new Date().toISOString() } : r
-            )
+              r.id === n.id ? { ...r, read_at: new Date().toISOString() } : r,
+            ),
           );
         }
       }
       router.push(notificationHref(n));
     },
-    [router]
+    [router],
   );
 
   const handleMarkAllRead = useCallback(async () => {
@@ -194,12 +194,12 @@ export function NotificationsPageView({
     const { data, error } = await supabase
       .from("notifications")
       .select(
-        "id, warehouse_id, type, title, body, payload, dedup_key, times, created_at, last_event_at, read_at"
+        "id, warehouse_id, type, title, body, payload, dedup_key, times, created_at, last_event_at, read_at",
       )
       .order("last_event_at", { ascending: false })
       .range(
         notificationsRef.current.length,
-        notificationsRef.current.length + pageSize - 1
+        notificationsRef.current.length + pageSize - 1,
       );
     if (!error && data) {
       setNotifications((rows) => [...rows, ...(data as NotificationRow[])]);
@@ -224,7 +224,7 @@ export function NotificationsPageView({
             aria-hidden="true"
             className={cn(
               "size-2 rounded-full",
-              unreadCount > 0 ? "bg-primary" : "bg-muted-foreground/40"
+              unreadCount > 0 ? "bg-primary" : "bg-muted-foreground/40",
             )}
           />
           {unreadCount > 0
@@ -268,7 +268,7 @@ export function NotificationsPageView({
                       "group hover:bg-surface-container/60 focus-visible:bg-surface-container focus-visible:ring-ring flex w-full items-start gap-4 px-4 py-4 text-left transition-colors focus-visible:ring-3 focus-visible:outline-none sm:px-6",
                       unread && "bg-primary/[0.04] hover:bg-primary/[0.07]",
                       flashId === n.id &&
-                        "motion-safe:animate-[notif-flash_1.6s_ease-out]"
+                        "motion-safe:animate-[notif-flash_1.6s_ease-out]",
                     )}
                   >
                     <span
@@ -281,7 +281,7 @@ export function NotificationsPageView({
                         meta?.tone === "danger" &&
                           "bg-status-err-bg text-status-err-fg border-status-err-border",
                         (!meta || meta.tone === "default") &&
-                          "bg-surface-container text-muted-foreground border-transparent"
+                          "bg-surface-container text-muted-foreground border-transparent",
                       )}
                       aria-hidden="true"
                     >
@@ -295,7 +295,7 @@ export function NotificationsPageView({
                       <span
                         className={cn(
                           "text-foreground t-body-md",
-                          unread ? "font-semibold" : "font-normal"
+                          unread ? "font-semibold" : "font-normal",
                         )}
                       >
                         {n.title}

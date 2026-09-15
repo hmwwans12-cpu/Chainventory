@@ -59,7 +59,7 @@ export default async function MembersPageRoute({
   const { data, error } = await supabase
     .from("memberships")
     .select(
-      "id, user_id, role, status, joined_at, users(id, email, display_name, avatar_url)"
+      "id, user_id, role, status, joined_at, users(id, email, display_name, avatar_url)",
     )
     .eq("warehouse_id", active.id)
     .order("joined_at", { ascending: true });
@@ -82,7 +82,7 @@ export default async function MembersPageRoute({
 
   const members: MemberListItem[] = (data ?? []).map((row) => {
     const profile = embedOne<{ email: string; display_name: string | null }>(
-      row.users
+      row.users,
     );
     return {
       membershipId: row.id,
@@ -113,7 +113,7 @@ export default async function MembersPageRoute({
   const pendingRequests: PendingJoinRequest[] = (pendingRows ?? []).map(
     (row) => {
       const profile = embedOne<{ email: string; display_name: string | null }>(
-        row.users
+        row.users,
       );
       return {
         requestId: row.id,
@@ -122,7 +122,7 @@ export default async function MembersPageRoute({
         email: profile?.email ?? t("members.unknown"),
         requestedAt: row.created_at,
       };
-    }
+    },
   );
 
   return (

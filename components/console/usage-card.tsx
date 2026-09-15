@@ -39,7 +39,7 @@ function Bar({ pct }: { pct: number | null }) {
       <span
         className={cn(
           "block h-full rounded-full",
-          pct !== null && pct >= 80 ? "bg-destructive" : "bg-primary"
+          pct !== null && pct >= 80 ? "bg-destructive" : "bg-primary",
         )}
         style={{ width: `${pct ?? 0}%` }}
       />
@@ -57,7 +57,9 @@ function Row({ item }: { item: UsageItem }) {
         ? "Privy MAU"
         : item.key === "upstash_commands"
           ? t("console.usage_upstash")
-          : (TABLE_LABELS[item.key] ? t(TABLE_LABELS[item.key]) : item.key);
+          : TABLE_LABELS[item.key]
+            ? t(TABLE_LABELS[item.key])
+            : item.key;
   return (
     <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3">
       <span className="text-foreground min-w-0 text-sm font-medium">

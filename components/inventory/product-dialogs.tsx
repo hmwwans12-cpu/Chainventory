@@ -137,7 +137,8 @@ export function CreateProductDialog({
                 <DialogDescription className="text-xs">
                   {t("dialogs.create_product.description", {
                     warehouse:
-                      warehouseName ?? t("dialogs.create_product.this_warehouse"),
+                      warehouseName ??
+                      t("dialogs.create_product.this_warehouse"),
                   })}
                 </DialogDescription>
               </div>
@@ -389,7 +390,7 @@ export function ProductDetailSheet({
 }) {
   const { t } = useLocale();
   const [movements, setMovements] = React.useState<StockMovementRow[] | null>(
-    null
+    null,
   );
   const [loading, setLoading] = React.useState(true);
   // NFE-15: reset + error eksplisit tiap ganti produk — tanpa ini produk B
@@ -403,7 +404,7 @@ export function ProductDetailSheet({
     supabase
       .from("stock_movements")
       .select(
-        "id, movement_type, quantity, reason, status, actor_wallet, created_at"
+        "id, movement_type, quantity, reason, status, actor_wallet, created_at",
       )
       .eq("warehouse_id", warehouseId)
       .eq("product_id", product.id)
@@ -424,7 +425,7 @@ export function ProductDetailSheet({
               actorWallet: row.actor_wallet,
               created_at: row.created_at,
               expectedBalanceVersion: null,
-            }))
+            })),
           );
         } else {
           setLoadError(true);

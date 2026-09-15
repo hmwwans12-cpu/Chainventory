@@ -52,7 +52,7 @@ function renderPage(query: string) {
       products={[]}
       initialMovements={[]}
       query={query}
-    />
+    />,
   );
 }
 
@@ -118,10 +118,12 @@ describe("MovementsPage search", () => {
             initialMovements={[]}
             query="PO-9"
           />
-        </LocaleProvider>
+        </LocaleProvider>,
       );
       expect(
-        screen.getByText("Tidak ada pergerakan yang cocok dengan pencarian Anda")
+        screen.getByText(
+          "Tidak ada pergerakan yang cocok dengan pencarian Anda",
+        ),
       ).toBeTruthy();
       expect(screen.queryByText(/\{query\}/)).toBeNull();
     } finally {

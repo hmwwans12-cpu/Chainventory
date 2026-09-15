@@ -45,17 +45,19 @@ export interface OwnershipTransferExpectation {
 }
 
 export type OwnershipTransferVerdict =
-  | { ok: true; newOwner: string }
-  | { ok: false; reason: string };
+  { ok: true; newOwner: string } | { ok: false; reason: string };
 
 export function verifyOwnershipTransferTx(
   tx: OwnershipTransferTx,
-  expected: OwnershipTransferExpectation
+  expected: OwnershipTransferExpectation,
 ): OwnershipTransferVerdict {
   if (tx.status !== "success") {
     return { ok: false, reason: "transaction not successful" };
   }
-  if (!tx.to || tx.to.toLowerCase() !== expected.contractAddress.toLowerCase()) {
+  if (
+    !tx.to ||
+    tx.to.toLowerCase() !== expected.contractAddress.toLowerCase()
+  ) {
     return { ok: false, reason: "transaction targets another contract" };
   }
   let decoded: { functionName: string; args: readonly unknown[] };

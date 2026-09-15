@@ -25,7 +25,7 @@ describe("date formatters lock locale + Asia/Jakarta timezone", () => {
     (tz) => {
       process.env.TZ = tz;
       expect(formatDate(EDGE_ISO)).toBe("Sep 13, 2026");
-    }
+    },
   );
 
   it.each(["UTC", "Pacific/Kiritimati"])(
@@ -33,7 +33,7 @@ describe("date formatters lock locale + Asia/Jakarta timezone", () => {
     (tz) => {
       process.env.TZ = tz;
       expect(formatDateTime(EDGE_ISO)).toBe("Sep 13, 01:30 AM");
-    }
+    },
   );
 
   it.each(["UTC", "America/New_York"])(
@@ -41,7 +41,7 @@ describe("date formatters lock locale + Asia/Jakarta timezone", () => {
     (tz) => {
       process.env.TZ = tz;
       expect(formatChartDay("2026-09-13")).toBe("Sep 13");
-    }
+    },
   );
 
   it("invalid input tetap em-dash", () => {

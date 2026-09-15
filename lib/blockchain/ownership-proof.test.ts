@@ -41,7 +41,7 @@ describe("verifyOwnershipTransferTx", () => {
 
   it("menolak receipt gagal", () => {
     expect(
-      verifyOwnershipTransferTx(tx({ status: "reverted" }), expected)
+      verifyOwnershipTransferTx(tx({ status: "reverted" }), expected),
     ).toEqual({ ok: false, reason: "transaction not successful" });
   });
 
@@ -49,22 +49,22 @@ describe("verifyOwnershipTransferTx", () => {
     expect(
       verifyOwnershipTransferTx(
         tx({ to: "0x9999999999999999999999999999999999999999" }),
-        expected
-      )
+        expected,
+      ),
     ).toEqual({ ok: false, reason: "transaction targets another contract" });
   });
 
   it("menolak fungsi lain", () => {
     expect(
       verifyOwnershipTransferTx(tx({ input: "0x12345678" as Hex }), expected)
-        .ok
+        .ok,
     ).toBe(false);
   });
 
   it("menolak pengirim bukan owner", () => {
     const r = verifyOwnershipTransferTx(
       tx({ from: "0x9999999999999999999999999999999999999999" }),
-      expected
+      expected,
     );
     expect(r).toEqual({
       ok: false,
