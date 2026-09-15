@@ -54,7 +54,6 @@ for (const file of SRC_DIRS.flatMap((d) => walk(d))) {
     }
   }
   if (DYNAMIC_RE.test(content)) {
-    dynamic++;
     console.warn(`⚠️  dynamic t() call in ${rel} (tidak bisa dicek statis)`);
   }
 }

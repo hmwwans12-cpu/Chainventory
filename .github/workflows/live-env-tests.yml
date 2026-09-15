@@ -67,3 +67,21 @@ jobs:
       - name: Run live-env contract tests
         run: pnpm exec vitest run contract --reporter=verbose
         timeout-minutes: 30
+
+  # Temuan audit #30: tanpa ini, kegagalan job TERJADWAL itu sendiri
+  # (runner error, outage) tidak pernah ter-alert — jaring pengaman
+  # mingguan bisa diam-diam berhenti jalan. Opt-in via secret
+  # SLACK_WEBHOOK_URL (tidak ada secret = tidak ada alert, tanpa gagal).
+  notify:
+    runs-on: ubuntu-latest
+    needs: [contract-tests]
+    if: always() && github.event_name == 'schedule' && needs.contract-tests.result == 'failure'
+    steps:
+      - name: Slack alert on scheduled failure
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":":rotating_light: live-env-tests (scheduled) FAILED on main. Cek Actions untuk detail."}' \
+            "$SLACK_WEBHOOK_URL"

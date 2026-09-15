@@ -157,3 +157,20 @@ jobs:
       - uses: actions/setup-node@v4
       - name: Audit production dependencies
         run: pnpm deps:audit
+
+  # Temuan audit #30: alert bila run TERJADWAL (cron Senin) gagal — tanpa
+  # ini kegagalan job scheduled (runner error/outage) tidak terdeteksi.
+  # Opt-in via secret SLACK_WEBHOOK_URL; hanya untuk event schedule.
+  notify-scheduled-failure:
+    runs-on: ubuntu-latest
+    needs: [quality, deps-audit]
+    if: always() && github.event_name == 'schedule' && (needs.quality.result == 'failure' || needs.deps-audit.result == 'failure')
+    steps:
+      - name: Slack alert on scheduled failure
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":":rotating_light: CI scheduled run FAILED on main. Cek Actions untuk detail."}' \
+            "$SLACK_WEBHOOK_URL"

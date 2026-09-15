@@ -19,6 +19,7 @@ import {
 import { SummaryCards } from "@/components/console/summary-cards";
 import { DependenciesCard } from "@/components/console/dependencies-card";
 import { TreasuryCard } from "@/components/console/treasury-card";
+import { UsageCard } from "@/components/console/usage-card";
 import { ManualReviewTable } from "@/components/console/manual-review-table";
 import { ErrorSummary } from "@/components/console/error-summary";
 import { AuditTrail } from "@/components/console/audit-trail";
@@ -32,6 +33,7 @@ import type {
   ManualReviewProof,
   TreasuryData,
 } from "@/lib/console/types";
+import type { UsageReport } from "@/lib/console/usage";
 
 function shortWallet(wallet: string): string {
   return `${wallet.slice(0, 6)}\u2026${wallet.slice(-4)}`;
@@ -72,6 +74,9 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
 
   const [depsTick, setDepsTick] = React.useState(0);
   const [treasuryTick, setTreasuryTick] = React.useState(0);
+  const [usage, setUsage] = React.useState<UsageReport | null>(null);
+  const [usageLoading, setUsageLoading] = React.useState(false);
+  const [usageTick, setUsageTick] = React.useState(0);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -124,6 +129,32 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
   const refreshTreasury = () => {
     setTreasuryLoading(true);
     setTreasuryTick((t) => t + 1);
+  };
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("/api/console/usage")
+      .then(
+        (res) => res.json() as Promise<{ ok: boolean; data?: UsageReport }>
+      )
+      .then((body) => {
+        if (cancelled) return;
+        setUsage(body.ok && body.data ? body.data : { items: [], complete: false });
+      })
+      .catch(() => {
+        if (!cancelled) setUsage({ items: [], complete: false });
+      })
+      .finally(() => {
+        if (!cancelled) setUsageLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [usageTick]);
+
+  const refreshUsage = () => {
+    setUsageLoading(true);
+    setUsageTick((t) => t + 1);
   };
 
   const loadLive = React.useCallback(async () => {
@@ -249,6 +280,11 @@ export function DeveloperConsole({ initial }: { initial: ConsoleInitialData }) {
             dependencies={dependencies}
             onRefresh={refreshDependencies}
             loading={depLoading}
+          />
+          <UsageCard
+            report={usage}
+            onRefresh={refreshUsage}
+            loading={usageLoading}
           />
         </TabsContent>
 

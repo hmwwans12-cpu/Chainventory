@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { toast } from "@/components/ui/toast";
+import { isLowStock } from "@/lib/inventory/low-stock";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -434,10 +435,13 @@ export function ProductDetailSheet({
     };
   }, [open, warehouseId, product.id]);
 
-  const low =
-    product.quantity != null &&
-    Number(product.lowStockThreshold) > 0 &&
-    Number(product.quantity) <= Number(product.lowStockThreshold);
+  // FE-23 + temuan audit #19: satu aturan dengan tabel desktop, card
+  // mobile, dan dashboard — jangan inline ulang.
+  const low = isLowStock({
+    status: product.status,
+    quantity: product.quantity,
+    threshold: product.lowStockThreshold,
+  });
 
   const statusTone = (
     product.status === "archived" ? "inactive" : low ? "warning" : "success"
