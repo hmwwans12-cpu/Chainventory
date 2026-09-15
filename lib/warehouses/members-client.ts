@@ -16,7 +16,7 @@ export const MEMBERSHIP_ROUTE = "/api/warehouses/membership";
 
 export async function changeMemberRole(
   values: { warehouseId: string; userId: string; role: Role },
-  fetcher: Fetcher = fetch,
+  fetcher: Fetcher = fetch
 ): Promise<ApiResult<unknown>> {
   const { status, json } = await sendJson(
     `${MEMBERSHIP_ROUTE}?action=change_role`,
@@ -27,21 +27,21 @@ export async function changeMemberRole(
         role: values.role,
       },
     },
-    fetcher,
+    fetcher
   );
   return parseSuccess<unknown>(status, json);
 }
 
 export async function transferOwnership(
   values: { warehouseId: string; newOwnerId: string },
-  fetcher: Fetcher = fetch,
+  fetcher: Fetcher = fetch
 ): Promise<ApiResult<unknown>> {
   const { status, json } = await sendJson(
     `${MEMBERSHIP_ROUTE}?action=transfer`,
     {
       body: { warehouseId: values.warehouseId, newOwnerId: values.newOwnerId },
     },
-    fetcher,
+    fetcher
   );
   return parseSuccess<unknown>(status, json);
 }
@@ -52,21 +52,21 @@ export async function transferOwnership(
  */
 export async function previewTransferTarget(
   values: { warehouseId: string; newOwnerId: string },
-  fetcher: Fetcher = fetch,
+  fetcher: Fetcher = fetch
 ): Promise<ApiResult<{ wallet: string }>> {
   const { status, json } = await sendJson(
     `${MEMBERSHIP_ROUTE}?action=transfer_preview`,
     {
       body: { warehouseId: values.warehouseId, newOwnerId: values.newOwnerId },
     },
-    fetcher,
+    fetcher
   );
   return parseSuccess<{ wallet: string }>(status, json);
 }
 
 export async function confirmOwnershipTransfer(
   values: { warehouseId: string; newOwnerId: string; txHash: string },
-  fetcher: Fetcher = fetch,
+  fetcher: Fetcher = fetch
 ): Promise<ApiResult<{ newOwnerWallet: string }>> {
   const { status, json } = await sendJson(
     `${MEMBERSHIP_ROUTE}?action=transfer_confirm`,
@@ -77,31 +77,31 @@ export async function confirmOwnershipTransfer(
         txHash: values.txHash,
       },
     },
-    fetcher,
+    fetcher
   );
   return parseSuccess<{ newOwnerWallet: string }>(status, json);
 }
 
 export async function removeMember(
   values: { warehouseId: string; userId: string },
-  fetcher: Fetcher = fetch,
+  fetcher: Fetcher = fetch
 ): Promise<ApiResult<unknown>> {
   const { status, json } = await sendJson(
     `${MEMBERSHIP_ROUTE}?action=remove`,
     { body: { warehouseId: values.warehouseId, userId: values.userId } },
-    fetcher,
+    fetcher
   );
   return parseSuccess<unknown>(status, json);
 }
 
 export async function leaveWarehouse(
   warehouseId: string,
-  fetcher: Fetcher = fetch,
+  fetcher: Fetcher = fetch
 ): Promise<ApiResult<unknown>> {
   const { status, json } = await sendJson(
     `${MEMBERSHIP_ROUTE}?action=leave`,
     { body: { warehouseId } },
-    fetcher,
+    fetcher
   );
   return parseSuccess<unknown>(status, json);
 }
@@ -113,24 +113,24 @@ export async function leaveWarehouse(
  */
 export async function approveJoin(
   values: { requestId: string; role: Role },
-  fetcher: Fetcher = fetch,
+  fetcher: Fetcher = fetch
 ): Promise<ApiResult<unknown>> {
   const { status, json } = await sendJson(
     `${MEMBERSHIP_ROUTE}?action=approve`,
     { body: { requestId: values.requestId, role: values.role } },
-    fetcher,
+    fetcher
   );
   return parseSuccess<unknown>(status, json);
 }
 
 export async function rejectJoin(
   values: { requestId: string; reason?: string },
-  fetcher: Fetcher = fetch,
+  fetcher: Fetcher = fetch
 ): Promise<ApiResult<unknown>> {
   const { status, json } = await sendJson(
     `${MEMBERSHIP_ROUTE}?action=reject`,
     { body: { requestId: values.requestId, reason: values.reason ?? "" } },
-    fetcher,
+    fetcher
   );
   return parseSuccess<unknown>(status, json);
 }

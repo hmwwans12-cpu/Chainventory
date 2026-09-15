@@ -62,7 +62,7 @@ export function TreasuryCard({
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimTxHash, setClaimTxHash] = useState<string | null>(null);
   const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(
-    null,
+    null
   );
 
   // Countdown timer for cooldown
@@ -202,7 +202,7 @@ export function TreasuryCard({
                       {t("console.available_in", {
                         time: formatCooldown(
                           cooldownRemaining,
-                          t("console.available_now"),
+                          t("console.available_now")
                         ),
                       })}
                     </span>
@@ -216,7 +216,7 @@ export function TreasuryCard({
                     className="min-h-11"
                     aria-label={t("console.claim_aria", {
                       amount: String(
-                        treasury.faucet?.amountEther ?? FAUCET_AMOUNT_ETH,
+                        treasury.faucet?.amountEther ?? FAUCET_AMOUNT_ETH
                       ),
                     })}
                     title={
@@ -230,7 +230,7 @@ export function TreasuryCard({
                       ? t("console.claiming")
                       : t("console.claim_amount", {
                           amount: String(
-                            treasury.faucet?.amountEther ?? FAUCET_AMOUNT_ETH,
+                            treasury.faucet?.amountEther ?? FAUCET_AMOUNT_ETH
                           ),
                         })}
                   </Button>
@@ -268,7 +268,7 @@ export function TreasuryCard({
           <p className="text-destructive text-sm">
             {formatTreasuryError(
               treasury?.error,
-              t("console.treasury_unavailable"),
+              t("console.treasury_unavailable")
             )}
           </p>
         )}

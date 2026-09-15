@@ -83,8 +83,7 @@ export default async function SettingsPage({
   const prefs = normalizePreferences(profileRes.data?.notification_preferences);
   const walletAddress = (walletRes.data?.address as string | undefined) ?? null;
   const walletVerified =
-    (walletRes.data?.verification_state as string | undefined) ===
-    "verified";
+    (walletRes.data?.verification_state as string | undefined) === "verified";
   const sp = await searchParams;
   const active = pickActiveWarehouse(warehouses, sp.warehouse);
   const locale = await getLocale();

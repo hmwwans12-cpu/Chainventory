@@ -199,7 +199,7 @@ export function MovementDetailSheet({
                     <span
                       className={cn(
                         "text-sm font-medium",
-                        step.tone === "failed" && "text-destructive",
+                        step.tone === "failed" && "text-destructive"
                       )}
                     >
                       {step.label}

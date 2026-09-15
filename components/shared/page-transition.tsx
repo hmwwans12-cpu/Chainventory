@@ -22,7 +22,9 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   const reduce = useReducedMotion();
 
   if (reduce) {
-    return <div className="animate-in fade-in min-w-0 duration-150">{children}</div>;
+    return (
+      <div className="animate-in fade-in min-w-0 duration-150">{children}</div>
+    );
   }
 
   return (

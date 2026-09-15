@@ -10,4 +10,4 @@ overrides:
   axios: 1.19.0
   ws: 8.21.0
 patchedDependencies:
-  '@privy-io/react-auth@3.37.1': patches/@privy-io__react-auth@3.37.1.patch
+  "@privy-io/react-auth@3.37.1": patches/@privy-io__react-auth@3.37.1.patch

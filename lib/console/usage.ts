@@ -33,7 +33,7 @@ export interface UsageItem {
 
 export function usagePct(
   used: number | null,
-  limit: number | null,
+  limit: number | null
 ): number | null {
   if (used === null || limit === null || limit <= 0 || used < 0) return null;
   return Math.min(100, Math.round((used / limit) * 100));
@@ -41,7 +41,7 @@ export function usagePct(
 
 export function formatUsageValue(
   value: number,
-  unit: UsageItem["unit"],
+  unit: UsageItem["unit"]
 ): string {
   if (unit === "bytes") {
     if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
@@ -70,7 +70,7 @@ async function fetchDbSizeBytes(): Promise<number | null> {
           query: "select pg_database_size(current_database()) as bytes",
         }),
         signal: AbortSignal.timeout(MGMT_TIMEOUT_MS),
-      },
+      }
     );
     if (!res.ok) return null;
     const rows = (await res.json()) as Array<{ bytes?: string | number }>;
@@ -106,7 +106,7 @@ async function countRows(): Promise<Record<string, number | null>> {
         logger.warn({ err, table }, "console usage row-count failed");
         return [table, null] as const;
       }
-    }),
+    })
   );
   return Object.fromEntries(entries);
 }

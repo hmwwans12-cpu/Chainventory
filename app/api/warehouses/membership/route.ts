@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       ? "ownership-transfer"
       : "membership",
     auth.user.id,
-    request,
+    request
   );
   if (rateLimited) return rateLimited;
 
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
         supabase,
         req.warehouse_id,
         auth.user.id,
-        PERMISSIONS.JOIN_REQUEST_APPROVE,
+        PERMISSIONS.JOIN_REQUEST_APPROVE
       );
       if (denied) return denied;
       rpcArgs.approve = {
@@ -179,7 +179,7 @@ export async function POST(request: Request) {
         supabase,
         req.warehouse_id,
         auth.user.id,
-        PERMISSIONS.JOIN_REQUEST_APPROVE,
+        PERMISSIONS.JOIN_REQUEST_APPROVE
       );
       if (denied) return denied;
       rpcArgs.reject = {
@@ -211,7 +211,7 @@ export async function POST(request: Request) {
         supabase,
         parsed.data.warehouseId,
         auth.user.id,
-        PERMISSIONS.JOIN_REQUEST_APPROVE,
+        PERMISSIONS.JOIN_REQUEST_APPROVE
       );
       if (denied) return denied;
       rpcArgs.remove = {
@@ -227,7 +227,7 @@ export async function POST(request: Request) {
         supabase,
         parsed.data.warehouseId,
         auth.user.id,
-        PERMISSIONS.JOIN_REQUEST_APPROVE,
+        PERMISSIONS.JOIN_REQUEST_APPROVE
       );
       if (denied) return denied;
       rpcArgs.change_role = {
@@ -271,7 +271,7 @@ export async function POST(request: Request) {
               "This warehouse is deployed on-chain. Transfer ownership from your owner wallet on Base Sepolia first, then sync. Off-chain-only transfer is blocked to prevent on-chain divergence.",
             errorCode: "CONFLICT",
           },
-          409,
+          409
         );
       }
       rpcArgs.transfer = {
@@ -284,7 +284,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase.rpc(
     fn[action],
-    rpcArgs[action] as Record<string, unknown>,
+    rpcArgs[action] as Record<string, unknown>
   );
 
   if (error) return fromPostgrestError(error.message);
@@ -326,7 +326,7 @@ async function requireTransferParties(
   supabase: DbClient,
   callerId: string,
   warehouseId: string,
-  newOwnerId: string,
+  newOwnerId: string
 ) {
   if (newOwnerId === callerId) return { error: invalid("Already the owner.") };
   const { data: me } = await supabase
@@ -379,7 +379,7 @@ async function handleOnchainTransfer(
   supabase: DbClient,
   callerId: string,
   action: "transfer_preview" | "transfer_confirm",
-  body: unknown,
+  body: unknown
 ) {
   if (action === "transfer_preview") {
     const parsed = transferPreviewSchema.safeParse(body);
@@ -389,7 +389,7 @@ async function handleOnchainTransfer(
       supabase,
       callerId,
       warehouseId,
-      newOwnerId,
+      newOwnerId
     );
     if ("error" in parties) return parties.error;
     return ok({ data: { wallet: parties.wallet } });
@@ -403,7 +403,7 @@ async function handleOnchainTransfer(
     supabase,
     callerId,
     warehouseId,
-    newOwnerId,
+    newOwnerId
   );
   if ("error" in parties) return parties.error;
 
@@ -415,7 +415,7 @@ async function handleOnchainTransfer(
   const contractAddress = warehouse?.contract_address as string | undefined;
   if (!contractAddress) {
     return invalid(
-      "This warehouse is not deployed on-chain. Use the off-chain transfer instead.",
+      "This warehouse is not deployed on-chain. Use the off-chain transfer instead."
     );
   }
 
@@ -446,7 +446,7 @@ async function handleOnchainTransfer(
         error: "Transaction not found or still confirming. Try again shortly.",
         errorCode: "RPC_FAILED",
       },
-      202,
+      202
     );
   }
 
@@ -456,7 +456,7 @@ async function handleOnchainTransfer(
       contractAddress,
       currentOwnerWallet: onChainOwner,
       newOwnerWallet: parties.wallet,
-    },
+    }
   );
   if (!verdict.ok) {
     return json(
@@ -465,7 +465,7 @@ async function handleOnchainTransfer(
         error: `Wallet transaction is not a valid ownership transfer (${verdict.reason}). Nothing was changed.`,
         errorCode: "RPC_FAILED",
       },
-      409,
+      409
     );
   }
 

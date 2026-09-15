@@ -2582,7 +2582,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 export function translate(
   locale: Locale,
   key: string,
-  params?: Record<string, string>,
+  params?: Record<string, string>
 ): string {
   const localized = translations[locale]?.[key];
   const fallback = translations.en[key];

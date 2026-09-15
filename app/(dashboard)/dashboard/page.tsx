@@ -91,7 +91,7 @@ export default async function DashboardPage({
   const warehouseParam =
     typeof params.warehouse === "string" ? params.warehouse : undefined;
   const range = parseRange(
-    typeof params.range === "string" ? params.range : undefined,
+    typeof params.range === "string" ? params.range : undefined
   );
 
   // Tahap 1: konteks user + profil + wallet utama (paralel).

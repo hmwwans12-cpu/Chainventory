@@ -24,8 +24,7 @@ export function buildVerifyMessage(address: string, issuedAt: Date): string {
 }
 
 export type ParsedVerifyMessage =
-  | { ok: true; address: string; issuedAt: number }
-  | { ok: false };
+  { ok: true; address: string; issuedAt: number } | { ok: false };
 
 export function parseVerifyMessage(message: string): ParsedVerifyMessage {
   const lines = message.split("\n");

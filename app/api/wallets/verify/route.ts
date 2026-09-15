@@ -70,7 +70,11 @@ export async function POST(request: Request) {
     .maybeSingle();
   if (lookupError || !row) {
     return json(
-      { ok: false, error: "Wallet not found on this account.", errorCode: "NOT_FOUND" },
+      {
+        ok: false,
+        error: "Wallet not found on this account.",
+        errorCode: "NOT_FOUND",
+      },
       404
     );
   }
@@ -87,7 +91,11 @@ export async function POST(request: Request) {
       "verify_wallet RPC failed"
     );
     return json(
-      { ok: false, error: "Could not verify wallet. Please try again.", errorCode: "RPC_FAILED" },
+      {
+        ok: false,
+        error: "Could not verify wallet. Please try again.",
+        errorCode: "RPC_FAILED",
+      },
       500
     );
   }

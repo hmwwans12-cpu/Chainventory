@@ -119,7 +119,7 @@ export function ProductsPage({
     (
       nextQuery: string,
       nextStatus: "active" | "archived" | "all",
-      nextCategory: string,
+      nextCategory: string
     ) => {
       const params = new URLSearchParams(searchParams.toString());
       if (nextQuery.trim()) params.set("q", nextQuery.trim());
@@ -143,7 +143,7 @@ export function ProductsPage({
         router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
       });
     },
-    [pathname, router, searchParams, warehouseId, startTransition],
+    [pathname, router, searchParams, warehouseId, startTransition]
   );
 
   const setStatus = (value: "active" | "archived" | "all") => {
@@ -165,14 +165,14 @@ export function ProductsPage({
   const [bulkOpen, setBulkOpen] = React.useState(false);
   const [editTarget, setEditTarget] = React.useState<ProductRow | null>(null);
   const [archiveTarget, setArchiveTarget] = React.useState<ProductRow | null>(
-    null,
+    null
   );
   const [stockTarget, setStockTarget] = React.useState<{
     product: ProductRow;
     type: "stock_in" | "stock_out";
   } | null>(null);
   const [detailTarget, setDetailTarget] = React.useState<ProductRow | null>(
-    null,
+    null
   );
 
   // Bulk selection (audit: bulk actions)
@@ -209,10 +209,10 @@ export function ProductsPage({
     setBulkBusy(true);
     const ids = [...selected];
     const results = await Promise.allSettled(
-      ids.map((id) => archiveProduct(warehouseId, id)),
+      ids.map((id) => archiveProduct(warehouseId, id))
     );
     const succeeded = results.filter(
-      (r) => r.status === "fulfilled" && r.value.ok,
+      (r) => r.status === "fulfilled" && r.value.ok
     ).length;
     const failed = results.length - succeeded;
     if (failed === 0) {
@@ -256,7 +256,7 @@ export function ProductsPage({
     if (!canExport || selected.size === 0) return;
     const ids = [...selected];
     const url = `/api/warehouses/export?type=products&warehouseId=${encodeURIComponent(
-      warehouseId,
+      warehouseId
     )}&ids=${encodeURIComponent(ids.join(","))}`;
     window.open(url, "_blank");
     toast.add({
@@ -297,12 +297,12 @@ export function ProductsPage({
             const body = await r.json().catch(() => ({}));
             throw new Error(
               (body as { error?: string })?.error ??
-                `HTTP ${r.status} for product ${id}`,
+                `HTTP ${r.status} for product ${id}`
             );
           }
           return r.json();
-        }),
-      ),
+        })
+      )
     );
     const failed = results.filter((r) => r.status === "rejected").length;
     setBulkBusy(false);
@@ -342,14 +342,14 @@ export function ProductsPage({
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [pathname, router, searchParams],
+    [pathname, router, searchParams]
   );
 
   // Aksi per-produk (dropdown) — dipakai di tabel desktop & card list mobile
   // supaya tidak duplikasi markup (audit: mobile card-list).
   const renderActions = (
     product: ProductRow,
-    mode: "dropdown" | "inline" = "dropdown",
+    mode: "dropdown" | "inline" = "dropdown"
   ) => {
     const archived = product.status === "archived";
     const inlineStockActions = !archived && (canStockIn || canStockOut);
@@ -509,7 +509,7 @@ export function ProductsPage({
       applyFiltersRef.current(
         searchInput,
         statusFilterRef.current ?? "active",
-        categoryFilterRef.current ?? "",
+        categoryFilterRef.current ?? ""
       );
     }, 350);
     return () => clearTimeout(timer);
@@ -1093,7 +1093,7 @@ export function ProductsPage({
                               <span className="text-muted-foreground font-mono text-xs tabular-nums">
                                 {t("products.min_alert", {
                                   threshold: String(
-                                    product.lowStockThreshold ?? "",
+                                    product.lowStockThreshold ?? ""
                                   ),
                                 })}
                               </span>
@@ -1385,7 +1385,7 @@ export function ProductsPage({
               onChange={(e) => setBulkCategoryValue(e.target.value)}
               placeholder={t("products.bulk_category_placeholder")}
               aria-invalid={Boolean(
-                bulkCategoryValue && !bulkCategoryValue.trim(),
+                bulkCategoryValue && !bulkCategoryValue.trim()
               )}
               aria-describedby={
                 bulkCategoryValue && !bulkCategoryValue.trim()

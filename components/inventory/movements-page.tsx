@@ -112,7 +112,7 @@ async function fetchPage(
   warehouseId: string,
   from: number,
   to: number,
-  query?: string,
+  query?: string
 ): Promise<FetchResult> {
   const escaped = query?.trim() ? escapeSearch(query) : "";
   // Temuan audit #25: cari by reference/reason/wallet aktor. Nama aktor
@@ -120,12 +120,12 @@ async function fetchPage(
   let req = supabase
     .from("stock_movements")
     .select(
-      "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(status, tx_hash, error)",
+      "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(status, tx_hash, error)"
     )
     .eq("warehouse_id", warehouseId);
   if (escaped) {
     req = req.or(
-      `reference.ilike.%${escaped}%,reason.ilike.%${escaped}%,actor_wallet.ilike.%${escaped}%`,
+      `reference.ilike.%${escaped}%,reason.ilike.%${escaped}%,actor_wallet.ilike.%${escaped}%`
     );
   }
   const { data, error } = await req
@@ -208,7 +208,7 @@ export function MovementsPage({
         router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
       });
     },
-    [pathname, router, searchParams, warehouseId, startTransition],
+    [pathname, router, searchParams, warehouseId, startTransition]
   );
   const applySearchRef = React.useRef(applySearch);
   React.useEffect(() => {
@@ -234,10 +234,10 @@ export function MovementsPage({
     MovementListItem[],
     { movementId: string; status: MovementListItem["status"] }
   >(movements, (current, { movementId, status }) =>
-    current.map((m) => (m.id === movementId ? { ...m, status } : m)),
+    current.map((m) => (m.id === movementId ? { ...m, status } : m))
   );
   const [hasMore, setHasMore] = React.useState(
-    initialMovements.length === PAGE_SIZE,
+    initialMovements.length === PAGE_SIZE
   );
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [loadError, setLoadError] = React.useState(false);
@@ -319,7 +319,7 @@ export function MovementsPage({
         warehouseId,
         0,
         PAGE_SIZE - 1,
-        query,
+        query
       );
       if (error) throw new Error("refresh failed");
       setMovements(items);
@@ -346,7 +346,7 @@ export function MovementsPage({
           table: "stock_movements",
           filter: `warehouse_id=eq.${warehouseId}`,
         },
-        refreshFirst,
+        refreshFirst
       )
       .on(
         "postgres_changes",
@@ -356,7 +356,7 @@ export function MovementsPage({
           table: "proofs",
           filter: `warehouse_id=eq.${warehouseId}`,
         },
-        refreshFirst,
+        refreshFirst
       )
       .subscribe((status) => {
         reportLive(status === "SUBSCRIBED");
@@ -376,7 +376,7 @@ export function MovementsPage({
       warehouseId,
       movements.length,
       movements.length + PAGE_SIZE - 1,
-      query,
+      query
     );
     if (error) {
       setLoadingMore(false);
@@ -407,7 +407,7 @@ export function MovementsPage({
                 "size-1.5 rounded-full",
                 liveStatus === "live"
                   ? "bg-current"
-                  : "animate-pulse bg-current",
+                  : "animate-pulse bg-current"
               )}
             />
             {liveStatus === "live"
@@ -690,7 +690,7 @@ export function MovementsPage({
                             m.movementType === "adjustment" &&
                               "bg-status-info-bg text-status-info-fg border-status-info-border",
                             m.movementType === "reversal" &&
-                              "bg-status-violet-bg text-status-violet-fg border-status-violet-border",
+                              "bg-status-violet-bg text-status-violet-fg border-status-violet-border"
                           )}
                         >
                           <typeMeta.icon aria-hidden="true" />
@@ -705,7 +705,7 @@ export function MovementsPage({
                           m.movementType === "stock_out" &&
                             "text-amber-700 dark:text-amber-400",
                           m.movementType === "reversal" && "text-status-err-fg",
-                          m.movementType === "adjustment" && "text-foreground",
+                          m.movementType === "adjustment" && "text-foreground"
                         )}
                       >
                         {negative ? "\u2212" : "+"}

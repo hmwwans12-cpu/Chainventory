@@ -23,7 +23,7 @@ export async function TopProducts({
     translate(locale, key, params);
   const max = Math.max(
     1,
-    ...products.map((p) => Number(p.inQty) + Number(p.outQty)),
+    ...products.map((p) => Number(p.inQty) + Number(p.outQty))
   );
 
   if (products.length === 0) {

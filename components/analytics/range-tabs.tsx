@@ -57,7 +57,7 @@ export async function RangeTabs({
               "focus-visible:ring-ring relative rounded-md px-3 py-1 text-xs font-semibold transition-colors before:absolute before:-inset-y-2 before:content-[''] focus-visible:ring-3 focus-visible:outline-none",
               active
                 ? "bg-card text-primary shadow-(--shadow-card)"
-                : "text-muted-foreground hover:text-foreground",
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {rangeLabel(r)}

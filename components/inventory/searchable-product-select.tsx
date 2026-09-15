@@ -48,7 +48,7 @@ export function SearchableProductSelect({
 
   const filtered = query.trim()
     ? products.filter((p) =>
-        `${p.name} ${p.sku}`.toLowerCase().includes(query.trim().toLowerCase()),
+        `${p.name} ${p.sku}`.toLowerCase().includes(query.trim().toLowerCase())
       )
     : products;
 
@@ -194,7 +194,7 @@ export function SearchableProductSelect({
                     "focus-visible:ring-ring flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm outline-none select-none focus-visible:ring-3",
                     isActive && "bg-muted",
                     !isActive && isSelected && "bg-muted/60",
-                    !isActive && !isSelected && "hover:bg-muted",
+                    !isActive && !isSelected && "hover:bg-muted"
                   )}
                   onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => select(p)}

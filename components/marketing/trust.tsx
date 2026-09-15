@@ -45,7 +45,11 @@ export function Trust() {
           {ITEMS.map((item, index) => {
             const Icon = item.icon;
             return (
-              <Reveal key={item.titleKey} delay={index * 0.06} className="h-full">
+              <Reveal
+                key={item.titleKey}
+                delay={index * 0.06}
+                className="h-full"
+              >
                 <div className="bg-card flex h-full flex-col rounded-2xl border p-6 sm:p-8">
                   <span className="bg-muted text-foreground flex size-10 items-center justify-center rounded-lg">
                     <Icon aria-hidden="true" className="size-5" />

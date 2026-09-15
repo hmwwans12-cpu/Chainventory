@@ -42,7 +42,7 @@ const WITH = [
 export function Problem() {
   const { t } = useLocale();
   return (
-    <section id="proof" className="border-y bg-surface-low py-20 scroll-mt-24">
+    <section id="proof" className="bg-surface-low scroll-mt-24 border-y py-20">
       <div className="mx-auto w-full max-w-5xl px-4 md:px-12">
         <Reveal className="mx-auto flex max-w-2xl flex-col items-center gap-3 text-center">
           <h2 className="font-display text-foreground text-2xl font-bold tracking-tight text-balance md:text-4xl">

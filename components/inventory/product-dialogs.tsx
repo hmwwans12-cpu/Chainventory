@@ -347,7 +347,7 @@ export function ArchiveProductDialog({
             size="sm"
             onClick={() => onOpenChange(false)}
             disabled={busy}
-            className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
+            className="relative h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] sm:w-auto"
           >
             {t("common.cancel")}
           </Button>
@@ -356,7 +356,7 @@ export function ArchiveProductDialog({
             size="sm"
             onClick={confirm}
             disabled={busy}
-            className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
+            className="relative h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] sm:w-auto"
           >
             {busy ? (
               <Loader2 aria-hidden="true" className="animate-spin" />
@@ -390,7 +390,7 @@ export function ProductDetailSheet({
 }) {
   const { t } = useLocale();
   const [movements, setMovements] = React.useState<StockMovementRow[] | null>(
-    null,
+    null
   );
   const [loading, setLoading] = React.useState(true);
   // NFE-15: reset + error eksplisit tiap ganti produk — tanpa ini produk B
@@ -404,7 +404,7 @@ export function ProductDetailSheet({
     supabase
       .from("stock_movements")
       .select(
-        "id, movement_type, quantity, reason, status, actor_wallet, created_at",
+        "id, movement_type, quantity, reason, status, actor_wallet, created_at"
       )
       .eq("warehouse_id", warehouseId)
       .eq("product_id", product.id)
@@ -425,7 +425,7 @@ export function ProductDetailSheet({
               actorWallet: row.actor_wallet,
               created_at: row.created_at,
               expectedBalanceVersion: null,
-            })),
+            }))
           );
         } else {
           setLoadError(true);

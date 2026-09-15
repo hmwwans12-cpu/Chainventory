@@ -104,7 +104,7 @@ export function StockMovementDialog({
   const [error, setError] = React.useState<string | null>(null);
   const [stale, setStale] = React.useState(false);
   const [currentBalance, setCurrentBalance] = React.useState<string | null>(
-    null,
+    null
   );
   const [reversalTarget, setReversalTarget] = React.useState("");
   const [reversalTargets, setReversalTargets] = React.useState<
@@ -192,7 +192,7 @@ export function StockMovementDialog({
             movementType: row.movement_type,
             quantity: String(row.quantity),
             created_at: row.created_at,
-          })),
+          }))
         );
       });
     return () => {
@@ -204,7 +204,7 @@ export function StockMovementDialog({
     new Promise<void>((resolve) => setTimeout(resolve, ms));
 
   const submitViaIntent = async (
-    qty: string,
+    qty: string
   ): Promise<{ handled: boolean }> => {
     const wallet =
       wallets.find((w) => w.address && w.walletClientType !== "guest") ??
@@ -259,7 +259,7 @@ export function StockMovementDialog({
       setError(
         code === 4001
           ? t("dialogs.movement.error_signature_cancelled")
-          : t("dialogs.movement.error_wallet_send"),
+          : t("dialogs.movement.error_wallet_send")
       );
       return { handled: true };
     }
@@ -732,11 +732,11 @@ export function StockMovementDialog({
                         <SelectTrigger id="movement-target" className="w-full">
                           <SelectValue
                             placeholder={t(
-                              "dialogs.movement.target_placeholder",
+                              "dialogs.movement.target_placeholder"
                             )}
                             getLabel={(v) => {
                               const found = reversalTargets.find(
-                                (x) => x.id === v,
+                                (x) => x.id === v
                               );
                               if (!found) return v;
                               return `${MOVEMENT_TYPE_META[found.movementType as keyof typeof MOVEMENT_TYPE_META]?.label ?? found.movementType} · ${found.quantity}`;
@@ -948,7 +948,7 @@ export function StockMovementDialog({
             size="sm"
             onClick={() => onOpenChange(false)}
             disabled={busy}
-            className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
+            className="relative h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] sm:w-auto"
           >
             {t("dialogs.movement.discard")}
           </Button>
@@ -956,7 +956,7 @@ export function StockMovementDialog({
             onClick={submit}
             disabled={busy || stale}
             size="sm"
-            className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
+            className="relative h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] sm:w-auto"
           >
             {busy ? (
               <Loader2 aria-hidden="true" className="animate-spin" />
@@ -981,7 +981,7 @@ export function StockMovementDialog({
 
 async function readCurrentBalance(
   warehouseId: string,
-  productId: string,
+  productId: string
 ): Promise<string | null> {
   // Audit v0.3.11 M-14: this is a fallback when the server does not
   // include the current balance in the INSUFFICIENT_STOCK error. The

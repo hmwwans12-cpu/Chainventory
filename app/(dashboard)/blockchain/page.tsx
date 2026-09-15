@@ -61,7 +61,7 @@ export default async function BlockchainPageRoute({
     supabase
       .from("warehouse_deployment_summaries")
       .select(
-        "id, warehouse_id, factory_address, chain_id, status, tx_hash, created_at, updated_at",
+        "id, warehouse_id, factory_address, chain_id, status, tx_hash, created_at, updated_at"
       )
       .eq("warehouse_id", active.id)
       .order("created_at", { ascending: false })
@@ -74,7 +74,7 @@ export default async function BlockchainPageRoute({
     supabase
       .from("proofs")
       .select(
-        "id, movement_id, payload_hash, status, tx_hash, error, attempt_count, confirmation_count, created_at",
+        "id, movement_id, payload_hash, status, tx_hash, error, attempt_count, confirmation_count, created_at"
       )
       .eq("warehouse_id", active.id)
       .order("created_at", { ascending: false })

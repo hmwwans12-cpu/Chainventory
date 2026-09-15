@@ -56,7 +56,7 @@ export function NotificationBell() {
   const unreadCount = useSyncExternalStore(
     unreadStore.subscribe,
     unreadStore.getSnapshot,
-    () => 0,
+    () => 0
   );
   const setUnreadCount = useCallback((next: number) => {
     unreadStore.set(next);
@@ -66,7 +66,7 @@ export function NotificationBell() {
   // diperlukan (store.adjust(-1) sudah atomic, lihat lib/notifications/unread-store).
   const markedReadRef = useRef<Set<string>>(new Set());
   const [notifications, setNotificationsState] = useState<NotificationRow[]>(
-    [],
+    []
   );
   // Ref mirror agar realtime callback selalu bandingkan dgn state terkini
   // (audit M-05: closure snapshot lama bikin flash palsu).
@@ -74,24 +74,24 @@ export function NotificationBell() {
   const setNotifications = useCallback(
     (
       value:
-        NotificationRow[] | ((rows: NotificationRow[]) => NotificationRow[]),
+        NotificationRow[] | ((rows: NotificationRow[]) => NotificationRow[])
     ) => {
       const next =
         typeof value === "function"
           ? (value as (rows: NotificationRow[]) => NotificationRow[])(
-              notificationsRef.current,
+              notificationsRef.current
             )
           : value;
       notificationsRef.current = next;
       setNotificationsState(next);
     },
-    [],
+    []
   );
   const [loading, setLoading] = useState(true);
   const [flashId, setFlashId] = useState<string | null>(null);
   const [badgePop, setBadgePop] = useState(false);
   const [warehouseNames, setWarehouseNames] = useState<Record<string, string>>(
-    {},
+    {}
   );
   const [announcement, setAnnouncement] = useState("");
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
@@ -120,8 +120,8 @@ export function NotificationBell() {
       setNotifications(rows);
       setWarehouseNames(
         Object.fromEntries(
-          (names.data ?? []).map((w) => [w.id, w.name as string]),
-        ),
+          (names.data ?? []).map((w) => [w.id, w.name as string])
+        )
       );
       setLoading(false);
 
@@ -142,7 +142,7 @@ export function NotificationBell() {
               fetchRecentNotifications(supabase, PANEL_LIMIT),
             ]);
             const added = newRows.find(
-              (r) => !notificationsRef.current.some((n) => n.id === r.id),
+              (r) => !notificationsRef.current.some((n) => n.id === r.id)
             );
             setNotifications(newRows);
             setUnreadCount(newCount);
@@ -156,7 +156,7 @@ export function NotificationBell() {
                 setBadgePop(false);
               }, FLASH_MESSAGE_MS);
             }
-          },
+          }
         )
         // M-07: UPDATE (mark-as-read di tab lain) ikut disinkronkan.
         .on(
@@ -174,7 +174,7 @@ export function NotificationBell() {
             ]);
             setNotifications(newRows);
             setUnreadCount(newCount);
-          },
+          }
         )
         .subscribe();
     }
@@ -203,7 +203,7 @@ export function NotificationBell() {
       setOpen(next);
       if (next) void refresh();
     },
-    [refresh],
+    [refresh]
   );
 
   const handleRowClick = useCallback(
@@ -219,15 +219,15 @@ export function NotificationBell() {
           unreadStore.adjust(-1);
           setNotifications((rows) =>
             rows.map((r) =>
-              r.id === n.id ? { ...r, read_at: new Date().toISOString() } : r,
-            ),
+              r.id === n.id ? { ...r, read_at: new Date().toISOString() } : r
+            )
           );
         }
       }
       router.push(notificationHref(n));
       setOpen(false);
     },
-    [router, setNotifications],
+    [router, setNotifications]
   );
 
   const handleMarkAllRead = useCallback(async () => {
@@ -269,7 +269,7 @@ export function NotificationBell() {
                 <Badge
                   className={cn(
                     "absolute -top-0.5 -right-0.5 size-6 items-center justify-center p-0 text-sm tabular-nums",
-                    badgePop && "motion-safe:animate-[bell-pop_200ms_ease-out]",
+                    badgePop && "motion-safe:animate-[bell-pop_200ms_ease-out]"
                   )}
                   aria-hidden="true"
                 >
@@ -350,7 +350,7 @@ export function NotificationBell() {
                               "group focus-visible:bg-muted/70 focus-visible:ring-ring flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors focus-visible:ring-3 focus-visible:outline-none",
                               unread && "bg-primary/5",
                               flashId === n.id &&
-                                "motion-safe:animate-[notif-flash_1.6s_ease-out]",
+                                "motion-safe:animate-[notif-flash_1.6s_ease-out]"
                             )}
                           >
                             <span
@@ -363,7 +363,7 @@ export function NotificationBell() {
                                 meta?.tone === "danger" &&
                                   "bg-destructive/15 text-destructive border-destructive/20",
                                 (!meta || meta.tone === "default") &&
-                                  "bg-muted text-muted-foreground",
+                                  "bg-muted text-muted-foreground"
                               )}
                               aria-hidden="true"
                             >
@@ -379,7 +379,7 @@ export function NotificationBell() {
                                   "text-foreground text-sm leading-snug",
                                   unread
                                     ? "font-semibold"
-                                    : "text-muted-foreground font-medium",
+                                    : "text-muted-foreground font-medium"
                                 )}
                               >
                                 {n.title}

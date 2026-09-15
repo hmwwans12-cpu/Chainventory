@@ -62,7 +62,7 @@ export default async function NotificationsPage() {
 
   const notifications = (notifRes.data ?? []) as NotificationRow[];
   const warehouseNames = Object.fromEntries(
-    (namesRes.data ?? []).map((w) => [w.id, w.name as string]),
+    (namesRes.data ?? []).map((w) => [w.id, w.name as string])
   );
   // APP-17: count/names gagal → badge unread bisa 0 palsu. Beri tahu.
   const partialError = countRes.error ?? namesRes.error;

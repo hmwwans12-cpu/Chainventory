@@ -36,7 +36,7 @@ function walk(dir, out = []) {
 
 const src = readFileSync(join(ROOT, "lib/i18n/translations.ts"), "utf8");
 const defined = new Set(
-  [...src.matchAll(/"([a-z][a-z0-9_.]+)":/g)].map((m) => m[1]),
+  [...src.matchAll(/"([a-z][a-z0-9_.]+)":/g)].map((m) => m[1])
 );
 
 let missing = 0;
@@ -65,7 +65,7 @@ for (const [ns, n] of [...perNs.entries()].sort((a, b) => b[1] - a[1])) {
 
 if (missing > 0) {
   console.error(
-    `\n❌ i18n-keys: ${missing} referensi key tidak ada di translations.ts`,
+    `\n❌ i18n-keys: ${missing} referensi key tidak ada di translations.ts`
   );
   process.exit(1);
 }

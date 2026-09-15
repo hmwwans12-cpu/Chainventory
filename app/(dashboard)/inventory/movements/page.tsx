@@ -77,13 +77,13 @@ export default async function StockMovementsPageRoute({
   const movementsBase = supabase
     .from("stock_movements")
     .select(
-      "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(status, tx_hash, error)",
+      "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(status, tx_hash, error)"
     )
     .eq("warehouse_id", active.id);
   const [movementsResult, productsResult] = await Promise.all([
     (q
       ? movementsBase.or(
-          `reference.ilike.%${q}%,reason.ilike.%${q}%,actor_wallet.ilike.%${q}%`,
+          `reference.ilike.%${q}%,reason.ilike.%${q}%,actor_wallet.ilike.%${q}%`
         )
       : movementsBase
     )
@@ -93,7 +93,7 @@ export default async function StockMovementsPageRoute({
       ? supabase
           .from("products")
           .select(
-            "id, sku, name, category, unit, status, low_stock_threshold, inventory_balances(quantity, version)",
+            "id, sku, name, category, unit, status, low_stock_threshold, inventory_balances(quantity, version)"
           )
           .eq("warehouse_id", active.id)
           .eq("status", "active")
@@ -134,7 +134,7 @@ export default async function StockMovementsPageRoute({
       proofStatus: row.proofs?.[0]?.status ?? null,
       proofTxHash: row.proofs?.[0]?.tx_hash ?? null,
       proofError: row.proofs?.[0]?.error ?? null,
-    }),
+    })
   );
 
   const products: ProductRow[] = (productsResult.data ?? []).map((row) => ({

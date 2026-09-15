@@ -99,7 +99,7 @@ export function shortenAddress(address: string, head = 6, tail = 4): string {
 export function getInitials(
   name?: string | null,
   email?: string | null,
-  fallback = "?",
+  fallback = "?"
 ): string {
   const source = (name || email || "").trim();
   if (!source) return fallback;

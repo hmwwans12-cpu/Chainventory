@@ -70,7 +70,7 @@ export function Faq() {
   };
   const useKeys = hasTranslation("landing.faq.q1");
   return (
-    <section id="faq" className="bg-background py-20 scroll-mt-24">
+    <section id="faq" className="bg-background scroll-mt-24 py-20">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-12 px-4 sm:px-6">
         <Reveal className="flex flex-col items-center gap-4 text-center">
           <h2 className="font-display text-foreground text-2xl font-bold tracking-tight text-balance md:text-4xl">

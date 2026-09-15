@@ -56,7 +56,7 @@ function runAudit() {
           cwd: ROOT,
           encoding: "utf8",
           stdio: ["ignore", "pipe", "pipe"],
-        }),
+        })
       );
     } catch (err) {
       lastError = err;
@@ -94,14 +94,14 @@ for (const advisory of Object.values(advisories)) {
   const title = (advisory.title || "").slice(0, 90);
   if (!GATING.has(severity)) {
     console.log(
-      ` - ${severity}: ${id} (${advisory.module_name}) — reported only`,
+      ` - ${severity}: ${id} (${advisory.module_name}) — reported only`
     );
     continue;
   }
   const entry = allowlist.get(id);
   if (entry && entry.expires >= today) {
     console.log(
-      ` - ${severity}: ${id} (${advisory.module_name}) — ACCEPTED until ${entry.expires}: ${entry.reason.slice(0, 80)}`,
+      ` - ${severity}: ${id} (${advisory.module_name}) — ACCEPTED until ${entry.expires}: ${entry.reason.slice(0, 80)}`
     );
     continue;
   }
@@ -109,18 +109,18 @@ for (const advisory of Object.values(advisories)) {
   console.error(`❌ ${severity}: ${id} (${advisory.module_name}) — ${title}`);
   if (entry) {
     console.error(
-      `   allow-list entry EXPIRED on ${entry.expires}; re-assess, do not blindly extend.`,
+      `   allow-list entry EXPIRED on ${entry.expires}; re-assess, do not blindly extend.`
     );
   } else {
     console.error(
-      "   no allow-list entry; upgrade the dependency or add an assessed entry with expiry to .github/security-allowlist.json",
+      "   no allow-list entry; upgrade the dependency or add an assessed entry with expiry to .github/security-allowlist.json"
     );
   }
 }
 
 if (failed) {
   console.error(
-    "❌ deps-audit: unaccepted high/critical vulnerabilities — see above",
+    "❌ deps-audit: unaccepted high/critical vulnerabilities — see above"
   );
   process.exit(1);
 }

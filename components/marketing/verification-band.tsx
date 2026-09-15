@@ -29,7 +29,7 @@ export function VerificationBand() {
   const { t } = useLocale();
 
   return (
-    <section className="bg-primary py-20 text-primary-foreground">
+    <section className="bg-primary text-primary-foreground py-20">
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 px-4 md:px-12 lg:grid-cols-12">
         <Reveal className="flex flex-col lg:col-span-7">
           <span className="bg-secondary-container text-primary inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
@@ -64,7 +64,10 @@ export function VerificationBand() {
           <div className="bg-card text-card-foreground rounded-2xl border p-6 shadow-lg">
             <div className="flex items-center justify-between gap-3">
               <h3 className="font-display flex items-center gap-2 text-base font-bold">
-                <ShieldCheck aria-hidden="true" className="text-primary size-5" />
+                <ShieldCheck
+                  aria-hidden="true"
+                  className="text-primary size-5"
+                />
                 {t("landing.band.inspector_title")}
               </h3>
               <span className="text-muted-foreground font-mono text-[11px]">

@@ -92,7 +92,7 @@ export function VerifyWalletButton({ address }: { address: string }) {
         size="sm"
         onClick={verify}
         disabled={busy}
-        className="h-8 px-3 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative"
+        className="relative h-8 px-3 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
       >
         {busy ? (
           <Loader2 aria-hidden="true" className="animate-spin" />

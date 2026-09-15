@@ -35,7 +35,7 @@ export function Security() {
   const { t } = useLocale();
 
   return (
-    <section className="border-t bg-background py-12">
+    <section className="bg-background border-t py-12">
       <div className="mx-auto grid w-full max-w-7xl grid-cols-2 gap-8 px-4 md:px-12 lg:grid-cols-4">
         {ITEMS.map((item, index) => {
           const Icon = item.icon;

@@ -39,7 +39,7 @@ function Bar({ pct }: { pct: number | null }) {
       <span
         className={cn(
           "block h-full rounded-full",
-          pct !== null && pct >= 80 ? "bg-destructive" : "bg-primary",
+          pct !== null && pct >= 80 ? "bg-destructive" : "bg-primary"
         )}
         style={{ width: `${pct ?? 0}%` }}
       />

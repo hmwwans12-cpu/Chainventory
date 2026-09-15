@@ -78,9 +78,7 @@ export function AuthSplitShell({
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
                   <point.icon aria-hidden="true" className="size-5 shrink-0" />
                 </span>
-                <span className="text-[15px] font-semibold">
-                  {point.text}
-                </span>
+                <span className="text-[15px] font-semibold">{point.text}</span>
               </li>
             ))}
           </ul>

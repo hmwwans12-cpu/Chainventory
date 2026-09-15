@@ -33,8 +33,8 @@ export function MarketingFooter() {
         <div className="flex flex-col gap-4 md:col-span-2">
           <Logo />
           <p className="text-muted-foreground max-w-sm text-sm leading-relaxed text-pretty">
-            Modern warehouse inventory management with verifiable
-            cryptographic proof stamping for every critical movement.
+            Modern warehouse inventory management with verifiable cryptographic
+            proof stamping for every critical movement.
           </p>
           <span className="text-muted-foreground bg-background border-border mt-1 inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium">
             <span className="bg-primary size-1.5 animate-pulse rounded-full" />

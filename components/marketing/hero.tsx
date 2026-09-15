@@ -91,7 +91,10 @@ export function Hero() {
             variants={item}
             className="bg-secondary-container/60 inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
           >
-            <CheckCircle2 aria-hidden="true" className="text-primary size-3.5" />
+            <CheckCircle2
+              aria-hidden="true"
+              className="text-primary size-3.5"
+            />
             {t("landing.hero.badge")}
           </motion.span>
 
@@ -100,7 +103,7 @@ export function Hero() {
             className="font-display text-foreground mt-5 text-3xl font-bold tracking-tight text-balance md:text-5xl"
           >
             {t("landing.hero.title_main")}{" "}
-            <span className="text-primary underline decoration-secondary-container decoration-4 underline-offset-4">
+            <span className="text-primary decoration-secondary-container underline decoration-4 underline-offset-4">
               {t("landing.hero.title_accent")}
             </span>
           </motion.h1>
@@ -218,7 +221,10 @@ export function Hero() {
               </div>
               <div className="mt-2 grid h-20 grid-cols-7 items-end gap-2">
                 {PREVIEW_BARS.map((b) => (
-                  <div key={b.day} className="flex h-full flex-col items-center justify-end gap-1">
+                  <div
+                    key={b.day}
+                    className="flex h-full flex-col items-center justify-end gap-1"
+                  >
                     <div
                       className={
                         b.today
@@ -235,7 +241,10 @@ export function Hero() {
             </div>
 
             <div className="bg-muted/60 mt-4 flex items-center gap-2 rounded-lg px-3 py-2 font-mono text-xs">
-              <Package aria-hidden="true" className="text-primary size-3.5 shrink-0" />
+              <Package
+                aria-hidden="true"
+                className="text-primary size-3.5 shrink-0"
+              />
               <span className="text-foreground truncate">
                 TX-8921 // 240kg Gayo Green Beans
               </span>

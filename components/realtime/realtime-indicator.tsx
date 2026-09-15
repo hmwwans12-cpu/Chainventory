@@ -52,7 +52,8 @@ export function RealtimeIndicator({
           "bg-warning/15 text-warning-foreground border-warning/20",
         effective === "offline" &&
           "bg-destructive/10 text-destructive border-destructive/20",
-        effective === "outdated" && "bg-destructive/15 text-destructive border-destructive/20"
+        effective === "outdated" &&
+          "bg-destructive/15 text-destructive border-destructive/20"
       )}
     >
       <span

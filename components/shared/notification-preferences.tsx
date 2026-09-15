@@ -73,7 +73,7 @@ export function NotificationPreferencesPanel({
 
   const toggle = (
     channel: NotificationChannel,
-    category: NotificationCategory,
+    category: NotificationCategory
   ) => {
     const base = pendingRef.current ?? prefs;
     const next: NotificationPreferences = {

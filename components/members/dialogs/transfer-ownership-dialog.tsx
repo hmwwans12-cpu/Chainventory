@@ -113,7 +113,7 @@ export function TransferOwnershipDialog({
           setTargetWallet(null);
           setError(result.error);
         }
-      },
+      }
     );
     return () => {
       cancelled = true;
@@ -161,7 +161,7 @@ export function TransferOwnershipDialog({
         setError(
           code === 4001
             ? t("ownership.error_signature_cancelled")
-            : t("ownership.error_wallet_send"),
+            : t("ownership.error_wallet_send")
         );
         return;
       }

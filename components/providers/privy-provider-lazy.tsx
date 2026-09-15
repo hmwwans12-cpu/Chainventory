@@ -18,7 +18,7 @@ import dynamic from "next/dynamic";
  */
 const PrivyProvider = dynamic(
   () => import("./privy-provider").then((m) => m.PrivyProvider),
-  { ssr: false },
+  { ssr: false }
 );
 
 export function PrivyProviderLazy({ children }: { children: React.ReactNode }) {

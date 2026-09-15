@@ -14,7 +14,7 @@ export function PilotStrip() {
   const { t } = useLocale();
 
   return (
-    <section className="border-y bg-surface-container py-10">
+    <section className="bg-surface-container border-y py-10">
       <Reveal className="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-4 text-center sm:flex-row sm:justify-center md:px-12">
         <p className="text-muted-foreground flex items-center gap-2 text-sm">
           <span

@@ -240,7 +240,7 @@ export function TransactionsPage({
               <SelectItem value="all">{t("tx.filter_all_types")}</SelectItem>
               {(
                 Object.keys(
-                  MOVEMENT_TYPE_META,
+                  MOVEMENT_TYPE_META
                 ) as (keyof typeof MOVEMENT_TYPE_META)[]
               ).map((t) => (
                 <SelectItem key={t} value={t}>
@@ -452,7 +452,7 @@ export function TransactionsPage({
                             m.movementType === "adjustment" &&
                               "bg-status-info-bg text-status-info-fg border-status-info-border",
                             m.movementType === "reversal" &&
-                              "bg-status-violet-bg text-status-violet-fg border-status-violet-border",
+                              "bg-status-violet-bg text-status-violet-fg border-status-violet-border"
                           )}
                         >
                           <typeMeta.icon aria-hidden="true" />
@@ -467,7 +467,7 @@ export function TransactionsPage({
                           m.movementType === "stock_out" &&
                             "text-amber-700 dark:text-amber-400",
                           m.movementType === "reversal" && "text-status-err-fg",
-                          m.movementType === "adjustment" && "text-foreground",
+                          m.movementType === "adjustment" && "text-foreground"
                         )}
                       >
                         {negative ? "\u2212" : "+"}

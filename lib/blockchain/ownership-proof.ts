@@ -49,7 +49,7 @@ export type OwnershipTransferVerdict =
 
 export function verifyOwnershipTransferTx(
   tx: OwnershipTransferTx,
-  expected: OwnershipTransferExpectation,
+  expected: OwnershipTransferExpectation
 ): OwnershipTransferVerdict {
   if (tx.status !== "success") {
     return { ok: false, reason: "transaction not successful" };

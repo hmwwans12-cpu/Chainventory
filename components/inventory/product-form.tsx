@@ -359,7 +359,7 @@ export function ProductForm({
             size="sm"
             onClick={onCancel}
             disabled={busy}
-            className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
+            className="relative h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] sm:w-auto"
           >
             {t("common.cancel")}
           </Button>
@@ -368,7 +368,7 @@ export function ProductForm({
           type="submit"
           size="sm"
           disabled={busy}
-          className="h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] relative sm:w-auto"
+          className="relative h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] sm:w-auto"
         >
           {busy ? (
             <Loader2 aria-hidden="true" className="animate-spin" />

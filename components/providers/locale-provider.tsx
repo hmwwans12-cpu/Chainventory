@@ -39,7 +39,7 @@ export function LocaleProvider({
   // dengan server (initialLocale dibaca dari cookie yang sama), tanpa
   // double-render + flash bahasa. Effect hanya sinkronkan <html lang>.
   const [locale, setLocaleState] = React.useState<Locale>(() =>
-    typeof document === "undefined" ? initialLocale : readCookie(),
+    typeof document === "undefined" ? initialLocale : readCookie()
   );
 
   React.useEffect(() => {
@@ -56,18 +56,18 @@ export function LocaleProvider({
       // komponen client (audit: toggle EN/ID sebelumnya tidak mengubah teks server).
       router.refresh();
     },
-    [router],
+    [router]
   );
 
   const t = React.useCallback(
     (key: string, params?: Record<string, string>) =>
       translate(locale, key, params),
-    [locale],
+    [locale]
   );
 
   const value = React.useMemo<LocaleContextValue>(
     () => ({ locale, setLocale, t }),
-    [locale, setLocale, t],
+    [locale, setLocale, t]
   );
 
   return (

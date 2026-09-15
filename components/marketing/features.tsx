@@ -54,7 +54,10 @@ export function Features() {
   const { t } = useLocale();
 
   return (
-    <section id="product" className="border-t bg-surface-container py-20 scroll-mt-24">
+    <section
+      id="product"
+      className="bg-surface-container scroll-mt-24 border-t py-20"
+    >
       <div className="mx-auto w-full max-w-7xl px-4 md:px-12">
         <Reveal className="mx-auto mb-12 flex max-w-2xl flex-col items-center gap-3 text-center">
           <h2 className="font-display text-primary text-2xl font-bold tracking-tight text-balance md:text-4xl">
