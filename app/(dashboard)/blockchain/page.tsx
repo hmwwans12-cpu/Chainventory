@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Link2 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/server";
@@ -89,7 +88,7 @@ export default async function BlockchainPageRoute({
           description={t("chain.status_suffix", { name: active.name })}
         />
         <RetryErrorState
-          icon={Link2}
+          icon="link-2"
           title={t("chain.load_failed_title")}
           description={t("chain.load_failed_desc")}
         />

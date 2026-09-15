@@ -123,7 +123,7 @@ export default async function ProductsPageRoute({
           description={`${active.name} · inventory.`}
         />
         <RetryErrorState
-          icon={Package}
+          icon="package"
           title="Unable to load inventory."
           description="Something went wrong while retrieving your inventory. Please try again."
         />

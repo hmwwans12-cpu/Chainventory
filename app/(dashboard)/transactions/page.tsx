@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { ArrowLeftRight } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/server";
@@ -131,7 +130,7 @@ export default async function TransactionsPageRoute({
           description={t("tx.header_ledger", { name: active.name })}
         />
         <RetryErrorState
-          icon={ArrowLeftRight}
+          icon="arrow-left-right"
           title={t("tx.error_title")}
           description={t("tx.error_desc")}
         />

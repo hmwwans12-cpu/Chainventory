@@ -1,8 +1,9 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
 import { ArrowDownRight, ArrowUpRight, Sparkles } from "lucide-react";
 import Link from "next/link";
+
+import { RSC_ICONS, type RscIconName } from "@/components/shared/rsc-icons";
 
 import {
   Card,
@@ -66,7 +67,7 @@ function DeltaBadge({ delta, newLabel }: { delta: Delta; newLabel: string }) {
  * sub copy → footer border-t with View Details only.
  */
 export function StatCard({
-  icon: Icon,
+  icon,
   label,
   value,
   unit,
@@ -74,7 +75,9 @@ export function StatCard({
   delta,
   href,
 }: {
-  icon?: LucideIcon;
+  // Nama ikon (bukan komponen) — lihat rsc-icons.ts. Definisi komponen
+  // Lucide tidak bisa melewati batas RSC dari Server Component.
+  icon?: RscIconName;
   label: string;
   value: string;
   /** Inline unit label after the value (Stitch: "SKUs Active"). */
@@ -85,6 +88,7 @@ export function StatCard({
 }) {
   const { t } = useLocale();
   const d = delta ? computeDelta(delta.current, delta.previous) : null;
+  const Icon = icon ? RSC_ICONS[icon] : undefined;
 
   const deltaPill = d ? (
     <Tooltip>

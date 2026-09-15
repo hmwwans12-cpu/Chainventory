@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Users } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/i18n/server";
@@ -72,7 +71,7 @@ export default async function MembersPageRoute({
           description={t("members.team_suffix", { name: active.name })}
         />
         <RetryErrorState
-          icon={Users}
+          icon="users"
           title={t("members.load_failed_title")}
           description={t("members.load_failed_desc")}
         />

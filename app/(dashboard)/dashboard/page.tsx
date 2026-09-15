@@ -5,10 +5,6 @@ import {
   CalendarDays,
   ChartNoAxesCombined,
   Check,
-  Layers,
-  Package,
-  PackageMinus,
-  PackagePlus,
   Warehouse,
 } from "lucide-react";
 
@@ -427,9 +423,13 @@ export default async function DashboardPage({
       ) : null}
 
       {/* 3. Statistics Cards (DESIGN §31) — KPI only, no alert mixed */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* data-testid: gate E2E regresi RSC (main-flow dashboard KPI test) */}
+      <div
+        data-testid="kpi-cards"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      >
         <StatCard
-          icon={Package}
+          icon="package"
           label={t("dashboard.total_products")}
           value={String(analytics?.totalProducts ?? 0)}
           unit={t("dashboard.unit_skus_active")}
@@ -437,7 +437,7 @@ export default async function DashboardPage({
           href={`/inventory/products?${whQuery}`}
         />
         <StatCard
-          icon={Layers}
+          icon="layers"
           label={t("dashboard.total_stock")}
           value={analytics?.totalStock ?? "0"}
           unit={t("dashboard.unit_units_on_hand")}
@@ -445,7 +445,7 @@ export default async function DashboardPage({
           href={`/inventory/products?${whQuery}`}
         />
         <StatCard
-          icon={PackagePlus}
+          icon="package-plus"
           label={t("dashboard.stock_in")}
           value={analytics?.period.stockIn ?? "0"}
           hint={rangeHint}
@@ -456,7 +456,7 @@ export default async function DashboardPage({
           href={`/analytics?${whQuery}&range=${range}`}
         />
         <StatCard
-          icon={PackageMinus}
+          icon="package-minus"
           label={t("dashboard.stock_out")}
           value={analytics?.period.stockOut ?? "0"}
           hint={rangeHint}

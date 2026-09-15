@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { ArrowDownToLine } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -109,7 +108,7 @@ export default async function StockMovementsPageRoute({
           description={`${active.name} · ledger.`}
         />
         <RetryErrorState
-          icon={ArrowDownToLine}
+          icon="arrow-down-to-line"
           title="Unable to load movements."
           description="Something went wrong while retrieving the ledger. Please try again."
         />

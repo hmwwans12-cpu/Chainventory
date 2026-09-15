@@ -218,6 +218,25 @@ test.describe.serial("main-flow", () => {
     );
   });
 
+  test("dashboard: KPI cards render with warehouse data (RSC serializable props)", async () => {
+    // Regresi: StatCard dkk menerima `icon` sebagai NAMA string, bukan definisi
+    // komponen Lucide — oper komponen melewati batas RSC melempar runtime
+    // "Only plain objects..." yang TIDAK tertangkap tsc/eslint/build (halaman
+    // force-dynamic) maupun E2E user-baru (cabang NoWarehouse). Uji ini membuka
+    // dashboard DENGAN warehouse sehingga cabang StatCard tereksekusi.
+    expect(state.warehouseId).toBeDefined();
+    const page = await ctx.newPage();
+    await page.goto(`/dashboard?warehouse=${state.warehouseId}`);
+    await expect(page).toHaveURL(/\/dashboard/);
+    // Scope ke grid KPI: teks "Stock In" dkk juga muncul di tombol/daftar lain.
+    const kpi = page.getByTestId("kpi-cards");
+    await expect(kpi.getByText("Total Products")).toBeVisible();
+    await expect(kpi.getByText("Total Stock")).toBeVisible();
+    await expect(kpi.getByText("Stock In")).toBeVisible();
+    await expect(kpi.getByText("Stock Out")).toBeVisible();
+    await page.close();
+  });
+
   test("member: join via code + owner approve as MANAGER", async () => {
     expect(state.owner).toBeDefined();
     expect(state.warehouseId).toBeDefined();

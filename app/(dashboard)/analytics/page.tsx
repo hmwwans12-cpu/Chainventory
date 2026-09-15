@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Package, Layers, PackagePlus, PackageMinus } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -102,19 +101,19 @@ export default async function AnalyticsPage({
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          icon={Package}
+          icon="package"
           label="Total Products"
           value={String(analytics.totalProducts)}
           unit="SKUs Active"
         />
         <StatCard
-          icon={Layers}
+          icon="layers"
           label="Total Stock"
           value={analytics.totalStock}
           unit="Units on hand"
         />
         <StatCard
-          icon={PackagePlus}
+          icon="package-plus"
           label="Stock In"
           value={analytics.period.stockIn}
           hint={rangeHint}
@@ -124,7 +123,7 @@ export default async function AnalyticsPage({
           }}
         />
         <StatCard
-          icon={PackageMinus}
+          icon="package-minus"
           label="Stock Out"
           value={analytics.period.stockOut}
           hint={rangeHint}
