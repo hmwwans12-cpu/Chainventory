@@ -1,4 +1,5 @@
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
+import { randomUUID } from "node:crypto";
 import type { Hex } from "viem";
 
 import { wipeRunDataFull } from "./support/cleanup";
@@ -293,6 +294,8 @@ test.describe.serial("main-flow", () => {
       "/api/warehouses/inventory/movements?action=apply",
       {
         data: {
+          // Audit C-10: idempotencyKey wajib (400 bila kosong).
+          idempotencyKey: randomUUID(),
           warehouseId: state.warehouseId,
           productId: state.productId,
           movementType: "stock_in",
@@ -334,8 +337,12 @@ test.describe.serial("main-flow", () => {
     const page = await ctx.newPage();
     await page.goto(`/inventory/movements?warehouse=${state.warehouseId}`);
     await expect(page).toHaveURL(/\/inventory\/movements/);
-    await expect(page.getByText(`SKU-E2E-${RUN}`)).toBeVisible();
-    await expect(page.getByText("Stock In").first()).toBeVisible();
+    // Scope ke tabel desktop: halaman me-render ganda (tabel + card-list
+    // mobile lg:hidden) sehingga getByText global strict-violation; tombol
+    // "+ Stock In" juga mengandung teks yang sama.
+    const table = page.locator("table");
+    await expect(table.getByText(`SKU-E2E-${RUN}`)).toBeVisible();
+    await expect(table.getByText("Stock In")).toBeVisible();
     await page.close();
   });
 
@@ -387,6 +394,7 @@ test.describe.serial("main-flow", () => {
       "/api/warehouses/inventory/movements?action=apply",
       {
         data: {
+          idempotencyKey: randomUUID(),
           warehouseId: state.warehouseId,
           productId: state.productId,
           movementType: "stock_in",
@@ -412,6 +420,7 @@ test.describe.serial("main-flow", () => {
       "/api/warehouses/inventory/movements?action=apply",
       {
         data: {
+          idempotencyKey: randomUUID(),
           warehouseId: state.warehouseId,
           productId: state.productId,
           movementType: "stock_out",
@@ -454,6 +463,8 @@ test.describe.serial("main-flow", () => {
       "/api/warehouses/inventory/movements?action=apply",
       {
         data: {
+          // Key tetap dikirim agar sampai ke guard suspended (cek key dulu).
+          idempotencyKey: randomUUID(),
           warehouseId: state.warehouseId,
           productId: state.productId,
           movementType: "stock_in",
