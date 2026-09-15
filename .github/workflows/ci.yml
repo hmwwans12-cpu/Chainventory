@@ -99,6 +99,10 @@ jobs:
       QSTASH_NEXT_SIGNING_KEY: ${{ secrets.E2E_QSTASH_NEXT_SIGNING_KEY }}
       CRON_SECRET: ${{ secrets.E2E_CRON_SECRET }}
       BASE_SEPOLIA_RPC_URL: ${{ secrets.E2E_BASE_SEPOLIA_RPC_URL }}
+      # Redis rate-limiter: mutasi sensitif fail-closed tanpa ini
+      # (lib/security/rate-limit.ts) — E2E stock movement ditolak bila kosong.
+      UPSTASH_REDIS_REST_URL: ${{ secrets.E2E_UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.E2E_UPSTASH_REDIS_REST_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
