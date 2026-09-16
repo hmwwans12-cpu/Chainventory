@@ -14,8 +14,12 @@
 --   1. Owner lama tanda tangan transferOwnership(newOwnerWallet) dari
 --      wallet-nya via Privy (client) → txHash.
 --   2. BFF verifikasi tx on-chain (to == kontrak, fungsi tepat, from ==
---      owner on-chain saat ini, newOwner == wallet primary verified
---      milik member target) — lihat lib/blockchain/ownership-proof.ts.
+--      on_chain_owner_wallet DB pra-transfer, newOwner == wallet primary
+--      verified milik member target, plus post-condition owner() pasca-tx
+--      == wallet target) — lihat lib/blockchain/ownership-proof.ts
+--      (resolveOwnershipTransferExpectation; fix P0-1 audit §10.1:
+--      owner() pasca-mined adalah owner BARU, jangan dipakai sebagai
+--      ekspektasi `from`).
 --   3. RPC ini melakukan sinkron DB atomik. Verifikasi on-chain TIDAK
 --      dilakukan di sini (RPC tak bisa panggil chain) — route handler
 --      yang menjaminnya sebelum memanggil (fail-closed: tanpa itu, RPC

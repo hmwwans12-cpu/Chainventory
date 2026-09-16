@@ -32,6 +32,7 @@ import {
   type DeploymentStepState,
 } from "@/components/warehouses/deployment-steps";
 import { useWalletSync } from "@/lib/wallets/use-wallet-sync";
+import { useLocale } from "@/components/providers/locale-provider";
 import {
   prepareDeployment,
   submitDeployment,
@@ -86,26 +87,28 @@ const STEP_ORDER = [
 
 type StepKey = (typeof STEP_ORDER)[number];
 
-const STEP_CONTENT: Record<StepKey, { label: string; hint: string }> = {
+// Kunci terjemahan langkah deploy (i18n FE-16) — di-resolve via t() di
+// body render agar ikut locale aktif.
+const STEP_CONTENT_KEYS: Record<StepKey, { label: string; hint: string }> = {
   preparing: {
-    label: "Preparing warehouse",
-    hint: "Generating your warehouse code and deployment authorization.",
+    label: "warehouses.create_step_preparing",
+    hint: "warehouses.create_step_preparing_hint",
   },
   signing: {
-    label: "Authorization signed",
-    hint: "Approve the signature request in your wallet.",
+    label: "warehouses.create_step_signing",
+    hint: "warehouses.create_step_signing_hint",
   },
   submitting: {
-    label: "Deployment submitted",
-    hint: "Transaction broadcast to Base Sepolia.",
+    label: "warehouses.create_step_submitting",
+    hint: "warehouses.create_step_submitting_hint",
   },
   confirming: {
-    label: "Waiting for confirmation",
-    hint: "The warehouse contract is being deployed on-chain. This usually takes under a minute.",
+    label: "warehouses.create_step_confirming",
+    hint: "warehouses.create_step_confirming_hint",
   },
   finalizing: {
-    label: "Finalizing warehouse",
-    hint: "Recording your contract address on-chain.",
+    label: "warehouses.create_step_finalizing",
+    hint: "warehouses.create_step_finalizing_hint",
   },
 };
 
@@ -139,6 +142,7 @@ function PhaseFade({
 
 export function CreateWarehouseForm() {
   const router = useRouter();
+  const { t } = useLocale();
   const { ready, authenticated } = usePrivy();
   const { wallets } = useWallets();
   const { signTypedData } = useSignTypedData();
@@ -211,12 +215,13 @@ export function CreateWarehouseForm() {
 
   function validate(): boolean {
     const errors: Record<string, string> = {};
-    if (!name.trim()) errors.name = "Enter a warehouse name.";
-    else if (name.length > 200) errors.name = "Warehouse name is too long.";
+    if (!name.trim()) errors.name = t("warehouses.create_err_name_required");
+    else if (name.length > 200)
+      errors.name = t("warehouses.create_err_name_long");
     if (companyName.length > 200)
-      errors.companyName = "Company name is too long.";
+      errors.companyName = t("warehouses.create_err_company_long");
     if (warehouseType.length > 60)
-      errors.warehouseType = "Warehouse type is too long.";
+      errors.warehouseType = t("warehouses.create_err_type_long");
     setFieldErrors(errors);
     const firstError = Object.keys(errors)[0];
     if (firstError) {
@@ -283,25 +288,23 @@ export function CreateWarehouseForm() {
     }
     if (status === 409) {
       fail({
-        title: "You already have an active warehouse",
-        detail:
-          "Each wallet can own one warehouse, and yours is already live on Base Sepolia. No new warehouse was created.",
+        title: t("warehouses.create_fail_active_title"),
+        detail: t("warehouses.create_fail_active_prepare"),
         action: "dashboard",
       });
       return;
     }
     if (code === "INVALID_INPUT" && /connect a wallet/i.test(message)) {
       fail({
-        title: "Your wallet is not connected",
-        detail:
-          "Connect and sync your wallet first, then try again. Reconnect your wallet so it can sync with your account.",
+        title: t("warehouses.create_fail_wallet_title"),
+        detail: t("warehouses.create_fail_wallet_prepare"),
         action: "connect-wallet",
       });
       return;
     }
     fail({
-      title: "Warehouse deployment failed.",
-      detail: `No warehouse was created. ${message}`,
+      title: t("warehouses.create_fail_deploy_title"),
+      detail: t("warehouses.create_fail_deploy_detail", { message }),
       action: "retry",
     });
   }
@@ -318,9 +321,8 @@ export function CreateWarehouseForm() {
     }
     if (status === 409 && /already have an active warehouse/i.test(message)) {
       fail({
-        title: "You already have an active warehouse",
-        detail:
-          "Your warehouse was created earlier and is live on Base Sepolia. Head to your dashboard to manage it.",
+        title: t("warehouses.create_fail_active_title"),
+        detail: t("warehouses.create_fail_active_submit"),
         action: "dashboard",
       });
       return;
@@ -331,8 +333,8 @@ export function CreateWarehouseForm() {
       return;
     }
     fail({
-      title: "Warehouse deployment failed.",
-      detail: `No warehouse was created. ${message}`,
+      title: t("warehouses.create_fail_deploy_title"),
+      detail: t("warehouses.create_fail_deploy_detail", { message }),
       action: "retry",
     });
   }
@@ -346,9 +348,8 @@ export function CreateWarehouseForm() {
     );
     if (!wallet) {
       fail({
-        title: "Your wallet is not connected",
-        detail:
-          "The deployment must be signed by your primary wallet. Reconnect your wallet so it can sync, then try again.",
+        title: t("warehouses.create_fail_wallet_title"),
+        detail: t("warehouses.create_fail_wallet_sign"),
         action: "connect-wallet",
       });
       return null;
@@ -399,9 +400,8 @@ export function CreateWarehouseForm() {
       signature = await signWithWallet(deployment, deployment.owner);
     } catch {
       fail({
-        title: "Authorization not signed",
-        detail:
-          "The deployment was cancelled because the signature was not completed. Nothing was created. You can try again.",
+        title: t("warehouses.create_fail_sign_title"),
+        detail: t("warehouses.create_fail_sign_detail"),
         action: "retry",
       });
       return;
@@ -433,9 +433,8 @@ export function CreateWarehouseForm() {
       if (!finalized.ok) {
         if (finalized.status === 202) {
           fail({
-            title: "Deployment is still confirming",
-            detail:
-              "Your warehouse was submitted and is confirming on-chain. Check your dashboard shortly. It will appear once confirmed.",
+            title: t("warehouses.create_fail_confirming_title"),
+            detail: t("warehouses.create_fail_confirming_detail"),
             action: "dashboard",
           });
           return;
@@ -498,8 +497,8 @@ export function CreateWarehouseForm() {
             : "pending";
     return {
       key,
-      label: STEP_CONTENT[key].label,
-      hint: index === currentIndex ? STEP_CONTENT[key].hint : undefined,
+      label: t(STEP_CONTENT_KEYS[key].label),
+      hint: index === currentIndex ? t(STEP_CONTENT_KEYS[key].hint) : undefined,
       state,
     };
   });
@@ -518,11 +517,10 @@ export function CreateWarehouseForm() {
             </span>
             <div className="flex flex-col gap-1">
               <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
-                Warehouse created
+                {t("warehouses.create_success_title")}
               </h1>
               <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-                Your warehouse is live on Base Sepolia. Share your code to
-                invite your team.
+                {t("warehouses.create_success_desc")}
               </p>
             </div>
           </div>
@@ -530,7 +528,7 @@ export function CreateWarehouseForm() {
           <PanelCard padding="none" className="bg-muted/40">
             <div className="flex flex-col gap-1 px-4 py-3.5">
               <span className="text-muted-foreground text-sm">
-                Warehouse code
+                {t("warehouses.code_label")}
               </span>
               <div className="flex min-w-0 items-center gap-1.5">
                 <code
@@ -541,14 +539,14 @@ export function CreateWarehouseForm() {
                 </code>
                 <CopyButton
                   text={result.warehouseCode}
-                  label="Copy warehouse code"
+                  label={t("dashboard.copy_warehouse_code")}
                 />
               </div>
             </div>
             {result.contractAddress ? (
               <div className="border-border flex flex-col gap-1 border-t px-4 py-3.5">
                 <span className="text-muted-foreground text-sm">
-                  Contract address
+                  {t("warehouses.create_contract_label")}
                 </span>
                 <div className="flex min-w-0 items-center gap-1.5">
                   <code
@@ -559,13 +557,13 @@ export function CreateWarehouseForm() {
                   </code>
                   <CopyButton
                     text={result.contractAddress}
-                    label="Copy contract address"
+                    label={t("warehouses.copy_contract")}
                   />
                   <a
                     href={`${BASESCAN_URL}/address/${result.contractAddress}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="View contract on BaseScan"
+                    aria-label={t("warehouses.view_basescan")}
                     className="text-muted-foreground hover:text-primary focus-visible:ring-ring relative flex size-7 shrink-0 items-center justify-center rounded-lg outline-none before:absolute before:-inset-[8px] before:content-[''] focus-visible:ring-3"
                   >
                     <ExternalLink aria-hidden="true" className="size-3.5" />
@@ -580,11 +578,10 @@ export function CreateWarehouseForm() {
             className="h-11 w-full text-base"
             render={<Link href="/dashboard" />}
           >
-            Go to dashboard
+            {t("warehouses.go_dashboard")}
           </Button>
           <p className="text-muted-foreground text-center text-sm">
-            Invite your team with the warehouse code, or manage everything from
-            your dashboard.
+            {t("warehouses.create_invite_note")}
           </p>
         </div>
       </PhaseFade>
@@ -603,10 +600,10 @@ export function CreateWarehouseForm() {
               render={<Link href="/onboarding" />}
             >
               <ArrowLeft aria-hidden="true" />
-              Back to onboarding
+              {t("warehouses.back_onboarding")}
             </Button>
             <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
-              Create Warehouse
+              {t("warehouses.create_title")}
             </h1>
           </div>
 
@@ -626,7 +623,7 @@ export function CreateWarehouseForm() {
               className="h-11 w-full text-base"
               render={<Link href="/dashboard" />}
             >
-              Go to dashboard
+              {t("warehouses.go_dashboard")}
             </Button>
           ) : (
             <Button
@@ -634,27 +631,29 @@ export function CreateWarehouseForm() {
               className="h-11 w-full text-base"
               onClick={startCreate}
               disabled={!ready || !authenticated}
-              title={!authenticated ? "Sign in first, then retry" : undefined}
+              title={
+                !authenticated ? t("warehouses.signin_retry_title") : undefined
+              }
             >
               <Blocks aria-hidden="true" />
-              Try Again
+              {t("warehouses.retry")}
             </Button>
           )}
           {!ready || !authenticated ? (
             <p className="text-muted-foreground text-center text-sm">
               {!authenticated
-                ? "Sign in first, then try again."
-                : "Still preparing. Wait a moment, then try again."}
+                ? t("warehouses.signin_retry_desc")
+                : t("warehouses.preparing_desc")}
             </p>
           ) : null}
           {error.action === "connect-wallet" ? (
             <p className="text-muted-foreground text-sm">
-              Wallet sync:{" "}
+              {t("warehouses.create_sync_label")}{" "}
               {walletSync.syncing
-                ? "syncing…"
+                ? t("warehouses.create_syncing")
                 : walletSync.synced.length > 0
-                  ? "wallet synced"
-                  : "waiting for connection…"}
+                  ? t("warehouses.create_synced")
+                  : t("warehouses.create_sync_waiting")}
             </p>
           ) : null}
         </div>
@@ -674,15 +673,14 @@ export function CreateWarehouseForm() {
               render={<Link href="/onboarding" />}
             >
               <ArrowLeft aria-hidden="true" />
-              Back to onboarding
+              {t("warehouses.back_onboarding")}
             </Button>
             <div className="flex flex-col gap-1">
               <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
-                Deploying Warehouse
+                {t("warehouses.create_deploying_title")}
               </h1>
               <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-                Creating your warehouse on Base Sepolia. This usually takes
-                under a minute.
+                {t("warehouses.create_deploying_desc")}
               </p>
             </div>
             <div
@@ -699,7 +697,7 @@ export function CreateWarehouseForm() {
               className="bg-muted/40 flex items-center justify-between gap-3 px-3.5 py-2.5"
             >
               <span className="text-muted-foreground text-sm">
-                Warehouse code
+                {t("warehouses.code_label")}
               </span>
               <code
                 translate="no"
@@ -711,11 +709,16 @@ export function CreateWarehouseForm() {
           ) : null}
           {refreshed ? (
             <p className="text-muted-foreground text-sm">
-              Your previous authorization expired. A fresh one was requested.
+              {t("warehouses.create_refreshed_note")}
             </p>
           ) : null}
 
-          <DeploymentSteps steps={steps} liveRegion={liveRegion} />
+          <DeploymentSteps
+            steps={steps}
+            liveRegion={liveRegion}
+            title={t("warehouses.deploy_progress")}
+            ofLabel={t("warehouses.deploy_of")}
+          />
         </div>
       </PhaseFade>
     );
@@ -730,11 +733,10 @@ export function CreateWarehouseForm() {
           </span>
           <div className="flex flex-col gap-1">
             <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
-              Create Warehouse
+              {t("warehouses.create_title")}
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-              Deploy your own warehouse on Base Sepolia. Your warehouse code and
-              contract are generated automatically.
+              {t("warehouses.create_desc")}
             </p>
           </div>
         </div>
@@ -745,10 +747,10 @@ export function CreateWarehouseForm() {
             className="bg-card/50 flex flex-col items-start gap-3"
           >
             <p className="text-foreground text-sm">
-              Please sign in to continue.
+              {t("warehouses.signin_prompt")}
             </p>
             <Button variant="outline" size="sm" render={<Link href="/login" />}>
-              Go to login
+              {t("warehouses.go_login")}
             </Button>
           </PanelCard>
         ) : (
@@ -762,7 +764,7 @@ export function CreateWarehouseForm() {
           >
             <FormField
               id="name"
-              label="Warehouse Name"
+              label={t("warehouses.create_name_label")}
               error={fieldErrors.name}
             >
               <Input
@@ -779,9 +781,9 @@ export function CreateWarehouseForm() {
 
             <FormField
               id="company"
-              label="Company / PT Name"
+              label={t("warehouses.create_company_label")}
               error={fieldErrors.companyName}
-              hint="Optional. The legal entity behind this warehouse."
+              hint={t("warehouses.create_company_hint")}
             >
               <Input
                 id="company"
@@ -797,9 +799,9 @@ export function CreateWarehouseForm() {
 
             <FormField
               id="type"
-              label="Warehouse Type"
+              label={t("warehouses.create_type_label")}
               error={fieldErrors.warehouseType}
-              hint="Optional."
+              hint={t("warehouses.create_type_hint")}
             >
               <Select
                 value={warehouseType}
@@ -810,7 +812,9 @@ export function CreateWarehouseForm() {
                   className="w-full"
                   aria-invalid={fieldErrors.warehouseType ? true : undefined}
                 >
-                  <SelectValue placeholder="Select a type" />
+                  <SelectValue
+                    placeholder={t("warehouses.create_type_placeholder")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {WAREHOUSE_TYPES.map((type) => (
@@ -836,10 +840,10 @@ export function CreateWarehouseForm() {
                 ) : (
                   <Blocks aria-hidden="true" />
                 )}
-                Create Warehouse
+                {t("warehouses.create_submit")}
               </Button>
               <p className="text-muted-foreground text-center text-sm">
-                Warehouse code and contract address are generated automatically.
+                {t("warehouses.create_auto_note")}
               </p>
             </div>
           </form>
@@ -854,8 +858,7 @@ export function CreateWarehouseForm() {
             className="text-primary mt-0.5 size-4 shrink-0"
           />
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Deploying is signed once with your wallet and submitted on your
-            behalf. Transaction fees are covered by Chainventory.
+            {t("warehouses.create_shield_note")}
           </p>
         </PanelCard>
       </div>

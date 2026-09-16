@@ -13,6 +13,7 @@ import {
 
 import { toast } from "@/components/ui/toast";
 import { isLowStock } from "@/lib/inventory/low-stock";
+import { getMovementRowView } from "@/lib/inventory/movement-row";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -580,11 +581,10 @@ export function ProductDetailSheet({
               ) : movements && movements.length > 0 ? (
                 <ul className="flex flex-col">
                   {movements.map((m) => {
-                    const typeMeta = MOVEMENT_TYPE_META[m.movementType];
-                    const statusMeta = MOVEMENT_STATUS_META[m.status];
-                    const negative =
-                      m.movementType === "stock_out" ||
-                      m.movementType === "reversal";
+                    // Rekomendasi audit 10.5: helper bersama — bukan
+                    // duplikasi inline (kelas bug FE-23/isLowStock).
+                    const { typeMeta, statusMeta, negative } =
+                      getMovementRowView(m);
                     return (
                       <li
                         key={m.id}

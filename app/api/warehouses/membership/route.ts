@@ -2,7 +2,10 @@ import { createPublicClient, type Hex } from "viem";
 
 import { createClient } from "@/lib/supabase/server";
 import { baseSepolia, createChainTransport } from "@/lib/blockchain/chains";
-import { verifyOwnershipTransferTx } from "@/lib/blockchain/ownership-proof";
+import {
+  resolveOwnershipTransferExpectation,
+  verifyOwnershipTransferTx,
+} from "@/lib/blockchain/ownership-proof";
 import {
   approveJoinSchema,
   cancelJoinSchema,
@@ -374,6 +377,11 @@ async function requireTransferParties(
  * verifyIntentProofTx) lalu panggil RPC confirm_ownership_transfer yang
  * melakukan sinkron DB atomik. Tanpa verifikasi ini, siapa pun bisa
  * mengklaim tx orang lain untuk mencuri ownership di DB.
+ *
+ * Fix P0-1 (audit §10.1): `from` dibandingkan dengan
+ * `warehouses.on_chain_owner_wallet` di DB (pra-transfer), BUKAN dengan
+ * `owner()` pasca-mined (yang sudah menjadi owner baru). `owner()`
+ * pasca-tx dipakai sebagai post-condition == wallet target.
  */
 async function handleOnchainTransfer(
   supabase: DbClient,
@@ -407,16 +415,26 @@ async function handleOnchainTransfer(
   );
   if ("error" in parties) return parties.error;
 
+  // Fix P0-1 (audit §10.1): baca identitas PRA-transfer dari tabel
+  // `warehouses` (owner-only, memuat on_chain_owner_wallet) — BUKAN dari
+  // `warehouse_summaries` yang memang menyembunyikan kolom identitas owner
+  // (migrasi 0020). Kolom on_chain_owner_wallet di DB baru berubah saat RPC
+  // confirm_ownership_transfer sukses, jadi nilainya adalah owner LAMA yang
+  // benar untuk ekspektasi `tx.from`.
   const { data: warehouse } = await supabase
-    .from("warehouse_summaries")
-    .select("contract_address")
+    .from("warehouses")
+    .select("contract_address, on_chain_owner_wallet")
     .eq("id", warehouseId)
     .maybeSingle();
   const contractAddress = warehouse?.contract_address as string | undefined;
+  const dbOwnerWallet = warehouse?.on_chain_owner_wallet as string | undefined;
   if (!contractAddress) {
     return invalid(
       "This warehouse is not deployed on-chain. Use the off-chain transfer instead."
     );
+  }
+  if (!dbOwnerWallet) {
+    return invalid("Warehouse owner wallet is not recorded.");
   }
 
   const client = createPublicClient({
@@ -425,7 +443,7 @@ async function handleOnchainTransfer(
   });
   let tx: { to: string | null; from: string; input: Hex };
   let receiptStatus: string | undefined;
-  let onChainOwner: string;
+  let onChainOwnerAfter: string;
   try {
     const [fetched, receipt, owner] = await Promise.all([
       client.getTransaction({ hash: txHash as Hex }),
@@ -438,7 +456,7 @@ async function handleOnchainTransfer(
     ]);
     tx = { to: fetched.to, from: fetched.from, input: fetched.input };
     receiptStatus = receipt.status;
-    onChainOwner = owner as string;
+    onChainOwnerAfter = owner as string;
   } catch {
     return json(
       {
@@ -450,13 +468,31 @@ async function handleOnchainTransfer(
     );
   }
 
+  // Fix P0-1 (audit §10.1): `owner()` dibaca SETELAH tx mined sehingga
+  // nilainya adalah owner BARU — JANGAN dipakai sebagai `currentOwnerWallet`
+  // (itu membuat cek `tx.from == currentOwner` selalu gagal untuk transfer
+  // valid). currentOwner datang dari DB pra-transfer; owner() pasca-tx
+  // dipakai sebagai post-condition (harus == wallet target).
+  const resolved = resolveOwnershipTransferExpectation({
+    contractAddress,
+    dbOwnerWallet,
+    onChainOwnerAfter,
+    targetWallet: parties.wallet,
+  });
+  if (!resolved.ok) {
+    return json(
+      {
+        ok: false,
+        error: `Wallet transaction is not a valid ownership transfer (${resolved.reason}). Nothing was changed.`,
+        errorCode: "RPC_FAILED",
+      },
+      409
+    );
+  }
+
   const verdict = verifyOwnershipTransferTx(
     { ...tx, status: receiptStatus },
-    {
-      contractAddress,
-      currentOwnerWallet: onChainOwner,
-      newOwnerWallet: parties.wallet,
-    }
+    resolved.expectation
   );
   if (!verdict.ok) {
     return json(

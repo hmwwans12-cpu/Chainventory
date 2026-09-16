@@ -41,6 +41,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cmd.join_warehouse": "Join Warehouse",
     "cmd.developer_console": "Developer Console",
     "cmd.no_results": "No results for “{query}”.",
+    "cmd.palette_label": "Command palette",
+    "cmd.list_label": "Commands",
     // Common
     "common.account_menu": "Account menu",
     "common.switch_warehouse": "Switch active warehouse",
@@ -922,6 +924,37 @@ export const translations: Record<Locale, Record<string, string>> = {
     "members.pending_failed":
       "Could not load pending join requests. New requests may be hidden. Refresh to retry.",
     "members.unknown": "Unknown",
+    // Member dialogs (i18n FE-16 — reject/remove/leave)
+    "members.reject_title": "Reject {name}?",
+    "members.reject_fallback_name": "this join request",
+    "members.reject_desc":
+      "They can submit a new request later. You can optionally include a reason.",
+    "members.reject_reason_label": "Reason for rejection (optional)",
+    "members.reject_reason_placeholder":
+      "Explain why this request cannot be approved",
+    "members.reject_keep": "Keep request pending",
+    "members.reject_confirm": "Reject request",
+    "members.reject_success_title": "Join request rejected",
+    "members.reject_success_desc": "{name} was not granted access.",
+    "members.remove_title": "Remove {name} from warehouse?",
+    "members.remove_desc":
+      "{name} will immediately lose access to this warehouse. Existing activity and movement history remain unchanged. You can re-invite them later.",
+    "members.remove_keep": "Keep member",
+    "members.remove_confirm": "Remove member",
+    "members.remove_success_title": "{name} removed",
+    "members.remove_success_desc":
+      "Access revoked. {name} can be re-invited later.",
+    "members.leave_title": "Leave warehouse?",
+    "members.leave_owner_desc":
+      "You are the owner. You can't leave until ownership is transferred to another member. Transfer ownership first, then you can leave.",
+    "members.leave_desc":
+      "You will immediately lose access to this warehouse. Your past activity remains. A Manager or Owner can re-invite you later.",
+    "members.leave_keep_owner": "Keep as owner",
+    "members.leave_stay": "Stay in warehouse",
+    "members.leave_transfer": "Transfer ownership",
+    "members.leave_confirm": "Leave warehouse",
+    "members.leave_success_title": "Left warehouse",
+    "members.leave_success_desc": "You are no longer a member.",
     // Transfer ownership on-chain (temuan audit #4)
     "ownership.title": "Transfer ownership",
     "ownership.choose_hint":
@@ -1133,12 +1166,188 @@ export const translations: Record<Locale, Record<string, string>> = {
     "console.usage_rows_proofs": "Proofs (rows)",
     "console.usage_rows_memberships": "Memberships (rows)",
     "console.usage_rows_notifications": "Notifications (rows)",
+    // Faucet claim card (i18n FE-16)
+    "faucet.title": "Testnet Gas Reserve",
+    "faucet.low_balance_desc":
+      "Base Sepolia balance is low ({balance} ETH). Claim {amount} test ETH to keep recording stock transactions.",
+    "faucet.view_transfer": "View transfer",
+    "faucet.claim_label": "Claim Test ETH ({amount} ETH)",
+    "faucet.claim_success":
+      "{amount} Base Sepolia ETH has been submitted to your wallet.",
+    "faucet.claim_failed": "Unable to claim test ETH. Try again shortly.",
+    "faucet.network_error":
+      "Network error. Your faucet claim was not submitted.",
+    // Warehouse onboarding forms (i18n FE-16)
+    "warehouses.go_login": "Go to login",
+    "warehouses.go_dashboard": "Go to dashboard",
+    "warehouses.signin_prompt": "Please sign in to continue.",
+    "warehouses.back_onboarding": "Back to onboarding",
+    "warehouses.retry": "Try Again",
+    "warehouses.signin_retry_title": "Sign in first, then retry",
+    "warehouses.signin_retry_desc": "Sign in first, then try again.",
+    "warehouses.preparing_desc":
+      "Still preparing. Wait a moment, then try again.",
+    "warehouses.code_label": "Warehouse code",
+    "warehouses.copy_contract": "Copy contract address",
+    "warehouses.view_basescan": "View contract on BaseScan",
+    "warehouses.join_title": "Join a Warehouse",
+    "warehouses.join_desc":
+      "Enter a warehouse code to request access to an existing team.",
+    "warehouses.join_code_hint":
+      "Ask the warehouse owner or manager for the code.",
+    "warehouses.join_request_access": "Request Access",
+    "warehouses.join_requesting": "Requesting access…",
+    "warehouses.join_review_hint":
+      "The owner reviews your request in Members. No payment needed.",
+    "warehouses.join_how_aria": "How joining works",
+    "warehouses.join_step_enter": "Enter code",
+    "warehouses.join_step_approve": "Owner approves",
+    "warehouses.join_step_in": "You're in",
+    "warehouses.join_err_required": "Enter a warehouse code.",
+    "warehouses.join_err_too_long": "Warehouse code is too long.",
+    "warehouses.join_err_format":
+      "Enter the warehouse code in the format {hint} (e.g. CHV-7K29XP4).",
+    "warehouses.join_success_title": "Access request sent",
+    "warehouses.join_success_desc":
+      "The warehouse owner has been notified. You'll get access once your request is approved.",
+    "warehouses.join_progress_aria": "Join request progress",
+    "warehouses.join_tl_sent": "Request sent",
+    "warehouses.join_tl_sent_sub": "Received by the warehouse",
+    "warehouses.join_tl_approve": "Owner approves",
+    "warehouses.join_tl_approve_sub": "Reviewed in Members",
+    "warehouses.join_tl_granted": "Access granted",
+    "warehouses.join_tl_granted_sub": "You're part of the team",
+    "warehouses.join_card_warehouse": "Warehouse",
+    "warehouses.join_card_status": "Status",
+    "warehouses.join_pending": "Pending approval",
+    "warehouses.join_request_another": "Request another code",
+    "warehouses.join_success_footer":
+      "The owner will find your request in Members. Joining is free.",
+    "warehouses.join_fail_not_found_title": "Warehouse not found",
+    "warehouses.join_fail_not_found_desc":
+      "No warehouse matches that code. Double-check it with your owner or manager, then try again.",
+    "warehouses.join_fail_member_title": "You're already a member",
+    "warehouses.join_fail_member_desc":
+      "This account already belongs to that warehouse. No request needed. Head to your dashboard.",
+    "warehouses.join_fail_sent_title": "Request already sent",
+    "warehouses.join_fail_sent_desc":
+      "A request for this warehouse is already waiting for approval. Check with the owner or manager.",
+    "warehouses.join_fail_closed_title": "Not accepting new members",
+    "warehouses.join_fail_closed_desc":
+      "This warehouse is currently closed to join requests. Ask the owner to invite you instead.",
+    "warehouses.join_fail_generic_title": "Access request failed",
+    "warehouses.join_fail_generic_detail":
+      "Something went wrong. Please try again.",
+    "warehouses.create_title": "Create Warehouse",
+    "warehouses.create_desc":
+      "Deploy your own warehouse on Base Sepolia. Your warehouse code and contract are generated automatically.",
+    "warehouses.create_name_label": "Warehouse Name",
+    "warehouses.create_company_label": "Company / PT Name",
+    "warehouses.create_company_hint":
+      "Optional. The legal entity behind this warehouse.",
+    "warehouses.create_type_label": "Warehouse Type",
+    "warehouses.create_type_hint": "Optional.",
+    "warehouses.create_type_placeholder": "Select a type",
+    "warehouses.create_submit": "Create Warehouse",
+    "warehouses.create_auto_note":
+      "Warehouse code and contract address are generated automatically.",
+    "warehouses.create_shield_note":
+      "Deploying is signed once with your wallet and submitted on your behalf. Transaction fees are covered by Chainventory.",
+    "warehouses.create_err_name_required": "Enter a warehouse name.",
+    "warehouses.create_err_name_long": "Warehouse name is too long.",
+    "warehouses.create_err_company_long": "Company name is too long.",
+    "warehouses.create_err_type_long": "Warehouse type is too long.",
+    "warehouses.create_step_preparing": "Preparing warehouse",
+    "warehouses.create_step_preparing_hint":
+      "Generating your warehouse code and deployment authorization.",
+    "warehouses.create_step_signing": "Authorization signed",
+    "warehouses.create_step_signing_hint":
+      "Approve the signature request in your wallet.",
+    "warehouses.create_step_submitting": "Deployment submitted",
+    "warehouses.create_step_submitting_hint":
+      "Transaction broadcast to Base Sepolia.",
+    "warehouses.create_step_confirming": "Waiting for confirmation",
+    "warehouses.create_step_confirming_hint":
+      "The warehouse contract is being deployed on-chain. This usually takes under a minute.",
+    "warehouses.create_step_finalizing": "Finalizing warehouse",
+    "warehouses.create_step_finalizing_hint":
+      "Recording your contract address on-chain.",
+    "warehouses.create_fail_active_title":
+      "You already have an active warehouse",
+    "warehouses.create_fail_active_prepare":
+      "Each wallet can own one warehouse, and yours is already live on Base Sepolia. No new warehouse was created.",
+    "warehouses.create_fail_active_submit":
+      "Your warehouse was created earlier and is live on Base Sepolia. Head to your dashboard to manage it.",
+    "warehouses.create_fail_wallet_title": "Your wallet is not connected",
+    "warehouses.create_fail_wallet_prepare":
+      "Connect and sync your wallet first, then try again. Reconnect your wallet so it can sync with your account.",
+    "warehouses.create_fail_wallet_sign":
+      "The deployment must be signed by your primary wallet. Reconnect your wallet so it can sync, then try again.",
+    "warehouses.create_fail_deploy_title": "Warehouse deployment failed.",
+    "warehouses.create_fail_deploy_detail":
+      "No warehouse was created. {message}",
+    "warehouses.create_fail_sign_title": "Authorization not signed",
+    "warehouses.create_fail_sign_detail":
+      "The deployment was cancelled because the signature was not completed. Nothing was created. You can try again.",
+    "warehouses.create_fail_confirming_title": "Deployment is still confirming",
+    "warehouses.create_fail_confirming_detail":
+      "Your warehouse was submitted and is confirming on-chain. Check your dashboard shortly. It will appear once confirmed.",
+    "warehouses.create_deploying_title": "Deploying Warehouse",
+    "warehouses.create_deploying_desc":
+      "Creating your warehouse on Base Sepolia. This usually takes under a minute.",
+    "warehouses.create_refreshed_note":
+      "Your previous authorization expired. A fresh one was requested.",
+    "warehouses.create_success_title": "Warehouse created",
+    "warehouses.create_success_desc":
+      "Your warehouse is live on Base Sepolia. Share your code to invite your team.",
+    "warehouses.create_contract_label": "Contract address",
+    "warehouses.create_invite_note":
+      "Invite your team with the warehouse code, or manage everything from your dashboard.",
+    "warehouses.create_sync_label": "Wallet sync:",
+    "warehouses.create_syncing": "syncing…",
+    "warehouses.create_synced": "wallet synced",
+    "warehouses.create_sync_waiting": "waiting for connection…",
     // Dashboard additions
     "dashboard.unknown_product": "Unknown product",
     "dashboard.profile_fallback": "Your profile",
     "dashboard.step_label": "STEP {n}",
     "dashboard.done": "Done",
     "dashboard.copy_warehouse_code": "Copy warehouse code",
+    // Recent widgets (server components receive these as `copy` props —
+    // pola yang sama dengan NoWarehouse di dashboard/page; i18n FE-16)
+    "dashboard.recent_movements_title": "Recent Stock Movements",
+    "dashboard.recent_movements_desc":
+      "Validated operational stock logs in this warehouse.",
+    "dashboard.recent_view_all_movements": "View All Movements",
+    "dashboard.recent_col_product": "Product",
+    "dashboard.recent_col_type": "Type",
+    "dashboard.recent_col_status": "Status",
+    "dashboard.recent_col_qty": "Qty",
+    "dashboard.recent_col_when": "When",
+    "dashboard.recent_movements_empty_title": "No stock movements yet",
+    "dashboard.recent_movements_empty_desc":
+      "Record your first stock in or out to start the ledger.",
+    "dashboard.recent_record_stock_in": "Record Stock In",
+    "dashboard.recent_tx_title": "Recent Transactions & Ledger Proofs",
+    "dashboard.recent_tx_desc": "Cryptographically signed batch commitments.",
+    "dashboard.recent_view_all_tx": "View All",
+    "dashboard.recent_tx_empty_title": "No ledger entries yet",
+    "dashboard.recent_tx_empty_desc":
+      "Stock operations and their blockchain proofs will appear here.",
+    "dashboard.recent_open_ledger": "Open the ledger",
+    "dashboard.recent_proof_verified": "Verified",
+    "dashboard.recent_proof_verifying": "Verifying",
+    "dashboard.recent_proof_failed": "Failed",
+    "dashboard.recent_type_stock_in": "Stock In",
+    "dashboard.recent_type_stock_out": "Stock Out",
+    "dashboard.recent_type_adjustment": "Adjustment",
+    "dashboard.recent_type_reversal": "Reversal",
+    "dashboard.recent_activity_title": "Recent Activity",
+    "dashboard.recent_activity_desc":
+      "Real-time event feed for this workspace.",
+    "dashboard.recent_unread_suffix": " (unread)",
+    "warehouses.deploy_progress": "Deployment progress",
+    "warehouses.deploy_of": "of",
     // Notifications
     "notif.new_one": "New notification",
     "notif.all_read": "All notifications marked as read",
@@ -1318,6 +1527,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cmd.join_warehouse": "Gabung Gudang",
     "cmd.developer_console": "Konsol Pengembang",
     "cmd.no_results": "Tidak ada hasil untuk “{query}”.",
+    "cmd.palette_label": "Palet perintah",
+    "cmd.list_label": "Perintah",
     "common.account_menu": "Menu akun",
     "common.switch_warehouse": "Ganti gudang aktif",
     "common.active_warehouse": "Gudang aktif",
@@ -2205,6 +2416,37 @@ export const translations: Record<Locale, Record<string, string>> = {
     "members.pending_failed":
       "Tidak dapat memuat permintaan gabung yang menunggu. Permintaan baru mungkin tersembunyi. Muat ulang untuk mencoba lagi.",
     "members.unknown": "Tidak diketahui",
+    // Dialog anggota (lihat komentar di blok en)
+    "members.reject_title": "Tolak {name}?",
+    "members.reject_fallback_name": "permintaan gabung ini",
+    "members.reject_desc":
+      "Mereka dapat mengajukan permintaan baru nanti. Anda opsional dapat menyertakan alasan.",
+    "members.reject_reason_label": "Alasan penolakan (opsional)",
+    "members.reject_reason_placeholder":
+      "Jelaskan mengapa permintaan ini tidak dapat disetujui",
+    "members.reject_keep": "Tetap tunggu",
+    "members.reject_confirm": "Tolak permintaan",
+    "members.reject_success_title": "Permintaan gabung ditolak",
+    "members.reject_success_desc": "{name} tidak diberi akses.",
+    "members.remove_title": "Hapus {name} dari gudang?",
+    "members.remove_desc":
+      "{name} akan langsung kehilangan akses ke gudang ini. Aktivitas dan riwayat pergerakan yang ada tetap tidak berubah. Anda dapat mengundang mereka lagi nanti.",
+    "members.remove_keep": "Pertahankan anggota",
+    "members.remove_confirm": "Hapus anggota",
+    "members.remove_success_title": "{name} dihapus",
+    "members.remove_success_desc":
+      "Akses dicabut. {name} dapat diundang kembali nanti.",
+    "members.leave_title": "Keluar dari gudang?",
+    "members.leave_owner_desc":
+      "Anda adalah owner. Anda tidak dapat keluar sebelum kepemilikan dialihkan ke anggota lain. Alihkan kepemilikan dulu, lalu Anda bisa keluar.",
+    "members.leave_desc":
+      "Anda akan langsung kehilangan akses ke gudang ini. Aktivitas lampau Anda tetap ada. Manajer atau Owner dapat mengundang Anda kembali nanti.",
+    "members.leave_keep_owner": "Tetap sebagai owner",
+    "members.leave_stay": "Tetap di gudang",
+    "members.leave_transfer": "Alihkan kepemilikan",
+    "members.leave_confirm": "Keluar dari gudang",
+    "members.leave_success_title": "Keluar dari gudang",
+    "members.leave_success_desc": "Anda bukan lagi anggota.",
     // Transfer ownership on-chain (temuan audit #4)
     "ownership.title": "Transfer kepemilikan",
     "ownership.choose_hint":
@@ -2422,12 +2664,187 @@ export const translations: Record<Locale, Record<string, string>> = {
     "console.usage_rows_proofs": "Bukti (baris)",
     "console.usage_rows_memberships": "Keanggotaan (baris)",
     "console.usage_rows_notifications": "Notifikasi (baris)",
+    // Kartu klaim faucet (lihat komentar di blok en)
+    "faucet.title": "Cadangan Gas Testnet",
+    "faucet.low_balance_desc":
+      "Saldo Base Sepolia rendah ({balance} ETH). Klaim {amount} test ETH agar tetap bisa mencatat transaksi stok.",
+    "faucet.view_transfer": "Lihat transfer",
+    "faucet.claim_label": "Klaim Test ETH ({amount} ETH)",
+    "faucet.claim_success":
+      "{amount} ETH Base Sepolia telah dikirim ke dompet Anda.",
+    "faucet.claim_failed": "Tidak dapat mengklaim test ETH. Coba lagi nanti.",
+    "faucet.network_error":
+      "Kesalahan jaringan. Klaim faucet Anda tidak terkirim.",
+    // Form onboarding gudang (lihat komentar di blok en)
+    "warehouses.go_login": "Ke halaman masuk",
+    "warehouses.go_dashboard": "Ke dasbor",
+    "warehouses.signin_prompt": "Silakan masuk untuk melanjutkan.",
+    "warehouses.back_onboarding": "Kembali ke onboarding",
+    "warehouses.retry": "Coba Lagi",
+    "warehouses.signin_retry_title": "Masuk dulu, lalu coba lagi.",
+    "warehouses.signin_retry_desc": "Masuk dulu, lalu coba lagi.",
+    "warehouses.preparing_desc":
+      "Masih menyiapkan. Tunggu sebentar, lalu coba lagi.",
+    "warehouses.code_label": "Kode gudang",
+    "warehouses.copy_contract": "Salin alamat kontrak",
+    "warehouses.view_basescan": "Lihat kontrak di BaseScan",
+    "warehouses.join_title": "Gabung ke Gudang",
+    "warehouses.join_desc":
+      "Masukkan kode gudang untuk meminta akses ke tim yang sudah ada.",
+    "warehouses.join_code_hint":
+      "Tanyakan kode kepada owner atau manajer gudang.",
+    "warehouses.join_request_access": "Minta Akses",
+    "warehouses.join_requesting": "Meminta akses…",
+    "warehouses.join_review_hint":
+      "Owner meninjau permintaan Anda di Anggota. Gratis.",
+    "warehouses.join_how_aria": "Cara bergabung",
+    "warehouses.join_step_enter": "Masukkan kode",
+    "warehouses.join_step_approve": "Owner menyetujui",
+    "warehouses.join_step_in": "Anda bergabung",
+    "warehouses.join_err_required": "Masukkan kode gudang.",
+    "warehouses.join_err_too_long": "Kode gudang terlalu panjang.",
+    "warehouses.join_err_format":
+      "Masukkan kode gudang dengan format {hint} (cth. CHV-7K29XP4).",
+    "warehouses.join_success_title": "Permintaan akses terkirim",
+    "warehouses.join_success_desc":
+      "Owner gudang telah diberi tahu. Anda mendapat akses setelah permintaan disetujui.",
+    "warehouses.join_progress_aria": "Progres permintaan gabung",
+    "warehouses.join_tl_sent": "Permintaan terkirim",
+    "warehouses.join_tl_sent_sub": "Diterima oleh gudang",
+    "warehouses.join_tl_approve": "Owner menyetujui",
+    "warehouses.join_tl_approve_sub": "Ditinjau di Anggota",
+    "warehouses.join_tl_granted": "Akses diberikan",
+    "warehouses.join_tl_granted_sub": "Anda bagian dari tim",
+    "warehouses.join_card_warehouse": "Gudang",
+    "warehouses.join_card_status": "Status",
+    "warehouses.join_pending": "Menunggu persetujuan",
+    "warehouses.join_request_another": "Minta dengan kode lain",
+    "warehouses.join_success_footer":
+      "Owner akan menemukan permintaan Anda di Anggota. Bergabung gratis.",
+    "warehouses.join_fail_not_found_title": "Gudang tidak ditemukan",
+    "warehouses.join_fail_not_found_desc":
+      "Tidak ada gudang yang cocok dengan kode itu. Periksa lagi dengan owner atau manajer Anda, lalu coba lagi.",
+    "warehouses.join_fail_member_title": "Anda sudah menjadi anggota",
+    "warehouses.join_fail_member_desc":
+      "Akun ini sudah termasuk gudang itu. Tidak perlu permintaan. Buka dasbor Anda.",
+    "warehouses.join_fail_sent_title": "Permintaan sudah pernah dikirim",
+    "warehouses.join_fail_sent_desc":
+      "Permintaan untuk gudang ini sudah menunggu persetujuan. Tanyakan kepada owner atau manajer.",
+    "warehouses.join_fail_closed_title": "Tidak menerima anggota baru",
+    "warehouses.join_fail_closed_desc":
+      "Gudang ini sedang tertutup untuk permintaan gabung. Minta owner mengundang Anda saja.",
+    "warehouses.join_fail_generic_title": "Permintaan akses gagal",
+    "warehouses.join_fail_generic_detail":
+      "Terjadi kesalahan. Silakan coba lagi.",
+    "warehouses.create_title": "Buat Gudang",
+    "warehouses.create_desc":
+      "Deploy gudang Anda sendiri di Base Sepolia. Kode gudang dan kontrak Anda dibuat otomatis.",
+    "warehouses.create_name_label": "Nama Gudang",
+    "warehouses.create_company_label": "Nama Perusahaan / PT",
+    "warehouses.create_company_hint":
+      "Opsional. Badan hukum di balik gudang ini.",
+    "warehouses.create_type_label": "Tipe Gudang",
+    "warehouses.create_type_hint": "Opsional.",
+    "warehouses.create_type_placeholder": "Pilih tipe",
+    "warehouses.create_submit": "Buat Gudang",
+    "warehouses.create_auto_note":
+      "Kode gudang dan alamat kontrak dibuat otomatis.",
+    "warehouses.create_shield_note":
+      "Deploy ditandatangani sekali dengan dompet Anda dan dikirim atas nama Anda. Biaya transaksi ditanggung Chainventory.",
+    "warehouses.create_err_name_required": "Masukkan nama gudang.",
+    "warehouses.create_err_name_long": "Nama gudang terlalu panjang.",
+    "warehouses.create_err_company_long": "Nama perusahaan terlalu panjang.",
+    "warehouses.create_err_type_long": "Tipe gudang terlalu panjang.",
+    "warehouses.create_step_preparing": "Menyiapkan gudang",
+    "warehouses.create_step_preparing_hint":
+      "Membuat kode gudang dan otorisasi deploy Anda.",
+    "warehouses.create_step_signing": "Otorisasi ditandatangani",
+    "warehouses.create_step_signing_hint":
+      "Setujui permintaan tanda tangan di dompet Anda.",
+    "warehouses.create_step_submitting": "Deploy dikirim",
+    "warehouses.create_step_submitting_hint":
+      "Transaksi disiarkan ke Base Sepolia.",
+    "warehouses.create_step_confirming": "Menunggu konfirmasi",
+    "warehouses.create_step_confirming_hint":
+      "Kontrak gudang sedang dideploy on-chain. Biasanya kurang dari satu menit.",
+    "warehouses.create_step_finalizing": "Menyelesaikan gudang",
+    "warehouses.create_step_finalizing_hint":
+      "Mencatat alamat kontrak Anda on-chain.",
+    "warehouses.create_fail_active_title": "Anda sudah punya gudang aktif",
+    "warehouses.create_fail_active_prepare":
+      "Tiap dompet hanya bisa memiliki satu gudang, dan milik Anda sudah live di Base Sepolia. Tidak ada gudang baru yang dibuat.",
+    "warehouses.create_fail_active_submit":
+      "Gudang Anda sudah dibuat sebelumnya dan live di Base Sepolia. Buka dasbor untuk mengelolanya.",
+    "warehouses.create_fail_wallet_title": "Dompet Anda belum terhubung",
+    "warehouses.create_fail_wallet_prepare":
+      "Hubungkan dan sinkronkan dompet dulu, lalu coba lagi. Sambungkan ulang dompet agar bisa tersinkron dengan akun Anda.",
+    "warehouses.create_fail_wallet_sign":
+      "Deploy harus ditandatangani dompet utama Anda. Sambungkan ulang dompet agar bisa tersinkron, lalu coba lagi.",
+    "warehouses.create_fail_deploy_title": "Deploy gudang gagal.",
+    "warehouses.create_fail_deploy_detail":
+      "Tidak ada gudang yang dibuat. {message}",
+    "warehouses.create_fail_sign_title": "Otorisasi tidak ditandatangani",
+    "warehouses.create_fail_sign_detail":
+      "Deploy dibatalkan karena tanda tangan tidak selesai. Tidak ada yang dibuat. Anda bisa coba lagi.",
+    "warehouses.create_fail_confirming_title": "Deploy masih dikonfirmasi",
+    "warehouses.create_fail_confirming_detail":
+      "Gudang Anda sudah dikirim dan sedang dikonfirmasi on-chain. Periksa dasbor Anda segera. Ia akan muncul setelah terkonfirmasi.",
+    "warehouses.create_deploying_title": "Mendeploy Gudang",
+    "warehouses.create_deploying_desc":
+      "Membuat gudang Anda di Base Sepolia. Biasanya kurang dari satu menit.",
+    "warehouses.create_refreshed_note":
+      "Otorisasi sebelumnya kedaluwarsa. Otorisasi baru telah diminta.",
+    "warehouses.create_success_title": "Gudang dibuat",
+    "warehouses.create_success_desc":
+      "Gudang Anda live di Base Sepolia. Bagikan kode Anda untuk mengundang tim.",
+    "warehouses.create_contract_label": "Alamat kontrak",
+    "warehouses.create_invite_note":
+      "Undang tim dengan kode gudang, atau kelola semuanya dari dasbor.",
+    "warehouses.create_sync_label": "Sinkron dompet:",
+    "warehouses.create_syncing": "menyinkron…",
+    "warehouses.create_synced": "dompet tersinkron",
+    "warehouses.create_sync_waiting": "menunggu koneksi…",
     // Dasbor (tambahan)
     "dashboard.unknown_product": "Produk tidak diketahui",
     "dashboard.profile_fallback": "Profil Anda",
     "dashboard.step_label": "LANGKAH {n}",
     "dashboard.done": "Selesai",
     "dashboard.copy_warehouse_code": "Salin kode gudang",
+    // Widget terkini (lihat komentar di blok en)
+    "dashboard.recent_movements_title": "Pergerakan Stok Terkini",
+    "dashboard.recent_movements_desc":
+      "Log stok operasional tervalidasi di gudang ini.",
+    "dashboard.recent_view_all_movements": "Lihat Semua Pergerakan",
+    "dashboard.recent_col_product": "Produk",
+    "dashboard.recent_col_type": "Tipe",
+    "dashboard.recent_col_status": "Status",
+    "dashboard.recent_col_qty": "Jml",
+    "dashboard.recent_col_when": "Waktu",
+    "dashboard.recent_movements_empty_title": "Belum ada pergerakan stok",
+    "dashboard.recent_movements_empty_desc":
+      "Catat stok masuk atau keluar pertama Anda untuk memulai ledger.",
+    "dashboard.recent_record_stock_in": "Catat Stok Masuk",
+    "dashboard.recent_tx_title": "Transaksi & Bukti Ledger Terkini",
+    "dashboard.recent_tx_desc":
+      "Komitmen batch yang ditandatangani secara kriptografis.",
+    "dashboard.recent_view_all_tx": "Lihat Semua",
+    "dashboard.recent_tx_empty_title": "Belum ada entri ledger",
+    "dashboard.recent_tx_empty_desc":
+      "Operasi stok dan bukti blockchain-nya akan muncul di sini.",
+    "dashboard.recent_open_ledger": "Buka ledger",
+    "dashboard.recent_proof_verified": "Terverifikasi",
+    "dashboard.recent_proof_verifying": "Memverifikasi",
+    "dashboard.recent_proof_failed": "Gagal",
+    "dashboard.recent_type_stock_in": "Stok Masuk",
+    "dashboard.recent_type_stock_out": "Stok Keluar",
+    "dashboard.recent_type_adjustment": "Penyesuaian",
+    "dashboard.recent_type_reversal": "Reversal",
+    "dashboard.recent_activity_title": "Aktivitas Terkini",
+    "dashboard.recent_activity_desc":
+      "Umpan event realtime untuk workspace ini.",
+    "dashboard.recent_unread_suffix": " (belum dibaca)",
+    "warehouses.deploy_progress": "Progres deploy",
+    "warehouses.deploy_of": "dari",
     // Notifikasi
     "notif.new_one": "Notifikasi baru",
     "notif.all_read": "Semua notifikasi ditandai telah dibaca",

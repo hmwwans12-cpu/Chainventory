@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { encodeFunctionData, type Hex } from "viem";
 
 import {
+  resolveOwnershipTransferExpectation,
   verifyOwnershipTransferTx,
   warehouseOwnershipAbi,
   type OwnershipTransferTx,
@@ -80,5 +81,62 @@ describe("verifyOwnershipTransferTx", () => {
       ok: false,
       reason: "transfer target differs from selected member wallet",
     });
+  });
+});
+
+describe("resolveOwnershipTransferExpectation (regresi P0-1 audit §10.1)", () => {
+  // Simulasi wiring realistis route transfer_confirm untuk transfer VALID:
+  // tx.from = owner LAMA, DB pra-transfer = owner LAMA,
+  // owner() pasca-mined = owner BARU == wallet target.
+  const wiring = {
+    contractAddress: CONTRACT,
+    dbOwnerWallet: OWNER,
+    onChainOwnerAfter: NEW_OWNER,
+    targetWallet: NEW_OWNER,
+  };
+
+  it("membangun ekspektasi dari DB pra-transfer (bukan owner() pasca-tx)", () => {
+    const r = resolveOwnershipTransferExpectation(wiring);
+    expect(r).toEqual({
+      ok: true,
+      expectation: {
+        contractAddress: CONTRACT,
+        currentOwnerWallet: OWNER,
+        newOwnerWallet: NEW_OWNER,
+      },
+    });
+  });
+
+  it("wiring realistis menerima transfer valid end-to-end", () => {
+    const r = resolveOwnershipTransferExpectation(wiring);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // tx.from = OWNER (lama) vs ekspektasi dari DB (lama) → lolos.
+    expect(verifyOwnershipTransferTx(tx(), r.expectation)).toEqual({
+      ok: true,
+      newOwner: NEW_OWNER.toLowerCase(),
+    });
+  });
+
+  it("mencegah regresi wiring lama: owner() pasca-tx sebagai currentOwner selalu gagal", () => {
+    // Inilah bug P0-1: memakai onChainOwnerAfter (BARU) sebagai
+    // currentOwnerWallet lalu membandingkan dengan tx.from (LAMA).
+    const buggy = verifyOwnershipTransferTx(tx(), {
+      contractAddress: CONTRACT,
+      currentOwnerWallet: NEW_OWNER,
+      newOwnerWallet: NEW_OWNER,
+    });
+    expect(buggy).toEqual({
+      ok: false,
+      reason: "transaction sender is not the current owner",
+    });
+  });
+
+  it("menolak bila owner() pasca-tx belum mencerminkan target (RPC lag / target salah)", () => {
+    const r = resolveOwnershipTransferExpectation({
+      ...wiring,
+      onChainOwnerAfter: OWNER,
+    });
+    expect(r.ok).toBe(false);
   });
 });

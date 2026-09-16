@@ -719,13 +719,48 @@ export default async function DashboardPage({
       ) : null}
 
       {/* 4. Recent Stock Movement â€” seksi penuh ala DataTable resmi (Â§29) */}
-      <RecentMovements items={recentMovements} warehouseId={active.id} />
+      <RecentMovements
+        items={recentMovements}
+        warehouseId={active.id}
+        copy={{
+          title: t("dashboard.recent_movements_title"),
+          description: t("dashboard.recent_movements_desc"),
+          viewAll: t("dashboard.recent_view_all_movements"),
+          colProduct: t("dashboard.recent_col_product"),
+          colType: t("dashboard.recent_col_type"),
+          colStatus: t("dashboard.recent_col_status"),
+          colQty: t("dashboard.recent_col_qty"),
+          colWhen: t("dashboard.recent_col_when"),
+          emptyTitle: t("dashboard.recent_movements_empty_title"),
+          emptyDesc: t("dashboard.recent_movements_empty_desc"),
+          recordLabel: t("dashboard.recent_record_stock_in"),
+          typeStockIn: t("dashboard.recent_type_stock_in"),
+          typeStockOut: t("dashboard.recent_type_stock_out"),
+          typeAdjustment: t("dashboard.recent_type_adjustment"),
+          typeReversal: t("dashboard.recent_type_reversal"),
+        }}
+      />
 
       {/* 5â€“6. Recent Transactions + Activity berdampingan (urutan Â§29 tetap) */}
       <div className="grid gap-4 lg:grid-cols-2">
         <RecentTransactions
           items={recentTransactions}
           warehouseId={active.id}
+          copy={{
+            title: t("dashboard.recent_tx_title"),
+            description: t("dashboard.recent_tx_desc"),
+            viewAll: t("dashboard.recent_view_all_tx"),
+            emptyTitle: t("dashboard.recent_tx_empty_title"),
+            emptyDesc: t("dashboard.recent_tx_empty_desc"),
+            emptyAction: t("dashboard.recent_open_ledger"),
+            proofVerified: t("dashboard.recent_proof_verified"),
+            proofVerifying: t("dashboard.recent_proof_verifying"),
+            proofFailed: t("dashboard.recent_proof_failed"),
+            typeStockIn: t("dashboard.recent_type_stock_in"),
+            typeStockOut: t("dashboard.recent_type_stock_out"),
+            typeAdjustment: t("dashboard.recent_type_adjustment"),
+            typeReversal: t("dashboard.recent_type_reversal"),
+          }}
         />
         <RecentActivity items={recentActivity} />
       </div>

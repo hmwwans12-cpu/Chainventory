@@ -1,7 +1,7 @@
 # TODO.md
 
 **Status:** Sebagian besar tercapai - disinkronkan dari audit kode
-**Last Updated:** 2026-09-06 (NCF-18: header basi 2026-08-23 diselaraskan)
+**Last Updated:** 2026-09-16 (release v0.5.5)
 **Companion to:** `PRD.md`, `ARSITEKTUR.md`, `TECHSTACK.md`, `WORKFLOW.md`
 
 Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet → RBAC → Inventory → Proof pipeline**, lalu **P2**, lalu **P3**.
@@ -24,6 +24,19 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 > (live-env contract tests auto-skip tanpa env server — jalankan dengan env
 > penuh untuk bukti live. Angka lama 2026-08-24: 223/30 — lihat AGENT.md §9
 > untuk changelog v0.4.x.)
+>
+> **Release v0.5.5 (2026-09-16):** fix P0-1 `transfer_confirm` on-chain
+> (ekspektasi `tx.from` dari `warehouses.on_chain_owner_wallet` DB
+> pra-transfer + post-condition `owner()` pasca-tx == wallet target via
+> `resolveOwnershipTransferExpectation`, 4 regression test wiring);
+> sentralisasi `getMovementRowView`/`isNegativeMovement`
+> (rekomendasi audit 10.5, 5 titik inline → 1 helper + test);
+> i18n FE-16 tuntas untuk dashboard widgets (copy-prop server),
+> Members dialogs, warehouse onboarding forms, faucet card, command
+> palette, deployment steps (semua marker `i18n-todo` dihapus);
+> rename `transactions-page.search.test.tsx`.
+> Catatan: 1 transfer nyata Base Sepolia tetap disarankan sebelum fitur
+> ownership on-chain diumumkan ke user.
 
 ---
 

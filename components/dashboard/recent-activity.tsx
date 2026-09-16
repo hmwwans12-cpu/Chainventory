@@ -90,9 +90,11 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
       <CardHeader className="border-b">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
-            <CardTitle className="t-headline-sm">Recent Activity</CardTitle>
+            <CardTitle className="t-headline-sm">
+              {t("dashboard.recent_activity_title")}
+            </CardTitle>
             <CardDescription>
-              Real-time event feed for this workspace.
+              {t("dashboard.recent_activity_desc")}
             </CardDescription>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -166,7 +168,9 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
                   <span className="text-foreground truncate text-sm font-medium">
                     {item.title}
                     {!item.readAt ? (
-                      <span className="sr-only"> (unread)</span>
+                      <span className="sr-only">
+                        {t("dashboard.recent_unread_suffix")}
+                      </span>
                     ) : null}
                   </span>
                   {item.body ? (

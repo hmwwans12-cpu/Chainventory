@@ -17,17 +17,26 @@ import {
   WAREHOUSE_CODE_RE,
 } from "@/lib/warehouses/warehouse-code";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/components/providers/locale-provider";
 
-const HOW_IT_WORKS = [
-  { label: "Enter code" },
-  { label: "Owner approves" },
-  { label: "You're in" },
+// Kunci terjemahan (i18n FE-16) — label di-resolve via t() di body render
+// agar ikut locale aktif, bukan string Inggris statis.
+const HOW_IT_WORKS_KEYS = [
+  "warehouses.join_step_enter",
+  "warehouses.join_step_approve",
+  "warehouses.join_step_in",
 ] as const;
 
-const TIMELINE = [
-  { label: "Request sent", sub: "Received by the warehouse" },
-  { label: "Owner approves", sub: "Reviewed in Members" },
-  { label: "Access granted", sub: "You're part of the team" },
+const TIMELINE_KEYS = [
+  { label: "warehouses.join_tl_sent", sub: "warehouses.join_tl_sent_sub" },
+  {
+    label: "warehouses.join_tl_approve",
+    sub: "warehouses.join_tl_approve_sub",
+  },
+  {
+    label: "warehouses.join_tl_granted",
+    sub: "warehouses.join_tl_granted_sub",
+  },
 ] as const;
 
 type Phase = "form" | "success" | "error";
@@ -67,6 +76,7 @@ function PhaseFade({
 export function JoinWarehouseForm() {
   const router = useRouter();
   const { ready, authenticated } = usePrivy();
+  const { t } = useLocale();
 
   const [code, setCode] = React.useState("");
   const [fieldError, setFieldError] = React.useState<string | undefined>(
@@ -87,10 +97,10 @@ export function JoinWarehouseForm() {
     // WH- lama memblokir SEMUA kode nyata. Single source: lib/warehouses.
     const value = code.trim().toUpperCase();
     let err: string | undefined;
-    if (!value) err = "Enter a warehouse code.";
-    else if (value.length > 64) err = "Warehouse code is too long.";
+    if (!value) err = t("warehouses.join_err_required");
+    else if (value.length > 64) err = t("warehouses.join_err_too_long");
     else if (!WAREHOUSE_CODE_RE.test(value))
-      err = `Enter the warehouse code in the format ${WAREHOUSE_CODE_HINT} (e.g. CHV-7K29XP4).`;
+      err = t("warehouses.join_err_format", { hint: WAREHOUSE_CODE_HINT });
     setFieldError(err);
     if (err) {
       document.getElementById("code")?.focus();
@@ -129,43 +139,39 @@ export function JoinWarehouseForm() {
     }
     if (/warehouse not found/i.test(message)) {
       fail({
-        title: "Warehouse not found",
-        detail:
-          "No warehouse matches that code. Double-check it with your owner or manager, then try again.",
+        title: t("warehouses.join_fail_not_found_title"),
+        detail: t("warehouses.join_fail_not_found_desc"),
         action: "retry",
       });
       return;
     }
     if (/already a member/i.test(message)) {
       fail({
-        title: "You're already a member",
-        detail:
-          "This account already belongs to that warehouse. No request needed. Head to your dashboard.",
+        title: t("warehouses.join_fail_member_title"),
+        detail: t("warehouses.join_fail_member_desc"),
         action: "dashboard",
       });
       return;
     }
     if (/join request already exists/i.test(message)) {
       fail({
-        title: "Request already sent",
-        detail:
-          "A request for this warehouse is already waiting for approval. Check with the owner or manager.",
+        title: t("warehouses.join_fail_sent_title"),
+        detail: t("warehouses.join_fail_sent_desc"),
         action: "dashboard",
       });
       return;
     }
     if (/warehouse not accepting/i.test(message)) {
       fail({
-        title: "Not accepting new members",
-        detail:
-          "This warehouse is currently closed to join requests. Ask the owner to invite you instead.",
+        title: t("warehouses.join_fail_closed_title"),
+        detail: t("warehouses.join_fail_closed_desc"),
         action: "retry",
       });
       return;
     }
     fail({
-      title: "Access request failed",
-      detail: message || "Something went wrong. Please try again.",
+      title: t("warehouses.join_fail_generic_title"),
+      detail: message || t("warehouses.join_fail_generic_detail"),
       action: "retry",
     });
   }
@@ -203,20 +209,19 @@ export function JoinWarehouseForm() {
             </span>
             <div className="flex flex-col gap-1">
               <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
-                Access request sent
+                {t("warehouses.join_success_title")}
               </h1>
               <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-                The warehouse owner has been notified. You&apos;ll get access
-                once your request is approved.
+                {t("warehouses.join_success_desc")}
               </p>
             </div>
           </div>
 
           <ol
-            aria-label="Join request progress"
+            aria-label={t("warehouses.join_progress_aria")}
             className="grid grid-cols-3 gap-2"
           >
-            {TIMELINE.map((step, index) => (
+            {TIMELINE_KEYS.map((step, index) => (
               <li
                 key={step.label}
                 aria-current={index === 1 ? "step" : undefined}
@@ -245,10 +250,10 @@ export function JoinWarehouseForm() {
                     index === 2 && "text-muted-foreground"
                   )}
                 >
-                  {step.label}
+                  {t(step.label)}
                 </span>
                 <span className="text-muted-foreground text-sm leading-snug text-pretty">
-                  {step.sub}
+                  {t(step.sub)}
                 </span>
               </li>
             ))}
@@ -256,14 +261,16 @@ export function JoinWarehouseForm() {
 
           <PanelCard padding="none" className="bg-muted/40">
             <div className="flex flex-col gap-1 px-4 py-3.5">
-              <span className="text-muted-foreground text-sm">Warehouse</span>
+              <span className="text-muted-foreground text-sm">
+                {t("warehouses.join_card_warehouse")}
+              </span>
               <span className="text-foreground truncate text-sm font-medium">
                 {requestedWarehouseName ?? "—"}
               </span>
             </div>
             <div className="border-border flex flex-col gap-1 border-t px-4 py-3.5">
               <span className="text-muted-foreground text-sm">
-                Warehouse code
+                {t("warehouses.code_label")}
               </span>
               <code
                 translate="no"
@@ -273,13 +280,15 @@ export function JoinWarehouseForm() {
               </code>
             </div>
             <div className="border-border flex flex-col gap-1 border-t px-4 py-3.5">
-              <span className="text-muted-foreground text-sm">Status</span>
+              <span className="text-muted-foreground text-sm">
+                {t("warehouses.join_card_status")}
+              </span>
               <span className="text-foreground flex items-center gap-1.5 text-sm font-medium">
                 <Clock
                   aria-hidden="true"
                   className="text-muted-foreground size-4 shrink-0"
                 />
-                Pending approval
+                {t("warehouses.join_pending")}
               </span>
             </div>
           </PanelCard>
@@ -289,7 +298,7 @@ export function JoinWarehouseForm() {
             className="h-11 w-full text-base"
             render={<Link href="/dashboard" />}
           >
-            Go to dashboard
+            {t("warehouses.go_dashboard")}
           </Button>
           <Button
             variant="ghost"
@@ -297,10 +306,10 @@ export function JoinWarehouseForm() {
             className="w-full"
             onClick={requestAnother}
           >
-            Request another code
+            {t("warehouses.join_request_another")}
           </Button>
           <p className="text-muted-foreground text-center text-sm">
-            The owner will find your request in Members. Joining is free.
+            {t("warehouses.join_success_footer")}
           </p>
         </div>
       </PhaseFade>
@@ -319,10 +328,10 @@ export function JoinWarehouseForm() {
               render={<Link href="/onboarding" />}
             >
               <ArrowLeft aria-hidden="true" />
-              Back to onboarding
+              {t("warehouses.back_onboarding")}
             </Button>
             <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
-              Join Warehouse
+              {t("warehouses.join_title")}
             </h1>
           </div>
 
@@ -342,7 +351,7 @@ export function JoinWarehouseForm() {
               className="h-11 w-full text-base"
               render={<Link href="/dashboard" />}
             >
-              Go to dashboard
+              {t("warehouses.go_dashboard")}
             </Button>
           ) : (
             <>
@@ -351,15 +360,19 @@ export function JoinWarehouseForm() {
                 className="h-11 w-full text-base"
                 onClick={retry}
                 disabled={!ready || !authenticated}
-                title={!authenticated ? "Sign in first, then retry" : undefined}
+                title={
+                  !authenticated
+                    ? t("warehouses.signin_retry_title")
+                    : undefined
+                }
               >
-                Try Again
+                {t("warehouses.retry")}
               </Button>
               {!ready || !authenticated ? (
                 <p className="text-muted-foreground text-center text-sm">
                   {!authenticated
-                    ? "Sign in first, then try again."
-                    : "Still preparing. Wait a moment, then try again."}
+                    ? t("warehouses.signin_retry_desc")
+                    : t("warehouses.preparing_desc")}
                 </p>
               ) : null}
             </>
@@ -378,10 +391,10 @@ export function JoinWarehouseForm() {
           </span>
           <div className="flex flex-col gap-1">
             <h1 className="text-foreground text-2xl font-semibold tracking-tight text-balance md:text-3xl">
-              Join a Warehouse
+              {t("warehouses.join_title")}
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
-              Enter a warehouse code to request access to an existing team.
+              {t("warehouses.join_desc")}
             </p>
           </div>
         </div>
@@ -392,7 +405,7 @@ export function JoinWarehouseForm() {
             className="bg-card/50 flex flex-col items-start gap-3"
           >
             <p className="text-foreground text-sm">
-              Please sign in to continue.
+              {t("warehouses.signin_prompt")}
             </p>
             {/* NFE-10: bawa ?next agar post-login kembali ke join. */}
             <Button
@@ -404,7 +417,7 @@ export function JoinWarehouseForm() {
                 />
               }
             >
-              Go to login
+              {t("warehouses.go_login")}
             </Button>
           </PanelCard>
         ) : (
@@ -418,9 +431,9 @@ export function JoinWarehouseForm() {
           >
             <FormField
               id="code"
-              label="Warehouse Code"
+              label={t("warehouses.code_label")}
               error={fieldError}
-              hint="Ask the warehouse owner or manager for the code."
+              hint={t("warehouses.join_code_hint")}
             >
               <Input
                 id="code"
@@ -452,19 +465,24 @@ export function JoinWarehouseForm() {
                 ) : (
                   <KeyRound aria-hidden="true" />
                 )}
-                {pending ? "Requesting access…" : "Request Access"}
+                {pending
+                  ? t("warehouses.join_requesting")
+                  : t("warehouses.join_request_access")}
               </Button>
               <p className="text-muted-foreground text-center text-sm">
-                The owner reviews your request in Members. No payment needed.
+                {t("warehouses.join_review_hint")}
               </p>
             </div>
           </form>
         )}
 
-        <ol className="grid grid-cols-3 gap-2" aria-label="How joining works">
-          {HOW_IT_WORKS.map((step, index) => (
+        <ol
+          className="grid grid-cols-3 gap-2"
+          aria-label={t("warehouses.join_how_aria")}
+        >
+          {HOW_IT_WORKS_KEYS.map((key, index) => (
             <li
-              key={step.label}
+              key={key}
               className="flex flex-col items-center gap-1.5 text-center"
             >
               <span
@@ -485,7 +503,7 @@ export function JoinWarehouseForm() {
                     : "text-muted-foreground"
                 )}
               >
-                {step.label}
+                {t(key)}
               </span>
             </li>
           ))}

@@ -1,6 +1,5 @@
 "use client";
 
-/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import * as React from "react";
 import { Droplets, ExternalLink, Loader2 } from "lucide-react";
 
@@ -11,12 +10,14 @@ import {
   FAUCET_AMOUNT_ETH,
   FAUCET_LOW_BALANCE_ETH,
 } from "@/lib/constants";
+import { useLocale } from "@/components/providers/locale-provider";
 
 export function FaucetClaimCard({
   walletAddress,
 }: {
   walletAddress: string | null;
 }) {
+  const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
   const [txHash, setTxHash] = React.useState<string | null>(null);
@@ -69,18 +70,16 @@ export function FaucetClaimCard({
         data?: { txHash?: string };
       };
       if (!response.ok || !body.ok) {
-        setMessage(
-          body.error ?? "Unable to claim test ETH. Try again shortly."
-        );
+        setMessage(body.error ?? t("faucet.claim_failed"));
         return;
       }
       setTxHash(body.data?.txHash ?? null);
       // FE-24: copy memakai konstanta (tidak basi bila nominal berubah).
       setMessage(
-        `${FAUCET_AMOUNT_ETH} Base Sepolia ETH has been submitted to your wallet.`
+        t("faucet.claim_success", { amount: String(FAUCET_AMOUNT_ETH) })
       );
     } catch {
-      setMessage("Network error. Your faucet claim was not submitted.");
+      setMessage(t("faucet.network_error"));
     } finally {
       setBusy(false);
     }
@@ -93,10 +92,12 @@ export function FaucetClaimCard({
           <Droplets aria-hidden="true" className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-foreground t-headline-sm">Testnet Gas Reserve</p>
+          <p className="text-foreground t-headline-sm">{t("faucet.title")}</p>
           <p className="text-muted-foreground t-body-sm">
-            Base Sepolia balance is low ({balance} ETH). Claim{" "}
-            {FAUCET_AMOUNT_ETH} test ETH to keep recording stock transactions.
+            {t("faucet.low_balance_desc", {
+              balance: balance ?? "",
+              amount: String(FAUCET_AMOUNT_ETH),
+            })}
           </p>
           {message ? (
             txHash ? (
@@ -124,7 +125,7 @@ export function FaucetClaimCard({
                 />
               }
             >
-              View transfer <ExternalLink aria-hidden="true" />
+              {t("faucet.view_transfer")} <ExternalLink aria-hidden="true" />
             </Button>
           ) : null}
           <Button size="default" onClick={claim} disabled={busy}>
@@ -133,7 +134,7 @@ export function FaucetClaimCard({
             ) : (
               <Droplets aria-hidden="true" />
             )}
-            Claim Test ETH ({FAUCET_AMOUNT_ETH} ETH)
+            {t("faucet.claim_label", { amount: String(FAUCET_AMOUNT_ETH) })}
           </Button>
         </div>
       </CardContent>

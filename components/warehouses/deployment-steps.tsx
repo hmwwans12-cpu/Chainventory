@@ -45,20 +45,24 @@ function StepNode({ state }: { state: DeploymentStepState }) {
 export function DeploymentSteps({
   steps,
   liveRegion,
+  title,
+  ofLabel,
 }: {
   steps: DeploymentStep[];
   liveRegion?: string;
+  /** Diterjemahkan oleh parent via t() (i18n FE-16). */
+  title: string;
+  /** Kata penghubung counter: "of" / "dari". */
+  ofLabel: string;
 }) {
   const reached = steps.filter((step) => step.state !== "pending").length;
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-foreground text-sm font-semibold">
-          Deployment progress
-        </span>
+        <span className="text-foreground text-sm font-semibold">{title}</span>
         <span className="text-muted-foreground text-sm tabular-nums">
-          {reached} of {steps.length}
+          {reached} {ofLabel} {steps.length}
         </span>
       </div>
 

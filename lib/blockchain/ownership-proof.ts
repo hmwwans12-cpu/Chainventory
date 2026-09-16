@@ -47,6 +47,56 @@ export interface OwnershipTransferExpectation {
 export type OwnershipTransferVerdict =
   { ok: true; newOwner: string } | { ok: false; reason: string };
 
+/**
+ * Wiring expectation untuk route handler transfer_confirm
+ * (fix audit §10.1 / P0-1 — regresi kritis wiring).
+ *
+ * Aturan yang dikunci helper ini:
+ *  - `currentOwnerWallet` WAJIB dari `warehouses.on_chain_owner_wallet` di DB
+ *    (state PRA-transfer; kolom ini baru berubah saat RPC
+ *    `confirm_ownership_transfer` sukses). JANGAN pakai hasil
+ *    `readContract(owner)` yang dibaca SETELAH tx mined — nilainya sudah
+ *    menjadi owner BARU sehingga cek `tx.from == currentOwner` selalu gagal
+ *    untuk transfer yang valid.
+ *  - `onChainOwnerAfter` (hasil `readContract(owner)` pasca-mined) dipakai
+ *    sebagai POST-CONDITION: harus sama dengan wallet target. Bila beda,
+ *    transfer belum terlihat di RPC / target salah — tolak fail-closed
+ *    sebelum sinkron DB.
+ */
+export interface TransferExpectationInput {
+  contractAddress: string;
+  /** State PRA-transfer dari DB (`warehouses.on_chain_owner_wallet`). */
+  dbOwnerWallet: string;
+  /** Hasil `owner()` pasca-tx mined (state SETELAH transfer). */
+  onChainOwnerAfter: string;
+  /** Wallet primary verified milik member target (otoritatif dari DB). */
+  targetWallet: string;
+}
+
+export function resolveOwnershipTransferExpectation(
+  input: TransferExpectationInput
+):
+  | { ok: true; expectation: OwnershipTransferExpectation }
+  | { ok: false; reason: string } {
+  if (
+    input.onChainOwnerAfter.toLowerCase() !== input.targetWallet.toLowerCase()
+  ) {
+    return {
+      ok: false,
+      reason:
+        "on-chain owner does not match the selected member wallet yet (transaction may still be propagating, or it targets a different address)",
+    };
+  }
+  return {
+    ok: true,
+    expectation: {
+      contractAddress: input.contractAddress,
+      currentOwnerWallet: input.dbOwnerWallet,
+      newOwnerWallet: input.targetWallet,
+    },
+  };
+}
+
 export function verifyOwnershipTransferTx(
   tx: OwnershipTransferTx,
   expected: OwnershipTransferExpectation

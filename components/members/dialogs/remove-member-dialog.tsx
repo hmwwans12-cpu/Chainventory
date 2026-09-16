@@ -6,6 +6,7 @@ import { Loader2, UserMinus } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { toast } from "@/components/ui/toast";
 import { removeMember } from "@/lib/warehouses/members-client";
+import { useLocale } from "@/components/providers/locale-provider";
 import type { MemberListItem } from "@/lib/members/types";
 
 export function RemoveMemberDialog({
@@ -21,8 +22,11 @@ export function RemoveMemberDialog({
   onOpenChange: (open: boolean) => void;
   onDone: () => void;
 }) {
+  const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const targetName =
+    member.displayName ?? member.email ?? t("members.unnamed_member");
 
   const remove = async () => {
     setBusy(true);
@@ -33,8 +37,8 @@ export function RemoveMemberDialog({
       onOpenChange(false);
       toast.add({
         type: "success",
-        title: `${member.displayName ?? member.email} removed`,
-        description: `Access revoked. ${member.displayName ?? member.email} can be re-invited later.`,
+        title: t("members.remove_success_title", { name: targetName }),
+        description: t("members.remove_success_desc", { name: targetName }),
       });
       onDone();
     } else {
@@ -47,11 +51,11 @@ export function RemoveMemberDialog({
       open={open}
       onOpenChange={onOpenChange}
       busy={busy}
-      title={`Remove ${member.displayName ?? member.email} from warehouse?`}
-      description={`${member.displayName ?? member.email} will immediately lose access to this warehouse. Existing activity and movement history remain unchanged. You can re-invite them later.`}
+      title={t("members.remove_title", { name: targetName })}
+      description={t("members.remove_desc", { name: targetName })}
       error={error}
-      cancelLabel="Keep member"
-      primaryLabel="Remove member"
+      cancelLabel={t("members.remove_keep")}
+      primaryLabel={t("members.remove_confirm")}
       primaryVariant="destructive"
       primaryIcon={
         busy ? (

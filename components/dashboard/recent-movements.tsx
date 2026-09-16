@@ -1,4 +1,3 @@
-/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import Link from "next/link";
 import { ArrowDownToLine } from "lucide-react";
 
@@ -33,6 +32,7 @@ import {
   MOVEMENT_STATUS_META,
   MOVEMENT_TYPE_META,
 } from "@/lib/inventory/status-meta";
+import { isNegativeMovement } from "@/lib/inventory/movement-row";
 
 /**
  * Recent Stock Movement (DESIGN §29) — bahasa visual DataTable resmi
@@ -74,27 +74,56 @@ const TONE_CLASS: Record<string, string> = {
   suspended: "bg-status-warn-bg text-status-warn-fg border-status-warn-border",
 };
 
+/**
+ * Copy terjemahan dari server page (dashboard/page via translate(locale))
+ * — pola yang sama dengan NoWarehouse. Widget ini tetap server component
+ * (tanpa "use client") agar tidak menambah JS client (i18n FE-16).
+ */
+export type RecentMovementsCopy = {
+  title: string;
+  description: string;
+  viewAll: string;
+  colProduct: string;
+  colType: string;
+  colStatus: string;
+  colQty: string;
+  colWhen: string;
+  emptyTitle: string;
+  emptyDesc: string;
+  recordLabel: string;
+  typeStockIn: string;
+  typeStockOut: string;
+  typeAdjustment: string;
+  typeReversal: string;
+};
+
 export function RecentMovements({
   items,
   warehouseId,
+  copy,
 }: {
   items: RecentMovementItem[];
   warehouseId?: string;
+  copy: RecentMovementsCopy;
 }) {
   const viewAllHref = warehouseId
     ? `/inventory/movements?warehouse=${warehouseId}`
     : "/inventory/movements";
+  const typeLabels: Record<RecentMovementItem["movementType"], string> = {
+    stock_in: copy.typeStockIn,
+    stock_out: copy.typeStockOut,
+    adjustment: copy.typeAdjustment,
+    reversal: copy.typeReversal,
+  };
 
   return (
     <Card>
       <CardHeader className="border-b">
-        <CardTitle className="t-headline-sm">Recent Stock Movements</CardTitle>
-        <CardDescription>
-          Validated operational stock logs in this warehouse.
-        </CardDescription>
+        <CardTitle className="t-headline-sm">{copy.title}</CardTitle>
+        <CardDescription>{copy.description}</CardDescription>
         <CardAction>
           <Button variant="link" render={<Link href={viewAllHref} />}>
-            View All Movements <span aria-hidden="true">→</span>
+            {copy.viewAll} <span aria-hidden="true">→</span>
           </Button>
         </CardAction>
       </CardHeader>
@@ -103,10 +132,10 @@ export function RecentMovements({
           <EmptyState
             icon={ArrowDownToLine}
             bare
-            title="No stock movements yet"
-            description="Record your first stock in or out to start the ledger."
+            title={copy.emptyTitle}
+            description={copy.emptyDesc}
             primaryAction={{
-              label: "Record Stock In",
+              label: copy.recordLabel,
               href: warehouseId
                 ? `/inventory/movements?warehouse=${warehouseId}&action=stock_in`
                 : `/inventory/movements?action=stock_in`,
@@ -117,11 +146,11 @@ export function RecentMovements({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead className="text-right">When</TableHead>
+                  <TableHead>{copy.colProduct}</TableHead>
+                  <TableHead>{copy.colType}</TableHead>
+                  <TableHead>{copy.colStatus}</TableHead>
+                  <TableHead className="text-right">{copy.colQty}</TableHead>
+                  <TableHead className="text-right">{copy.colWhen}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -129,6 +158,8 @@ export function RecentMovements({
                   const meta =
                     TYPE_META[item.movementType as keyof typeof TYPE_META];
                   const Icon = meta.icon;
+                  // Klasifikasi tanda terpusat (rekomendasi audit 10.5).
+                  const negative = isNegativeMovement(item.movementType);
                   const status =
                     (
                       STATUS_TONE_LABEL as Record<
@@ -159,7 +190,7 @@ export function RecentMovements({
                           )}
                         >
                           <Icon aria-hidden="true" />
-                          {meta.label}
+                          {typeLabels[item.movementType]}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -197,10 +228,7 @@ export function RecentMovements({
                               "text-foreground"
                           )}
                         >
-                          {item.movementType === "stock_out" ||
-                          item.movementType === "reversal"
-                            ? "−"
-                            : "+"}
+                          {negative ? "−" : "+"}
                           {item.quantity} {item.unit}
                         </span>
                       </TableCell>

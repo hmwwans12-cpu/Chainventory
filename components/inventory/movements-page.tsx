@@ -1,6 +1,5 @@
 "use client";
 
-/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import * as React from "react";
 import { useOptimistic } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -74,15 +73,14 @@ import {
   type MovementType,
 } from "@/lib/inventory/movements-client";
 import {
-  MOVEMENT_STATUS_META,
   MOVEMENT_TYPE_META,
   StockMovementDialog,
 } from "@/components/inventory/product-dialogs";
 import {
   MovementDetailSheet,
-  PROOF_STATUS_META,
   BASESCAN_URL,
 } from "@/components/inventory/movement-detail-sheet";
+import { getMovementRowView } from "@/lib/inventory/movement-row";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { useSwitchWarehouse } from "@/lib/warehouses/use-switch-warehouse";
 import { useLiveStatus } from "@/hooks/use-live-status";
@@ -633,14 +631,10 @@ export function MovementsPage({
               </TableHeader>
               <TableBody>
                 {optimisticMovements.map((m) => {
-                  const typeMeta = MOVEMENT_TYPE_META[m.movementType];
-                  const statusMeta = MOVEMENT_STATUS_META[m.status];
-                  const negative =
-                    m.movementType === "stock_out" ||
-                    m.movementType === "reversal";
-                  const proofMeta = m.proofStatus
-                    ? PROOF_STATUS_META[m.proofStatus]
-                    : null;
+                  // Rekomendasi audit 10.5: nilai turunan dihitung sekali
+                  // via helper bersama (bukan inline per render path).
+                  const { typeMeta, statusMeta, proofMeta, negative } =
+                    getMovementRowView(m);
                   return (
                     <TableRow key={m.id}>
                       <TableCell className="text-sm whitespace-nowrap tabular-nums">
@@ -808,13 +802,9 @@ export function MovementsPage({
           {/* Mobile: card list (audit N) */}
           <ul className="divide-y lg:hidden">
             {optimisticMovements.map((m) => {
-              const typeMeta = MOVEMENT_TYPE_META[m.movementType];
-              const statusMeta = MOVEMENT_STATUS_META[m.status];
-              const negative =
-                m.movementType === "stock_out" || m.movementType === "reversal";
-              const proofMeta = m.proofStatus
-                ? PROOF_STATUS_META[m.proofStatus]
-                : null;
+              // Rekomendasi audit 10.5: sama seperti path desktop di atas.
+              const { typeMeta, statusMeta, proofMeta, negative } =
+                getMovementRowView(m);
               return (
                 <li
                   key={m.id}

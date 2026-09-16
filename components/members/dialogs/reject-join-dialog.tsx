@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { toast } from "@/components/ui/toast";
 import { rejectJoin } from "@/lib/warehouses/members-client";
+import { useLocale } from "@/components/providers/locale-provider";
 import type { PendingJoinRequest } from "@/lib/members/types";
 
 export function RejectJoinDialog({
@@ -21,9 +22,12 @@ export function RejectJoinDialog({
   onOpenChange: (open: boolean) => void;
   onDone: () => void;
 }) {
+  const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [reason, setReason] = React.useState("");
+  const targetName =
+    request.displayName ?? request.email ?? t("members.reject_fallback_name");
 
   const reject = async () => {
     setBusy(true);
@@ -37,8 +41,8 @@ export function RejectJoinDialog({
       onOpenChange(false);
       toast.add({
         type: "success",
-        title: "Join request rejected",
-        description: `${request.displayName ?? request.email} was not granted access.`,
+        title: t("members.reject_success_title"),
+        description: t("members.reject_success_desc", { name: targetName }),
       });
       onDone();
     } else {
@@ -51,11 +55,11 @@ export function RejectJoinDialog({
       open={open}
       onOpenChange={onOpenChange}
       busy={busy}
-      title={`Reject ${request.displayName ?? "this join request"}?`}
-      description="They can submit a new request later. You can optionally include a reason."
+      title={t("members.reject_title", { name: targetName })}
+      description={t("members.reject_desc")}
       error={error}
-      cancelLabel="Keep request pending"
-      primaryLabel="Reject request"
+      cancelLabel={t("members.reject_keep")}
+      primaryLabel={t("members.reject_confirm")}
       primaryVariant="destructive"
       primaryIcon={
         busy ? (
@@ -67,13 +71,15 @@ export function RejectJoinDialog({
       onConfirm={reject}
     >
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="reject-reason">Reason for rejection (optional)</Label>
+        <Label htmlFor="reject-reason">
+          {t("members.reject_reason_label")}
+        </Label>
         <Input
           id="reject-reason"
           value={reason}
           maxLength={500}
           onChange={(event) => setReason(event.target.value)}
-          placeholder="Explain why this request cannot be approved"
+          placeholder={t("members.reject_reason_placeholder")}
         />
       </div>
     </ConfirmDialog>

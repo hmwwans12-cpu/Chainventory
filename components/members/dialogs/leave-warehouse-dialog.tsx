@@ -6,6 +6,7 @@ import { Crown, Loader2, LogOut } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { toast } from "@/components/ui/toast";
 import { leaveWarehouse } from "@/lib/warehouses/members-client";
+import { useLocale } from "@/components/providers/locale-provider";
 
 export function LeaveWarehouseDialog({
   warehouseId,
@@ -22,6 +23,7 @@ export function LeaveWarehouseDialog({
   onTransfer: () => void;
   onDone: () => void;
 }) {
+  const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -34,8 +36,8 @@ export function LeaveWarehouseDialog({
       onOpenChange(false);
       toast.add({
         type: "success",
-        title: "Left warehouse",
-        description: "You are no longer a member.",
+        title: t("members.leave_success_title"),
+        description: t("members.leave_success_desc"),
       });
       onDone();
     } else {
@@ -55,15 +57,17 @@ export function LeaveWarehouseDialog({
       open={open}
       onOpenChange={onOpenChange}
       busy={busy}
-      title="Leave warehouse?"
+      title={t("members.leave_title")}
       description={
-        isOwner
-          ? "You are the owner. You can't leave until ownership is transferred to another member. Transfer ownership first, then you can leave."
-          : "You will immediately lose access to this warehouse. Your past activity remains. A Manager or Owner can re-invite you later."
+        isOwner ? t("members.leave_owner_desc") : t("members.leave_desc")
       }
       error={error}
-      cancelLabel={isOwner ? "Keep as owner" : "Stay in warehouse"}
-      primaryLabel={isOwner ? "Transfer ownership" : "Leave warehouse"}
+      cancelLabel={
+        isOwner ? t("members.leave_keep_owner") : t("members.leave_stay")
+      }
+      primaryLabel={
+        isOwner ? t("members.leave_transfer") : t("members.leave_confirm")
+      }
       primaryVariant={isOwner ? "outline" : "destructive"}
       primaryIcon={
         isOwner ? (

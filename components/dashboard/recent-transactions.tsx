@@ -1,4 +1,3 @@
-/* i18n-todo: copy halaman ini belum masuk translations.ts (FE-16) — tambah kunci + ganti literal dengan t() agar toggle EN/ID penuh. */
 import Link from "next/link";
 import {
   ArrowLeftRight,
@@ -7,6 +6,7 @@ import {
   Clock3,
   type LucideIcon,
 } from "lucide-react";
+import { isNegativeMovement } from "@/lib/inventory/movement-row";
 
 import {
   Card,
@@ -41,51 +41,83 @@ export type RecentTransactionItem = {
   createdAt: string;
 };
 
-const PROOF_META: Record<
+/**
+ * Copy terjemahan dari server page (dashboard/page via translate(locale))
+ * — pola yang sama dengan NoWarehouse. Widget ini tetap server component
+ * (tanpa "use client") agar tidak menambah JS client (i18n FE-16).
+ */
+export type RecentTransactionsCopy = {
+  title: string;
+  description: string;
+  viewAll: string;
+  emptyTitle: string;
+  emptyDesc: string;
+  emptyAction: string;
+  proofVerified: string;
+  proofVerifying: string;
+  proofFailed: string;
+  typeStockIn: string;
+  typeStockOut: string;
+  typeAdjustment: string;
+  typeReversal: string;
+};
+
+type MovementKind = "stock_in" | "stock_out" | "adjustment" | "reversal";
+
+const PROOF_ICON: Record<
   NonNullable<RecentTransactionItem["proofStatus"]>,
-  { label: string; icon: LucideIcon; className: string }
+  { icon: LucideIcon; className: string }
 > = {
   confirmed: {
-    label: "Verified",
     icon: CheckCircle2,
     className: "bg-status-ok-bg text-status-ok-fg border-status-ok-border",
   },
   pending: {
-    label: "Verifying",
     icon: Clock3,
     className:
       "bg-status-warn-bg text-status-warn-fg border-status-warn-border",
   },
   failed: {
-    label: "Failed",
     icon: XCircle as unknown as LucideIcon,
     className: "bg-status-err-bg text-status-err-fg border-status-err-border",
   },
 };
 
-const TYPE_LABEL: Record<string, string> = {
-  stock_in: "Stock In",
-  stock_out: "Stock Out",
-  adjustment: "Adjustment",
-  reversal: "Reversal",
-};
-
 export function RecentTransactions({
   items,
   warehouseId,
+  copy,
 }: {
   items: RecentTransactionItem[];
   warehouseId?: string;
+  copy: RecentTransactionsCopy;
 }) {
+  const proofLabel: Record<
+    NonNullable<RecentTransactionItem["proofStatus"]>,
+    string
+  > = {
+    confirmed: copy.proofVerified,
+    pending: copy.proofVerifying,
+    failed: copy.proofFailed,
+  };
+  const typeLabels: Record<MovementKind, string> = {
+    stock_in: copy.typeStockIn,
+    stock_out: copy.typeStockOut,
+    adjustment: copy.typeAdjustment,
+    reversal: copy.typeReversal,
+  };
+  const typeLabel = (kind: string): string =>
+    (typeLabels as Record<string, string>)[kind] ??
+    kind
+      .split("_")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+
   return (
     <Card>
       <CardHeader className="border-b">
-        <CardTitle className="t-headline-sm">
-          Recent Transactions & Ledger Proofs
-        </CardTitle>
-        <CardDescription>
-          Cryptographically signed batch commitments.
-        </CardDescription>
+        <CardTitle className="t-headline-sm">{copy.title}</CardTitle>
+        <CardDescription>{copy.description}</CardDescription>
         <CardAction>
           <Button
             variant="link"
@@ -99,7 +131,7 @@ export function RecentTransactions({
               />
             }
           >
-            View All <span aria-hidden="true">→</span>
+            {copy.viewAll} <span aria-hidden="true">→</span>
           </Button>
         </CardAction>
       </CardHeader>
@@ -108,10 +140,10 @@ export function RecentTransactions({
           <EmptyState
             icon={ArrowLeftRight}
             bare
-            title="No ledger entries yet"
-            description="Stock operations and their blockchain proofs will appear here."
+            title={copy.emptyTitle}
+            description={copy.emptyDesc}
             primaryAction={{
-              label: "Open the ledger",
+              label: copy.emptyAction,
               href: warehouseId
                 ? `/transactions?warehouse=${warehouseId}`
                 : "/transactions",
@@ -121,24 +153,21 @@ export function RecentTransactions({
           <ul className="divide-border/60 -my-1 divide-y">
             {items.map((item) => {
               const proof =
-                item.proofStatus != null ? PROOF_META[item.proofStatus] : null;
+                item.proofStatus != null ? PROOF_ICON[item.proofStatus] : null;
               const ProofIcon = proof?.icon;
-              const qtyNegative =
-                item.movementType === "stock_out" ||
-                item.movementType === "reversal";
+              // Klasifikasi tanda terpusat (rekomendasi audit 10.5).
+              const qtyNegative = isNegativeMovement(
+                item.movementType as MovementKind
+              );
+              const label = typeLabel(item.movementType);
               return (
                 <li key={item.id} className="flex items-center gap-3 py-3">
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <span
                       className="text-foreground truncate text-sm font-medium"
-                      title={`${item.productName} · ${TYPE_LABEL[item.movementType] ?? item.movementType}`}
+                      title={`${item.productName} · ${label}`}
                     >
-                      {item.productName} ·{" "}
-                      {TYPE_LABEL[item.movementType] ??
-                        item.movementType
-                          .split("_")
-                          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                          .join(" ")}
+                      {item.productName} · {label}
                     </span>
                     <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
                       <span
@@ -177,7 +206,9 @@ export function RecentTransactions({
                         className={cn("text-sm", proof.className)}
                       >
                         <ProofIcon aria-hidden="true" />
-                        {proof.label}
+                        {item.proofStatus != null
+                          ? proofLabel[item.proofStatus]
+                          : null}
                       </Badge>
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>
