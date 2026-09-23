@@ -1,6 +1,7 @@
 import { createPublicClient, type Hex } from "viem";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { baseSepolia, createChainTransport } from "@/lib/blockchain/chains";
 import {
   resolveOwnershipTransferExpectation,
@@ -505,10 +506,16 @@ async function handleOnchainTransfer(
     );
   }
 
-  const { error } = await supabase.rpc("confirm_ownership_transfer", {
+  // v3 §2.1: RPC kini EXECUTE service_role saja (migrasi 0061) — verifikasi
+  // on-chain di atas + requireTransferParties (caller = owner) + rate-limit
+  // di route ini adalah gerbangnya; pemanggilan RPC langsung tidak bisa lagi
+  // mem-bypass ketiganya. Actor diteruskan eksplisit untuk audit.
+  const service = createServiceClient();
+  const { error } = await service.rpc("confirm_ownership_transfer", {
     p_warehouse_id: warehouseId,
     p_new_owner_id: newOwnerId,
     p_tx_hash: txHash,
+    p_actor_user_id: callerId,
   });
   if (error) return fromPostgrestError(error.message);
   return ok({ data: { newOwnerWallet: verdict.newOwner } });

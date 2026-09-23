@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { proofRetrySchema } from "@/lib/validators/blockchain";
 import {
   fromPostgrestError,
@@ -58,8 +59,13 @@ export async function POST(request: Request) {
   const parsed = proofRetrySchema.safeParse(raw.body);
   if (!parsed.success) return invalid(parsed.error.issues[0]?.message);
 
-  const { data, error } = await supabase.rpc("proof_retry", {
+  // v3 §4: RPC kini EXECUTE service_role saja (migrasi 0061, pola
+  // proof_manual_retry) — gate allowlist di atas + audit actor adalah
+  // gerbangnya; member (termasuk Viewer) tidak bisa lagi retry langsung.
+  const service = createServiceClient();
+  const { data, error } = await service.rpc("proof_retry", {
     p_proof_id: parsed.data.proofId,
+    p_actor_user_id: consoleActor.user.id,
   });
 
   if (error) return fromPostgrestError(error.message);

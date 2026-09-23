@@ -179,6 +179,29 @@ flowchart LR
 
 Ini memberi pemeriksaan integritas eksplisit lintas boundary BFF → database → worker, dengan overhead minimal (satu operasi hash tambahan).
 
+### 5.2 Batas Kepercayaan Event Log On-Chain (audit v3 §5)
+
+`Warehouse.recordProof` hanya menegakkan `actor == msg.sender` (anti-spoofing
+identitas orang lain) — **siapa pun** di Base Sepolia bisa merekam proof
+dengan `actor = alamatnya sendiri` ke kontrak warehouse mana pun, tanpa
+jadi member. Ini trade-off sadar kontrak v1 immutable: membership
+ditegakkan BFF **sebelum** intent dibuat (`Warehouse.sol` §10-11), bukan
+di kontrak.
+
+Konsekuensinya eksplisit dan mengikat:
+
+- **Event log on-chain TIDAK bisa dipercaya berdiri sendiri.** Entry
+  `ProofRecorded` sampah dari orang asing tidak bisa dibedakan dari proof
+  asli hanya dari event mentah/BaseScan.
+- **Sumber kebenaran UI adalah tabel `proofs` off-chain** (ditulis hanya
+  via intent terotorisasi + processor treasury), BUKAN scan event.
+  Verifikator eksternal wajib cross-check `proofId`/`payloadHash` ke
+  endpoint aplikasi, bukan percaya event log mentah.
+- Menambah allowlist member di kontrak butuh Warehouse tahu daftar
+  member (state + governance sync) — ditolak untuk v1 immutable;
+  opsi murah yang diterima: filter di level indexer/subgraph bila
+  dibutuhkan nanti (belum dibangun).
+
 ---
 
 ## 6. Read Path, Realtime, dan UX State
@@ -311,7 +334,15 @@ Direct table mutation dari authenticated **ditolak** (REVOKE INSERT/UPDATE/DELET
 - `request_fingerprint` **WAJIB** saat `idempotency_key` ada — ditolak `INVALID_INPUT` di level RPC dan dijaga CHECK constraint DB (0040); baris legacy sudah di-backfill. BFF menghitung fingerprint (SHA-256 canonical payload). Key sama + payload sama → replay `IDEMPOTENT`; key sama + payload beda → `IDEMPOTENCY_CONFLICT` (409).
 - Insert movement race-safe: `INSERT ... ON CONFLICT ... DO NOTHING` lalu re-select; request yang kalah race menerima jawaban idempotent/konflik, bukan error database generik.
 - `actor_wallet` pada movement gratisan DITURUNKAN server-side dari wallet TERVERIFIKASI milik `auth.uid()` (primary verified). Nilai client hanya diterima bila cocok dengan salah satu wallet verified; selain itu 403.
-- **Known boundary** (0.1.6 audit P1-11/P1-12): RPC movement masih executable oleh authenticated; invariant otorisasi ditegakkan penuh di RPC, namun rate limit/verified-wallet/proof-hash adalah tanggung jawab trust boundary BFF — keputusan BFF-only penuh terdokumentasi di TODO.md sebagai keputusan arsitektur menyusul.
+- **Known boundary** (0.1.6 audit P1-11/P1-12; dipersempit 0061, audit v3):
+  `verify_wallet`, `proof_retry`, `confirm_ownership_transfer` kini
+  EXECUTE `service_role` saja — route BFF (verifikasi signature /
+  allowlist / tx on-chain + rate-limit) adalah satu-satunya pemanggil,
+  actor diteruskan eksplisit untuk audit. RPC movement + `transfer_ownership`
+  - `set_warehouse_contract_address` masih executable oleh authenticated,
+    tetapi invariant otorisasi + guard deployment/format/latch ditegakkan
+    penuh di dalam RPC (bukan cuma di route). Rate-limit tetap tanggung
+    jawab BFF. Keputusan BFF-only penuh: ADR-0007.
 
 ### 12.4 Create Product + Initial Stock (Atomik Penuh)
 

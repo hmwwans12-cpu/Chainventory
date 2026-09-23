@@ -1,5 +1,6 @@
 import { logger } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   invalid,
   json,
@@ -82,8 +83,13 @@ export async function POST(request: Request) {
     return json({ ok: true, alreadyVerified: true as const });
   }
 
-  const { data, error } = await supabase.rpc("verify_wallet", {
+  // v3 (v2 §2.2): RPC kini EXECUTE service_role saja (migrasi 0061) —
+  // pembuktian personal_sign di atas adalah satu-satunya jalan menuju
+  // `verified`; pemanggilan RPC langsung tidak bisa lagi memalsukannya.
+  const service = createServiceClient();
+  const { data, error } = await service.rpc("verify_wallet", {
     p_wallet_id: (row as { id: string }).id,
+    p_user_id: auth.user.id,
   });
   if (error || !data) {
     logger.error(

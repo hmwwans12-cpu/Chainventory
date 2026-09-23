@@ -37,6 +37,20 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 > rename `transactions-page.search.test.tsx`.
 > Catatan: 1 transfer nyata Base Sepolia tetap disarankan sebelum fitur
 > ownership on-chain diumumkan ke user.
+>
+> **Audit v3 full-stack (2026-09-16, unreleased):** migrasi 0061
+> `rpc_trust_boundary_hardening` TER-APPLY live & terverifikasi
+> (signature + GRANT + guard dicek via Management API; live contract
+> test `rpc-hardening.contract.test.ts` hijau 8/8, cleanup bersih):
+> `transfer_ownership` tolak deployed (Fix A5 di DB); `verify_wallet`,
+> `proof_retry`, `confirm_ownership_transfer` EXECUTE service_role saja
+> (route via service client + actor eksplisit);
+> `set_warehouse_contract_address` format 0x + one-way latch.
+> `recordProof` tanpa access control = known-limitation v1 yang disengaja
+> (ADR-0008 + ARSITEKTUR §5.2: event log tidak standalone-trustworthy).
+> `deps-audit` sudah punya `expires` per-entry (= acceptedUntil yang
+> diminta §7). Sisa manual: transfer Base Sepolia (setelah §2/§3),
+> switch factory v2 Vercel, 3 keputusan ADR-0007.
 
 ---
 
