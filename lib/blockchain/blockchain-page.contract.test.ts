@@ -7,12 +7,14 @@ import { describe, expect, it } from "vitest";
  * Memverifikasi:
  *  - proof readable oleh member (RLS `proofs_select_member`)
  *  - `warehouse_deployment_summaries` readable member (view definer 0012)
- *  - RPC `proof_retry` (migration 0016):
+ *  - RPC `proof_retry` (0016 → di-hardening 0061: EXECUTE service_role
+ *    saja + p_actor_user_id; gate allowlist ada di route BFF):
+ *      panggilan langsung oleh authenticated → DITOLAK (level DB)
  *      failed     → re-queued: proofs.status=pending, error=null;
  *                   proof_outbox.status=pending, next_attempt_at=now()
  *      manual_review → TOLAK (terminal, "proof not retryable")
  *      confirmed  → TOLAK ("proof not retryable")
- *      outsider   → TOLAK ("not a member")
+ *      outsider (actor non-member) → TOLAK ("not a member")
  *
  * Setup/cleanup memakai service role (bypass RLS). Butuh env (SERVER-ONLY):
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_PUBLISHABLE_KEY.
@@ -136,6 +138,7 @@ async function callRpc(
     );
     created.forEach((u) => userIds.push(u.id));
     const staffId = created[0].id;
+    const outsiderId = created[1].id;
 
     let warehouseId = "";
     let proofFailed = "";
@@ -147,7 +150,6 @@ async function callRpc(
         tokens.set(email, await login(email));
       }
       const staffToken = tokens.get(emails.staff)!;
-      const outsiderToken = tokens.get(emails.outsider)!;
 
       const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
         warehouse_code: `BC-${suffix.slice(0, 8)}`,
@@ -276,9 +278,18 @@ async function callRpc(
       expect(deplVisible.length).toBe(1);
       expect(deplVisible[0]?.tx_hash).toMatch(/^0x/);
 
-      // 2) Retry failed → re-queued.
-      const retryRes = await callRpc(PUBLISHABLE!, staffToken, "proof_retry", {
+      // 2) Panggilan langsung oleh authenticated DITOLAK (0061: EXECUTE
+      //    service_role saja — invariant di level DB, bukan cuma route).
+      const directRes = await callRpc(PUBLISHABLE!, staffToken, "proof_retry", {
         p_proof_id: proofFailed,
+        p_actor_user_id: staffId,
+      });
+      expect(directRes.status).toBeGreaterThanOrEqual(400);
+
+      // 3) Retry failed via service_role (jalur BFF) → re-queued.
+      const retryRes = await callRpc(SECRET!, SECRET!, "proof_retry", {
+        p_proof_id: proofFailed,
+        p_actor_user_id: staffId,
       });
       expect([200, 204]).toContain(retryRes.status);
 
@@ -305,34 +316,27 @@ async function callRpc(
       expect(outboxAfter[0]?.error).toBeNull();
       expect(outboxAfter[0]?.attempt_count).toBe(3); // attempt TIDAK di-reset
 
-      // 3) Retry manual_review → TOLAK.
-      const manualRes = await callRpc(PUBLISHABLE!, staffToken, "proof_retry", {
+      // 4) Retry manual_review → TOLAK.
+      const manualRes = await callRpc(SECRET!, SECRET!, "proof_retry", {
         p_proof_id: proofManual,
+        p_actor_user_id: staffId,
       });
       expect(manualRes.status).toBe(400);
       expect(manualRes.text).toContain("proof not retryable");
 
-      // 4) Retry confirmed → TOLAK.
-      const confirmedRes = await callRpc(
-        PUBLISHABLE!,
-        staffToken,
-        "proof_retry",
-        {
-          p_proof_id: proofConfirmed,
-        }
-      );
+      // 5) Retry confirmed → TOLAK.
+      const confirmedRes = await callRpc(SECRET!, SECRET!, "proof_retry", {
+        p_proof_id: proofConfirmed,
+        p_actor_user_id: staffId,
+      });
       expect(confirmedRes.status).toBe(400);
       expect(confirmedRes.text).toContain("proof not retryable");
 
-      // 5) Outsider → TOLAK.
-      const outsiderRes = await callRpc(
-        PUBLISHABLE!,
-        outsiderToken,
-        "proof_retry",
-        {
-          p_proof_id: proofFailed,
-        }
-      );
+      // 6) Outsider (actor non-member) → TOLAK.
+      const outsiderRes = await callRpc(SECRET!, SECRET!, "proof_retry", {
+        p_proof_id: proofFailed,
+        p_actor_user_id: outsiderId,
+      });
       expect(outsiderRes.status).toBe(400);
       expect(outsiderRes.text).toContain("not a member");
     } finally {

@@ -41,6 +41,11 @@ jobs:
     if: needs.gate.outputs.enabled == 'true'
     env:
       SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      # createProofServiceClient() membaca env.NEXT_PUBLIC_SUPABASE_URL
+      # (lib/supabase/config.ts) — tanpa ini proof-pipeline crash "requires
+      # Supabase server credentials" meski SUPABASE_URL sudah ter-set.
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.E2E_SUPABASE_PUBLISHABLE_KEY }}
       SUPABASE_SECRET_KEY: ${{ secrets.E2E_SUPABASE_SECRET_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_PUBLISHABLE_KEY: ${{ secrets.E2E_SUPABASE_PUBLISHABLE_KEY }}

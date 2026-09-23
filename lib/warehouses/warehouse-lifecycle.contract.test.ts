@@ -519,10 +519,12 @@ const daysAgo = (days: number): string =>
         expect(resetMovement.status).toBe(200);
         const [resetRow] = JSON.parse(resetMovement.text) as {
           error_code: string | null;
-          message: string;
+          message: string | null;
         }[];
         expect(resetRow.error_code).toBeNull();
-        expect(resetRow.message).toBe("ok");
+        // Kontrak kanonis 0038/0052: sukses → message NULL (bukan "ok";
+        // "ok" hanya dipakai intent-commit 0057, bukan apply_stock_movement).
+        expect(resetRow.message).toBeNull();
 
         const [wh3After] = await selectRows<{ last_activity_at: string }>(
           SECRET!,
