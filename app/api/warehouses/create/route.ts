@@ -14,6 +14,7 @@ import {
   notFound,
   ok,
   readJson,
+  requireReadRateLimit,
   requireRateLimit,
   requireUser,
   serverError,
@@ -132,12 +133,15 @@ export async function POST(request: Request) {
   const auth = await requireUser(supabase);
   if (auth.res) return auth.res;
 
-  // Deployment termasuk mutation sensitif fail-closed (TECHSTACK §6.1).
-  const rateLimited = await requireRateLimit(
-    "warehouse-create",
-    auth.user.id,
-    request
-  );
+  const isDeploymentPoll =
+    action === "submit" && url.searchParams.get("poll") === "1";
+  const rateLimited = isDeploymentPoll
+    ? await requireReadRateLimit(
+        "warehouse-create-status",
+        auth.user.id,
+        request
+      )
+    : await requireRateLimit("warehouse-create", auth.user.id, request);
   if (rateLimited) return rateLimited;
 
   const raw = await readJson(request);
@@ -321,6 +325,10 @@ export async function POST(request: Request) {
     .select("id, status, tx_hash, warehouse_id")
     .eq("idempotency_key", parsed.data.idempotencyKey)
     .maybeSingle();
+
+  if (isDeploymentPoll && !existing) {
+    return notFound("Deployment not found.");
+  }
 
   if (existing?.warehouse_id) {
     const { data: ownerCheck } = await supabase

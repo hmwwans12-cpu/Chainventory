@@ -35,6 +35,7 @@ import { useWalletSync } from "@/lib/wallets/use-wallet-sync";
 import { useLocale } from "@/components/providers/locale-provider";
 import {
   prepareDeployment,
+  pollDeployment,
   submitDeployment,
   type ApiFailure,
   type ApiResult,
@@ -280,7 +281,8 @@ export function CreateWarehouseForm() {
   function handlePrepareFailure(
     status: number,
     message: string,
-    code?: string
+    code?: string,
+    retryAfterSeconds?: number
   ) {
     if (status === 401) {
       redirectLogin();
@@ -302,6 +304,16 @@ export function CreateWarehouseForm() {
       });
       return;
     }
+    if (status === 429) {
+      fail({
+        title: t("warehouses.create_fail_rate_limit_title"),
+        detail: t("warehouses.create_fail_rate_limit_detail", {
+          seconds: String(retryAfterSeconds ?? 60),
+        }),
+        action: "retry",
+      });
+      return;
+    }
     fail({
       title: t("warehouses.create_fail_deploy_title"),
       detail: t("warehouses.create_fail_deploy_detail", { message }),
@@ -313,7 +325,8 @@ export function CreateWarehouseForm() {
     status: number,
     message: string,
     code: string | undefined,
-    attempt: number
+    attempt: number,
+    retryAfterSeconds?: number
   ) {
     if (status === 401) {
       redirectLogin();
@@ -330,6 +343,16 @@ export function CreateWarehouseForm() {
     // Authorization expired/stale → minta tanda tangan baru sekali otomatis.
     if ((/stale/i.test(message) || /expired/i.test(message)) && attempt === 0) {
       void runPrepare(1);
+      return;
+    }
+    if (status === 429) {
+      fail({
+        title: t("warehouses.create_fail_rate_limit_title"),
+        detail: t("warehouses.create_fail_rate_limit_detail", {
+          seconds: String(retryAfterSeconds ?? 60),
+        }),
+        action: "retry",
+      });
       return;
     }
     fail({
@@ -383,7 +406,7 @@ export function CreateWarehouseForm() {
     setRefreshed(attempt > 0);
     const p = await prepareDeployment(meta);
     if (!p.ok) {
-      handlePrepareFailure(p.status, p.error, p.errorCode);
+      handlePrepareFailure(p.status, p.error, p.errorCode, p.retryAfterSeconds);
       return;
     }
     setPrepared(p.data);
@@ -432,7 +455,13 @@ export function CreateWarehouseForm() {
         });
         return;
       }
-      handleSubmitFailure(s.status, s.error, s.errorCode, attempt);
+      handleSubmitFailure(
+        s.status,
+        s.error,
+        s.errorCode,
+        attempt,
+        s.retryAfterSeconds
+      );
       return;
     }
     if (s.data.status === "confirmed") {
@@ -463,7 +492,8 @@ export function CreateWarehouseForm() {
         finalized.status,
         finalized.error,
         finalized.errorCode,
-        attempt
+        attempt,
+        finalized.retryAfterSeconds
       );
       return;
     }
@@ -481,7 +511,7 @@ export function CreateWarehouseForm() {
     const MAX_ATTEMPTS = 24; // 120s selaras maxDuration 120
     for (let i = 0; i < MAX_ATTEMPTS; i += 1) {
       await sleep(5_000);
-      const res = await submitDeployment(payload);
+      const res = await pollDeployment(payload);
       if (!res.ok) return res;
       if (res.data.status === "confirmed") return res;
     }

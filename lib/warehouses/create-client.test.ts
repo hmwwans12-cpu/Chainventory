@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   prepareDeployment,
+  pollDeployment,
   submitDeployment,
   CREATE_WAREHOUSE_ROUTE,
 } from "@/lib/warehouses/create-client";
@@ -144,6 +145,43 @@ describe("create-client", () => {
       expect(res.status).toBe(400);
       expect(res.errorCode).toBe("INVALID_INPUT");
       expect(res.error).toMatch(/expired/i);
+    }
+  });
+
+  it("pollDeployment uses the read-limited polling endpoint", async () => {
+    const data = {
+      status: "pending_confirmation",
+      warehouseId: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      deploymentId: "ffffffff-0000-1111-2222-333333333333",
+      warehouseCode: "CHV-AB2DEF34",
+      contractAddress: null,
+      txHash: "0x" + "ab".repeat(32),
+    };
+    const fetcher = mockFetch(202, { ok: true, data });
+
+    const res = await pollDeployment({} as never, fetcher);
+
+    expect(fetcher).toHaveBeenCalledWith(
+      `${CREATE_WAREHOUSE_ROUTE}?action=submit&poll=1`,
+      expect.objectContaining({ method: "POST" })
+    );
+    expect(res.ok).toBe(true);
+  });
+
+  it("preserves Retry-After on rate-limit failures", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ error: "Too many requests." }), {
+          status: 429,
+          headers: { "Retry-After": "17" },
+        })
+    ) as unknown as typeof fetch;
+
+    const res = await prepareDeployment(META, fetcher);
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.retryAfterSeconds).toBe(17);
     }
   });
 

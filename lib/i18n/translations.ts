@@ -1296,6 +1296,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "warehouses.create_fail_deploy_title": "Warehouse deployment failed.",
     "warehouses.create_fail_deploy_detail":
       "No warehouse was created. {message}",
+    "warehouses.create_fail_rate_limit_title": "Too many attempts",
+    "warehouses.create_fail_rate_limit_detail":
+      "No warehouse was created. Please wait {seconds} seconds before trying again.",
     "warehouses.create_fail_sign_title": "Authorization not signed",
     "warehouses.create_fail_sign_detail":
       "The deployment was cancelled because the signature was not completed. Nothing was created. You can try again.",
@@ -2833,6 +2836,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "warehouses.create_fail_deploy_title": "Deploy gudang gagal.",
     "warehouses.create_fail_deploy_detail":
       "Tidak ada gudang yang dibuat. {message}",
+    "warehouses.create_fail_rate_limit_title": "Terlalu banyak percobaan",
+    "warehouses.create_fail_rate_limit_detail":
+      "Tidak ada gudang yang dibuat. Tunggu {seconds} detik sebelum mencoba lagi.",
     "warehouses.create_fail_sign_title": "Otorisasi tidak ditandatangani",
     "warehouses.create_fail_sign_detail":
       "Deploy dibatalkan karena tanda tangan tidak selesai. Tidak ada yang dibuat. Anda bisa coba lagi.",

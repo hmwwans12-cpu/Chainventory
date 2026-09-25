@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import localFont from "next/font/local";
 
 import "./globals.css";
@@ -97,7 +98,9 @@ export default function RootLayout({
       <body
         className={`${hankenGrotesk.variable} ${manrope.variable} ${jetbrainsMono.variable} flex min-h-full flex-col antialiased`}
       >
-        <script
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html:
               "(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();",

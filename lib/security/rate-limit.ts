@@ -73,6 +73,7 @@ export const READ_RATE_LIMITS = {
   export: { user: 30, ip: 120 },
   /** cek saldo wallet publik (fail-open; sebelumnya salah pakai bucket export). */
   "wallet-balance": { user: 30, ip: 120 },
+  "warehouse-create-status": { user: 30, ip: 60 },
 } as const;
 
 export type MutationAction = keyof typeof MUTATION_RATE_LIMITS;

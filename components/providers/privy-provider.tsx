@@ -3,8 +3,11 @@
 import {
   PrivyProvider as PrivyReactProvider,
   SUPPORTED_CHAINS,
+  useCreateWallet,
+  usePrivy,
+  useWallets,
 } from "@privy-io/react-auth";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 import { BASE_SEPOLIA_CHAIN_ID } from "@/lib/constants";
@@ -12,6 +15,37 @@ import { BASE_SEPOLIA_CHAIN_ID } from "@/lib/constants";
 const BASE_SEPOLIA = SUPPORTED_CHAINS.find(
   (c) => c.id === BASE_SEPOLIA_CHAIN_ID
 ) as (typeof SUPPORTED_CHAINS)[number];
+
+function CustomAuthWalletBootstrap({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { ready, authenticated } = usePrivy();
+  const { wallets, ready: walletsReady } = useWallets();
+  const { createWallet } = useCreateWallet();
+  const attemptedRef = useRef(false);
+
+  useEffect(() => {
+    if (!ready || !authenticated || !walletsReady || attemptedRef.current) {
+      return;
+    }
+    if (
+      wallets.some(
+        (wallet) =>
+          wallet.type === "ethereum" && wallet.connectorType === "embedded"
+      )
+    ) {
+      return;
+    }
+    attemptedRef.current = true;
+    void createWallet().catch(() => {
+      attemptedRef.current = false;
+    });
+  }, [authenticated, createWallet, ready, wallets, walletsReady]);
+
+  return children;
+}
 
 /**
  * PrivyProvider client wrapper (TECHSTACK §2.2, DESIGN §25).
@@ -22,8 +56,8 @@ const BASE_SEPOLIA = SUPPORTED_CHAINS.find(
  *   (https://<project>.supabase.co/auth/v1/.well-known/jwks.json) lalu
  *   menerbitkan sesi + embedded wallet.
  *
- * `createOnLogin: "all-users"` → embedded wallet dibuat otomatis saat login
- * (TECHSTACK §2.2: embedded wallet auto saat login).
+ * `createOnLogin: "off"` + bootstrap manual → embedded wallet dibuat setelah
+ * custom JWT session terautentikasi (TECHSTACK §2.2).
  *
  * `supportedChains` + `defaultChain` → embedded wallet langsung di Base Sepolia,
  * mencegah UNSUPPORTED_NETWORK error saat wallet sync.
@@ -59,12 +93,12 @@ export function PrivyProvider({ children }: { children: React.ReactNode }) {
         },
         embeddedWallets: {
           ethereum: {
-            createOnLogin: "all-users",
+            createOnLogin: "off",
           },
         },
       }}
     >
-      {children}
+      <CustomAuthWalletBootstrap>{children}</CustomAuthWalletBootstrap>
     </PrivyReactProvider>
   );
 }

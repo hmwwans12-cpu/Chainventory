@@ -72,6 +72,7 @@ export type ApiFailure = {
   status: number;
   error: string;
   errorCode?: string;
+  retryAfterSeconds?: number;
 };
 export type ApiResult<T> = ApiSuccess<T> | ApiFailure;
 
@@ -81,7 +82,11 @@ async function postJson(
   path: string,
   body: unknown,
   fetcher: Fetcher
-): Promise<{ status: number; json: unknown }> {
+): Promise<{
+  status: number;
+  json: unknown;
+  retryAfterSeconds?: number;
+}> {
   const res = await fetcher(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -93,10 +98,21 @@ async function postJson(
   } catch {
     json = null;
   }
-  return { status: res.status, json };
+  const retryAfter = Number(res.headers.get("retry-after"));
+  return {
+    status: res.status,
+    json,
+    ...(Number.isFinite(retryAfter) && retryAfter > 0
+      ? { retryAfterSeconds: Math.ceil(retryAfter) }
+      : {}),
+  };
 }
 
-function toFailure<T>(status: number, json: unknown): ApiResult<T> {
+function toFailure<T>(
+  status: number,
+  json: unknown,
+  retryAfterSeconds?: number
+): ApiResult<T> {
   const payload =
     json && typeof json === "object" && "error" in json
       ? (json as { error?: unknown; errorCode?: unknown })
@@ -110,6 +126,7 @@ function toFailure<T>(status: number, json: unknown): ApiResult<T> {
         : "Something went wrong. Please try again.",
     errorCode:
       typeof payload.errorCode === "string" ? payload.errorCode : undefined,
+    ...(retryAfterSeconds ? { retryAfterSeconds } : {}),
   };
 }
 
@@ -117,7 +134,7 @@ export async function prepareDeployment(
   meta: CreateWarehouseMeta,
   fetcher: Fetcher = fetch
 ): Promise<ApiResult<PreparedDeployment>> {
-  const { status, json } = await postJson(
+  const { status, json, retryAfterSeconds } = await postJson(
     `${CREATE_WAREHOUSE_ROUTE}?action=prepare`,
     meta,
     fetcher
@@ -126,15 +143,16 @@ export async function prepareDeployment(
     const body = json as { ok: boolean; data: PreparedDeployment };
     return { ok: true, status, data: body.data };
   }
-  return toFailure<PreparedDeployment>(status, json);
+  return toFailure<PreparedDeployment>(status, json, retryAfterSeconds);
 }
 
-export async function submitDeployment(
+async function submitDeploymentRequest(
   payload: SubmitPayload,
-  fetcher: Fetcher = fetch
+  fetcher: Fetcher,
+  poll: boolean
 ): Promise<ApiResult<SubmitResult>> {
-  const { status, json } = await postJson(
-    `${CREATE_WAREHOUSE_ROUTE}?action=submit`,
+  const { status, json, retryAfterSeconds } = await postJson(
+    `${CREATE_WAREHOUSE_ROUTE}?action=submit${poll ? "&poll=1" : ""}`,
     payload,
     fetcher
   );
@@ -144,5 +162,19 @@ export async function submitDeployment(
       return { ok: true, status, data: body.data };
     }
   }
-  return toFailure<SubmitResult>(status, json);
+  return toFailure<SubmitResult>(status, json, retryAfterSeconds);
+}
+
+export async function submitDeployment(
+  payload: SubmitPayload,
+  fetcher: Fetcher = fetch
+): Promise<ApiResult<SubmitResult>> {
+  return submitDeploymentRequest(payload, fetcher, false);
+}
+
+export async function pollDeployment(
+  payload: SubmitPayload,
+  fetcher: Fetcher = fetch
+): Promise<ApiResult<SubmitResult>> {
+  return submitDeploymentRequest(payload, fetcher, true);
 }
