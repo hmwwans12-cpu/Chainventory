@@ -59,6 +59,7 @@ export const env = createEnv({
     BASE_SEPOLIA_RPC_URL: optionalUrl,
     BASE_SEPOLIA_RPC_FALLBACK_URL: optionalUrl,
     WAREHOUSE_FACTORY_ADDRESS: optionalHexAddress,
+    CONTRACT_REGISTRY_FILE: optionalString,
 
     // Audit v0.3.9 H-13: documented in .env.example but not validated here.
     // BaseScan API key for contract verification & transaction lookups.
@@ -130,6 +131,7 @@ export const env = createEnv({
     BASE_SEPOLIA_RPC_URL: process.env.BASE_SEPOLIA_RPC_URL,
     BASE_SEPOLIA_RPC_FALLBACK_URL: process.env.BASE_SEPOLIA_RPC_FALLBACK_URL,
     WAREHOUSE_FACTORY_ADDRESS: process.env.WAREHOUSE_FACTORY_ADDRESS,
+    CONTRACT_REGISTRY_FILE: process.env.CONTRACT_REGISTRY_FILE,
     BASESCAN_API_KEY: process.env.BASESCAN_API_KEY,
     QSTASH_TOKEN: process.env.QSTASH_TOKEN,
     QSTASH_URL: process.env.QSTASH_URL,

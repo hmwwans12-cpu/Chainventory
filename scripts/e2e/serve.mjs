@@ -51,6 +51,7 @@ const e2eEnv = parseEnv(".env.e2e.local");
 const env = {
   ...baseEnv,
   WAREHOUSE_FACTORY_ADDRESS: e2eEnv.WAREHOUSE_FACTORY_ADDRESS,
+  CONTRACT_REGISTRY_FILE: "contracts/deployments/base-sepolia-test.json",
   NEXT_PUBLIC_APP_URL: `http://localhost:${port}`,
   PORT: String(port),
   // Developer Console allowlist untuk E2E (di-set di .env.e2e.local); bila

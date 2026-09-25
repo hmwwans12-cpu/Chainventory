@@ -183,8 +183,8 @@ test.describe.serial("main-flow", () => {
     const body = await res.json();
 
     // 200 (confirmed) atau 202 (submitted, finalisasi async).
-    expect(body.ok).toBe(true);
-    expect([200, 202]).toContain(res.status());
+    expect(body.ok, JSON.stringify(body)).toBe(true);
+    expect([200, 202], JSON.stringify(body)).toContain(res.status());
     expect(body.data.warehouseId).toBeTruthy();
     const warehouseId: string = body.data.warehouseId;
     state.warehouseId = warehouseId;

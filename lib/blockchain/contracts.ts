@@ -43,11 +43,16 @@ const abiCache = new Map<string, Abi>();
 function loadRegistry(): RegistryShape | null {
   if (registryCache !== undefined) return registryCache;
 
+  const registryFile =
+    env.CONTRACT_REGISTRY_FILE ===
+    "contracts/deployments/base-sepolia-test.json"
+      ? "base-sepolia-test.json"
+      : "base-sepolia.json";
   const registryPath = path.join(
     process.cwd(),
     "contracts",
     "deployments",
-    "base-sepolia.json"
+    registryFile
   );
 
   try {
