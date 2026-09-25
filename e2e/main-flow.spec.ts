@@ -297,9 +297,9 @@ test.describe.serial("main-flow", () => {
       },
     });
     await page.close();
-    expect(res.status()).toBe(201);
     const body = await res.json();
-    expect(body.ok).toBe(true);
+    expect(res.status(), JSON.stringify(body)).toBe(201);
+    expect(body.ok, JSON.stringify(body)).toBe(true);
     expect(body.data.id).toBeTruthy();
     state.productId = body.data.id;
   });
