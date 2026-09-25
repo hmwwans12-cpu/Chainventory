@@ -129,9 +129,14 @@ function submitBody(prepareData: PreparedData, signature: Hex) {
   };
 }
 
-async function postSubmit(prepareData: PreparedData, signature: Hex) {
+async function postSubmit(
+  prepareData: PreparedData,
+  signature: Hex,
+  poll = false
+) {
+  const action = poll ? "submit&poll=1" : "submit";
   return POST(
-    new Request("http://localhost/api/warehouses/create?action=submit", {
+    new Request(`http://localhost/api/warehouses/create?action=${action}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(submitBody(prepareData, signature)),
@@ -302,7 +307,7 @@ let submitData: SubmitData;
       // Bila receipt > timeout di submit (202), finalisasi via resubmit
       // idempotent (finalizeIfMined) lalu baca ulang.
       if (deployment.status === "submitted") {
-        const retry = await postSubmit(prepareData, signature);
+        const retry = await postSubmit(prepareData, signature, true);
         const retryBody = await retry.json();
         console.log(
           "[smoke] finalisasi retry HTTP",

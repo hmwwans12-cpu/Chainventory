@@ -202,7 +202,7 @@ test.describe.serial("main-flow", () => {
     } | null = null;
     while (Date.now() < deadline) {
       const retry = await page.request.post(
-        "/api/warehouses/create?action=submit",
+        "/api/warehouses/create?action=submit&poll=1",
         { data: submitData }
       );
       expect((await retry.json()).ok).toBe(true);
