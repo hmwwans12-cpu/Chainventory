@@ -190,12 +190,35 @@ export async function claimFaucet(
   // raise: wajib dicek eksplisit, kalau tidak tx_hash gagal tersimpan
   // diam-diam (bug 0051: confirm menolak status 'pending').
   try {
-    const { error: attachError } = await supabase.rpc("confirm_faucet_claim", {
-      p_claim_id: claimId,
-      p_tx_hash: transferResult.txHash,
-      p_status: "pending",
-    });
-    if (attachError) throw new Error(attachError.message);
+    let attached = false;
+    let lastAttachError: unknown = null;
+    for (let attempt = 0; attempt < 3 && !attached; attempt += 1) {
+      const { error: attachError } = await supabase.rpc(
+        "confirm_faucet_claim",
+        {
+          p_claim_id: claimId,
+          p_tx_hash: transferResult.txHash,
+          p_status: "pending",
+        }
+      );
+      if (!attachError) {
+        attached = true;
+        break;
+      }
+      lastAttachError = attachError;
+      if (attempt < 2) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, 250 * (attempt + 1))
+        );
+      }
+    }
+    if (!attached) {
+      throw new Error(
+        lastAttachError instanceof Error
+          ? lastAttachError.message
+          : "transaction hash could not be attached"
+      );
+    }
   } catch (dbErr) {
     // Broadcast already succeeded on-chain. Log loudly so operators
     // can run reconciliation; do NOT reset the rate limit because

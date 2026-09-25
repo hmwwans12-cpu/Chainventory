@@ -3,11 +3,20 @@ import { ArrowDownToLine } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { PanelCard } from "@/components/shared/panel-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
-export default function Loading() {
+export default async function Loading() {
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
+  const loadingLabel = t("dialogs.detail.loading");
+
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title="Stock Movement" description="Loading ledger…" />
+    <div className="flex flex-col gap-6" aria-busy="true">
+      <PageHeader
+        title={t("sub.stock_movement")}
+        description={t("tx.description")}
+      />
       {/* Toolbar: live badge + warehouse + actions */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2">
@@ -25,8 +34,12 @@ export default function Loading() {
             aria-hidden="true"
             className="text-muted-foreground size-4 shrink-0"
           />
-          <span className="text-muted-foreground text-sm">
-            Loading movements...
+          <span
+            role="status"
+            aria-live="polite"
+            className="text-muted-foreground text-sm"
+          >
+            {loadingLabel}
           </span>
         </div>
         {Array.from({ length: 5 }).map((_, i) => (

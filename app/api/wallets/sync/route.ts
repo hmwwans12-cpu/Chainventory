@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
-import { syncWallet } from "@/lib/wallets/sync";
+import { persistWalletRegistration, syncWallet } from "@/lib/wallets/sync";
 import {
   invalid,
   json,
@@ -39,7 +39,14 @@ export async function POST(request: Request) {
     ? authorization.slice("Bearer ".length).trim()
     : null;
 
-  const result = await syncWallet(supabase, raw.body, privyToken);
+  const result = await syncWallet(
+    supabase,
+    raw.body,
+    privyToken,
+    undefined,
+    undefined,
+    persistWalletRegistration
+  );
 
   if (!result.ok) {
     logger.warn({ errorCode: result.errorCode }, "wallet sync rejected");

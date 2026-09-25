@@ -5,6 +5,7 @@
 export const APP_NAME = "Chainventory";
 
 export const BASE_SEPOLIA_CHAIN_ID = 84532;
+export const MIN_PROOF_CONFIRMATIONS = 2;
 
 /** Faucet policy (PRD §17): 0.001 Base Sepolia ETH / user / 12 hours. */
 export const FAUCET_AMOUNT_ETH = "0.001";

@@ -44,10 +44,16 @@ export async function confirmProof(
     return { ok: true, processed: 0 };
   }
   if (!data.tx_hash) {
-    await supabase.rpc("proof_mark_manual", {
+    const { error: transitionError } = await supabase.rpc("proof_mark_manual", {
       p_proof_id: proofId,
       p_error: "proof is submitted but has no tx_hash",
     });
+    if (transitionError) {
+      logger.error(
+        { err: transitionError.message, proofId },
+        "proof missing tx transition failed"
+      );
+    }
     return { ok: false, processed: 1, error: "proof has no tx_hash" };
   }
 
@@ -55,21 +61,40 @@ export async function confirmProof(
   const outcome = await treasury.confirm(data.tx_hash);
   if (!outcome.ok) {
     if (outcome.error === "transaction reverted on-chain") {
-      await supabase.rpc("proof_mark_manual", {
-        p_proof_id: proofId,
-        p_error: outcome.error,
-      });
+      const { error: transitionError } = await supabase.rpc(
+        "proof_mark_manual",
+        {
+          p_proof_id: proofId,
+          p_error: outcome.error,
+        }
+      );
+      if (transitionError) {
+        logger.error(
+          { err: transitionError.message, proofId },
+          "proof revert transition failed"
+        );
+      }
       return { ok: false, processed: 1, error: outcome.error };
     }
     if (round >= CONFIRM_MAX_ROUNDS) {
-      await supabase.rpc("proof_mark_manual", {
-        p_proof_id: proofId,
-        p_error: outcome.error ?? "confirmation check failed",
-      });
+      const message = outcome.error ?? "confirmation check failed";
+      const { error: transitionError } = await supabase.rpc(
+        "proof_mark_manual",
+        {
+          p_proof_id: proofId,
+          p_error: message,
+        }
+      );
+      if (transitionError) {
+        logger.error(
+          { err: transitionError.message, proofId },
+          "proof max-round transition failed"
+        );
+      }
       return {
         ok: false,
         processed: 1,
-        error: outcome.error ?? "confirmation check failed",
+        error: message,
       };
     }
     try {
@@ -85,11 +110,21 @@ export async function confirmProof(
 
   const count = outcome.confirmationCount ?? 0;
   if (count >= 2) {
-    await supabase.rpc("proof_set_confirmation", {
-      p_proof_id: proofId,
-      p_count: count,
-      p_status: "confirmed",
-    });
+    const { error: transitionError } = await supabase.rpc(
+      "proof_set_confirmation",
+      {
+        p_proof_id: proofId,
+        p_count: count,
+        p_status: "confirmed",
+      }
+    );
+    if (transitionError) {
+      logger.error(
+        { err: transitionError.message, proofId },
+        "proof confirmation transition failed"
+      );
+      return { ok: false, processed: 1, error: transitionError.message };
+    }
     logger.info(
       { proofId, txHash: data.tx_hash, count },
       "proof confirmed on-chain"
@@ -98,22 +133,39 @@ export async function confirmProof(
   }
 
   if (round >= CONFIRM_MAX_ROUNDS) {
-    await supabase.rpc("proof_mark_manual", {
+    const message = "confirmations not reached within polling window";
+    const { error: transitionError } = await supabase.rpc("proof_mark_manual", {
       p_proof_id: proofId,
-      p_error: "confirmations not reached within polling window",
+      p_error: message,
     });
+    if (transitionError) {
+      logger.error(
+        { err: transitionError.message, proofId },
+        "proof max-round transition failed"
+      );
+    }
     return {
       ok: false,
       processed: 1,
-      error: "confirmations not reached within polling window",
+      error: message,
     };
   }
 
-  await supabase.rpc("proof_set_confirmation", {
-    p_proof_id: proofId,
-    p_count: count,
-    p_status: "confirming",
-  });
+  const { error: transitionError } = await supabase.rpc(
+    "proof_set_confirmation",
+    {
+      p_proof_id: proofId,
+      p_count: count,
+      p_status: "confirming",
+    }
+  );
+  if (transitionError) {
+    logger.error(
+      { err: transitionError.message, proofId },
+      "proof confirming transition failed"
+    );
+    return { ok: false, processed: 1, error: transitionError.message };
+  }
   try {
     await scheduleProofConfirmation(proofId, round + 1);
   } catch (err) {

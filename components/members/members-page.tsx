@@ -59,7 +59,7 @@ import {
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EntityName } from "@/components/shared/entity-name";
 import { toast } from "@/components/ui/toast";
-import { ROLE_META } from "@/lib/inventory/status-meta";
+import { ROLE_META, localizedMetaLabel } from "@/lib/inventory/status-meta";
 import {
   canAssignRole,
   canManageRole,
@@ -108,7 +108,7 @@ export function MembersPage({
   pendingRequests: PendingJoinRequest[];
 }) {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   const [changing, setChanging] = React.useState<Set<string>>(new Set());
   // Audit v0.4.5: useOptimistic for member role changes. We sync the
@@ -236,7 +236,7 @@ export function MembersPage({
         title: t("members.approve_success_title"),
         description: t("members.approve_success_desc", {
           name: request.displayName ?? request.email,
-          role: ROLE_META[chosenRole].label,
+          role: localizedMetaLabel(ROLE_META[chosenRole], t),
         }),
       });
       refresh();
@@ -297,7 +297,7 @@ export function MembersPage({
         title: t("members.role_updated_title"),
         description: t("members.role_updated_desc", {
           name: member.displayName ?? member.email,
-          role: ROLE_META[newRole].label,
+          role: localizedMetaLabel(ROLE_META[newRole], t),
         }),
       });
       refresh();
@@ -418,76 +418,85 @@ export function MembersPage({
                   </p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="invite-email">
-                      {t("members.email_label")}
-                    </Label>
-                    <Input
-                      id="invite-email"
-                      ref={inviteEmailRef}
-                      type="email"
-                      inputMode="email"
-                      autoComplete="email"
-                      placeholder="teammate@company.com"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      disabled={inviteBusy}
-                      aria-invalid={Boolean(inviteError)}
-                      aria-describedby={
-                        inviteError ? "invite-email-error" : undefined
-                      }
-                    />
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleInvite();
+                  }}
+                  noValidate
+                  aria-busy={inviteBusy}
+                >
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor="invite-email">
+                        {t("members.email_label")}
+                      </Label>
+                      <Input
+                        id="invite-email"
+                        ref={inviteEmailRef}
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        placeholder="teammate@company.com"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        disabled={inviteBusy}
+                        required
+                        aria-invalid={Boolean(inviteError)}
+                        aria-describedby={
+                          inviteError ? "invite-email-error" : undefined
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor="invite-role">{t("settings.role")}</Label>
+                      <Select
+                        value={inviteRole}
+                        onValueChange={(value) => {
+                          if (value !== null) setInviteRole(value as Role);
+                        }}
+                      >
+                        <SelectTrigger
+                          id="invite-role"
+                          className="w-full"
+                          aria-required="true"
+                        >
+                          <SelectValue
+                            placeholder={t("members.select_role")}
+                            getLabel={(v) =>
+                              localizedMetaLabel(ROLE_META[v as Role], t)
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent layer="modal">
+                          {assignableRoles.map((r) => (
+                            <SelectItem key={r} value={r}>
+                              {localizedMetaLabel(ROLE_META[r], t)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {inviteError ? (
+                      <p
+                        id="invite-email-error"
+                        role="alert"
+                        className="text-destructive text-sm"
+                      >
+                        {inviteError}
+                      </p>
+                    ) : null}
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="invite-role">{t("settings.role")}</Label>
-                    <Select
-                      value={inviteRole}
-                      onValueChange={(value) => {
-                        if (value !== null) setInviteRole(value as Role);
-                      }}
-                    >
-                      <SelectTrigger id="invite-role" className="w-full">
-                        <SelectValue
-                          placeholder={t("members.select_role")}
-                          getLabel={(v) => ROLE_META[v as Role]?.label ?? v}
-                        />
-                      </SelectTrigger>
-                      <SelectContent layer="modal">
-                        {assignableRoles.map((r) => (
-                          <SelectItem key={r} value={r}>
-                            {ROLE_META[r].label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {inviteError ? (
-                    <p
-                      id="invite-email-error"
-                      role="alert"
-                      className="text-destructive text-sm"
-                    >
-                      {inviteError}
-                    </p>
-                  ) : null}
-                </div>
-              )}
-              <DialogFooter>
-                {inviteUrl ? (
-                  <Button onClick={() => setInviteOpen(false)}>
-                    {t("members.done")}
-                  </Button>
-                ) : (
-                  <>
+                  <DialogFooter>
                     <Button
+                      type="button"
                       variant="outline"
                       onClick={() => setInviteOpen(false)}
                       disabled={inviteBusy}
                     >
                       {t("common.cancel")}
                     </Button>
-                    <Button onClick={handleInvite} disabled={inviteBusy}>
+                    <Button type="submit" disabled={inviteBusy}>
                       {inviteBusy ? (
                         <Loader2 aria-hidden="true" className="animate-spin" />
                       ) : (
@@ -495,9 +504,16 @@ export function MembersPage({
                       )}
                       {t("members.create_invite")}
                     </Button>
-                  </>
-                )}
-              </DialogFooter>
+                  </DialogFooter>
+                </form>
+              )}
+              {inviteUrl ? (
+                <DialogFooter>
+                  <Button type="button" onClick={() => setInviteOpen(false)}>
+                    {t("members.done")}
+                  </Button>
+                </DialogFooter>
+              ) : null}
             </DialogContent>
           </Dialog>
         ) : null}
@@ -539,7 +555,7 @@ export function MembersPage({
                         {request.email}
                         {request.requestedAt
                           ? ` · ${t("members.requested_at", {
-                              date: formatDate(request.requestedAt),
+                              date: formatDate(request.requestedAt, locale),
                             })}`
                           : ""}
                       </p>
@@ -565,13 +581,15 @@ export function MembersPage({
                         >
                           <SelectValue
                             placeholder={t("members.select_role")}
-                            getLabel={(v) => ROLE_META[v as Role]?.label ?? v}
+                            getLabel={(v) =>
+                              localizedMetaLabel(ROLE_META[v as Role], t)
+                            }
                           />
                         </SelectTrigger>
                         <SelectContent>
                           {assignableRoles.map((r) => (
                             <SelectItem key={r} value={r}>
-                              {ROLE_META[r].label}
+                              {localizedMetaLabel(ROLE_META[r], t)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -702,7 +720,7 @@ export function MembersPage({
                             >
                               <SelectValue
                                 getLabel={(v) =>
-                                  ROLE_META[v as Role]?.label ?? v
+                                  localizedMetaLabel(ROLE_META[v as Role], t)
                                 }
                               />
                             </SelectTrigger>
@@ -712,11 +730,11 @@ export function MembersPage({
                                   ("STAFF") — Base UI fallback ke value bila
                                   tak ada item cocok. Pilih ulang = no-op. */}
                               <SelectItem key={member.role} value={member.role}>
-                                {ROLE_META[member.role].label}
+                                {localizedMetaLabel(ROLE_META[member.role], t)}
                               </SelectItem>
                               {assignable.map((r) => (
                                 <SelectItem key={r} value={r}>
-                                  {ROLE_META[r].label}
+                                  {localizedMetaLabel(ROLE_META[r], t)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -724,7 +742,7 @@ export function MembersPage({
                         ) : (
                           <StatusBadge
                             tone={roleMeta.tone}
-                            label={roleMeta.label}
+                            label={localizedMetaLabel(roleMeta, t)}
                           />
                         )}
                       </TableCell>
@@ -747,7 +765,9 @@ export function MembersPage({
                         />
                       </TableCell>
                       <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
-                        {member.joinedAt ? formatDate(member.joinedAt) : "—"}
+                        {member.joinedAt
+                          ? formatDate(member.joinedAt, locale)
+                          : "—"}
                       </TableCell>
                       <TableCell>
                         {isSelf || manageable ? (
@@ -858,16 +878,18 @@ export function MembersPage({
                             disabled={changing.has(member.membershipId)}
                           >
                             <SelectValue
-                              getLabel={(v) => ROLE_META[v as Role]?.label ?? v}
+                              getLabel={(v) =>
+                                localizedMetaLabel(ROLE_META[v as Role], t)
+                              }
                             />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem key={member.role} value={member.role}>
-                              {ROLE_META[member.role].label}
+                              {localizedMetaLabel(ROLE_META[member.role], t)}
                             </SelectItem>
                             {assignable.map((r) => (
                               <SelectItem key={r} value={r}>
-                                {ROLE_META[r].label}
+                                {localizedMetaLabel(ROLE_META[r], t)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -875,7 +897,7 @@ export function MembersPage({
                       ) : (
                         <StatusBadge
                           tone={roleMeta.tone}
-                          label={roleMeta.label}
+                          label={localizedMetaLabel(roleMeta, t)}
                         />
                       )}
                     </div>
@@ -883,7 +905,7 @@ export function MembersPage({
                       <StatusBadge tone={statusTone} label={statusLabel} />
                       {member.joinedAt ? (
                         <span className="text-muted-foreground text-sm tabular-nums">
-                          {formatDate(member.joinedAt)}
+                          {formatDate(member.joinedAt, locale)}
                         </span>
                       ) : null}
                     </div>

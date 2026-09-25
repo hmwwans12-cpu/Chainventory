@@ -27,6 +27,9 @@ const PUBLISHABLE = process.env.SUPABASE_PUBLISHABLE_KEY;
 
 const available = Boolean(BASE && SECRET && PUBLISHABLE);
 
+const testWalletAddress = (suffix: string, tag: number): string =>
+  `0x${suffix.replace(/-/g, "").slice(0, 32)}${tag.toString(16).padStart(8, "0")}`;
+
 async function send(
   path: string,
   init: RequestInit,
@@ -114,6 +117,20 @@ async function insertRow(
   return rows[0];
 }
 
+async function insertVerifiedWallet(
+  userId: string,
+  address: string
+): Promise<void> {
+  await insertRow(SECRET!, SECRET!, "wallets", {
+    user_id: userId,
+    address,
+    wallet_type: "external",
+    is_primary: true,
+    verification_state: "verified",
+    verified_at: new Date().toISOString(),
+  });
+}
+
 async function selectRows<T = Record<string, unknown>>(
   apiKey: string,
   bearer: string,
@@ -197,6 +214,14 @@ type NotificationRow = {
       );
       const userIds = created.map((u) => u.id);
       const [ownerId, managerId, staffId, r2Id] = userIds;
+      const outsiderId = userIds[4];
+      const wallets = {
+        owner: testWalletAddress(suffix, 1),
+        manager: testWalletAddress(suffix, 2),
+        staff: testWalletAddress(suffix, 3),
+        r2: testWalletAddress(suffix, 4),
+        outsider: testWalletAddress(suffix, 5),
+      };
 
       let warehouseId = "";
       let productId = "";
@@ -235,6 +260,15 @@ type NotificationRow = {
             status: "ACTIVE",
             joined_at: new Date().toISOString(),
           });
+        }
+        for (const [userId, address] of [
+          [ownerId, wallets.owner],
+          [managerId, wallets.manager],
+          [staffId, wallets.staff],
+          [r2Id, wallets.r2],
+          [outsiderId, wallets.outsider],
+        ] as const) {
+          await insertVerifiedWallet(userId, address);
         }
         const product = await insertRow(SECRET!, SECRET!, "products", {
           warehouse_id: warehouseId,
@@ -424,7 +458,7 @@ type NotificationRow = {
 
         // ---- 7) Adjustment: manager buat → OWNER+MANAGER dapat
         //         adjustment_pending; owner approve → manager dapat approved ----
-        const adj = await callRpc(managerToken, "apply_stock_movement", {
+        const adj = await callRpcService("apply_stock_movement", {
           p_warehouse_id: warehouseId,
           p_product_id: productId,
           p_movement_type: "adjustment",
@@ -433,11 +467,13 @@ type NotificationRow = {
           p_reason: "koreksi",
           p_reference: null,
           p_reversal_of: null,
-          p_idempotency_key: null,
-          p_actor_wallet: null,
+          p_idempotency_key: `NT-ADJ-${suffix}`,
+          p_actor_wallet: wallets.manager,
           p_movement_id: null,
           p_proof_payload: null,
           p_proof_payload_hash: null,
+          p_request_fingerprint: `NT-ADJ-FP-${suffix}`,
+          p_actor_user_id: managerId,
         });
         expect(adj.status).toBe(200);
         const adjMovId = String(
@@ -461,15 +497,12 @@ type NotificationRow = {
         expect(String(pendingOwner[0].payload.movement_id)).toBe(adjMovId);
         expect(String(pendingManager[0].payload.movement_id)).toBe(adjMovId);
 
-        const approveAdj = await callRpc(
-          ownerToken,
-          "approve_stock_adjustment",
-          {
-            p_movement_id: adjMovId,
-            p_proof_payload: null,
-            p_proof_payload_hash: null,
-          }
-        );
+        const approveAdj = await callRpcService("approve_stock_adjustment", {
+          p_movement_id: adjMovId,
+          p_proof_payload: null,
+          p_proof_payload_hash: null,
+          p_actor_user_id: ownerId,
+        });
         expect(approveAdj.status).toBe(200);
 
         const adjApprovedForManager = await selectRows<NotificationRow>(

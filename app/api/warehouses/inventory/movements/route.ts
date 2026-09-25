@@ -7,6 +7,7 @@ import {
   type Permission,
 } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   applyMovementSchema,
   approveAdjustmentSchema,
@@ -28,6 +29,7 @@ import {
 } from "@/lib/api-handler";
 import { hashProofPayload } from "@/lib/proof/hash";
 import { buildProofPayload } from "@/lib/proof/payload";
+import { isLegacyTreasuryWarehouse } from "@/lib/proof/treasury";
 import { publishProofJob } from "@/lib/proof/qstash";
 import { computeRequestFingerprint } from "@/lib/inventory/fingerprint";
 
@@ -98,6 +100,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const auth = await requireUser(supabase);
   if (auth.res) return auth.res;
+  const service = createServiceClient();
 
   const rateLimited = await requireRateLimit(
     "stock-movement",
@@ -152,36 +155,23 @@ export async function POST(request: Request) {
       );
       if (inactive) return inactive;
 
-      // P1-10: actorWallet diturunkan server-side dari wallet TERVERIFIKASI
-      // milik actor — nilai client tidak dipercaya sebagai identitas.
-      // Client boleh mengirim alamatnya, tapi wajib cocok dengan salah satu
-      // wallet verified; bila tidak mengirim, pakai wallet primary verified.
-      const { data: wallets } = await supabase
+      const { data: primaryWallet } = await supabase
         .from("wallets")
-        .select("address, is_primary")
+        .select("address")
         .eq("user_id", auth.user.id)
-        .eq("verification_state", "verified");
-      const verified = wallets ?? [];
+        .eq("is_primary", true)
+        .eq("verification_state", "verified")
+        .maybeSingle();
+      const actorWallet = primaryWallet?.address ?? null;
       const requestedWallet = parsed.data.actorWallet?.toLowerCase() ?? null;
-      let actorWallet: string | null;
-      if (requestedWallet) {
-        const match = verified.find(
-          (w) => w.address.toLowerCase() === requestedWallet
+      if (
+        requestedWallet &&
+        (!actorWallet || requestedWallet !== actorWallet.toLowerCase())
+      ) {
+        return forbidden(
+          "actorWallet is not the primary verified wallet of this account."
         );
-        if (!match) {
-          return forbidden(
-            "actorWallet is not a verified wallet of this account."
-          );
-        }
-        actorWallet = match.address;
-      } else {
-        actorWallet =
-          verified.find((w) => w.is_primary)?.address ??
-          verified[0]?.address ??
-          null;
       }
-      // Tanpa wallet verified tidak ada identitas on-chain yang sah —
-      // tolak eksplisit dengan arahan (bukan gagal obscure di RPC bawah).
       if (!actorWallet) {
         return forbidden(
           "Your wallet is not verified yet. Verify it in Settings → Wallet, then try again."
@@ -205,6 +195,32 @@ export async function POST(request: Request) {
           .maybeSingle(),
       ]);
       const contractAddress = warehouse.data?.contract_address;
+      if (contractAddress) {
+        let legacyTreasury = false;
+        try {
+          legacyTreasury = await isLegacyTreasuryWarehouse(contractAddress);
+        } catch {
+          return json(
+            {
+              ok: false,
+              error: "Could not verify the warehouse proof mode. Try again.",
+              errorCode: "RPC_FAILED",
+            },
+            503
+          );
+        }
+        if (!legacyTreasury) {
+          return json(
+            {
+              ok: false,
+              error:
+                "This warehouse requires a wallet-paid stock intent; treasury proofs are not supported for v2 warehouses.",
+              errorCode: "UNSUPPORTED_PROOF_MODE",
+            },
+            409
+          );
+        }
+      }
       if (contractAddress && !product.data) {
         // Audit v0.3.0 §2.13: warehouse sudah di-deploy tapi product tidak
         // ditemukan di warehouse ini — sebelumnya di-skip diam-diam sehingga
@@ -215,7 +231,11 @@ export async function POST(request: Request) {
 
       let proofPayload: unknown = null;
       let proofPayloadHash: string | null = null;
-      if (contractAddress && product.data) {
+      if (
+        contractAddress &&
+        product.data &&
+        parsed.data.movementType !== "adjustment"
+      ) {
         const payload = buildProofPayload({
           movementId,
           warehouseId: parsed.data.warehouseId,
@@ -248,7 +268,7 @@ export async function POST(request: Request) {
         actorWallet,
       });
 
-      const { data, error } = await supabase.rpc("apply_stock_movement", {
+      const { data, error } = await service.rpc("apply_stock_movement", {
         p_warehouse_id: parsed.data.warehouseId,
         p_product_id: parsed.data.productId,
         p_movement_type: parsed.data.movementType,
@@ -263,6 +283,7 @@ export async function POST(request: Request) {
         p_proof_payload: proofPayload,
         p_proof_payload_hash: proofPayloadHash,
         p_request_fingerprint: requestFingerprint,
+        p_actor_user_id: auth.user.id,
       });
 
       if (error) {
@@ -362,6 +383,32 @@ export async function POST(request: Request) {
       ]);
 
       const contractAddress = warehouse.data?.contract_address;
+      if (contractAddress) {
+        let legacyTreasury = false;
+        try {
+          legacyTreasury = await isLegacyTreasuryWarehouse(contractAddress);
+        } catch {
+          return json(
+            {
+              ok: false,
+              error: "Could not verify the warehouse proof mode. Try again.",
+              errorCode: "RPC_FAILED",
+            },
+            503
+          );
+        }
+        if (!legacyTreasury) {
+          return json(
+            {
+              ok: false,
+              error:
+                "This warehouse requires a wallet-paid stock intent; treasury proofs are not supported for v2 warehouses.",
+              errorCode: "UNSUPPORTED_PROOF_MODE",
+            },
+            409
+          );
+        }
+      }
       let proofPayload: unknown = null;
       let proofPayloadHash: string | null = null;
       if (contractAddress && product.data && movement.data.actor_user_id) {
@@ -388,10 +435,11 @@ export async function POST(request: Request) {
         proofPayloadHash = hashProofPayload(payload);
       }
 
-      const { data, error } = await supabase.rpc("approve_stock_adjustment", {
+      const { data, error } = await service.rpc("approve_stock_adjustment", {
         p_movement_id: parsed.data.movementId,
         p_proof_payload: proofPayload,
         p_proof_payload_hash: proofPayloadHash,
+        p_actor_user_id: auth.user.id,
       });
       if (error) return fromPostgrestError(error.message);
 
@@ -429,9 +477,10 @@ export async function POST(request: Request) {
       );
       if (inactive) return inactive;
 
-      const { data, error } = await supabase.rpc("reject_stock_adjustment", {
+      const { data, error } = await service.rpc("reject_stock_adjustment", {
         p_movement_id: parsed.data.movementId,
         p_reason: parsed.data.reason || null,
+        p_actor_user_id: auth.user.id,
       });
       if (error) return fromPostgrestError(error.message);
       return ok(data);

@@ -105,7 +105,7 @@ export function ProductsPage({
    */
   paginationDisabled?: boolean;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -340,9 +340,11 @@ export function ProductsPage({
       if (next <= 1) params.delete("page");
       else params.set("page", String(next));
       const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      startTransition(() => {
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      });
     },
-    [pathname, router, searchParams]
+    [pathname, router, searchParams, startTransition]
   );
 
   // Aksi per-produk (dropdown) — dipakai di tabel desktop & card list mobile
@@ -575,7 +577,7 @@ export function ProductsPage({
   const switchWarehouse = useSwitchWarehouse(warehouseId);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" aria-busy={isPending || bulkBusy}>
       <div className="bg-card flex flex-col gap-3 rounded-xl border p-3 shadow-(--shadow-card) xl:flex-row xl:items-center xl:justify-between">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-64">
@@ -907,6 +909,18 @@ export function ProductsPage({
         </div>
       )}
 
+      <span
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {isPending || bulkBusy
+          ? t("common.loading")
+          : t("dashboard.step_products_count", {
+              n: String(products.length),
+            })}
+      </span>
       {products.length === 0 ? (
         <EmptyState
           icon={Package}
@@ -1101,7 +1115,7 @@ export function ProductsPage({
                             {low ? (
                               <Badge variant="warning" data-icon="inline-start">
                                 <TriangleAlert aria-hidden="true" />
-                                Low Stock
+                                {t("dashboard.low_stock")}
                               </Badge>
                             ) : null}
                           </div>
@@ -1117,7 +1131,7 @@ export function ProductsPage({
                           />
                         </TableCell>
                         <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
-                          {formatDate(product.updatedAt)}
+                          {formatDate(product.updatedAt, locale)}
                         </TableCell>
                         <TableCell>
                           <div className="hidden xl:flex">

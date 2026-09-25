@@ -91,6 +91,10 @@ export const env = createEnv({
     // Server-only; tidak pernah ke browser.
     QSTASH_APP_BASE_URL: optionalUrl,
     VERCEL_URL: optionalString,
+    VERCEL_ENV: z.preprocess(
+      emptyToUndefined,
+      z.enum(["development", "preview", "production"]).optional()
+    ),
 
     // CI bypass for builds without live secrets
     SKIP_ENV_VALIDATION: z.preprocess(emptyToUndefined, z.string().optional()),
@@ -136,6 +140,7 @@ export const env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     QSTASH_APP_BASE_URL: process.env.QSTASH_APP_BASE_URL,
     VERCEL_URL: process.env.VERCEL_URL,
+    VERCEL_ENV: process.env.VERCEL_ENV,
     DEVELOPER_ALLOWLIST: process.env.DEVELOPER_ALLOWLIST,
     SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION,
     LOG_LEVEL: process.env.LOG_LEVEL,

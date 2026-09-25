@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { type Abi } from "viem";
+import { isAddress, type Abi } from "viem";
 
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
@@ -19,7 +19,7 @@ import { BASE_SEPOLIA_CHAIN_ID } from "@/lib/constants";
 type RegistryEntry = {
   version: string;
   address: string;
-  deploymentBlock: number;
+  deploymentBlock: number | null;
   deployedAt: string | null;
   abiPath: string;
   proofRecorder?: string;
@@ -80,12 +80,15 @@ function loadAbi(entry: RegistryEntry | undefined): Abi | null {
   }
 }
 
+export type FactoryProofMode = "legacy-v1" | "wallet-paid-v2" | "unknown";
+
 export type WarehouseFactoryContract = {
   chainId: number;
   address: `0x${string}`;
   abi: Abi;
   deploymentBlock: number;
   version: string;
+  proofMode: FactoryProofMode;
   proofRecorder?: `0x${string}`;
 };
 
@@ -94,33 +97,89 @@ export type WarehouseFactoryContract = {
  * or the ABI cannot be loaded, so callers fail fast instead of signing
  * against an unknown contract (PRD §8 replay protection depends on this).
  */
-export function getWarehouseFactory(): WarehouseFactoryContract {
+function proofModeForVersion(version: string): FactoryProofMode {
+  if (version.startsWith("1.")) return "legacy-v1";
+  if (version.startsWith("2.")) return "wallet-paid-v2";
+  return "unknown";
+}
+
+function getEntryByAddress(address: string): RegistryEntry | null {
+  const normalized = address.trim().toLowerCase();
+  if (!normalized || !isAddress(normalized)) return null;
   const registry = loadRegistry();
-  const envAddress = env.WAREHOUSE_FACTORY_ADDRESS;
+  return (
+    Object.values(registry?.contracts ?? {}).find(
+      (candidate) =>
+        typeof candidate.address === "string" &&
+        isAddress(candidate.address) &&
+        candidate.address.toLowerCase() === normalized
+    ) ?? null
+  );
+}
 
-  const entry = registry?.contracts?.WarehouseFactory;
-  const address = (envAddress ?? entry?.address ?? "").trim();
+export function getFactoryProofMode(address: string): FactoryProofMode {
+  const entry = getEntryByAddress(address);
+  return entry ? proofModeForVersion(entry.version) : "unknown";
+}
 
-  if (!address) {
+export function resolveFactoryByAddress(
+  address: string
+): WarehouseFactoryContract {
+  const registry = loadRegistry();
+  const normalized = address.trim();
+  const entry = getEntryByAddress(normalized);
+  if (!registry || !entry) {
     throw new Error(
-      "WarehouseFactory not deployed. Set WAREHOUSE_FACTORY_ADDRESS or run DeployFactory and populate contracts/deployments/base-sepolia.json."
+      `WarehouseFactory address is not in the registry: ${address}`
     );
   }
-
+  if (registry.chainId !== BASE_SEPOLIA_CHAIN_ID) {
+    throw new Error("WarehouseFactory registry chainId is not Base Sepolia");
+  }
+  if (!isAddress(entry.address)) {
+    throw new Error("WarehouseFactory registry contains an invalid address.");
+  }
+  const proofMode = proofModeForVersion(entry.version);
+  if (proofMode === "unknown") {
+    throw new Error(`Unsupported WarehouseFactory version: ${entry.version}`);
+  }
+  if (entry.proofRecorder && !isAddress(entry.proofRecorder)) {
+    throw new Error(
+      "WarehouseFactory registry contains an invalid proofRecorder."
+    );
+  }
   const abi = loadAbi(entry);
   if (!abi) {
     throw new Error(
       "WarehouseFactory ABI not found. Build contracts (forge build) so the artifact exists."
     );
   }
-
   return {
-    chainId: registry?.chainId ?? BASE_SEPOLIA_CHAIN_ID,
-    address: address as `0x${string}`,
+    chainId: registry.chainId,
+    address: entry.address as `0x${string}`,
     abi,
-    deploymentBlock: entry?.deploymentBlock ?? 0,
-    version: entry?.version ?? "unknown",
-    proofRecorder:
-      (entry?.proofRecorder as `0x${string}` | undefined) ?? undefined,
+    deploymentBlock: entry.deploymentBlock ?? 0,
+    version: entry.version,
+    proofMode,
+    proofRecorder: entry.proofRecorder as `0x${string}` | undefined,
   };
+}
+
+export function getWarehouseFactory(): WarehouseFactoryContract {
+  const registry = loadRegistry();
+  const address = (
+    env.WAREHOUSE_FACTORY_ADDRESS ??
+    registry?.contracts?.WarehouseFactory?.address ??
+    ""
+  ).trim();
+  if (!address) {
+    throw new Error(
+      "WarehouseFactory not deployed. Set WAREHOUSE_FACTORY_ADDRESS or run DeployFactory and populate contracts/deployments/base-sepolia.json."
+    );
+  }
+  return resolveFactoryByAddress(address);
+}
+
+export function getRegisteredFactoryVersion(address: string): string | null {
+  return getEntryByAddress(address)?.version ?? null;
 }

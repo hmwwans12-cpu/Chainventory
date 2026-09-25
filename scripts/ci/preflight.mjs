@@ -45,13 +45,19 @@ function walk(dir, ext = ".tsx") {
   return files;
 }
 
-function checkFile(file, patterns, description, skipPatterns = []) {
+function checkFile(
+  file,
+  patterns,
+  description,
+  skipPatterns = [],
+  contextSkip = null
+) {
   const content = readFileSync(file, "utf-8");
   const lines = content.split("\n");
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    // Skip if any skip pattern matches
     if (skipPatterns.some((p) => p.test(line))) continue;
+    if (contextSkip?.(lines, i)) continue;
     for (const pattern of patterns) {
       if (pattern.test(line)) {
         error(`${description}: "${line.trim()}"`, file, i + 1);
@@ -128,8 +134,20 @@ const skipTouch = [
   /div.*rounded-lg.*border.*px-.*py-.*text-sm/,
   /inline-flex.*rounded-full.*px-.*py-.*text-xs/,
 ];
+const isNonInteractiveContext = (lines, index) => {
+  const context = lines.slice(Math.max(0, index - 3), index + 1).join("\n");
+  return (
+    /<Badge\b/.test(context) || /aria-hidden\s*=\s*["']true["']/.test(context)
+  );
+};
 for (const file of [...walk(COMPONENTS_DIR), ...walk(APP_DIR)]) {
-  checkFile(file, touchTargetPatterns, "Touch target < 44px", skipTouch);
+  checkFile(
+    file,
+    touchTargetPatterns,
+    "Touch target < 44px",
+    skipTouch,
+    isNonInteractiveContext
+  );
 }
 ok("Touch target audit complete");
 

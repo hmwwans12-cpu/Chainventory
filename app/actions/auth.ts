@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { env } from "@/lib/env";
+import { resolvePublicOrigin } from "@/lib/runtime/public-origin";
 import { loginSchema, signupSchema } from "@/lib/validators/auth";
 import { mapDbError } from "@/lib/domain/errors";
 import { logger } from "@/lib/logger";
@@ -141,7 +141,7 @@ export async function resetPasswordAction(
   const supabase = await createClient();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/confirm?next=/reset-password`,
+    redirectTo: `${resolvePublicOrigin()}/auth/confirm?next=/reset-password`,
   });
 
   if (error) {
@@ -172,7 +172,7 @@ export async function signInWithGoogleAction(): Promise<never> {
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback` },
+    options: { redirectTo: `${resolvePublicOrigin()}/auth/callback` },
   });
 
   if (error || !data.url) {

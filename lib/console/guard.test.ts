@@ -33,13 +33,70 @@ describe("isDeveloperAllowed", () => {
     ).toBe(true);
   });
 
-  it("allows a matching wallet (lowercased)", () => {
+  it("allows a matching verified primary wallet (lowercased)", () => {
     expect(
       isDeveloperAllowed(
-        { emails: [], wallets: ["0xabcdef0123456789abcdef0123456789abcdef01"] },
+        {
+          emails: [],
+          wallets: [
+            {
+              address: "0xABCDEF0123456789AbCdEf0123456789AbCdEf01",
+              is_primary: true,
+              verification_state: "verified",
+            },
+          ],
+        },
         allowed
       )
     ).toBe(true);
+  });
+
+  it("denies unverified and non-primary wallet rows", () => {
+    const address = "0xabcdef0123456789abcdef0123456789abcdef01";
+    expect(
+      isDeveloperAllowed(
+        {
+          emails: [],
+          wallets: [
+            { address, is_primary: true, verification_state: "unverified" },
+          ],
+        },
+        allowed
+      )
+    ).toBe(false);
+    expect(
+      isDeveloperAllowed(
+        {
+          emails: [],
+          wallets: [
+            { address, is_primary: false, verification_state: "verified" },
+          ],
+        },
+        allowed
+      )
+    ).toBe(false);
+  });
+
+  it("denies raw or malformed wallet identities", () => {
+    const address = "0xabcdef0123456789abcdef0123456789abcdef01";
+    expect(
+      isDeveloperAllowed({ emails: [], wallets: [address] }, allowed)
+    ).toBe(false);
+    expect(
+      isDeveloperAllowed(
+        {
+          emails: [],
+          wallets: [
+            {
+              address: "not-an-address",
+              is_primary: true,
+              verification_state: "verified",
+            },
+          ],
+        },
+        allowed
+      )
+    ).toBe(false);
   });
 
   it("denies non-matching identities", () => {

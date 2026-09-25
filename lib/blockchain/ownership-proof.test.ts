@@ -3,6 +3,7 @@ import { encodeFunctionData, type Hex } from "viem";
 
 import {
   resolveOwnershipTransferExpectation,
+  verifyOwnershipTransferCall,
   verifyOwnershipTransferTx,
   warehouseOwnershipAbi,
   type OwnershipTransferTx,
@@ -35,6 +36,14 @@ const expected = {
 describe("verifyOwnershipTransferTx", () => {
   it("menerima transfer valid", () => {
     expect(verifyOwnershipTransferTx(tx(), expected)).toEqual({
+      ok: true,
+      newOwner: NEW_OWNER.toLowerCase(),
+    });
+  });
+
+  it("verifikasi call tanpa receipt untuk intent yang masih submitted", () => {
+    const pending = tx({ status: undefined });
+    expect(verifyOwnershipTransferCall(pending, expected)).toEqual({
       ok: true,
       newOwner: NEW_OWNER.toLowerCase(),
     });

@@ -88,8 +88,8 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
   return (
     <Card>
       <CardHeader className="border-b">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 flex-col gap-1">
             <CardTitle className="t-headline-sm">
               {t("dashboard.recent_activity_title")}
             </CardTitle>
@@ -97,29 +97,32 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
               {t("dashboard.recent_activity_desc")}
             </CardDescription>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex max-w-full min-w-0 flex-wrap items-center justify-between gap-2 sm:justify-end">
             {items.length > 0 ? (
               <div
-                className="bg-surface-container flex items-center gap-0.5 rounded-lg border p-1"
-                role="tablist"
+                className="bg-surface-container flex w-full max-w-full items-center overflow-x-auto overscroll-x-contain rounded-lg border p-1 sm:w-auto"
+                role="group"
                 aria-label={t("activity.filter_label")}
               >
-                {TABS.map((id) => (
-                  <button
-                    key={id}
-                    role="tab"
-                    aria-selected={tab === id}
-                    onClick={() => setTab(id)}
-                    className={cn(
-                      "relative rounded-md px-2.5 py-1 text-sm font-medium transition-colors before:absolute before:-inset-y-2 before:content-[''] focus-visible:ring-3 focus-visible:outline-none",
-                      tab === id
-                        ? "bg-card text-primary shadow-(--shadow-card)"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {tabLabel(id)}
-                  </button>
-                ))}
+                <div className="flex w-max min-w-max items-center gap-0.5">
+                  {TABS.map((id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={tab === id}
+                      aria-controls="recent-activity-results"
+                      onClick={() => setTab(id)}
+                      className={cn(
+                        "relative shrink-0 rounded-md px-2.5 py-1 text-sm font-medium transition-colors before:absolute before:-inset-y-2 before:content-[''] focus-visible:ring-3 focus-visible:outline-none",
+                        tab === id
+                          ? "bg-card text-primary shadow-(--shadow-card)"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {tabLabel(id)}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : null}
             <CardAction>
@@ -130,7 +133,7 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col">
+      <CardContent id="recent-activity-results" className="flex flex-col">
         {items.length === 0 ? (
           <p className="text-muted-foreground py-4 text-sm">
             {t("activity.empty")}{" "}
@@ -146,6 +149,7 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
           <p className="text-muted-foreground py-4 text-sm">
             {t("activity.no_match", { tab: tabLabel(tab) })}{" "}
             <button
+              type="button"
               onClick={() => setTab("all")}
               className="text-primary underline-offset-4 hover:underline"
             >

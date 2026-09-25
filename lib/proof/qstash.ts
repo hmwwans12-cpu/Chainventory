@@ -4,6 +4,7 @@ import { Client } from "@upstash/qstash";
 
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { resolvePublicOrigin } from "@/lib/runtime/public-origin";
 
 /**
  * QStash publisher (P1 Step 5).
@@ -20,39 +21,14 @@ import { logger } from "@/lib/logger";
 
 export const PROOF_PROCESS_PATH = "/api/internal/proofs/process";
 export const PROOF_CONFIRM_PATH = "/api/internal/proofs/confirm";
+export const PROOF_RECONCILE_PATH = "/api/internal/proofs/reconcile";
 
 /** Delay (detik) konfirmasi job per round; setelah MAX → manual_review. */
 export const CONFIRM_DELAYS = [5, 10, 20, 40, 80] as const;
 export const CONFIRM_MAX_ROUNDS = CONFIRM_DELAYS.length + 1;
 
 export function proofBaseUrl(): string {
-  // Prioritas (semua server-side / runtime, tidak ada yang di-inline):
-  //   1. QSTASH_APP_BASE_URL  — override eksplisit (serve.mjs E2E tunnel).
-  //   2. NEXT_PUBLIC_APP_URL  — URL Vercel production (di-set manual saat
-  //      build; diabaikan bila masih default localhost — menandakan belum
-  //      dikonfigurasi di Vercel).
-  //   3. VERCEL_URL           — di-inject Vercel per deployment (hostname
-  //      tanpa skema) → menjamin preview & production default selalu benar
-  //      walaupun preview URL unik/berubah tiap deploy.
-  // QStash TIDAK bisa menjangkau localhost/private — memakai base URL lokal
-  // di sini = proof macet pending (bug yang baru ditemukan lewat E2E).
-  const explicit = env.QSTASH_APP_BASE_URL;
-  if (explicit) return explicit.replace(/\/+$/, "");
-
-  const nextPublic = env.NEXT_PUBLIC_APP_URL;
-  const nextPublicOk =
-    nextPublic &&
-    nextPublic.startsWith("https://") &&
-    !/localhost|127\.0\.0\.1|0\.0\.0\.0/.test(nextPublic);
-  if (nextPublicOk) return nextPublic.replace(/\/+$/, "");
-
-  const vercelHost = env.VERCEL_URL;
-  if (vercelHost) return `https://${vercelHost}`.replace(/\/+$/, "");
-
-  throw new Error(
-    "No public base URL for QStash delivery. Set QSTASH_APP_BASE_URL, or " +
-      "NEXT_PUBLIC_APP_URL (Vercel env), or deploy on Vercel (VERCEL_URL)."
-  );
+  return resolvePublicOrigin();
 }
 
 export function proofProcessUrl(): string {
@@ -61,6 +37,10 @@ export function proofProcessUrl(): string {
 
 export function proofConfirmUrl(): string {
   return `${proofBaseUrl()}${PROOF_CONFIRM_PATH}`;
+}
+
+export function proofReconcileUrl(): string {
+  return `${proofBaseUrl()}${PROOF_RECONCILE_PATH}`;
 }
 
 export function qstashClient(): Client {

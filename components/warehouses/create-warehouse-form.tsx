@@ -424,33 +424,50 @@ export function CreateWarehouseForm() {
     setPhase("submitting");
     const s = await submitDeployment(payload);
     if (!s.ok) {
+      if (s.status === 202 && s.errorCode === "DEPLOYMENT_RECOVERY_PENDING") {
+        fail({
+          title: t("warehouses.create_fail_confirming_title"),
+          detail: t("warehouses.create_fail_confirming_detail"),
+          action: "dashboard",
+        });
+        return;
+      }
       handleSubmitFailure(s.status, s.error, s.errorCode, attempt);
       return;
     }
-    if (s.data.status === "submitted") {
-      setPhase("confirming");
-      const finalized = await pollUntilConfirmed(payload);
-      if (!finalized.ok) {
-        if (finalized.status === 202) {
-          fail({
-            title: t("warehouses.create_fail_confirming_title"),
-            detail: t("warehouses.create_fail_confirming_detail"),
-            action: "dashboard",
-          });
-          return;
-        }
-        handleSubmitFailure(
-          finalized.status,
-          finalized.error,
-          finalized.errorCode,
-          attempt
-        );
-        return;
-      }
-      complete(finalized.data);
+    if (s.data.status === "confirmed") {
+      complete(s.data);
       return;
     }
-    complete(s.data);
+    if (s.data.status === "failed") {
+      handleSubmitFailure(
+        409,
+        "Warehouse deployment failed.",
+        "RPC_FAILED",
+        attempt
+      );
+      return;
+    }
+    setPhase("confirming");
+    const finalized = await pollUntilConfirmed(payload);
+    if (!finalized.ok) {
+      if (finalized.status === 202) {
+        fail({
+          title: t("warehouses.create_fail_confirming_title"),
+          detail: t("warehouses.create_fail_confirming_detail"),
+          action: "dashboard",
+        });
+        return;
+      }
+      handleSubmitFailure(
+        finalized.status,
+        finalized.error,
+        finalized.errorCode,
+        attempt
+      );
+      return;
+    }
+    complete(finalized.data);
   }
 
   async function pollUntilConfirmed(

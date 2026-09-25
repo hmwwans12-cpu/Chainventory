@@ -96,14 +96,10 @@ export function resolveOwnershipTransferExpectation(
     },
   };
 }
-
-export function verifyOwnershipTransferTx(
-  tx: OwnershipTransferTx,
+export function verifyOwnershipTransferCall(
+  tx: Omit<OwnershipTransferTx, "status">,
   expected: OwnershipTransferExpectation
 ): OwnershipTransferVerdict {
-  if (tx.status !== "success") {
-    return { ok: false, reason: "transaction not successful" };
-  }
   if (
     !tx.to ||
     tx.to.toLowerCase() !== expected.contractAddress.toLowerCase()
@@ -136,4 +132,14 @@ export function verifyOwnershipTransferTx(
     };
   }
   return { ok: true, newOwner: newOwner.toLowerCase() };
+}
+
+export function verifyOwnershipTransferTx(
+  tx: OwnershipTransferTx,
+  expected: OwnershipTransferExpectation
+): OwnershipTransferVerdict {
+  if (tx.status !== "success") {
+    return { ok: false, reason: "transaction not successful" };
+  }
+  return verifyOwnershipTransferCall(tx, expected);
 }

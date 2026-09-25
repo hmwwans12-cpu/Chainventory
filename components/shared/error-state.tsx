@@ -1,6 +1,9 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
 import { AlertTriangle } from "lucide-react";
 
+import { useLocale } from "@/components/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -10,18 +13,24 @@ import { cn } from "@/lib/utils";
  * "Try again" button when provided. Never color-only; always has text + icon.
  */
 export function ErrorState({
-  title = "Something went wrong",
+  title,
   description,
   onRetry,
+  retryLabel,
   icon: Icon = AlertTriangle,
   className,
 }: {
   title?: string;
   description?: string;
   onRetry?: () => void;
+  retryLabel?: string;
   icon?: LucideIcon;
   className?: string;
 }) {
+  const { t } = useLocale();
+  const resolvedTitle = title ?? t("common.error_title");
+  const resolvedRetryLabel = retryLabel ?? t("common.retry");
+
   return (
     <div
       role="alert"
@@ -34,7 +43,9 @@ export function ErrorState({
         <Icon aria-hidden="true" className="size-5" />
       </span>
       <div className="mt-2 space-y-1">
-        <p className="text-foreground text-base font-semibold">{title}</p>
+        <p className="text-foreground text-base font-semibold">
+          {resolvedTitle}
+        </p>
         {description ? (
           <p className="text-muted-foreground mx-auto max-w-sm text-sm text-pretty">
             {description}
@@ -44,7 +55,7 @@ export function ErrorState({
       {onRetry ? (
         <div className="mt-4">
           <Button variant="outline" onClick={onRetry}>
-            Try again
+            {resolvedRetryLabel}
           </Button>
         </div>
       ) : null}

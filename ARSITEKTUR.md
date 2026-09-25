@@ -161,6 +161,8 @@ flowchart LR
 ```
 
 - Factory dan Warehouse Contract bersifat **immutable pada v1**.
+- Registry address diparse exact dan tidak fallback diam-diam; mode `legacy-v1`, `wallet-paid-v2`, atau `unknown` harus eksplisit. Unknown address/version dan signer yang tidak cocok dengan `proofRecorder()` fail-closed sebelum broadcast.
+- Deployment finalization resolve factory dari `factory_address` yang tersimpan, bukan factory global saat ini; owner-authorized `?action=recover` dapat attach tx hash yang diketahui tanpa menghapus data warehouse.
 - Factory memverifikasi EIP-712 `owner`, `warehouseCodeHash`, `deploymentNonce`, dan `expiry`; `chainId` serta Factory address terikat pada domain separator.
 - `deploymentNonce` bersumber dari Factory **on-chain**. `idempotencyKey` hanya berada di database dan tidak menggantikannya.
 - Treasury membayar test gas dan hanya menjadi **Proof Recorder**, bukan Owner.
@@ -260,13 +262,14 @@ flowchart TB
 ### 7.2 Job & RPC Failure
 
 - Jika QStash unavailable setelah database commit, `proof_outbox` tetap `pending`; reconciliation terjadwal menjadwalkannya ulang.
+- Semua callback/redirect/undangan memakai `resolvePublicOrigin()`: preview mengikuti `VERCEL_URL`, production memakai canonical HTTPS allowlist, dan private/local origin hanya untuk mode lokal/E2E eksplisit.
 - Jika RPC gagal, gunakan fallback provider; jika tetap gagal, proof retry dan akhirnya `manual_review`.
 
 ### 7.3 Supabase Keep-Alive
 
 Supabase Free dapat pause setelah tidak aktif (~7 hari). Mitigasi: **Vercel Cron harian** (sesuai batas Hobby) memanggil endpoint internal terautentikasi yang menjalankan health check database read-only ringan (`keepalive_ping()` RPC, tanpa RLS).
 
-CF-08 batas Hobby: 3 cron daily (`reconcile` 04:00, `lifecycle` 05:00, `keep-alive` 06:00 UTC, presisi ±59 menit) — **urutan eksekusi tidak dijamin**. Semua job wajib idempoten terhadap urutan (reconcile + lifecycle + keep-alive aman dijalankan bersamaan/acak).
+CF-08 batas Hobby: 5 cron daily (`proof reconcile` 04:00, `faucet reconcile` 04:30, `deployment reconcile` 04:45, `lifecycle` 05:00, `keep-alive` 06:00 UTC, presisi ±59 menit) — **urutan eksekusi tidak dijamin**. Semua job wajib idempoten terhadap urutan.
 
 Bila tetap pause atau cron gagal, Developer Console menampilkan status **degraded** dan prosedur recovery manual sebelum demo.
 
@@ -322,27 +325,33 @@ Direct table mutation dari authenticated **ditolak** (REVOKE INSERT/UPDATE/DELET
 | RPC                                 | Fungsi                                                                             | Hardening                                                                                                                                                                                                        |
 | ----------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apply_stock_movement`              | Atomic: lock product+balance, validate, insert, audit                              | qty > 0, warehouse active, product active, FOR UPDATE lock, reversal direction + concurrency lock; idempotency: fingerprint (`IDEMPOTENT` vs `IDEMPOTENCY_CONFLICT`) + `ON CONFLICT DO NOTHING` race-safe (0038) |
-| `archive_product`                   | Atomic archive: lock product+balance, check qty=0, update                          | auth.uid() only (bukan parameter), MANAGER/OWNER, qty=0                                                                                                                                                          |
+| `archive_product`                   | Atomic archive: lock product+balance, check qty=0, update                          | actor eksplisit + service-only, MANAGER/OWNER, qty=0, delete warehouse guarded bila ada dependent data                                                                                                           |
 | `create_user_paid_stock_intent`     | User-paid intent v2                                                                | warehouse active, role check, wallet verified, product active, payload_hash conflict                                                                                                                             |
-| `create_product_rpc`                | Create product                                                                     | warehouse active, role check                                                                                                                                                                                     |
+| `create_product_rpc`                | Legacy product RPC — direct authenticated access revoked                           | BFF memakai `create_product_with_initial_stock`; direct caller ditolak                                                                                                                                           |
 | `create_product_with_initial_stock` | Create + initial stock ATOMIK (satu transaksi; rollback total bila stock_in gagal) | warehouse active, role check; dipakai BFF saat warehouse belum deployed (P1-06)                                                                                                                                  |
-| `update_product_rpc`                | Update product                                                                     | warehouse active, archived read-only, role check                                                                                                                                                                 |
+| `update_product_rpc`                | Update product                                                                     | actor eksplisit + service-only, archived read-only, role check                                                                                                                                                   |
 
 ### 12.3 Idempotency & Actor Identity
 
 - `idempotency_key` di-scope `(warehouse_id, idempotency_key)` pada level lookup DAN constraint database (partial unique index) — scope logika dan scope DB identik.
 - `request_fingerprint` **WAJIB** saat `idempotency_key` ada — ditolak `INVALID_INPUT` di level RPC dan dijaga CHECK constraint DB (0040); baris legacy sudah di-backfill. BFF menghitung fingerprint (SHA-256 canonical payload). Key sama + payload sama → replay `IDEMPOTENT`; key sama + payload beda → `IDEMPOTENCY_CONFLICT` (409).
 - Insert movement race-safe: `INSERT ... ON CONFLICT ... DO NOTHING` lalu re-select; request yang kalah race menerima jawaban idempotent/konflik, bukan error database generik.
-- `actor_wallet` pada movement gratisan DITURUNKAN server-side dari wallet TERVERIFIKASI milik `auth.uid()` (primary verified). Nilai client hanya diterima bila cocok dengan salah satu wallet verified; selain itu 403.
-- **Known boundary** (0.1.6 audit P1-11/P1-12; dipersempit 0061, audit v3):
-  `verify_wallet`, `proof_retry`, `confirm_ownership_transfer` kini
-  EXECUTE `service_role` saja — route BFF (verifikasi signature /
-  allowlist / tx on-chain + rate-limit) adalah satu-satunya pemanggil,
-  actor diteruskan eksplisit untuk audit. RPC movement + `transfer_ownership`
-  - `set_warehouse_contract_address` masih executable oleh authenticated,
-    tetapi invariant otorisasi + guard deployment/format/latch ditegakkan
-    penuh di dalam RPC (bukan cuma di route). Rate-limit tetap tanggung
-    jawab BFF. Keputusan BFF-only penuh: ADR-0007.
+- `actor_wallet` pada movement gratisan DITURUNKAN server-side dari wallet TERVERIFIKASI milik actor (primary verified). Nilai client hanya diterima bila cocok dengan primary wallet tersebut; selain itu 403.
+- Cron `faucet/reconcile` dan `warehouses/deployments/reconcile` menutup orphan
+  setelah broadcast; hasil dengan tx hash unknown ditandai failure/manual
+  recovery, bukan dianggap success.
+- **Trust boundary RPC** (0.1.6 audit P1-11/P1-12; 0061 audit v3; 0062–0073):
+  `verify_wallet`, `register_wallet_for_user`, `create_invitation_for_user`,
+  product mutation, `proof_retry`, `confirm_ownership_transfer`,
+  `set_warehouse_contract_address`, deployment lifecycle,
+  movement/adjustment, user-paid intent, dan atomic product-initial-stock
+  kini EXECUTE `service_role` saja — route BFF (verifikasi signature /
+  allowlist / tx on-chain + receipt / rate-limit) adalah satu-satunya
+  pemanggil, actor diteruskan eksplisit untuk audit. Profile sensitif
+  (`privy_user_id`, notification preferences) hanya melalui `get_my_profile`.
+  Movement/intent memakai private shared core, primary verified wallet,
+  key + fingerprint, permission recheck, dan proof/evidence checks.
+- Ownership transfer on-chain memakai `ownership_transfer_intents` + `warehouses.ownership_generation` (0073). Prepare mengunci intent aktif, record/confirm service-only, replay memakai tx hash yang sama, dan cleanup mempertahankan retensi 24 jam.
 
 ### 12.4 Create Product + Initial Stock (Atomik Penuh)
 

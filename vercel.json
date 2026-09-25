@@ -11,6 +11,18 @@
     {
       "path": "/api/internal/warehouses/lifecycle",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/internal/faucet/reconcile",
+      "schedule": "30 4 * * *"
+    },
+    {
+      "path": "/api/internal/warehouses/deployments/reconcile",
+      "schedule": "45 4 * * *"
+    },
+    {
+      "path": "/api/internal/warehouses/ownership-intents/reconcile",
+      "schedule": "50 4 * * *"
     }
   ]
 }

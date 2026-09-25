@@ -5,7 +5,16 @@ import {
   verifyPrivyAccessToken,
   type VerifiedPrivyToken,
 } from "@/lib/privy/custom-auth";
-import { SUPPORTED_CHAIN_IDS, syncWalletSchema } from "@/lib/validators/wallet";
+import { createServiceClient } from "@/lib/supabase/service";
+import {
+  isVerifyMessageFresh,
+  recoverVerifyAddress,
+} from "@/lib/wallets/verify";
+import {
+  SUPPORTED_CHAIN_IDS,
+  syncWalletSchema,
+  verifyWalletSchema,
+} from "@/lib/validators/wallet";
 
 export interface WalletRow {
   id: string;
@@ -37,6 +46,112 @@ export type PrivyVerifier = (
   token: string
 ) => Promise<VerifiedPrivyToken | null>;
 
+export type PrivyBindingWriter = (
+  userId: string,
+  privyUserId: string
+) => Promise<{ error: { message: string } | null }>;
+
+export type WalletRegistrationWriter = (
+  userId: string,
+  address: string,
+  walletType: "embedded" | "external"
+) => Promise<{
+  data: unknown;
+  error: { message: string } | null;
+}>;
+
+export async function persistWalletRegistration(
+  userId: string,
+  address: string,
+  walletType: "embedded" | "external"
+): Promise<{
+  data: unknown;
+  error: { message: string } | null;
+}> {
+  const service = createServiceClient();
+  return service.rpc("register_wallet_for_user", {
+    p_user_id: userId,
+    p_address: address,
+    p_wallet_type: walletType,
+  });
+}
+
+async function persistPrivyBinding(
+  userId: string,
+  privyUserId: string
+): Promise<{ error: { message: string } | null }> {
+  try {
+    const service = createServiceClient();
+    const { error } = await service.rpc("bind_privy_user", {
+      p_user_id: userId,
+      p_privy_user_id: privyUserId,
+    });
+    return { error };
+  } catch (err) {
+    logger.error(
+      { err: err instanceof Error ? err.message : String(err) },
+      "privy binding persist failed"
+    );
+    return { error: { message: "Could not persist Privy identity." } };
+  }
+}
+
+function isSupportedPrivyChain(chainId: string | number | undefined): boolean {
+  if (chainId === undefined || chainId === null || chainId === "") return true;
+  const reference =
+    typeof chainId === "number" ? String(chainId) : chainId.split(":").pop();
+  if (!reference) return false;
+  const numeric = /^0x[0-9a-f]+$/i.test(reference)
+    ? Number.parseInt(reference, 16)
+    : Number(reference);
+  return numeric === 84532;
+}
+
+function parseBoundWalletProof(
+  message: string,
+  address: string,
+  userId: string
+): number | null {
+  const lines = message.split("\n");
+  if (lines.length !== 4) return null;
+  const [title, addressLine, userLine, issuedLine] = lines;
+  if (title !== "Chainventory wallet verification") return null;
+
+  const proofAddress = addressLine.startsWith("Address: ")
+    ? addressLine.slice("Address: ".length).trim().toLowerCase()
+    : null;
+  if (proofAddress !== address.toLowerCase()) return null;
+  if (userLine !== `User: ${userId}`) return null;
+  if (!issuedLine.startsWith("Issued at: ")) return null;
+
+  const issuedAt = Date.parse(issuedLine.slice("Issued at: ".length));
+  return Number.isNaN(issuedAt) ? null : issuedAt;
+}
+
+async function hasServerWalletProof(
+  input: unknown,
+  address: string,
+  userId: string
+): Promise<boolean> {
+  if (!input || typeof input !== "object") return false;
+  const values = input as Record<string, unknown>;
+  const parsed = verifyWalletSchema.safeParse({
+    address,
+    message: values.verificationMessage ?? values.message,
+    signature: values.verificationSignature ?? values.signature,
+  });
+  if (!parsed.success) return false;
+
+  const issuedAt = parseBoundWalletProof(parsed.data.message, address, userId);
+  if (issuedAt === null || !isVerifyMessageFresh(issuedAt)) return false;
+
+  const recovered = await recoverVerifyAddress(
+    parsed.data.message,
+    parsed.data.signature as `0x${string}`
+  );
+  return recovered === address;
+}
+
 /**
  * Wallet sync flow (P1 Step 2, PLAN_04 §5 Identity/Wallet; harden C3).
  *
@@ -57,7 +172,18 @@ export async function syncWallet(
   supabase: SupabaseClient,
   input: unknown,
   privyAccessToken: string | null,
-  verify: PrivyVerifier = verifyPrivyAccessToken
+  verify: PrivyVerifier = verifyPrivyAccessToken,
+  bindPrivyUser: PrivyBindingWriter = persistPrivyBinding,
+  registerWallet: WalletRegistrationWriter = async (
+    userId,
+    address,
+    walletType
+  ) =>
+    supabase.rpc("register_wallet_for_user", {
+      p_user_id: userId,
+      p_address: address,
+      p_wallet_type: walletType,
+    })
 ): Promise<WalletSyncResult> {
   const parsed = syncWalletSchema.safeParse(input);
   if (!parsed.success) {
@@ -114,10 +240,28 @@ export async function syncWallet(
     };
   }
 
+  const verifiedWallets = verified.wallets;
+  if (verifiedWallets?.length) {
+    const addressMatches = verifiedWallets.some((wallet) => {
+      if (!wallet || typeof wallet.address !== "string") return false;
+      const verifiedAddress = wallet.address.trim().toLowerCase();
+      return (
+        /^0x[0-9a-f]{40}$/.test(verifiedAddress) &&
+        verifiedAddress === address.toLowerCase() &&
+        isSupportedPrivyChain(wallet.chainId)
+      );
+    });
+    if (!addressMatches) {
+      return {
+        ok: false,
+        errorCode: "PRIVY_VERIFICATION_FAILED",
+        error: "Submitted wallet is not linked to the verified Privy user.",
+      };
+    }
+  }
+
   // Fix BE-14 (confused-deputy): token Privy valid milik user A tidak boleh
   // dipakai sesi Supabase user B untuk mendaftarkan wallet A ke akun B.
-  // users.privy_user_id adalah peta binding (0001); cocokkan atau ikat
-  // sekali saat pertama (fail-closed pada mismatch).
   const {
     data: { user: sessionUser },
   } = await supabase.auth.getUser();
@@ -128,11 +272,31 @@ export async function syncWallet(
       error: "Session expired.",
     };
   }
-  const { data: profile } = await supabase
-    .from("users")
-    .select("privy_user_id")
-    .eq("id", sessionUser.id)
-    .maybeSingle();
+  if (
+    !verifiedWallets?.length &&
+    !(await hasServerWalletProof(input, address, sessionUser.id))
+  ) {
+    return {
+      ok: false,
+      errorCode: "PRIVY_VERIFICATION_FAILED",
+      error:
+        "Privy wallet data is unavailable; complete the server wallet verification challenge first.",
+    };
+  }
+  const { data: profileData, error: profileError } =
+    await supabase.rpc("get_my_profile");
+  const profile = Array.isArray(profileData) ? profileData[0] : profileData;
+  if (profileError) {
+    logger.error(
+      { err: profileError.message },
+      "wallet sync rejected: privy binding lookup failed"
+    );
+    return {
+      ok: false,
+      errorCode: "PRIVY_VERIFICATION_FAILED",
+      error: "Could not verify wallet ownership. Try again.",
+    };
+  }
   const bound = (profile as { privy_user_id?: string | null } | null)
     ?.privy_user_id;
   if (bound && bound !== verified.userId) {
@@ -147,16 +311,25 @@ export async function syncWallet(
     };
   }
   if (!bound) {
-    const { error: bindError } = await supabase
-      .from("users")
-      .update({ privy_user_id: verified.userId })
-      .eq("id", sessionUser.id);
-    // NBE-07: fail-closed bila persist gagal — swallowed error berarti
-    // binding tak pernah menempel dan cek mismatch berikutnya selalu
-    // bypass (confused-deputy abadi).
-    if (bindError) {
+    try {
+      const { error: bindError } = await bindPrivyUser(
+        sessionUser.id,
+        verified.userId
+      );
+      if (bindError) {
+        logger.error(
+          { err: bindError.message },
+          "wallet sync rejected: privy binding persist failed"
+        );
+        return {
+          ok: false,
+          errorCode: "PRIVY_VERIFICATION_FAILED",
+          error: "Could not verify wallet ownership. Try again.",
+        };
+      }
+    } catch (err) {
       logger.error(
-        { err: bindError.message },
+        { err: err instanceof Error ? err.message : String(err) },
         "wallet sync rejected: privy binding persist failed"
       );
       return {
@@ -167,11 +340,11 @@ export async function syncWallet(
     }
   }
 
-  // Register wallet via RPC security-definer (auth.uid() = session user).
-  const { data, error } = await supabase.rpc("register_wallet", {
-    p_address: address,
-    p_wallet_type: walletType,
-  });
+  const { data, error } = await registerWallet(
+    sessionUser.id,
+    address,
+    walletType
+  );
 
   if (error || !data) {
     logger.error(

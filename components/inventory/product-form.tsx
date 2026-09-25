@@ -178,10 +178,10 @@ export function ProductForm({
             />
             <Input
               id="product-name"
-              autoFocus
+              required
               {...register("name")}
               placeholder={t("dialogs.product_form.name_placeholder")}
-              className="h-9 px-3 py-2 text-xs"
+              className="px-3 py-2 text-sm"
               aria-invalid={Boolean(errors.name)}
               aria-describedby={errors.name ? "err-product-name" : undefined}
             />
@@ -198,9 +198,10 @@ export function ProductForm({
             />
             <Input
               id="product-sku"
+              required
               {...register("sku")}
               placeholder={t("dialogs.product_form.sku_placeholder")}
-              className="h-9 px-3 py-2 font-mono text-xs"
+              className="px-3 py-2 font-mono text-xs"
               aria-invalid={Boolean(errors.sku)}
               aria-describedby={errors.sku ? "err-product-sku" : undefined}
             />
@@ -221,7 +222,11 @@ export function ProductForm({
               id="product-category"
               {...register("category")}
               placeholder={t("dialogs.product_form.category_placeholder")}
-              className="h-9 px-3 py-2 text-xs"
+              className="px-3 py-2 text-sm"
+              aria-invalid={Boolean(errors.category)}
+              aria-describedby={
+                errors.category ? "err-product-category" : undefined
+              }
             />
             <FieldError
               message={translateError(errors.category?.message)}
@@ -236,15 +241,25 @@ export function ProductForm({
             />
             <Input
               id="product-unit"
+              required
               {...register("unit")}
               placeholder={t("dialogs.product_form.unit_placeholder")}
               disabled={unitLocked}
-              className="h-9 px-3 py-2 text-xs"
+              className="px-3 py-2 text-sm"
               aria-invalid={Boolean(errors.unit)}
-              aria-describedby={errors.unit ? "err-product-unit" : undefined}
+              aria-describedby={
+                unitLocked
+                  ? "product-unit-locked-hint"
+                  : errors.unit
+                    ? "err-product-unit"
+                    : undefined
+              }
             />
             {unitLocked ? (
-              <p className="text-muted-foreground flex items-center gap-1.5 text-sm leading-relaxed">
+              <p
+                id="product-unit-locked-hint"
+                className="text-muted-foreground flex items-center gap-1.5 text-sm leading-relaxed"
+              >
                 <Lock aria-hidden="true" className="size-4 shrink-0" />
                 {t("dialogs.product_form.unit_locked_hint")}
               </p>
@@ -272,6 +287,10 @@ export function ProductForm({
             placeholder={t("dialogs.product_form.description_placeholder")}
             rows={3}
             className="px-3 py-2 text-sm"
+            aria-invalid={Boolean(errors.description)}
+            aria-describedby={
+              errors.description ? "err-product-description" : undefined
+            }
           />
           <FieldError
             id="err-product-description"
@@ -294,10 +313,12 @@ export function ProductForm({
               inputMode="decimal"
               {...register("lowStockThreshold")}
               placeholder="0"
-              className="h-9 px-3 py-2 font-mono text-xs font-medium"
+              className="px-3 py-2 font-mono text-xs font-medium"
               aria-invalid={Boolean(errors.lowStockThreshold)}
               aria-describedby={
-                errors.lowStockThreshold ? "err-product-threshold" : undefined
+                errors.lowStockThreshold
+                  ? "err-product-threshold"
+                  : "product-threshold-hint"
               }
             />
             <FieldError
@@ -305,7 +326,10 @@ export function ProductForm({
               message={translateError(errors.lowStockThreshold?.message)}
             />
             {!errors.lowStockThreshold?.message ? (
-              <p className="text-muted-foreground text-xs">
+              <p
+                id="product-threshold-hint"
+                className="text-muted-foreground text-xs"
+              >
                 {t("dialogs.product_form.threshold_hint")}
               </p>
             ) : null}
@@ -325,10 +349,12 @@ export function ProductForm({
                 inputMode="decimal"
                 {...register("initialQuantity")}
                 placeholder="0"
-                className="h-9 px-3 py-2 font-mono text-xs font-medium"
+                className="px-3 py-2 font-mono text-xs font-medium"
                 aria-invalid={Boolean(errors.initialQuantity)}
                 aria-describedby={
-                  errors.initialQuantity ? "err-product-initial" : undefined
+                  errors.initialQuantity
+                    ? "err-product-initial"
+                    : "product-initial-hint"
                 }
               />
               {errors.initialQuantity ? (
@@ -337,7 +363,10 @@ export function ProductForm({
                   message={translateError(errors.initialQuantity.message)}
                 />
               ) : (
-                <p className="text-muted-foreground flex items-start gap-1.5 text-xs leading-relaxed">
+                <p
+                  id="product-initial-hint"
+                  className="text-muted-foreground flex items-start gap-1.5 text-xs leading-relaxed"
+                >
                   <Info
                     aria-hidden="true"
                     className="mt-0.5 size-3.5 shrink-0"

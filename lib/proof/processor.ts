@@ -40,6 +40,7 @@ interface LeaseRow {
   payload: Record<string, unknown> | null;
   payload_hash: string;
   attempt_count: number;
+  lease_token: string;
 }
 
 export function backoffSeconds(attempt: number): number {
@@ -62,6 +63,17 @@ export async function processProof(
     // Sudah diproses / belum waktunya / state tak leaseable → no-op.
     return { ok: true, processed: 0 };
   }
+  if (!row.lease_token?.trim()) {
+    logger.error(
+      { proofId },
+      "proof lease returned no token; refusing to process"
+    );
+    return {
+      ok: false,
+      processed: 1,
+      error: "proof lease token missing",
+    };
+  }
 
   const payload = row.payload as Record<string, unknown>;
 
@@ -72,10 +84,17 @@ export async function processProof(
       { proofId, stored: row.payload_hash, recomputed },
       "proof payload hash mismatch → manual_review"
     );
-    await supabase.rpc("proof_mark_manual", {
+    const { error: transitionError } = await supabase.rpc("proof_mark_manual", {
       p_proof_id: proofId,
+      p_lease_token: row.lease_token,
       p_error: "payload hash mismatch on re-hash",
     });
+    if (transitionError) {
+      logger.error(
+        { proofId, err: transitionError.message },
+        "proof hash-mismatch transition failed"
+      );
+    }
     return { ok: false, processed: 1, error: "payload hash mismatch" };
   }
 
@@ -93,10 +112,20 @@ export async function processProof(
       .eq("id", warehouseId)
       .maybeSingle();
     if (wh.error) {
-      await supabase.rpc("proof_mark_manual", {
-        p_proof_id: proofId,
-        p_error: `warehouse lookup failed: ${wh.error.message}`,
-      });
+      const { error: transitionError } = await supabase.rpc(
+        "proof_mark_manual",
+        {
+          p_proof_id: proofId,
+          p_lease_token: row.lease_token,
+          p_error: `warehouse lookup failed: ${wh.error.message}`,
+        }
+      );
+      if (transitionError) {
+        logger.error(
+          { proofId, err: transitionError.message },
+          "proof warehouse-lookup transition failed"
+        );
+      }
       return { ok: false, processed: 1, error: wh.error.message };
     }
     if (wh.data?.on_chain_owner_wallet) {
@@ -104,10 +133,17 @@ export async function processProof(
     }
   }
   if (!actor) {
-    await supabase.rpc("proof_mark_manual", {
+    const { error: transitionError } = await supabase.rpc("proof_mark_manual", {
       p_proof_id: proofId,
+      p_lease_token: row.lease_token,
       p_error: "no actor wallet resolved for proof",
     });
+    if (transitionError) {
+      logger.error(
+        { proofId, err: transitionError.message },
+        "proof actor transition failed"
+      );
+    }
     return {
       ok: false,
       processed: 1,
@@ -134,30 +170,44 @@ export async function processProof(
   const treasury = createTreasuryAdapter();
   const outcome = await treasury.submit(record);
   if (!outcome.ok) {
-    // Fix A1: kontrak Warehouse v2 (actor == msg.sender) tidak mengizinkan
-    // treasury mensubmit proof member: retry 5x hanya buang gas/RPC.
-    // Langsung manual_review dengan pesan jelas; jalur member-paid
-    // (stock_intents prepare/submit/finalize) adalah penggantinya.
     const errMsg = outcome.error ?? "treasury submit failed";
     if (/actor must be caller/i.test(errMsg)) {
-      await supabase.rpc("proof_mark_manual", {
-        p_proof_id: proofId,
-        p_error:
-          "treasury path deprecated for v2 warehouses (actor must be caller): use member-paid stock intents",
-      });
-      logger.error(
-        { proofId, error: errMsg },
-        "treasury submit rejected by v2 contract → manual_review (no retry)"
+      const { error: transitionError } = await supabase.rpc(
+        "proof_mark_manual",
+        {
+          p_proof_id: proofId,
+          p_lease_token: row.lease_token,
+          p_error:
+            "treasury path deprecated for v2 warehouses (actor must be caller): use member-paid stock intents",
+        }
       );
+      if (transitionError) {
+        logger.error(
+          { proofId, err: transitionError.message },
+          "proof manual-review transition failed"
+        );
+      }
       return { ok: false, processed: 1, error: errMsg };
     }
     const attempts = row.attempt_count;
     if (attempts >= PROOF_MAX_ATTEMPTS) {
-      await supabase.rpc("proof_requeue", {
-        p_proof_id: proofId,
-        p_error: outcome.error ?? "treasury submit failed",
-        p_next_attempt_at: null,
-      });
+      const { data: applied, error: transitionError } = await supabase.rpc(
+        "proof_requeue",
+        {
+          p_proof_id: proofId,
+          p_lease_token: row.lease_token,
+          p_error: outcome.error ?? "treasury submit failed",
+          p_next_attempt_at: null,
+        }
+      );
+      if (transitionError) {
+        logger.error(
+          { proofId, err: transitionError.message },
+          "proof max-retry transition failed"
+        );
+      } else if (applied !== true) {
+        logger.warn({ proofId }, "proof max-retry transition lost lease");
+      }
       logger.error(
         { proofId, attempts, error: outcome.error },
         "proof manual_review after max retries"
@@ -165,21 +215,33 @@ export async function processProof(
     } else {
       const delay = backoffSeconds(attempts);
       const nextAttemptAt = new Date(Date.now() + delay * 1000).toISOString();
-      await supabase.rpc("proof_requeue", {
-        p_proof_id: proofId,
-        p_error: outcome.error ?? "treasury submit failed",
-        p_next_attempt_at: nextAttemptAt,
-      });
-      try {
-        await scheduleProofRetry(proofId, delay);
-      } catch (err) {
-        // Reconciliation harian = safety net bila QStash down/gagal.
-        logger.error({ err, proofId, delay }, "retry job scheduling failed");
-      }
-      logger.warn(
-        { proofId, attempts, delay, error: outcome.error },
-        "proof submit failed, scheduled retry"
+      const { data: applied, error: transitionError } = await supabase.rpc(
+        "proof_requeue",
+        {
+          p_proof_id: proofId,
+          p_lease_token: row.lease_token,
+          p_error: outcome.error ?? "treasury submit failed",
+          p_next_attempt_at: nextAttemptAt,
+        }
       );
+      if (transitionError) {
+        logger.error(
+          { proofId, err: transitionError.message },
+          "proof retry transition failed"
+        );
+      } else if (applied === true) {
+        try {
+          await scheduleProofRetry(proofId, delay);
+        } catch (err) {
+          logger.error({ err, proofId, delay }, "retry job scheduling failed");
+        }
+        logger.warn(
+          { proofId, attempts, delay, error: outcome.error },
+          "proof submit failed, scheduled retry"
+        );
+      } else {
+        logger.warn({ proofId }, "proof retry transition lost lease");
+      }
     }
     return {
       ok: false,
@@ -189,22 +251,43 @@ export async function processProof(
   }
 
   if (!outcome.txHash) {
-    await supabase.rpc("proof_mark_manual", {
+    const { error: transitionError } = await supabase.rpc("proof_mark_manual", {
       p_proof_id: proofId,
+      p_lease_token: row.lease_token,
       p_error: "treasury submit returned no tx hash",
     });
+    if (transitionError) {
+      logger.error(
+        { proofId, err: transitionError.message },
+        "proof no-tx transition failed"
+      );
+    }
     return { ok: false, processed: 1, error: "no tx hash from submit" };
   }
 
-  await supabase.rpc("proof_complete", {
-    p_proof_id: proofId,
-    p_tx_hash: outcome.txHash,
-    p_status: "submitted",
-  });
+  const { data: completed, error: completeError } = await supabase.rpc(
+    "proof_complete",
+    {
+      p_proof_id: proofId,
+      p_lease_token: row.lease_token,
+      p_tx_hash: outcome.txHash,
+      p_status: "submitted",
+    }
+  );
+  if (completeError || completed !== true) {
+    logger.error(
+      { proofId, err: completeError?.message, completed },
+      "proof completion transition failed or lease was lost"
+    );
+    return {
+      ok: false,
+      processed: 1,
+      error: completeError?.message ?? "proof completion lease lost",
+    };
+  }
   try {
     await scheduleProofConfirmation(proofId, 1);
   } catch (err) {
-    // Reconciliation harian = safety net bila QStash down/gagal.
     logger.error({ err, proofId }, "confirmation job scheduling failed");
   }
 

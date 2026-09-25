@@ -1,13 +1,22 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { PanelCard } from "@/components/shared/panel-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
-export default function ProductsPageLoading() {
+export default async function ProductsPageLoading() {
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
+  const loadingLabel = `${t("sub.products")}: ${t("common.loading")}`;
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" aria-busy="true">
+      <span role="status" aria-live="polite" className="sr-only">
+        {loadingLabel}
+      </span>
       <PageHeader
-        title="Products"
-        description="Manage your warehouse inventory."
+        title={t("sub.products")}
+        description={t("dashboard.description")}
       />
       {/* Toolbar: search + status filter + actions */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

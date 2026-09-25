@@ -36,6 +36,17 @@ describe("mapDbError (P1-09 domain error catalog)", () => {
 
   it("IDEMPOTENCY_CONFLICT -> 409", () => {
     expect(mapDbError("IDEMPOTENCY_CONFLICT").httpStatus).toBe(409);
+    expect(mapDbError("PRODUCT_INTENT_CONFLICT").httpStatus).toBe(409);
+  });
+
+  it("ownership intent conflicts, stale generations, and expiry -> 409", () => {
+    expect(mapDbError("OWNERSHIP_INTENT_CONFLICT").code).toBe(
+      "OWNERSHIP_INTENT_CONFLICT"
+    );
+    expect(mapDbError("STALE_GENERATION").httpStatus).toBe(409);
+    expect(mapDbError("OWNERSHIP_INTENT_EXPIRED").code).toBe(
+      "OWNERSHIP_INTENT_EXPIRED"
+    );
   });
 
   it("raise code RPC milik sendiri dipetakan", () => {

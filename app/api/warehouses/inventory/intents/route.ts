@@ -10,14 +10,21 @@ import {
 } from "viem";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { createChainTransport, baseSepolia } from "@/lib/blockchain/chains";
 import {
   verifyIntentProofTx,
   warehouseProofAbi,
 } from "@/lib/blockchain/intent-proof";
 import { buildProofPayload } from "@/lib/proof/payload";
+import { isLegacyTreasuryWarehouse } from "@/lib/proof/treasury";
 import { hashProofPayload } from "@/lib/proof/hash";
 import { computeRequestFingerprint } from "@/lib/inventory/fingerprint";
+import {
+  getIntentOccurredAt,
+  isIntentReplayCompatible,
+  type IntentReplayRecord,
+} from "@/lib/inventory/intent-replay";
 import { applyMovementSchema } from "@/lib/validators/inventory";
 import {
   invalid,
@@ -30,6 +37,7 @@ import {
   error,
 } from "@/lib/api-handler";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { MIN_PROOF_CONFIRMATIONS } from "@/lib/constants";
 
 /**
  * Pesan ramah-UX untuk exception RPC intent (mencegah teks Postgres mentah
@@ -45,21 +53,44 @@ const INTENT_RPC_MESSAGES: Record<string, string> = {
     "Your wallet is not verified yet. Verify it in Settings → Wallet, then try again.",
 };
 
-type IntentRow = {
+type IntentRow = IntentReplayRecord & {
   id: string;
-  warehouse_id: string;
-  product_id: string;
-  actor_wallet: string;
-  payload: unknown;
   payload_hash: string;
   status: string;
   tx_hash: string | null;
 };
 
+function getPayloadWarehouseAddress(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const value = (payload as Record<string, unknown>).warehouseAddress;
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function encodeIntentCalldata(
+  intent: IntentRow,
+  movementType: string,
+  occurredAt: string
+): string {
+  const timestamp = Math.floor(Date.parse(occurredAt) / 1000);
+  return encodeFunctionData({
+    abi: warehouseProofAbi,
+    functionName: "recordProof",
+    args: [
+      keccak256(toBytes(intent.id)),
+      intent.payload_hash as Hex,
+      intent.actor_wallet as Hex,
+      movementType,
+      BigInt(timestamp),
+      toHex(toBytes(intent.id)),
+    ],
+  });
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const auth = await requireUser(supabase);
   if (auth.res) return auth.res;
+  const service = createServiceClient();
   const rateLimited = await requireRateLimit(
     "stock-intent",
     auth.user.id,
@@ -74,8 +105,6 @@ export async function POST(request: Request) {
   if (action === "prepare") {
     const parsed = applyMovementSchema.safeParse(raw.body);
     if (!parsed.success) return invalid(parsed.error.issues[0]?.message);
-    if (!parsed.data.actorWallet)
-      return invalid("Connect a Base Sepolia wallet before recording stock.");
     if (!["stock_in", "stock_out"].includes(parsed.data.movementType))
       return invalid("Only Stock In and Stock Out use a wallet-paid proof.");
     const denied = await requirePermission(
@@ -88,15 +117,128 @@ export async function POST(request: Request) {
     );
     if (denied) return denied;
 
-    // Audit C-02: tolak bila warehouse suspended/inactive.
     const inactive = await requireActiveWarehouse(
       supabase,
       parsed.data.warehouseId
     );
     if (inactive) return inactive;
 
-    // NBE-12: via warehouse_summaries (member-visible); tabel dasar
-    // owner-only membuat intent v2 mustahil untuk non-owner.
+    const idempotencyKey = parsed.data.idempotencyKey?.trim() || "";
+    if (!idempotencyKey) {
+      return invalid("idempotencyKey is required for stock intents.");
+    }
+
+    let expectedBalanceVersionBig: bigint | null = null;
+    if (parsed.data.expectedBalanceVersion) {
+      if (parsed.data.expectedBalanceVersion.length > 20) {
+        return invalid("Version number is too large.");
+      }
+      try {
+        expectedBalanceVersionBig = BigInt(parsed.data.expectedBalanceVersion);
+      } catch {
+        return invalid("Invalid version.");
+      }
+    }
+
+    const { data: existingIntent, error: existingIntentError } = await supabase
+      .from("stock_intents")
+      .select(
+        "id, warehouse_id, product_id, movement_type, quantity, expected_balance_version, reason, reference, actor_wallet, payload, payload_hash, status, tx_hash, created_at, request_fingerprint"
+      )
+      .eq("actor_user_id", auth.user.id)
+      .eq("idempotency_key", idempotencyKey)
+      .maybeSingle();
+    if (existingIntentError) {
+      return error(
+        "Unable to read the existing stock request. Please try again.",
+        "RPC_FAILED",
+        500
+      );
+    }
+    if (existingIntent) {
+      const intent = existingIntent as unknown as IntentRow;
+      const storedReplayFingerprint = computeRequestFingerprint({
+        warehouseId: parsed.data.warehouseId,
+        productId: parsed.data.productId,
+        movementType: parsed.data.movementType,
+        quantity: parsed.data.quantity,
+        expectedBalanceVersion: parsed.data.expectedBalanceVersion,
+        reason: parsed.data.reason || null,
+        reference: parsed.data.reference || null,
+        reversalOf: null,
+        actorWallet: intent.actor_wallet,
+      });
+      const compatible = isIntentReplayCompatible(
+        intent,
+        {
+          actorUserId: auth.user.id,
+          warehouseId: parsed.data.warehouseId,
+          productId: parsed.data.productId,
+          movementType: parsed.data.movementType,
+          quantity: parsed.data.quantity,
+          expectedBalanceVersion: parsed.data.expectedBalanceVersion,
+          reason: parsed.data.reason || null,
+          reference: parsed.data.reference || null,
+          actorWallet: intent.actor_wallet,
+        },
+        storedReplayFingerprint
+      );
+      if (!compatible) {
+        return error(
+          "This idempotency key was already used for a different stock request.",
+          "IDEMPOTENCY_CONFLICT",
+          409
+        );
+      }
+      const occurredAt = getIntentOccurredAt(intent);
+      const to = getPayloadWarehouseAddress(intent.payload);
+      if (!to) {
+        return error(
+          "The existing stock request is missing its contract payload.",
+          "IDEMPOTENCY_CONFLICT",
+          409
+        );
+      }
+      const timestamp = Math.floor(Date.parse(occurredAt) / 1000);
+      return ok(
+        {
+          intentId: intent.id,
+          to,
+          data: encodeIntentCalldata(
+            intent,
+            parsed.data.movementType,
+            occurredAt
+          ),
+          chainId: baseSepolia.id,
+          actorWallet: intent.actor_wallet,
+          occurredAt,
+          timestamp,
+          status: intent.status,
+        },
+        200
+      );
+    }
+
+    if (!parsed.data.actorWallet) {
+      return invalid("Connect a Base Sepolia wallet before recording stock.");
+    }
+
+    const { data: primaryWallet } = await supabase
+      .from("wallets")
+      .select("address")
+      .eq("user_id", auth.user.id)
+      .eq("is_primary", true)
+      .eq("verification_state", "verified")
+      .maybeSingle();
+    const actorWallet = primaryWallet?.address ?? null;
+    if (!actorWallet) {
+      return error(
+        "Your primary verified wallet is required to prepare this stock request.",
+        "FORBIDDEN",
+        403
+      );
+    }
+
     const [{ data: warehouse }, { data: product }] = await Promise.all([
       supabase
         .from("warehouse_summaries")
@@ -114,33 +256,24 @@ export async function POST(request: Request) {
       return invalid(
         "This warehouse must be migrated to the v2 contract before wallet-paid stock movements are available."
       );
+    try {
+      if (await isLegacyTreasuryWarehouse(warehouse.contract_address)) {
+        return error(
+          "This warehouse uses the treasury proof flow; use a standard stock movement instead.",
+          "UNSUPPORTED_PROOF_MODE",
+          409
+        );
+      }
+    } catch {
+      return error(
+        "Could not verify the warehouse proof mode. Try again.",
+        "RPC_FAILED",
+        503
+      );
+    }
+
     const intentId = randomUUID();
     const occurredAt = new Date().toISOString();
-    // Audit v0.3.8 C-12: cap the BigInt input. The schema enforces
-    // digits-only, but a multi-MB string of "9"s would still parse to
-    // a huge BigInt and reach the RPC layer. 20 digits is far beyond
-    // any realistic inventory version (which is an int4 counter, so
-    // even 12 digits is wildly over-provisioned). Reject up front so
-    // we can return a 400 instead of letting BigInt throw inside the
-    // RPC call.
-    let expectedBalanceVersionBig: bigint | null = null;
-    if (parsed.data.expectedBalanceVersion) {
-      if (parsed.data.expectedBalanceVersion.length > 20) {
-        return invalid("Version number is too large.");
-      }
-      try {
-        expectedBalanceVersionBig = BigInt(parsed.data.expectedBalanceVersion);
-      } catch {
-        return invalid("Invalid version.");
-      }
-    }
-    // Fix BE-25 (PRD §32): retryable writes WAJIB idempotencyKey stabil dari
-    // client. Fallback randomUUID() tiap retry = intent duplikat. Tolak bila
-    // kosong, selaras dengan movements yang mewajibkan key (C-10).
-    const idempotencyKey = parsed.data.idempotencyKey?.trim() || "";
-    if (!idempotencyKey) {
-      return invalid("idempotencyKey is required for stock intents.");
-    }
     const payload = buildProofPayload({
       movementId: intentId,
       warehouseId: parsed.data.warehouseId,
@@ -153,12 +286,12 @@ export async function POST(request: Request) {
       reason: parsed.data.reason || null,
       reference: parsed.data.reference || null,
       actorUserId: auth.user.id,
-      actorWallet: parsed.data.actorWallet,
+      actorWallet,
       expectedBalanceVersion: parsed.data.expectedBalanceVersion,
       occurredAt,
     });
     const payloadHash = hashProofPayload(payload);
-    const { data, error: rpcError } = await supabase.rpc(
+    const { data, error: rpcError } = await service.rpc(
       "create_user_paid_stock_intent",
       {
         p_id: intentId,
@@ -169,12 +302,10 @@ export async function POST(request: Request) {
         p_expected_balance_version: expectedBalanceVersionBig,
         p_reason: parsed.data.reason || null,
         p_reference: parsed.data.reference || null,
-        p_actor_wallet: parsed.data.actorWallet,
+        p_actor_wallet: actorWallet,
         p_idempotency_key: idempotencyKey,
         p_payload: payload,
         p_payload_hash: payloadHash,
-        // 0057: fingerprint kanonis (format SAMA dengan jalur movements
-        // langsung) — diteruskan saat commit agar guard 0040 lolos.
         p_request_fingerprint: computeRequestFingerprint({
           warehouseId: parsed.data.warehouseId,
           productId: parsed.data.productId,
@@ -184,12 +315,20 @@ export async function POST(request: Request) {
           reason: parsed.data.reason || null,
           reference: parsed.data.reference || null,
           reversalOf: null,
-          actorWallet: parsed.data.actorWallet,
+          actorWallet,
         }),
+        p_actor_user_id: auth.user.id,
       }
     );
     if (rpcError || !data) {
       const code = rpcError?.message ?? "";
+      if (code.toUpperCase().includes("IDEMPOTENCY_CONFLICT")) {
+        return error(
+          "This idempotency key was already used for a different stock request.",
+          "IDEMPOTENCY_CONFLICT",
+          409
+        );
+      }
       return error(
         INTENT_RPC_MESSAGES[code] ??
           "Unable to prepare stock transaction. Please try again.",
@@ -197,24 +336,27 @@ export async function POST(request: Request) {
         500
       );
     }
-    const intent = data as IntentRow;
-    const calldata = encodeFunctionData({
-      abi: warehouseProofAbi,
-      functionName: "recordProof",
-      args: [
-        keccak256(toBytes(intent.id)),
-        intent.payload_hash as Hex,
-        intent.actor_wallet as Hex,
-        parsed.data.movementType,
-        BigInt(Math.floor(Date.parse(occurredAt) / 1000)),
-        toHex(toBytes(intent.id)),
-      ],
+    const intent = (Array.isArray(data) ? data[0] : data) as IntentRow;
+    const storedOccurredAt = getIntentOccurredAt({
+      ...intent,
+      created_at: intent.created_at ?? occurredAt,
     });
+    const to =
+      getPayloadWarehouseAddress(intent.payload) ?? warehouse.contract_address;
+    const timestamp = Math.floor(Date.parse(storedOccurredAt) / 1000);
     return ok({
       intentId: intent.id,
-      to: warehouse.contract_address,
-      data: calldata,
+      to,
+      data: encodeIntentCalldata(
+        intent,
+        parsed.data.movementType,
+        storedOccurredAt
+      ),
       chainId: baseSepolia.id,
+      actorWallet: intent.actor_wallet,
+      occurredAt: storedOccurredAt,
+      timestamp,
+      status: intent.status,
     });
   }
 
@@ -226,7 +368,7 @@ export async function POST(request: Request) {
       return invalid("Invalid transaction hash.");
     const { data: intentWh } = await supabase
       .from("stock_intents")
-      .select("warehouse_id, actor_user_id")
+      .select("warehouse_id, actor_user_id, movement_type")
       .eq("id", body.intentId)
       .maybeSingle();
     if (!intentWh) return error("Stock intent not found.", "NOT_FOUND", 404);
@@ -242,15 +384,35 @@ export async function POST(request: Request) {
         403
       );
     }
+    const permission =
+      intentWh.movement_type === "stock_in"
+        ? PERMISSIONS.STOCK_IN
+        : intentWh.movement_type === "stock_out"
+          ? PERMISSIONS.STOCK_OUT
+          : null;
+    if (!permission) {
+      return error("Invalid stock movement type.", "INVALID_INPUT", 400);
+    }
+    const denied = await requirePermission(
+      supabase,
+      intentWh.warehouse_id,
+      auth.user.id,
+      permission
+    );
+    if (denied) return denied;
     // Audit C-02: tolak bila warehouse suspended/inactive.
     const inactive = await requireActiveWarehouse(
       supabase,
       intentWh.warehouse_id
     );
     if (inactive) return inactive;
-    const { error: rpcError } = await supabase.rpc(
+    const { error: rpcError } = await service.rpc(
       "submit_user_paid_stock_intent",
-      { p_id: body.intentId, p_tx_hash: body.txHash }
+      {
+        p_id: body.intentId,
+        p_tx_hash: body.txHash,
+        p_actor_user_id: auth.user.id,
+      }
     );
     if (rpcError) {
       const friendly = INTENT_RPC_MESSAGES[rpcError.message];
@@ -267,7 +429,7 @@ export async function POST(request: Request) {
     const { data: intent, error: intentError } = await supabase
       .from("stock_intents")
       .select(
-        "id, actor_user_id, actor_wallet, payload_hash, warehouse_id, status, tx_hash"
+        "id, actor_user_id, actor_wallet, payload_hash, warehouse_id, movement_type, status, tx_hash"
       )
       .eq("id", body.intentId)
       .maybeSingle();
@@ -282,6 +444,22 @@ export async function POST(request: Request) {
         403
       );
     }
+    const permission =
+      intent.movement_type === "stock_in"
+        ? PERMISSIONS.STOCK_IN
+        : intent.movement_type === "stock_out"
+          ? PERMISSIONS.STOCK_OUT
+          : null;
+    if (!permission) {
+      return error("Invalid stock movement type.", "INVALID_INPUT", 400);
+    }
+    const denied = await requirePermission(
+      supabase,
+      intent.warehouse_id,
+      auth.user.id,
+      permission
+    );
+    if (denied) return denied;
     // Audit C-02: tolak bila warehouse suspended/inactive.
     const inactive = await requireActiveWarehouse(
       supabase,
@@ -315,10 +493,18 @@ export async function POST(request: Request) {
         chain: baseSepolia,
         transport: createChainTransport(),
       });
-      const [tx, receipt] = await Promise.all([
+      const [tx, receipt, confirmations] = await Promise.all([
         client.getTransaction({ hash: intent.tx_hash as Hex }),
         client.getTransactionReceipt({ hash: intent.tx_hash as Hex }),
+        client.getTransactionConfirmations({ hash: intent.tx_hash as Hex }),
       ]);
+      if (Number(confirmations ?? 0) < MIN_PROOF_CONFIRMATIONS) {
+        return error(
+          "Transaction is still confirming. Inventory has not changed.",
+          "CONFIRMING",
+          202
+        );
+      }
       const verdict = verifyIntentProofTx(
         {
           to: tx.to,
@@ -348,9 +534,14 @@ export async function POST(request: Request) {
         202
       );
     }
-    const { data, error: rpcError } = await supabase.rpc(
+    const { data, error: rpcError } = await service.rpc(
       "commit_user_paid_stock_intent",
-      { p_id: body.intentId }
+      {
+        p_id: body.intentId,
+        p_actor_user_id: auth.user.id,
+        p_verified_tx_hash: intent.tx_hash,
+        p_verified_payload_hash: intent.payload_hash,
+      }
     );
     if (rpcError) {
       const friendly = INTENT_RPC_MESSAGES[rpcError.message];

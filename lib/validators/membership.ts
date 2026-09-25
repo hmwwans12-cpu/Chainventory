@@ -78,9 +78,15 @@ export const transferOwnershipSchema = z.object({
 export const transferPreviewSchema = z.object({
   warehouseId: z.string().uuid("Invalid warehouse id."),
   newOwnerId: z.string().uuid("Invalid user id."),
+  idempotencyKey: z.string().uuid("Invalid idempotency key.").optional(),
+});
+
+export const transferResumeSchema = z.object({
+  warehouseId: z.string().uuid("Invalid warehouse id."),
 });
 
 export const transferConfirmSchema = transferPreviewSchema.extend({
+  intentId: z.string().uuid("Invalid ownership intent id.").optional(),
   txHash: z
     .string()
     .trim()
@@ -96,4 +102,5 @@ export type RemoveMemberValues = z.infer<typeof removeMemberSchema>;
 export type ChangeRoleValues = z.infer<typeof changeRoleSchema>;
 export type TransferOwnershipValues = z.infer<typeof transferOwnershipSchema>;
 export type TransferPreviewValues = z.infer<typeof transferPreviewSchema>;
+export type TransferResumeValues = z.infer<typeof transferResumeSchema>;
 export type TransferConfirmValues = z.infer<typeof transferConfirmSchema>;

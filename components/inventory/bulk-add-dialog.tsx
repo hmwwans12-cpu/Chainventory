@@ -39,6 +39,7 @@ import {
 } from "@/lib/inventory/products-client";
 import { MAX_CSV_BYTES, parseProductsCsv } from "@/lib/inventory/csv";
 import { cn } from "@/lib/utils";
+import { isRetryableApiFailure, newIdempotencyKey } from "@/lib/api-client";
 import { useLocale } from "@/components/providers/locale-provider";
 
 /**
@@ -91,7 +92,12 @@ export function BulkAddDialog({
   const { t } = useLocale();
   const [results, setResults] = React.useState<BulkCreateResult | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const idempotencyKey = React.useRef<string | null>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
+  const closeDialog = () => {
+    idempotencyKey.current = null;
+    onOpenChange(false);
+  };
   const translateCsvError = (message: string): string => {
     switch (message) {
       case "CSV is empty.":
@@ -181,9 +187,10 @@ export function BulkAddDialog({
   };
 
   const importRows = async () => {
+    if (!idempotencyKey.current) {
+      idempotencyKey.current = newIdempotencyKey();
+    }
     setBusy(true);
-    // Atomic per-baris: initialQuantity dikirim ke route bulk; baris
-    // ber-stok dibuat via RPC atomic (product+stock+proof satu transaksi).
     const result = await bulkCreateProducts(
       warehouseId,
       rows.map((r) => ({
@@ -194,19 +201,24 @@ export function BulkAddDialog({
         description: r.description,
         lowStockThreshold: r.lowStockThreshold,
         initialQuantity: r.initialQty ?? undefined,
-      }))
+      })),
+      { idempotencyKey: idempotencyKey.current }
     );
     if (!result.ok) {
       setBusy(false);
+      if (!isRetryableApiFailure(result)) {
+        idempotencyKey.current = null;
+        setStep("input");
+      }
       toast.add({
         type: "error",
         title: t("dialogs.bulk.toast_import_failed_title"),
         description: result.error,
       });
-      setStep("input");
       return;
     }
 
+    idempotencyKey.current = null;
     setBusy(false);
     setResults(result.data);
     setStep("result");
@@ -302,7 +314,13 @@ export function BulkAddDialog({
   ];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) idempotencyKey.current = null;
+        onOpenChange(next);
+      }}
+    >
       <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-2xl gap-0 overflow-y-auto rounded-2xl p-0">
         {/* Stepper — lingkaran + garis progres (referensi wizard Stitch).
             Murni visual dari `step`; bukan navigasi (tanpa tab ARIA). */}
@@ -384,7 +402,14 @@ export function BulkAddDialog({
 
         <div className="flex flex-col gap-4 px-6 py-5">
           {step === "input" ? (
-            <>
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                goToPreview();
+              }}
+              noValidate
+            >
               {/* NFE-05: ini segmented control, bukan tabs ARIA (tanpa
                 tabpanel/arrow-nav) — role group + pressed. */}
               <div
@@ -458,6 +483,7 @@ export function BulkAddDialog({
                             </Label>
                             <Input
                               id={`bulk-name-${row.id}`}
+                              required
                               value={row.name}
                               onChange={(e) =>
                                 updateManualRow(i, "name", e.target.value)
@@ -465,7 +491,7 @@ export function BulkAddDialog({
                               placeholder={t(
                                 "dialogs.product_form.name_placeholder"
                               )}
-                              className="h-9 text-xs"
+                              className="text-xs"
                             />
                           </div>
                           <div className="flex flex-col gap-1 sm:col-span-3">
@@ -477,6 +503,7 @@ export function BulkAddDialog({
                             </Label>
                             <Input
                               id={`bulk-sku-${row.id}`}
+                              required
                               value={row.sku}
                               onChange={(e) =>
                                 updateManualRow(i, "sku", e.target.value)
@@ -484,7 +511,7 @@ export function BulkAddDialog({
                               placeholder={t(
                                 "dialogs.product_form.sku_placeholder"
                               )}
-                              className="h-9 font-mono text-xs"
+                              className="font-mono text-xs"
                             />
                           </div>
                           <div className="flex flex-col gap-1 sm:col-span-2">
@@ -496,12 +523,13 @@ export function BulkAddDialog({
                             </Label>
                             <Input
                               id={`bulk-unit-${row.id}`}
+                              required
                               value={row.unit}
                               onChange={(e) =>
                                 updateManualRow(i, "unit", e.target.value)
                               }
                               placeholder={t("dialogs.bulk.placeholder_unit")}
-                              className="h-9 text-xs"
+                              className="text-xs"
                             />
                           </div>
                           <div className="flex items-center gap-1 sm:col-span-2">
@@ -521,7 +549,7 @@ export function BulkAddDialog({
                                 placeholder={t(
                                   "dialogs.bulk.placeholder_category"
                                 )}
-                                className="h-9 text-xs"
+                                className="text-xs"
                               />
                             </div>
                             {manualRows.length > 1 ? (
@@ -549,6 +577,7 @@ export function BulkAddDialog({
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <Button
+                      type="button"
                       variant="outline"
                       size="sm"
                       onClick={() =>
@@ -578,17 +607,10 @@ export function BulkAddDialog({
               ) : (
                 <div className="flex flex-col gap-2">
                   {mode === "upload" ? (
-                    <div
-                      role="button"
-                      tabIndex={0}
+                    <button
+                      type="button"
                       aria-label={t("dialogs.bulk.dropzone_label")}
                       onClick={() => fileRef.current?.click()}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          fileRef.current?.click();
-                        }
-                      }}
                       onDragOver={(e) => {
                         e.preventDefault();
                         setDragOver(true);
@@ -601,7 +623,7 @@ export function BulkAddDialog({
                         if (file) handleCsvFile(file);
                       }}
                       className={cn(
-                        "border-status-ok-border bg-status-ok-bg/40 hover:bg-status-ok-bg/70 group cursor-pointer rounded-xl border-2 border-dashed p-5 text-center transition-colors",
+                        "border-status-ok-border bg-status-ok-bg/40 hover:bg-status-ok-bg/70 focus-visible:ring-ring group w-full cursor-pointer rounded-xl border-2 border-dashed p-5 text-center transition-colors focus-visible:ring-3 focus-visible:outline-none",
                         dragOver && "bg-status-ok-bg ring-primary/30 ring-4"
                       )}
                     >
@@ -614,13 +636,14 @@ export function BulkAddDialog({
                       <span className="text-muted-foreground mt-0.5 block text-[11px]">
                         {t("dialogs.bulk.dropzone_hint")}
                       </span>
-                    </div>
+                    </button>
                   ) : null}
                   <Label htmlFor="bulk-paste">
                     {t("dialogs.bulk.csv_label")}
                   </Label>
                   <Textarea
                     id="bulk-paste"
+                    required
                     value={pasteText}
                     onChange={(e) => setPasteText(e.target.value)}
                     rows={8}
@@ -687,22 +710,23 @@ export function BulkAddDialog({
 
               <div className="border-border flex flex-col-reverse gap-2.5 border-t pt-4 sm:flex-row sm:justify-end">
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => onOpenChange(false)}
+                  onClick={closeDialog}
                   className="relative h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
                 >
                   {t("common.cancel")}
                 </Button>
                 <Button
-                  onClick={goToPreview}
+                  type="submit"
                   size="sm"
                   className="relative h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
                 >
                   {t("dialogs.bulk.continue_review")}
                 </Button>
               </div>
-            </>
+            </form>
           ) : null}
 
           {step === "preview" ? (
@@ -1017,7 +1041,7 @@ export function BulkAddDialog({
                   gagal ikut hilang), jadi jangan suruh "Review errors".
                   Daftar + unduhan CSV tetap di atas selama dialog terbuka. */}
                 <Button
-                  onClick={() => onOpenChange(false)}
+                  onClick={closeDialog}
                   size="sm"
                   className="relative h-8 px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
                 >

@@ -38,10 +38,11 @@ import {
 } from "@/lib/inventory/movements-client";
 import {
   finalizeStockIntent,
+  isPendingIntentConfirmation,
   prepareStockIntent,
   submitStockIntent,
 } from "@/lib/inventory/intents-client";
-import { newIdempotencyKey } from "@/lib/api-client";
+import { isRetryableApiFailure, newIdempotencyKey } from "@/lib/api-client";
 import type { ProductRow } from "@/lib/inventory/types";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { formatDate } from "@/lib/utils";
@@ -166,6 +167,9 @@ export function StockMovementDialog({
           ? t("dialogs.movement.type_adjustment")
           : t("dialogs.movement.type_reversal");
   const typeDescription = t(`dialogs.movement.desc_${movementType}`);
+  const targetError = error === t("dialogs.movement.error_select_target");
+  const quantityError = error === t("dialogs.movement.error_invalid_quantity");
+  const reasonError = error === t("dialogs.movement.error_reason_required");
 
   React.useEffect(() => {
     if (!open || movementType !== "reversal" || !selectedId) return;
@@ -233,103 +237,138 @@ export function StockMovementDialog({
       actorWallet: wallet.address,
     });
     if (!prep.ok) {
-      setError(prep.error);
-      idempotencyKey.current = null;
-      return { handled: true };
-    }
-
-    setPhase(t("dialogs.movement.phase_sign"));
-    const provider = await wallet.getEthereumProvider();
-    let txHash: string;
-    try {
-      txHash = (await provider.request({
-        method: "eth_sendTransaction",
-        params: [
-          {
-            to: prep.data.to,
-            data: prep.data.data,
-            chainId: `0x${prep.data.chainId.toString(16)}`,
-          },
-        ],
-      })) as string;
-    } catch (err) {
-      const code = (err as { code?: number })?.code;
-      idempotencyKey.current = null;
-      setPhase(null);
-      setError(
-        code === 4001
-          ? t("dialogs.movement.error_signature_cancelled")
-          : t("dialogs.movement.error_wallet_send")
-      );
-      return { handled: true };
-    }
-    if (!txHash || typeof txHash !== "string") {
-      idempotencyKey.current = null;
-      setPhase(null);
-      setError(t("dialogs.movement.error_no_tx_hash"));
-      return { handled: true };
-    }
-
-    setPhase(t("dialogs.movement.phase_submitting"));
-    const submitted = await submitStockIntent(prep.data.intentId, txHash);
-    // Audit v0.3.9 H-14: short-circuit when submitStockIntent says "the
-    // intent is already past submit". Without this, the code below would
-    // fall through to the 15×3s polling loop (~45s wasted). The intent
-    // is racing the confirmation on Base Sepolia; the polling loop is
-    // the right place for that wait, but only if the intent is not yet
-    // committed.
-    if (
-      submitted.ok &&
-      submitted.data &&
-      (submitted.data as { status?: string }).status === "submitted"
-    ) {
-      // Intent accepted; fall through to the polling loop to wait for
-      // confirmation. This is the normal happy path.
-    } else if (!submitted.ok) {
-      // Submit RPC failed; check if the intent was actually committed
-      // (race with the confirmation job). If so, treat as success and
-      // exit early.
-      const direct = await finalizeStockIntent(prep.data.intentId);
-      if (direct.ok && direct.data.status === "committed") {
-        setPhase(null);
-        // NFE-07: kunci sukses tidak boleh dipakai movement berikutnya.
+      if (!isRetryableApiFailure(prep)) {
         idempotencyKey.current = null;
-        onOpenChange(false);
-        onSuccess();
-        const newMovementId = direct.data.movementId;
-        toast.add({
-          type: "success",
-          title: typeLabel,
-          description:
-            movementType === "stock_in"
-              ? newMovementId
-                ? t("dialogs.movement.toast_stock_in_with_id", {
-                    qty,
-                    unit: selected!.unit,
-                    name: selected!.name,
-                  })
-                : t("dialogs.movement.toast_stock_in_simple", {
-                    qty,
-                    unit: selected!.unit,
-                    name: selected!.name,
-                  })
-              : newMovementId
-                ? t("dialogs.movement.toast_stock_out_with_id", {
-                    qty,
-                    unit: selected!.unit,
-                    name: selected!.name,
-                  })
-                : t("dialogs.movement.toast_stock_out_simple", {
-                    qty,
-                    unit: selected!.unit,
-                    name: selected!.name,
-                  }),
-        });
+      }
+      setError(prep.error);
+      return { handled: true };
+    }
+
+    if (prep.data.status === "failed" || prep.data.status === "cancelled") {
+      idempotencyKey.current = null;
+      setPhase(null);
+      setError(t("dialogs.movement.error_still_waiting"));
+      return { handled: true };
+    }
+    const replayableIntent =
+      prep.data.status === "submitted" || prep.data.status === "committed";
+    if (!replayableIntent) {
+      const signingWallet = wallets.find(
+        (candidate) =>
+          candidate.address.toLowerCase() ===
+          prep.data.actorWallet.toLowerCase()
+      );
+      if (!signingWallet) {
+        idempotencyKey.current = null;
+        setPhase(null);
+        setError(t("dialogs.movement.error_wallet_connect"));
         return { handled: true };
       }
-      setPhase(null);
-      setError(submitted.error);
-      return { handled: true };
+
+      setPhase(t("dialogs.movement.phase_sign"));
+      const provider = await signingWallet.getEthereumProvider();
+      let txHash: string;
+      try {
+        txHash = (await provider.request({
+          method: "eth_sendTransaction",
+          params: [
+            {
+              to: prep.data.to,
+              data: prep.data.data,
+              chainId: `0x${prep.data.chainId.toString(16)}`,
+            },
+          ],
+        })) as string;
+      } catch (err) {
+        const code = (err as { code?: number })?.code;
+        if (code === 4001) {
+          idempotencyKey.current = null;
+        }
+        setPhase(null);
+        setError(
+          code === 4001
+            ? t("dialogs.movement.error_signature_cancelled")
+            : t("dialogs.movement.error_wallet_send")
+        );
+        return { handled: true };
+      }
+      if (!txHash || typeof txHash !== "string") {
+        setPhase(null);
+        setError(t("dialogs.movement.error_no_tx_hash"));
+        return { handled: true };
+      }
+
+      setPhase(t("dialogs.movement.phase_submitting"));
+      const submitted = await submitStockIntent(prep.data.intentId, txHash);
+      // Audit v0.3.9 H-14: short-circuit when submitStockIntent says "the
+      // intent is already past submit". Without this, the code below would
+      // fall through to the 15×3s polling loop (~45s wasted). The intent
+      // is racing the confirmation on Base Sepolia; the polling loop is
+      // the right place for that wait, but only if the intent is not yet
+      // committed.
+      if (
+        submitted.ok &&
+        submitted.data &&
+        (submitted.data as { status?: string }).status === "submitted"
+      ) {
+        // Intent accepted; fall through to the polling loop to wait for
+        // confirmation. This is the normal happy path.
+      } else if (!submitted.ok) {
+        // Submit RPC failed; check if the intent was actually committed
+        // (race with the confirmation job). If so, treat as success and
+        // exit early.
+        const direct = await finalizeStockIntent(prep.data.intentId);
+        if (direct.ok && direct.data.status === "committed") {
+          setPhase(null);
+          // NFE-07: kunci sukses tidak boleh dipakai movement berikutnya.
+          idempotencyKey.current = null;
+          onOpenChange(false);
+          onSuccess();
+          const newMovementId = direct.data.movementId;
+          toast.add({
+            type: "success",
+            title: typeLabel,
+            description:
+              movementType === "stock_in"
+                ? newMovementId
+                  ? t("dialogs.movement.toast_stock_in_with_id", {
+                      qty,
+                      unit: selected!.unit,
+                      name: selected!.name,
+                    })
+                  : t("dialogs.movement.toast_stock_in_simple", {
+                      qty,
+                      unit: selected!.unit,
+                      name: selected!.name,
+                    })
+                : newMovementId
+                  ? t("dialogs.movement.toast_stock_out_with_id", {
+                      qty,
+                      unit: selected!.unit,
+                      name: selected!.name,
+                    })
+                  : t("dialogs.movement.toast_stock_out_simple", {
+                      qty,
+                      unit: selected!.unit,
+                      name: selected!.name,
+                    }),
+          });
+          return { handled: true };
+        }
+        if (isPendingIntentConfirmation(direct)) {
+          setPhase(t("dialogs.movement.phase_waiting"));
+        } else {
+          if (
+            !isRetryableApiFailure(submitted) ||
+            !isRetryableApiFailure(direct)
+          ) {
+            idempotencyKey.current = null;
+          }
+          setPhase(null);
+          setError(submitted.error);
+          return { handled: true };
+        }
+      }
     }
 
     setPhase(t("dialogs.movement.phase_waiting"));
@@ -371,6 +410,10 @@ export function StockMovementDialog({
         });
         return { handled: true };
       }
+      if (isPendingIntentConfirmation(fin)) {
+        await sleep(3000);
+        continue;
+      }
       if (!fin.ok) {
         if (fin.errorCode === "STALE_STOCK") {
           setStale(true);
@@ -388,12 +431,20 @@ export function StockMovementDialog({
         ) {
           setPhase(null);
           if (fin.errorCode === "INSUFFICIENT_STOCK") {
+            idempotencyKey.current = null;
             const balance = await readCurrentBalance(warehouseId, selected!.id);
             setCurrentBalance(balance);
             setError(t("dialogs.movement.error_insufficient"));
           } else {
+            idempotencyKey.current = null;
             setError(fin.error);
           }
+          return { handled: true };
+        }
+        if (!isRetryableApiFailure(fin)) {
+          idempotencyKey.current = null;
+          setPhase(null);
+          setError(fin.error);
           return { handled: true };
         }
       }
@@ -573,407 +624,451 @@ export function StockMovementDialog({
           </div>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 px-6 py-5">
-          {stale ? (
-            <p
-              role="alert"
-              className="bg-status-warn-bg border-status-warn-border text-status-warn-fg flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium"
-            >
-              <Loader2
-                aria-hidden="true"
-                className="size-4 shrink-0 animate-spin"
-              />
-              {t("dialogs.movement.error_stale")}
-            </p>
-          ) : null}
-          {error && !stale ? <ErrorBanner message={error} /> : null}
-          {phase ? (
-            <p
-              aria-live="polite"
-              className="bg-status-info-bg border-status-info-border text-status-info-fg flex items-start gap-2.5 rounded-xl border p-3 text-xs leading-snug"
-            >
-              <Loader2
-                aria-hidden="true"
-                className="mt-0.5 size-4 shrink-0 animate-spin"
-              />
-              <span className="flex flex-1 flex-col gap-0.5">
-                <span className="font-semibold">{phase}</span>
-                <span className="opacity-90">
-                  {t("dialogs.movement.phase_leave_hint")}
-                </span>
-              </span>
-            </p>
-          ) : null}
-          {currentBalance != null ? (
-            <p className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
-              <span>{t("dialogs.movement.current_balance")}</span>
-              <span className="border-border rounded border px-2 py-0.5 font-mono font-semibold tabular-nums">
-                {currentBalance} {selected?.unit}
-              </span>
-            </p>
-          ) : null}
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center justify-between gap-2">
-              <Label
-                htmlFor="movement-product"
-                className="text-xs font-semibold"
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submit();
+          }}
+          noValidate
+          aria-busy={busy}
+        >
+          <div className="flex flex-col gap-4 px-6 py-5">
+            {stale ? (
+              <p
+                role="alert"
+                className="bg-status-warn-bg border-status-warn-border text-status-warn-fg flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium"
               >
-                {t("dialogs.movement.target_product")}
-              </Label>
-              <span className="text-muted-foreground font-mono text-[10px]">
-                {product
-                  ? t("dialogs.movement.context_readonly")
-                  : t("dialogs.movement.context_searchable")}
-              </span>
-            </span>
-            {product ? (
-              <div className="bg-surface-low/70 border-border flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <span
-                    aria-hidden="true"
-                    className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
-                  >
-                    {initials(product.name)}
+                <Loader2
+                  aria-hidden="true"
+                  className="size-4 shrink-0 animate-spin"
+                />
+                {t("dialogs.movement.error_stale")}
+              </p>
+            ) : null}
+            {error && !stale ? <ErrorBanner message={error} /> : null}
+            {phase ? (
+              <p
+                aria-live="polite"
+                className="bg-status-info-bg border-status-info-border text-status-info-fg flex items-start gap-2.5 rounded-xl border p-3 text-xs leading-snug"
+              >
+                <Loader2
+                  aria-hidden="true"
+                  className="mt-0.5 size-4 shrink-0 animate-spin"
+                />
+                <span className="flex flex-1 flex-col gap-0.5">
+                  <span className="font-semibold">{phase}</span>
+                  <span className="opacity-90">
+                    {t("dialogs.movement.phase_leave_hint")}
                   </span>
-                  <div className="flex min-w-0 flex-col">
-                    <span
-                      className="text-foreground block truncate font-semibold"
-                      title={product.name}
-                    >
-                      {product.name}
-                    </span>
-                    <span className="text-muted-foreground block truncate text-[11px]">
-                      {product.category ?? product.unit}
-                    </span>
-                  </div>
-                </div>
-                <span className="bg-card border-border text-foreground shrink-0 rounded border px-2 py-0.5 font-mono text-[11px] font-medium">
-                  {product.sku}
                 </span>
-              </div>
-            ) : (
-              <SearchableProductSelect
-                products={products}
-                id="movement-product"
-                value={selectedId}
-                onChange={(id) => {
-                  setSelectedId(id);
-                  setReversalTargets([]);
-                  setReversalTarget("");
-                  setQuantity("");
-                }}
-              />
-            )}
-          </div>
+              </p>
+            ) : null}
+            {currentBalance != null ? (
+              <p className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
+                <span>{t("dialogs.movement.current_balance")}</span>
+                <span className="border-border rounded border px-2 py-0.5 font-mono font-semibold tabular-nums">
+                  {currentBalance} {selected?.unit}
+                </span>
+              </p>
+            ) : null}
+            <div className="flex flex-col gap-1.5">
+              <span className="flex items-center justify-between gap-2">
+                <Label
+                  htmlFor="movement-product"
+                  className="text-xs font-semibold"
+                >
+                  {t("dialogs.movement.target_product")}{" "}
+                  <span aria-hidden="true" className="text-status-err-fg">
+                    *
+                  </span>
+                </Label>
+                <span className="text-muted-foreground font-mono text-[10px]">
+                  {product
+                    ? t("dialogs.movement.context_readonly")
+                    : t("dialogs.movement.context_searchable")}
+                </span>
+              </span>
+              {product ? (
+                <div className="bg-surface-low/70 border-border flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span
+                      aria-hidden="true"
+                      className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
+                    >
+                      {initials(product.name)}
+                    </span>
+                    <div className="flex min-w-0 flex-col">
+                      <span
+                        className="text-foreground block truncate font-semibold"
+                        title={product.name}
+                      >
+                        {product.name}
+                      </span>
+                      <span className="text-muted-foreground block truncate text-[11px]">
+                        {product.category ?? product.unit}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="bg-card border-border text-foreground shrink-0 rounded border px-2 py-0.5 font-mono text-[11px] font-medium">
+                    {product.sku}
+                  </span>
+                </div>
+              ) : (
+                <SearchableProductSelect
+                  products={products}
+                  id="movement-product"
+                  value={selectedId}
+                  onChange={(id) => {
+                    setSelectedId(id);
+                    setReversalTargets([]);
+                    setReversalTarget("");
+                    setQuantity("");
+                  }}
+                />
+              )}
+            </div>
 
-          <div className="flex flex-col gap-1.5">
-            {movementType === "reversal" ? (
-              <>
-                <span className="flex items-center justify-between gap-2">
-                  <Label
-                    htmlFor="movement-target"
-                    className="text-xs font-semibold"
-                  >
-                    {t("dialogs.movement.target_reverse")}{" "}
-                    <span aria-hidden="true" className="text-status-err-fg">
-                      *
-                    </span>
-                  </Label>
-                </span>
-                {targetsLoaded ? (
-                  targetsError ? (
-                    <div className="bg-status-err-bg/80 border-status-err-border text-status-err-fg flex flex-col gap-1.5 rounded-xl border p-3.5">
-                      <p className="flex items-center gap-2 text-xs font-semibold">
-                        <WifiOff
-                          aria-hidden="true"
-                          className="size-4 shrink-0"
-                        />
-                        {t("dialogs.movement.targets_error_title")}
-                      </p>
-                      <p
-                        role="alert"
-                        className="text-[11px] leading-snug opacity-90"
-                      >
-                        {t("dialogs.movement.targets_error_desc")}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTargetsLoaded(false);
-                          setTargetsError(false);
-                          setTargetsNonce((n) => n + 1);
-                        }}
-                        className="inline-flex w-fit items-center gap-1 text-[11px] font-semibold underline underline-offset-2 hover:opacity-80"
-                      >
-                        <RotateCw aria-hidden="true" className="size-3" />
-                        {t("dialogs.movement.targets_retry")}
-                      </button>
-                    </div>
-                  ) : reversalTargets.length === 0 ? (
-                    <div className="bg-status-neutral-bg/60 border-border flex flex-col items-center gap-1 rounded-xl border p-3.5 text-center">
-                      <span className="bg-status-neutral-border/50 text-status-neutral-fg flex size-7 items-center justify-center rounded-full">
-                        <Inbox aria-hidden="true" className="size-3.5" />
-                      </span>
-                      <p className="text-foreground text-xs font-semibold">
-                        {t("dialogs.movement.targets_empty_title")}
-                      </p>
-                      <p className="text-muted-foreground mx-auto max-w-xs text-[11px]">
-                        {t("dialogs.movement.targets_empty_desc")}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <Select
-                        value={reversalTarget}
-                        onValueChange={(value) => {
-                          if (value !== null) setReversalTarget(value);
-                        }}
-                      >
-                        <SelectTrigger id="movement-target" className="w-full">
-                          <SelectValue
-                            placeholder={t(
-                              "dialogs.movement.target_placeholder"
-                            )}
-                            getLabel={(v) => {
-                              const found = reversalTargets.find(
-                                (x) => x.id === v
-                              );
-                              if (!found) return v;
-                              return `${MOVEMENT_TYPE_META[found.movementType as keyof typeof MOVEMENT_TYPE_META]?.label ?? found.movementType} · ${found.quantity}`;
-                            }}
-                          />
-                        </SelectTrigger>
-                        <SelectContent layer="modal">
-                          {reversalTargets.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
-                              {MOVEMENT_TYPE_META[
-                                item.movementType as keyof typeof MOVEMENT_TYPE_META
-                              ]?.label ?? item.movementType}{" "}
-                              · {item.quantity} · {formatDate(item.created_at)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="text-muted-foreground flex items-center justify-between gap-2 px-1 text-[11px]">
-                        <span>{t("dialogs.movement.only_committed_hint")}</span>
-                        <span className="text-status-ok-fg flex shrink-0 items-center gap-1 font-semibold">
-                          <ShieldCheck aria-hidden="true" className="size-3" />
-                          {t("dialogs.movement.proof_verified")}
-                        </span>
-                      </div>
-                    </>
-                  )
-                ) : (
-                  <div className="bg-surface-low/50 border-border flex flex-col gap-2 rounded-xl border border-dashed p-4">
-                    <p className="text-muted-foreground flex items-center justify-center gap-2 text-xs font-medium">
-                      <Loader2
-                        aria-hidden="true"
-                        className="text-primary size-4 shrink-0 animate-spin"
-                      />
-                      {t("dialogs.movement.targets_loading")}
-                    </p>
-                    <div
-                      aria-hidden="true"
-                      className="bg-border/60 mx-auto h-2.5 w-2/3 animate-pulse rounded-full"
-                    />
-                  </div>
-                )}
-                {selectedTarget ? (
-                  <p className="text-muted-foreground text-sm">
-                    {t("dialogs.movement.reversing_prefix")}{" "}
-                    <span className="font-mono tabular-nums">
-                      {selectedTarget.quantity}
-                    </span>{" "}
-                    {selected?.unit} {t("dialogs.movement.reversing_suffix")}
-                  </p>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <span className="flex items-center justify-between gap-2">
-                  <Label
-                    htmlFor="movement-quantity"
-                    className="text-xs font-semibold"
-                  >
-                    {t("dialogs.movement.quantity_label")}
-                  </Label>
-                  {selected ? (
-                    <span className="text-muted-foreground font-mono text-[11px]">
-                      {t("dialogs.movement.unit_suffix", {
-                        unit: selected.unit,
-                      })}
-                    </span>
-                  ) : null}
-                </span>
-                <div className="relative">
-                  <Input
-                    id="movement-quantity"
-                    ref={quantityRef}
-                    type="text"
-                    inputMode="decimal"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    placeholder={
-                      movementType === "stock_in"
-                        ? t("dialogs.movement.qty_placeholder_in")
-                        : t("dialogs.movement.qty_placeholder_out")
-                    }
-                    aria-invalid={Boolean(error)}
-                    aria-describedby={error ? "movement-form-error" : undefined}
-                    className="pr-12 font-mono font-semibold"
-                  />
-                  {selected ? (
-                    <span
-                      aria-hidden="true"
-                      className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 font-mono text-xs font-medium"
+            <div className="flex flex-col gap-1.5">
+              {movementType === "reversal" ? (
+                <>
+                  <span className="flex items-center justify-between gap-2">
+                    <Label
+                      htmlFor="movement-target"
+                      className="text-xs font-semibold"
                     >
-                      {selected.unit}
-                    </span>
-                  ) : null}
-                </div>
-                {selected ? (
-                  <div className="bg-surface-low/60 border-border flex flex-col gap-2 rounded-xl border p-3.5 text-xs">
-                    <div className="text-muted-foreground flex items-center justify-between font-medium">
-                      <span>{t("dialogs.detail.current_stock")}</span>
-                      <span className="text-foreground font-mono font-semibold tabular-nums">
-                        {selected.quantity ?? "0"} {selected.unit}
+                      {t("dialogs.movement.target_reverse")}{" "}
+                      <span aria-hidden="true" className="text-status-err-fg">
+                        *
                       </span>
-                    </div>
-                    {quantity.trim() &&
-                    /^\d+(\.\d{1,3})?$/.test(quantity.trim()) &&
-                    Number(quantity) > 0 ? (
+                    </Label>
+                  </span>
+                  {targetsLoaded ? (
+                    targetsError ? (
+                      <div className="bg-status-err-bg/80 border-status-err-border text-status-err-fg flex flex-col gap-1.5 rounded-xl border p-3.5">
+                        <p className="flex items-center gap-2 text-xs font-semibold">
+                          <WifiOff
+                            aria-hidden="true"
+                            className="size-4 shrink-0"
+                          />
+                          {t("dialogs.movement.targets_error_title")}
+                        </p>
+                        <p
+                          role="alert"
+                          className="text-[11px] leading-snug opacity-90"
+                        >
+                          {t("dialogs.movement.targets_error_desc")}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTargetsLoaded(false);
+                            setTargetsError(false);
+                            setTargetsNonce((n) => n + 1);
+                          }}
+                          className="inline-flex w-fit items-center gap-1 text-[11px] font-semibold underline underline-offset-2 hover:opacity-80"
+                        >
+                          <RotateCw aria-hidden="true" className="size-3" />
+                          {t("dialogs.movement.targets_retry")}
+                        </button>
+                      </div>
+                    ) : reversalTargets.length === 0 ? (
+                      <div className="bg-status-neutral-bg/60 border-border flex flex-col items-center gap-1 rounded-xl border p-3.5 text-center">
+                        <span className="bg-status-neutral-border/50 text-status-neutral-fg flex size-7 items-center justify-center rounded-full">
+                          <Inbox aria-hidden="true" className="size-3.5" />
+                        </span>
+                        <p className="text-foreground text-xs font-semibold">
+                          {t("dialogs.movement.targets_empty_title")}
+                        </p>
+                        <p className="text-muted-foreground mx-auto max-w-xs text-[11px]">
+                          {t("dialogs.movement.targets_empty_desc")}
+                        </p>
+                      </div>
+                    ) : (
                       <>
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">
-                            {movementType === "stock_in"
-                              ? t("dialogs.movement.qty_added")
-                              : movementType === "stock_out"
-                                ? t("dialogs.movement.qty_removed")
-                                : t("dialogs.movement.qty_adjusted")}
-                          </span>
-                          <span
-                            className={`rounded px-1.5 py-0.5 font-mono font-semibold tabular-nums ${
-                              movementType === "stock_in"
-                                ? "bg-status-ok-bg text-status-ok-fg"
-                                : movementType === "stock_out"
-                                  ? "bg-status-err-bg text-status-err-fg"
-                                  : "bg-status-warn-bg text-status-warn-fg"
-                            }`}
+                        <Select
+                          value={reversalTarget}
+                          onValueChange={(value) => {
+                            if (value !== null) setReversalTarget(value);
+                          }}
+                        >
+                          <SelectTrigger
+                            id="movement-target"
+                            className="w-full"
+                            aria-required="true"
+                            aria-invalid={targetError}
+                            aria-describedby={
+                              targetError ? "movement-form-error" : undefined
+                            }
                           >
-                            {movementType === "stock_in" ? "+" : "−"}
-                            {quantity.trim()} {selected.unit}
-                          </span>
-                        </div>
-                        <div className="border-border/70 border-t" />
-                        <div className="flex items-center justify-between font-semibold">
-                          <span className="text-foreground">
-                            {t("dialogs.movement.new_projected")}
-                          </span>
-                          <span className="text-foreground font-mono text-sm font-bold tabular-nums">
-                            {(() => {
-                              const cur = Number(selected.quantity ?? 0);
-                              const qty = Number(quantity.trim());
-                              const next =
-                                movementType === "stock_in"
-                                  ? cur + qty
-                                  : cur - qty;
-                              return `${next} ${selected.unit}`;
-                            })()}
-                          </span>
-                        </div>
-                        {movementType === "stock_out" &&
-                        Number(quantity.trim()) >
-                          Number(selected.quantity ?? 0) ? (
-                          <p className="text-status-err-fg border-status-err-border/60 flex items-center gap-1.5 border-t pt-2 text-[11px] font-medium">
-                            <AlertTriangle
-                              aria-hidden="true"
-                              className="size-3.5 shrink-0"
+                            <SelectValue
+                              placeholder={t(
+                                "dialogs.movement.target_placeholder"
+                              )}
+                              getLabel={(v) => {
+                                const found = reversalTargets.find(
+                                  (x) => x.id === v
+                                );
+                                if (!found) return v;
+                                return `${MOVEMENT_TYPE_META[found.movementType as keyof typeof MOVEMENT_TYPE_META]?.label ?? found.movementType} · ${found.quantity}`;
+                              }}
                             />
-                            {t("dialogs.movement.qty_exceeds")}
-                          </p>
-                        ) : null}
+                          </SelectTrigger>
+                          <SelectContent layer="modal">
+                            {reversalTargets.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {MOVEMENT_TYPE_META[
+                                  item.movementType as keyof typeof MOVEMENT_TYPE_META
+                                ]?.label ?? item.movementType}{" "}
+                                · {item.quantity} ·{" "}
+                                {formatDate(item.created_at)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <div className="text-muted-foreground flex items-center justify-between gap-2 px-1 text-[11px]">
+                          <span>
+                            {t("dialogs.movement.only_committed_hint")}
+                          </span>
+                          <span className="text-status-ok-fg flex shrink-0 items-center gap-1 font-semibold">
+                            <ShieldCheck
+                              aria-hidden="true"
+                              className="size-3"
+                            />
+                            {t("dialogs.movement.proof_verified")}
+                          </span>
+                        </div>
                       </>
+                    )
+                  ) : (
+                    <div className="bg-surface-low/50 border-border flex flex-col gap-2 rounded-xl border border-dashed p-4">
+                      <p className="text-muted-foreground flex items-center justify-center gap-2 text-xs font-medium">
+                        <Loader2
+                          aria-hidden="true"
+                          className="text-primary size-4 shrink-0 animate-spin"
+                        />
+                        {t("dialogs.movement.targets_loading")}
+                      </p>
+                      <div
+                        aria-hidden="true"
+                        className="bg-border/60 mx-auto h-2.5 w-2/3 animate-pulse rounded-full"
+                      />
+                    </div>
+                  )}
+                  {selectedTarget ? (
+                    <p className="text-muted-foreground text-sm">
+                      {t("dialogs.movement.reversing_prefix")}{" "}
+                      <span className="font-mono tabular-nums">
+                        {selectedTarget.quantity}
+                      </span>{" "}
+                      {selected?.unit} {t("dialogs.movement.reversing_suffix")}
+                    </p>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <span className="flex items-center justify-between gap-2">
+                    <Label
+                      htmlFor="movement-quantity"
+                      className="text-xs font-semibold"
+                    >
+                      {t("dialogs.movement.quantity_label")}{" "}
+                      <span aria-hidden="true" className="text-status-err-fg">
+                        *
+                      </span>
+                    </Label>
+                    {selected ? (
+                      <span className="text-muted-foreground font-mono text-[11px]">
+                        {t("dialogs.movement.unit_suffix", {
+                          unit: selected.unit,
+                        })}
+                      </span>
+                    ) : null}
+                  </span>
+                  <div className="relative">
+                    <Input
+                      id="movement-quantity"
+                      ref={quantityRef}
+                      type="text"
+                      required
+                      inputMode="decimal"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      placeholder={
+                        movementType === "stock_in"
+                          ? t("dialogs.movement.qty_placeholder_in")
+                          : t("dialogs.movement.qty_placeholder_out")
+                      }
+                      aria-invalid={quantityError}
+                      aria-describedby={
+                        quantityError ? "movement-form-error" : undefined
+                      }
+                      className="pr-12 font-mono font-semibold"
+                    />
+                    {selected ? (
+                      <span
+                        aria-hidden="true"
+                        className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 font-mono text-xs font-medium"
+                      >
+                        {selected.unit}
+                      </span>
                     ) : null}
                   </div>
-                ) : null}
-              </>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="flex items-center justify-between gap-2">
-              <Label
-                htmlFor="movement-reason"
-                className="text-xs font-semibold"
-              >
-                {t("dialogs.movement.reason_label")}
-              </Label>
-              {movementType === "adjustment" || movementType === "reversal" ? (
-                <span className="text-status-err-fg font-mono text-[10px] font-bold">
-                  {t("dialogs.movement.reason_required")}
-                </span>
-              ) : (
-                <span className="text-muted-foreground font-mono text-[10px]">
-                  {t("dialogs.product_form.optional_pill")}
-                </span>
+                  {selected ? (
+                    <div className="bg-surface-low/60 border-border flex flex-col gap-2 rounded-xl border p-3.5 text-xs">
+                      <div className="text-muted-foreground flex items-center justify-between font-medium">
+                        <span>{t("dialogs.detail.current_stock")}</span>
+                        <span className="text-foreground font-mono font-semibold tabular-nums">
+                          {selected.quantity ?? "0"} {selected.unit}
+                        </span>
+                      </div>
+                      {quantity.trim() &&
+                      /^\d+(\.\d{1,3})?$/.test(quantity.trim()) &&
+                      Number(quantity) > 0 ? (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">
+                              {movementType === "stock_in"
+                                ? t("dialogs.movement.qty_added")
+                                : movementType === "stock_out"
+                                  ? t("dialogs.movement.qty_removed")
+                                  : t("dialogs.movement.qty_adjusted")}
+                            </span>
+                            <span
+                              className={`rounded px-1.5 py-0.5 font-mono font-semibold tabular-nums ${
+                                movementType === "stock_in"
+                                  ? "bg-status-ok-bg text-status-ok-fg"
+                                  : movementType === "stock_out"
+                                    ? "bg-status-err-bg text-status-err-fg"
+                                    : "bg-status-warn-bg text-status-warn-fg"
+                              }`}
+                            >
+                              {movementType === "stock_in" ? "+" : "−"}
+                              {quantity.trim()} {selected.unit}
+                            </span>
+                          </div>
+                          <div className="border-border/70 border-t" />
+                          <div className="flex items-center justify-between font-semibold">
+                            <span className="text-foreground">
+                              {t("dialogs.movement.new_projected")}
+                            </span>
+                            <span className="text-foreground font-mono text-sm font-bold tabular-nums">
+                              {(() => {
+                                const cur = Number(selected.quantity ?? 0);
+                                const qty = Number(quantity.trim());
+                                const next =
+                                  movementType === "stock_in"
+                                    ? cur + qty
+                                    : cur - qty;
+                                return `${next} ${selected.unit}`;
+                              })()}
+                            </span>
+                          </div>
+                          {movementType === "stock_out" &&
+                          Number(quantity.trim()) >
+                            Number(selected.quantity ?? 0) ? (
+                            <p className="text-status-err-fg border-status-err-border/60 flex items-center gap-1.5 border-t pt-2 text-[11px] font-medium">
+                              <AlertTriangle
+                                aria-hidden="true"
+                                className="size-3.5 shrink-0"
+                              />
+                              {t("dialogs.movement.qty_exceeds")}
+                            </p>
+                          ) : null}
+                        </>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </>
               )}
-            </span>
-            <Textarea
-              id="movement-reason"
-              ref={reasonRef}
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              aria-invalid={Boolean(error)}
-              aria-describedby={error ? "movement-form-error" : undefined}
-              placeholder={
-                movementType === "adjustment"
-                  ? t("dialogs.movement.reason_ph_adjustment")
-                  : movementType === "reversal"
-                    ? t("dialogs.movement.reason_ph_reversal")
-                    : movementType === "stock_out"
-                      ? t("dialogs.movement.reason_ph_out")
-                      : t("dialogs.movement.reason_ph_in")
-              }
-              rows={2}
-            />
-            <p className="text-muted-foreground/80 text-[11px]">
-              {t("dialogs.movement.reason_hint")}
-            </p>
-          </div>
-        </div>
+            </div>
 
-        <div className="border-border flex flex-col-reverse gap-2.5 border-t px-6 py-4 sm:flex-row sm:justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            disabled={busy}
-            className="relative h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] sm:w-auto"
-          >
-            {t("dialogs.movement.discard")}
-          </Button>
-          <Button
-            onClick={submit}
-            disabled={busy || stale}
-            size="sm"
-            className="relative h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] sm:w-auto"
-          >
-            {busy ? (
-              <Loader2 aria-hidden="true" className="animate-spin" />
-            ) : meta?.icon ? (
-              <meta.icon aria-hidden="true" />
-            ) : (
-              <Package aria-hidden="true" />
-            )}
-            {movementType === "adjustment"
-              ? t("dialogs.movement.submit_adjustment")
-              : movementType === "reversal"
-                ? t("dialogs.movement.submit_reversal")
-                : movementType === "stock_in"
-                  ? t("dialogs.movement.submit_record_in")
-                  : t("dialogs.movement.submit_record_out")}
-          </Button>
-        </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="flex items-center justify-between gap-2">
+                <Label
+                  htmlFor="movement-reason"
+                  className="text-xs font-semibold"
+                >
+                  {t("dialogs.movement.reason_label")}
+                </Label>
+                {movementType === "adjustment" ||
+                movementType === "reversal" ? (
+                  <span className="text-status-err-fg font-mono text-[10px] font-bold">
+                    {t("dialogs.movement.reason_required")}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground font-mono text-[10px]">
+                    {t("dialogs.product_form.optional_pill")}
+                  </span>
+                )}
+              </span>
+              <Textarea
+                id="movement-reason"
+                ref={reasonRef}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                required={
+                  movementType === "adjustment" || movementType === "reversal"
+                }
+                aria-invalid={reasonError}
+                aria-describedby={
+                  reasonError
+                    ? "movement-form-error movement-reason-hint"
+                    : "movement-reason-hint"
+                }
+                placeholder={
+                  movementType === "adjustment"
+                    ? t("dialogs.movement.reason_ph_adjustment")
+                    : movementType === "reversal"
+                      ? t("dialogs.movement.reason_ph_reversal")
+                      : movementType === "stock_out"
+                        ? t("dialogs.movement.reason_ph_out")
+                        : t("dialogs.movement.reason_ph_in")
+                }
+                rows={2}
+              />
+              <p
+                id="movement-reason-hint"
+                className="text-muted-foreground/80 text-[11px]"
+              >
+                {t("dialogs.movement.reason_hint")}
+              </p>
+            </div>
+          </div>
+
+          <div className="border-border flex flex-col-reverse gap-2.5 border-t px-6 py-4 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              disabled={busy}
+              className="relative h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] sm:w-auto"
+            >
+              {t("dialogs.movement.discard")}
+            </Button>
+            <Button
+              type="submit"
+              disabled={busy || stale}
+              size="sm"
+              className="relative h-8 w-full px-4 text-xs font-semibold before:absolute before:-inset-y-2 before:content-[''] sm:w-auto"
+            >
+              {busy ? (
+                <Loader2 aria-hidden="true" className="animate-spin" />
+              ) : meta?.icon ? (
+                <meta.icon aria-hidden="true" />
+              ) : (
+                <Package aria-hidden="true" />
+              )}
+              {movementType === "adjustment"
+                ? t("dialogs.movement.submit_adjustment")
+                : movementType === "reversal"
+                  ? t("dialogs.movement.submit_reversal")
+                  : movementType === "stock_in"
+                    ? t("dialogs.movement.submit_record_in")
+                    : t("dialogs.movement.submit_record_out")}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

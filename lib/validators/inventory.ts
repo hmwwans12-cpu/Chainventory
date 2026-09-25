@@ -36,6 +36,13 @@ const positiveDecimal3 = z
   .refine((v) => Number(v) > 0, "Must be greater than 0.")
   .refine((v) => Number(v) <= MAX_QUANTITY, "Value is too large.");
 
+const productIdempotencyKeySchema = z
+  .string()
+  .trim()
+  .max(200, "Idempotency key is too long.")
+  .optional()
+  .default("");
+
 export const createProductSchema = z.object({
   warehouseId: z.string().uuid("Invalid warehouse id."),
   sku: z.string().trim().min(1, "Enter a SKU.").max(64, "SKU is too long."),
@@ -59,6 +66,7 @@ export const createProductSchema = z.object({
     .optional()
     .default(""),
   initialQuantity: decimal3.optional(),
+  idempotencyKey: productIdempotencyKeySchema,
 });
 
 export const bulkProductRowSchema = z.object({
@@ -87,6 +95,7 @@ export const bulkProductRowSchema = z.object({
 
 export const bulkCreateProductsSchema = z.object({
   warehouseId: z.string().uuid("Invalid warehouse id."),
+  idempotencyKey: productIdempotencyKeySchema,
   products: z
     .array(bulkProductRowSchema)
     .min(1, "Add at least one product.")
@@ -94,7 +103,7 @@ export const bulkCreateProductsSchema = z.object({
 });
 
 export const updateProductSchema = createProductSchema
-  .omit({ warehouseId: true })
+  .omit({ warehouseId: true, idempotencyKey: true })
   .extend({
     productId: z.string().uuid("Invalid product id."),
   });

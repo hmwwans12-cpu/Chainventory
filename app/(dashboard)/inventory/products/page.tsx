@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { LayoutGrid, Package, TriangleAlert } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import { logger } from "@/lib/logger";
 import {
   getMyWarehouses,
@@ -35,6 +37,9 @@ export default async function ProductsPageRoute({
     warehouse?: string | string[];
   }>;
 }) {
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   const supabase = await createClient();
   const {
     data: { user },
@@ -66,8 +71,8 @@ export default async function ProductsPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Products"
-          description="Manage your warehouse inventory."
+          title={t("sub.products")}
+          description={t("dashboard.description")}
         />
         <NoWarehouse />
       </div>
@@ -119,7 +124,7 @@ export default async function ProductsPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Products"
+          title={t("sub.products")}
           description={`${active.name} · inventory.`}
         />
         <RetryErrorState
@@ -221,7 +226,7 @@ export default async function ProductsPageRoute({
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Products"
+        title={t("sub.products")}
         description={`${active.name} · ${active.code} · inventory catalog.`}
         pill={
           <Badge variant="success">

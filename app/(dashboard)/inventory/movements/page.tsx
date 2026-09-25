@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
@@ -34,6 +36,9 @@ export default async function StockMovementsPageRoute({
     q?: string | string[];
   }>;
 }) {
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   const supabase = await createClient();
   const {
     data: { user },
@@ -56,10 +61,10 @@ export default async function StockMovementsPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Stock Movement"
-          description="Ledger of all stock in/out movements."
+          title={t("sub.stock_movement")}
+          description={t("dashboard.description")}
         />
-        <NoWarehouse description="Create a warehouse to start recording stock movements, or join one with a warehouse code." />
+        <NoWarehouse description={t("dashboard.empty_desc")} />
       </div>
     );
   }
@@ -158,8 +163,8 @@ export default async function StockMovementsPageRoute({
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Stock Movement"
-        description="Operational movement ledger and real-time verifiable audit trail."
+        title={t("sub.stock_movement")}
+        description={t("dashboard.description")}
         pill={
           <Badge variant="neutral" className="font-mono">
             {active.code} · ledger

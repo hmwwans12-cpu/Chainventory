@@ -3,13 +3,16 @@ import {
   createWalletClient,
   decodeEventLog,
   encodeFunctionData,
+  isAddress,
   type Hex,
 } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
 
-import { getWarehouseFactory } from "@/lib/blockchain/contracts";
+import {
+  getWarehouseFactory,
+  resolveFactoryByAddress,
+} from "@/lib/blockchain/contracts";
+import { getVerifiedTreasuryAccount } from "@/lib/blockchain/treasury-signer";
 import { baseSepolia, createChainTransport } from "@/lib/blockchain/chains";
-import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { extractDeploymentRevertReason } from "@/lib/warehouses/create";
 
@@ -38,15 +41,6 @@ function publicClient() {
     chain: baseSepolia,
     transport: createChainTransport(),
   });
-}
-
-function treasuryAccount() {
-  const privateKey = env.TREASURY_PRIVATE_KEY;
-  if (!privateKey) throw new Error("TREASURY_PRIVATE_KEY not configured");
-  const hexKey: Hex = privateKey.startsWith("0x")
-    ? (privateKey as Hex)
-    : `0x${privateKey}`;
-  return privateKeyToAccount(hexKey);
 }
 
 /** Baca deploymentNonce live dari Factory untuk owner. */
@@ -85,7 +79,7 @@ export async function simulateDeployWarehouse(
   signature: Hex
 ): Promise<void> {
   const factory = getWarehouseFactory();
-  const account = treasuryAccount();
+  const account = await getVerifiedTreasuryAccount(factory);
   const client = publicClient();
   const data = encodeFunctionData({
     abi: factory.abi,
@@ -105,7 +99,7 @@ export async function relayDeployWarehouse(
   signature: Hex
 ): Promise<Hex> {
   const factory = getWarehouseFactory();
-  const account = treasuryAccount();
+  const account = await getVerifiedTreasuryAccount(factory);
   const client = createWalletClient({
     account,
     chain: baseSepolia,
@@ -121,22 +115,129 @@ export async function relayDeployWarehouse(
   return txHash;
 }
 
-export type DeploymentReceiptOutcome =
-  | { status: "confirmed"; warehouseAddress?: Hex }
-  | { status: "reverted"; reason: string }
-  | { status: "timeout" };
+export type DeploymentEventExpectation = {
+  factoryAddress: Hex;
+  chainId: number | bigint;
+  owner: Hex;
+  warehouseCodeHash: Hex;
+  deploymentNonce: bigint;
+};
 
-/**
- * Tunggu receipt pertama. Sukses → decode event `WarehouseDeployed` untuk
- * alamat kontrak warehouse (PRD §6.4 "Contract address recorded"). Revert →
- * reason kanonik. Timeout → biarkan `submitted` (finalisasi saat retry
- * idempotent / job konfirmasi).
- */
+export type DeploymentReceiptOutcome =
+  | { status: "confirmed"; warehouseAddress: Hex }
+  | { status: "reverted"; reason: string }
+  | { status: "timeout" }
+  | { status: "unverified"; reason: string };
+
+export function validateWarehouseDeployedEvent(
+  args: unknown,
+  expected: DeploymentEventExpectation
+): { ok: true; warehouseAddress: Hex } | { ok: false; reason: string } {
+  if (!isAddress(expected.factoryAddress) || !isAddress(expected.owner)) {
+    return { ok: false, reason: "invalid deployment expectation" };
+  }
+  if (!/^0x[0-9a-f]{64}$/i.test(expected.warehouseCodeHash)) {
+    return { ok: false, reason: "invalid deployment code hash" };
+  }
+  if (
+    typeof expected.deploymentNonce !== "bigint" ||
+    expected.deploymentNonce < 0n
+  ) {
+    return { ok: false, reason: "invalid deployment nonce" };
+  }
+  if (args === null || typeof args !== "object") {
+    return { ok: false, reason: "deployment event is missing" };
+  }
+
+  const event = args as Record<string, unknown>;
+  if (typeof event.owner !== "string" || !isAddress(event.owner)) {
+    return { ok: false, reason: "deployment event owner is invalid" };
+  }
+  if (event.owner.toLowerCase() !== expected.owner.toLowerCase()) {
+    return { ok: false, reason: "deployment event owner does not match" };
+  }
+  if (
+    typeof event.warehouseCodeHash !== "string" ||
+    !/^0x[0-9a-f]{64}$/i.test(event.warehouseCodeHash)
+  ) {
+    return { ok: false, reason: "deployment event code hash is invalid" };
+  }
+  if (
+    event.warehouseCodeHash.toLowerCase() !==
+    expected.warehouseCodeHash.toLowerCase()
+  ) {
+    return { ok: false, reason: "deployment event code hash does not match" };
+  }
+
+  let eventNonce: bigint;
+  const rawNonce = event.deploymentNonce;
+  if (
+    (typeof rawNonce !== "string" &&
+      typeof rawNonce !== "number" &&
+      typeof rawNonce !== "bigint") ||
+    (typeof rawNonce === "string" && rawNonce.trim() === "")
+  ) {
+    return { ok: false, reason: "deployment event nonce is invalid" };
+  }
+  try {
+    eventNonce = BigInt(rawNonce);
+  } catch {
+    return { ok: false, reason: "deployment event nonce is invalid" };
+  }
+  if (eventNonce !== expected.deploymentNonce) {
+    return { ok: false, reason: "deployment event nonce does not match" };
+  }
+  if (typeof event.warehouse !== "string" || !isAddress(event.warehouse)) {
+    return { ok: false, reason: "deployment event address is invalid" };
+  }
+  const warehouseAddress = event.warehouse.toLowerCase();
+  if (/^0x0{40}$/.test(warehouseAddress)) {
+    return { ok: false, reason: "deployment event address is empty" };
+  }
+  return { ok: true, warehouseAddress: warehouseAddress as Hex };
+}
+
 export async function waitForWarehouseDeployment(
   txHash: Hex,
-  timeoutMs = 90_000
+  expectation: DeploymentEventExpectation,
+  timeoutMs?: number
+): Promise<DeploymentReceiptOutcome>;
+export async function waitForWarehouseDeployment(
+  txHash: Hex,
+  timeoutMs?: number
+): Promise<DeploymentReceiptOutcome>;
+export async function waitForWarehouseDeployment(
+  txHash: Hex,
+  expectationOrTimeout: DeploymentEventExpectation | number = 90_000,
+  maybeTimeout = 90_000
 ): Promise<DeploymentReceiptOutcome> {
-  const factory = getWarehouseFactory();
+  const expectation =
+    typeof expectationOrTimeout === "number" ? null : expectationOrTimeout;
+  const timeoutMs =
+    typeof expectationOrTimeout === "number"
+      ? expectationOrTimeout
+      : maybeTimeout;
+  if (!expectation) {
+    return {
+      status: "unverified",
+      reason: "deployment expectation is required",
+    };
+  }
+  let factory;
+  try {
+    factory = resolveFactoryByAddress(expectation.factoryAddress);
+  } catch {
+    return {
+      status: "unverified",
+      reason: "deployment factory is not present in the registry",
+    };
+  }
+  if (factory.chainId !== Number(expectation.chainId)) {
+    return {
+      status: "unverified",
+      reason: "deployment factory chain does not match pending deployment",
+    };
+  }
   const client = publicClient();
   try {
     const receipt = await client.waitForTransactionReceipt({
@@ -149,6 +250,12 @@ export async function waitForWarehouseDeployment(
         reason: extractDeploymentRevertReason("reverted"),
       };
     }
+    if (receipt.status !== "success") {
+      return {
+        status: "unverified",
+        reason: "deployment receipt has no successful status",
+      };
+    }
     for (const log of receipt.logs) {
       if (log.address.toLowerCase() !== factory.address.toLowerCase()) continue;
       try {
@@ -157,18 +264,30 @@ export async function waitForWarehouseDeployment(
           data: log.data,
           topics: log.topics,
         });
-        if (decoded.eventName === "WarehouseDeployed") {
-          const { warehouse } = decoded.args as unknown as { warehouse: Hex };
-          return {
-            status: "confirmed",
-            warehouseAddress: warehouse.toLowerCase() as Hex,
-          };
+        if (decoded.eventName !== "WarehouseDeployed") continue;
+        const validated = validateWarehouseDeployedEvent(
+          decoded.args,
+          expectation
+        );
+        if (!validated.ok) {
+          logger.warn(
+            { txHash, reason: validated.reason },
+            "warehouse deployment event failed validation"
+          );
+          return { status: "unverified", reason: validated.reason };
         }
+        return {
+          status: "confirmed",
+          warehouseAddress: validated.warehouseAddress,
+        };
       } catch {
-        /* log lain (mis. transfer) — lanjut */
+        continue;
       }
     }
-    return { status: "confirmed" };
+    return {
+      status: "unverified",
+      reason: "WarehouseDeployed event or address is missing",
+    };
   } catch (err) {
     logger.warn({ err, txHash }, "warehouse deployment receipt wait timed out");
     return { status: "timeout" };

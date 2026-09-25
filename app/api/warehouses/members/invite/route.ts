@@ -1,5 +1,7 @@
 import { hasPermission, PERMISSIONS, type Role } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
+import { resolvePublicOrigin } from "@/lib/runtime/public-origin";
 import {
   forbidden,
   fromPostgrestError,
@@ -52,10 +54,12 @@ export async function POST(request: Request) {
     return forbidden("Insufficient permission to invite.");
   }
 
-  const { data, error } = await supabase.rpc("create_invitation", {
+  const service = createServiceClient();
+  const { data, error } = await service.rpc("create_invitation_for_user", {
     p_warehouse_id: warehouseId,
     p_email: email,
     p_role: role,
+    p_actor_user_id: auth.user.id,
   });
   if (error) {
     logger.warn({ err: error, email, warehouseId }, "invite rpc error");
@@ -69,10 +73,8 @@ export async function POST(request: Request) {
   // Audit v0.3.0 §2.8: appUrl kosong akan menghasilkan link relatif yang
   // gagal di email client. Fallback ke origin request sebelum relative,
   // dan surface warning ke inviter.
-  const envAppUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  const requestOrigin = new URL(request.url).origin;
-  const baseUrl = envAppUrl || requestOrigin;
-  const fullLink = `${baseUrl.replace(/\/$/, "")}${acceptUrl}`;
+  const baseUrl = resolvePublicOrigin();
+  const fullLink = `${baseUrl}${acceptUrl}`;
 
   // Best-effort email delivery (audit: email invites). Kegagalan TIDAK
   // membatalkan undangan — UI tetap menampilkan link untuk disalin.

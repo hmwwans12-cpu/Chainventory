@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getConsoleActor } from "@/lib/console/guard";
 import { createProofServiceClient } from "@/lib/proof/supabase";
-import { publishProofJob } from "@/lib/proof/qstash";
+import { republishProofJob } from "@/lib/proof/qstash";
 import { logger } from "@/lib/logger";
 import { invalid, ok, safeError } from "@/lib/api-handler";
 import { mapDbError } from "@/lib/domain/errors";
@@ -16,7 +16,7 @@ import { mapDbError } from "@/lib/domain/errors";
  *   1. RPC `proof_manual_retry` (SECURITY DEFINER, EXECUTE service_role saja)
  *      — kembalikan ke `pending` + outbox siap lease + audit `proof_manual_retry`
  *      dengan actor user id. attempt_count DI-PERTAHANKAN (budget retry).
- *   2. `publishProofJob` (QStash) existing — job proses langsung diterbitkan.
+ *   2. `republishProofJob` (QStash) — job proses diterbitkan dengan dedup attempt baru.
  *
  * Akses digate `getConsoleActor` (allowlist server-side) — bukan role.
  */
@@ -50,7 +50,7 @@ export async function POST(
 
     let messageId: string | undefined;
     try {
-      messageId = await publishProofJob(id);
+      messageId = await republishProofJob(id);
     } catch (err) {
       // Proof sudah kembali pending + outbox siap lease; reconciliation
       // harian = safety net bila QStash publish gagal. Jangan gagal request.

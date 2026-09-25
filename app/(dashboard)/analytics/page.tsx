@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import {
   getMyWarehouses,
   pickActiveWarehouse,
@@ -40,6 +42,9 @@ export default async function AnalyticsPage({
     range?: string | string[];
   }>;
 }) {
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   const supabase = await createClient();
   const {
     data: { user },
@@ -60,10 +65,10 @@ export default async function AnalyticsPage({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Analytics"
-          description="Stock movement trends and inventory overview."
+          title={t("dashboard.analytics")}
+          description={t("dashboard.description")}
         />
-        <NoWarehouse description="Create a warehouse to see analytics, or join one with a warehouse code." />
+        <NoWarehouse description={t("dashboard.empty_desc")} />
       </div>
     );
   }

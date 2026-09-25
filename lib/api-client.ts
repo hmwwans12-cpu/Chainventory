@@ -21,9 +21,24 @@ type Fetcher = typeof fetch;
 export type { Fetcher };
 
 export function newIdempotencyKey(): string {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  const value = `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+  return `${value.slice(0, 8)}-${value.slice(8, 12)}-4${value.slice(12, 15)}-8${value.slice(15, 18)}-${value.slice(18, 30)}`.padEnd(
+    36,
+    "0"
+  );
+}
+
+export function isRetryableApiFailure(result: {
+  ok: boolean;
+  status: number;
+}): boolean {
   return (
-    globalThis.crypto?.randomUUID?.() ??
-    `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    result.status === 0 ||
+    result.status === 202 ||
+    result.status === 408 ||
+    result.status === 429 ||
+    result.status >= 500
   );
 }
 
@@ -78,10 +93,13 @@ export function toFailure<T>(status: number, json: unknown): ApiResult<T> {
 
 export function parseSuccess<T>(status: number, json: unknown): ApiResult<T> {
   if (status >= 200 && status < 300) {
-    const body = json as { ok?: boolean; data?: T };
-    // Audit v0.3.0 §1.4: BFF kadang mengembalikan { ok: true } tanpa
-    // `data` (mis. RPC yang return void). Jika caller menggunakan
-    // `created.data.id` dll, akan crash. Tangani sebagai failure.
+    const body =
+      json !== null && typeof json === "object"
+        ? (json as { ok?: boolean; data?: T })
+        : null;
+    if (body?.ok === false) {
+      return toFailure<T>(status, json);
+    }
     if (body?.ok === true && "data" in body) {
       return { ok: true, status, data: body.data as T };
     }

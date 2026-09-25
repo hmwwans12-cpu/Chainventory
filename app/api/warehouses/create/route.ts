@@ -5,11 +5,13 @@ import type { Hex } from "viem";
 import { logger } from "@/lib/logger";
 import { getWarehouseFactory } from "@/lib/blockchain/contracts";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   forbidden,
   fromPostgrestError,
   invalid,
   json,
+  notFound,
   ok,
   readJson,
   requireRateLimit,
@@ -18,6 +20,7 @@ import {
 } from "@/lib/api-handler";
 import {
   createWarehousePrepareSchema,
+  createWarehouseRecoverySchema,
   createWarehouseSubmitSchema,
 } from "@/lib/validators/warehouse";
 import {
@@ -36,8 +39,8 @@ import {
   readHasActiveWarehouse,
   relayDeployWarehouse,
   simulateDeployWarehouse,
-  waitForWarehouseDeployment,
 } from "@/lib/warehouses/chain";
+import { finalizeIfMined } from "@/lib/warehouses/deployment-finalize";
 
 /**
  * Create Warehouse server flow (P1 Step 1 sisa) — PRD §6.4/§7, ARSITEKTUR §5.
@@ -57,8 +60,8 @@ import {
  * on-chain — Invariant D (PRD §7.5).
  */
 
-type Action = "prepare" | "submit";
-const ACTION_VALUES: Action[] = ["prepare", "submit"];
+type Action = "prepare" | "submit" | "recover";
+const ACTION_VALUES: Action[] = ["prepare", "submit", "recover"];
 
 // Selaras dengan client poll 24×5s=120s di create-warehouse-form.tsx.
 // Temuan audit segar: Vercel Hobby membatasi durasi fungsi 60 detik —
@@ -117,62 +120,6 @@ async function ensureNoActiveWarehouse(
   return data ? "has-active" : "ok";
 }
 
-/** Finalisasi deployment `submitted` saat retry idempotent (receipt sudah mined). */
-async function finalizeIfMined(
-  supabase: Supabase,
-  deployment: {
-    id: string;
-    status: string;
-    tx_hash: string | null;
-    warehouse_id: string | null;
-  }
-): Promise<void> {
-  if (
-    deployment.status !== "submitted" ||
-    !deployment.tx_hash ||
-    !deployment.warehouse_id
-  ) {
-    return;
-  }
-  const { data: warehouse } = await supabase
-    .from("warehouses")
-    .select("contract_address")
-    .eq("id", deployment.warehouse_id)
-    .maybeSingle();
-  if (!warehouse || warehouse.contract_address) return;
-
-  const outcome = await waitForWarehouseDeployment(
-    deployment.tx_hash as Hex,
-    45_000
-  );
-  if (outcome.status === "confirmed") {
-    if (outcome.warehouseAddress) {
-      const { error: addrErr } = await supabase.rpc(
-        "set_warehouse_contract_address",
-        {
-          p_warehouse_id: deployment.warehouse_id,
-          p_contract_address: outcome.warehouseAddress,
-        }
-      );
-      if (addrErr) {
-        logger.warn(
-          { err: addrErr.message, warehouseId: deployment.warehouse_id },
-          "set_warehouse_contract_address rejected"
-        );
-      }
-    }
-    await supabase.rpc("update_warehouse_deployment_status", {
-      p_deployment_id: deployment.id,
-      p_status: "confirmed",
-    });
-  } else if (outcome.status === "reverted") {
-    await supabase.rpc("rollback_warehouse_creation", {
-      p_deployment_id: deployment.id,
-      p_error: "deployment reverted on-chain",
-    });
-  }
-}
-
 export async function POST(request: Request) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action") as Action | null;
@@ -195,6 +142,69 @@ export async function POST(request: Request) {
 
   const raw = await readJson(request);
   if (!raw.ok) return invalid("Invalid JSON body.");
+
+  if (action === "recover") {
+    const parsed = createWarehouseRecoverySchema.safeParse(raw.body);
+    if (!parsed.success) return invalid(parsed.error.issues[0]?.message);
+    const service = createServiceClient();
+    const { data: deployment } = await service
+      .from("warehouse_deployments")
+      .select("id, status, tx_hash, warehouse_id")
+      .eq("id", parsed.data.deploymentId)
+      .maybeSingle();
+    if (!deployment?.warehouse_id) return notFound("Deployment not found.");
+    const { data: warehouse } = await service
+      .from("warehouses")
+      .select("owner_user_id")
+      .eq("id", deployment.warehouse_id)
+      .maybeSingle();
+    if (warehouse?.owner_user_id !== auth.user.id) {
+      return forbidden("You do not have access to this deployment.");
+    }
+    if (deployment.status === "confirmed") {
+      return ok({
+        deploymentId: deployment.id,
+        status: deployment.status,
+        txHash: deployment.tx_hash,
+      });
+    }
+    if (deployment.status !== "pending" && deployment.status !== "submitted") {
+      return invalid("This deployment is no longer recoverable.");
+    }
+    const { error: updateError } = await service.rpc(
+      "update_warehouse_deployment_status",
+      {
+        p_deployment_id: deployment.id,
+        p_status: "submitted",
+        p_tx_hash: parsed.data.txHash,
+        p_error: null,
+        p_actor_user_id: auth.user.id,
+      }
+    );
+    if (updateError) return fromPostgrestError(updateError.message);
+    await finalizeIfMined(
+      undefined,
+      service,
+      { ...deployment, tx_hash: parsed.data.txHash },
+      auth.user.id
+    );
+    const { data: settled } = await service
+      .from("warehouse_deployments")
+      .select("status, tx_hash")
+      .eq("id", deployment.id)
+      .maybeSingle();
+    return json(
+      {
+        ok: true,
+        data: {
+          deploymentId: deployment.id,
+          status: settled?.status ?? "submitted",
+          txHash: settled?.tx_hash ?? parsed.data.txHash,
+        },
+      },
+      settled?.status === "confirmed" ? 200 : 202
+    );
+  }
 
   if (action === "prepare") {
     const parsed = createWarehousePrepareSchema.safeParse(raw.body);
@@ -328,8 +338,10 @@ export async function POST(request: Request) {
     }
   }
 
+  const service = createServiceClient();
+
   if (existing) {
-    await finalizeIfMined(supabase, existing);
+    await finalizeIfMined(supabase, service, existing, auth.user.id);
     // Audit v0.3.2 §2.7: warehouseCode dari request body dapat stale
     // (client lost original) — ambil dari warehouses row, bukan dari
     // parsed.data. Fallback ke body hanya jika DB read gagal (transient).
@@ -454,7 +466,7 @@ export async function POST(request: Request) {
   }
 
   // Klaim atomik (write-intent) sebelum relay.
-  const { data: created, error: createError } = await supabase.rpc(
+  const { data: created, error: createError } = await service.rpc(
     "create_warehouse_and_deployment",
     {
       p_warehouse_code: parsed.data.warehouseCode,
@@ -469,6 +481,7 @@ export async function POST(request: Request) {
       p_expiry: BigInt(parsed.data.expiry),
       p_signature: signature,
       p_idempotency_key: parsed.data.idempotencyKey,
+      p_actor_user_id: auth.user.id,
     }
   );
 
@@ -509,21 +522,38 @@ export async function POST(request: Request) {
   try {
     txHash = await relayDeployWarehouse(authTuple, signature);
   } catch (err) {
-    logger.error({ err, warehouseId }, "deployWarehouse relay failed");
-    await supabase.rpc("rollback_warehouse_creation", {
-      p_deployment_id: deploymentId,
-      p_error: "relay failed",
-    });
-    return serverError(
-      "Deployment failed to submit. No warehouse was created."
+    logger.error(
+      { err, warehouseId, deploymentId },
+      "deployWarehouse relay outcome unknown"
+    );
+    return json(
+      {
+        ok: false,
+        error:
+          "Deployment relay outcome is not yet known. The warehouse was retained for recovery; retry with the same request.",
+        errorCode: "DEPLOYMENT_RECOVERY_PENDING",
+        deploymentId,
+      },
+      202
     );
   }
 
-  await supabase.rpc("update_warehouse_deployment_status", {
-    p_deployment_id: deploymentId,
-    p_status: "submitted",
-    p_tx_hash: txHash,
-  });
+  const { error: statusError } = await service.rpc(
+    "update_warehouse_deployment_status",
+    {
+      p_deployment_id: deploymentId,
+      p_status: "submitted",
+      p_tx_hash: txHash,
+      p_error: null,
+      p_actor_user_id: auth.user.id,
+    }
+  );
+  if (statusError) {
+    logger.error(
+      { err: statusError.message, deploymentId },
+      "warehouse deployment submitted status update failed"
+    );
+  }
 
   // Fix A4: JANGAN tunggu receipt di dalam request (melanggar PRD §6.4/§15:
   // "blockchain confirmation async, tidak block request"). Relay 45-90s
@@ -538,7 +568,7 @@ export async function POST(request: Request) {
     {
       ok: true,
       data: {
-        status: "submitted",
+        status: statusError ? "pending_confirmation" : "submitted",
         warehouseId,
         deploymentId,
         warehouseCode: parsed.data.warehouseCode,

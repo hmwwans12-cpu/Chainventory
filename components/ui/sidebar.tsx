@@ -6,6 +6,7 @@ import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocale } from "@/components/providers/locale-provider";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,18 @@ const SIDEBAR_WIDTH = "18rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
+const SIDEBAR_COPY = {
+  en: {
+    title: "Sidebar",
+    description: "Displays the mobile sidebar.",
+    toggle: "Toggle sidebar",
+  },
+  id: {
+    title: "Sidebar",
+    description: "Menampilkan sidebar seluler.",
+    toggle: "Buka atau tutup sidebar",
+  },
+} as const;
 
 type SidebarContextProps = {
   state: "expanded" | "collapsed";
@@ -163,6 +176,7 @@ function Sidebar({
   collapsible?: "offcanvas" | "icon" | "none";
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+  const { locale } = useLocale();
 
   if (collapsible === "none") {
     return (
@@ -196,8 +210,10 @@ function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>{SIDEBAR_COPY[locale].title}</SheetTitle>
+            <SheetDescription>
+              {SIDEBAR_COPY[locale].description}
+            </SheetDescription>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
@@ -257,6 +273,7 @@ function SidebarTrigger({
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { toggleSidebar } = useSidebar();
+  const { locale } = useLocale();
 
   return (
     <Button
@@ -271,22 +288,23 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <PanelLeftIcon />
-      <span className="sr-only">Toggle sidebar</span>
+      <PanelLeftIcon aria-hidden="true" />
+      <span className="sr-only">{SIDEBAR_COPY[locale].toggle}</span>
     </Button>
   );
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
   const { toggleSidebar } = useSidebar();
+  const { locale } = useLocale();
 
   return (
     <button
       data-sidebar="rail"
       data-slot="sidebar-rail"
-      aria-label="Toggle sidebar"
+      aria-label={SIDEBAR_COPY[locale].toggle}
       onClick={toggleSidebar}
-      title="Toggle sidebar"
+      title={SIDEBAR_COPY[locale].toggle}
       className={cn(
         "hover:after:bg-sidebar-border absolute relative inset-y-0 z-20 hidden w-4 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 before:absolute before:-inset-[9px] after:absolute after:inset-y-0 after:start-1/2 after:w-[2px] sm:flex ltr:-translate-x-1/2 rtl:-translate-x-1/2",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
@@ -324,7 +342,7 @@ function SidebarInput({
     <Input
       data-slot="sidebar-input"
       data-sidebar="input"
-      className={cn("bg-background h-10 w-full shadow-none", className)}
+      className={cn("bg-background w-full shadow-none", className)}
       {...props}
     />
   );

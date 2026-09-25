@@ -29,6 +29,9 @@ const PUBLISHABLE = process.env.SUPABASE_PUBLISHABLE_KEY;
 
 const available = Boolean(BASE && SECRET && PUBLISHABLE);
 
+const testWalletAddress = (suffix: string, tag: number): string =>
+  `0x${suffix.replace(/-/g, "").slice(0, 32)}${tag.toString(16).padStart(8, "0")}`;
+
 async function send(
   path: string,
   init: RequestInit,
@@ -116,6 +119,20 @@ async function insertRow(
   return rows[0];
 }
 
+async function insertVerifiedWallet(
+  userId: string,
+  address: string
+): Promise<void> {
+  await insertRow(SECRET!, SECRET!, "wallets", {
+    user_id: userId,
+    address,
+    wallet_type: "external",
+    is_primary: true,
+    verification_state: "verified",
+    verified_at: new Date().toISOString(),
+  });
+}
+
 async function selectRows(
   apiKey: string,
   bearer: string,
@@ -153,18 +170,40 @@ type RpcResult = {
   message: string | null;
 };
 
+type MovementActor = {
+  userId: string;
+  wallet: string;
+};
+
 async function applyMovement(
-  token: string,
+  actor: MovementActor,
   params: Record<string, unknown>
 ): Promise<RpcResult> {
+  const hasFingerprint = Object.prototype.hasOwnProperty.call(
+    params,
+    "p_request_fingerprint"
+  );
+  const request = {
+    ...params,
+    p_idempotency_key:
+      typeof params.p_idempotency_key === "string" &&
+      params.p_idempotency_key.trim()
+        ? params.p_idempotency_key
+        : `CT-KEY-${randomUUID()}`,
+    p_actor_wallet: actor.wallet,
+    p_request_fingerprint: hasFingerprint
+      ? params.p_request_fingerprint
+      : `CT-FP-${randomUUID()}`,
+    p_actor_user_id: actor.userId,
+  };
   const res = await send(
     "/rest/v1/rpc/apply_stock_movement",
     {
       method: "POST",
-      body: JSON.stringify(params),
+      body: JSON.stringify(request),
     },
-    PUBLISHABLE!,
-    token
+    SECRET!,
+    SECRET!
   );
   const rows = await json<RpcResult[]>(res);
   return rows[0];
@@ -182,7 +221,6 @@ async function applyMovement(
         outsider: `contract-outsider-${suffix}@test.local`,
       };
       const userIds: string[] = [];
-      const tokens = new Map<string, string>();
 
       const created = await Promise.all(
         Object.values(emails).map((email) => adminCreateUser(email))
@@ -192,19 +230,23 @@ async function applyMovement(
       const ownerId = created[0].id;
       const staffId = created[1].id;
       const viewerId = created[2].id;
+      const outsiderId = created[3].id;
+      const actors = {
+        owner: { userId: ownerId, wallet: testWalletAddress(suffix, 1) },
+        staff: { userId: staffId, wallet: testWalletAddress(suffix, 2) },
+        viewer: { userId: viewerId, wallet: testWalletAddress(suffix, 3) },
+        outsider: {
+          userId: outsiderId,
+          wallet: testWalletAddress(suffix, 4),
+        },
+      };
 
       let warehouseId = "";
       let productId = "";
       let balanceVersion = 0;
 
       try {
-        for (const email of Object.values(emails)) {
-          tokens.set(email, await login(email));
-        }
-        const ownerTok = tokens.get(emails.owner)!;
-        const staffTok = tokens.get(emails.staff)!;
-        const viewerTok = tokens.get(emails.viewer)!;
-        const outsiderTok = tokens.get(emails.outsider)!;
+        const ownerTok = await login(emails.owner);
 
         // Setup: warehouse + product + memberships (service role, bypass RLS).
         const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
@@ -239,18 +281,20 @@ async function applyMovement(
           });
         }
 
+        for (const actor of Object.values(actors)) {
+          await insertVerifiedWallet(actor.userId, actor.wallet);
+        }
+
         const base = {
           p_warehouse_id: warehouseId,
           p_product_id: productId,
           p_reason: "contract test",
           p_reference: null,
           p_reversal_of: null,
-          p_idempotency_key: null,
-          p_actor_wallet: null,
         };
 
         // 1) Non-member → FORBIDDEN.
-        let r = await applyMovement(outsiderTok, {
+        let r = await applyMovement(actors.outsider, {
           ...base,
           p_movement_type: "stock_in",
           p_quantity: 1,
@@ -259,7 +303,7 @@ async function applyMovement(
         expect(r.error_code).toBe("FORBIDDEN");
 
         // 2) VIEWER tidak boleh stock_in.
-        r = await applyMovement(viewerTok, {
+        r = await applyMovement(actors.viewer, {
           ...base,
           p_movement_type: "stock_in",
           p_quantity: 5,
@@ -268,7 +312,7 @@ async function applyMovement(
         expect(r.error_code).toBe("FORBIDDEN");
 
         // 3) OWNER stock_in 100 (balance dibuat 0/0 → v1).
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "stock_in",
           p_quantity: 100,
@@ -280,7 +324,7 @@ async function applyMovement(
         balanceVersion = 1;
 
         // 4) STAFF boleh stock_in (role staff) → v2.
-        r = await applyMovement(staffTok, {
+        r = await applyMovement(actors.staff, {
           ...base,
           p_movement_type: "stock_in",
           p_quantity: 7,
@@ -291,7 +335,7 @@ async function applyMovement(
         balanceVersion = 2;
 
         // 5) STAFF stock_out → v3.
-        r = await applyMovement(staffTok, {
+        r = await applyMovement(actors.staff, {
           ...base,
           p_movement_type: "stock_out",
           p_quantity: 10,
@@ -302,7 +346,7 @@ async function applyMovement(
         balanceVersion = 3;
 
         // 6) INSUFFICIENT_STOCK (punya 97, minta 100) — balance tidak berubah.
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "stock_out",
           p_quantity: 100,
@@ -311,7 +355,7 @@ async function applyMovement(
         expect(r.error_code).toBe("INSUFFICIENT_STOCK");
 
         // 7) STALE_STOCK (version mismatch).
-        r = await applyMovement(staffTok, {
+        r = await applyMovement(actors.staff, {
           ...base,
           p_movement_type: "stock_out",
           p_quantity: 5,
@@ -323,17 +367,18 @@ async function applyMovement(
         //    replay = key+fp sama; payload beda = IDEMPOTENCY_CONFLICT.
         const key = `CT-KEY-${suffix}`;
         const fpA = `fp-a-${suffix}`;
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "stock_in",
           p_quantity: 3,
           p_expected_balance_version: 3,
           p_idempotency_key: key,
+          p_request_fingerprint: null,
         });
         // 8a) key ada, fingerprint NULL -> INVALID_INPUT (P1-01a).
         expect(r.error_code).toBe("INVALID_INPUT");
 
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "stock_in",
           p_quantity: 3,
@@ -347,7 +392,7 @@ async function applyMovement(
         const keyMovementId = r.movement_id;
 
         // 8b) replay dengan fingerprint SAMA -> IDEMPOTENT.
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "stock_in",
           p_quantity: 3,
@@ -359,7 +404,7 @@ async function applyMovement(
         expect(r.movement_id).toBe(keyMovementId);
 
         // 8c) key sama, fingerprint BEDA -> IDEMPOTENCY_CONFLICT (bukan replay).
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "stock_in",
           p_quantity: 999,
@@ -370,7 +415,7 @@ async function applyMovement(
         expect(r.error_code).toBe("IDEMPOTENCY_CONFLICT");
 
         // 9) Reversal penuh dari movement stock_in key K → v5.
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "reversal",
           p_quantity: 3,
@@ -382,7 +427,7 @@ async function applyMovement(
         balanceVersion = 5;
 
         // 10) Over-reversal ditolak (sudah di-reverse 3/3).
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "reversal",
           p_quantity: 1,
@@ -392,7 +437,7 @@ async function applyMovement(
         expect(r.error_code).toBe("INVALID_REVERSAL");
 
         // 11) STAFF tidak boleh adjustment (hanya MANAGER/OWNER).
-        r = await applyMovement(staffTok, {
+        r = await applyMovement(actors.staff, {
           ...base,
           p_movement_type: "adjustment",
           p_quantity: 5,
@@ -401,7 +446,7 @@ async function applyMovement(
         expect(r.error_code).toBe("FORBIDDEN");
 
         // 12) Adjustment OWNER → status pending_approval, saldo tidak berubah.
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "adjustment",
           p_quantity: 10,
@@ -427,7 +472,7 @@ async function applyMovement(
         expect(Number(balance[0]?.version)).toBe(balanceVersion);
 
         // 13) Movement type tidak dikenal → INVALID_INPUT.
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "foobar",
           p_quantity: 1,
@@ -436,7 +481,7 @@ async function applyMovement(
         expect(r.error_code).toBe("INVALID_INPUT");
 
         // 14) Produk bukan milik warehouse → NOT_FOUND.
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_product_id: "00000000-0000-0000-0000-000000000000",
           p_movement_type: "stock_in",
@@ -448,7 +493,7 @@ async function applyMovement(
         // 15) C-02: Reversal terhadap STOCK_OUT MENGEMBALIKAN stok (+qty).
         // Saldo 97 @v5. Out 90 -> v6 (7). Reversal out-90 -> v7 (97 kembali).
         // Kode lama (selalu kurangi) akan menjawab INSUFFICIENT_STOCK di sini.
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "stock_out",
           p_quantity: 90,
@@ -458,7 +503,7 @@ async function applyMovement(
         expect(r.balance_version).toBe(6);
         const c02OutMovementId = r.movement_id;
 
-        r = await applyMovement(ownerTok, {
+        r = await applyMovement(actors.owner, {
           ...base,
           p_movement_type: "reversal",
           p_quantity: 90,
@@ -508,6 +553,10 @@ async function applyMovement(
       const suffix = randomUUID();
       const email = `contract-conc-${suffix}@test.local`;
       const createdUser = await adminCreateUser(email);
+      const actor = {
+        userId: createdUser.id,
+        wallet: testWalletAddress(suffix, 1),
+      };
       let warehouseId = "";
 
       try {
@@ -537,6 +586,7 @@ async function applyMovement(
           status: "ACTIVE",
           joined_at: new Date().toISOString(),
         });
+        await insertVerifiedWallet(actor.userId, actor.wallet);
 
         const base = {
           p_warehouse_id: warehouseId,
@@ -544,12 +594,10 @@ async function applyMovement(
           p_reason: "concurrency test",
           p_reference: null,
           p_reversal_of: null,
-          p_idempotency_key: null,
-          p_actor_wallet: null,
         };
 
         // Original committed stock_in 100.
-        const original = await applyMovement(token, {
+        const original = await applyMovement(actor, {
           ...base,
           p_movement_type: "stock_in",
           p_quantity: 100,
@@ -560,14 +608,14 @@ async function applyMovement(
 
         // Dua reversal 70 PARALEL (total 140 > 100). Persis satu sukses.
         const [a, b] = await Promise.all([
-          applyMovement(token, {
+          applyMovement(actor, {
             ...base,
             p_movement_type: "reversal",
             p_quantity: 70,
             p_expected_balance_version: 1,
             p_reversal_of: originalId,
           }),
-          applyMovement(token, {
+          applyMovement(actor, {
             ...base,
             p_movement_type: "reversal",
             p_quantity: 70,

@@ -19,7 +19,11 @@ export type DomainErrorCode =
   | "INSUFFICIENT_STOCK"
   | "STALE_STOCK"
   | "IDEMPOTENCY_CONFLICT"
+  | "OWNERSHIP_INTENT_CONFLICT"
+  | "STALE_GENERATION"
+  | "OWNERSHIP_INTENT_EXPIRED"
   | "INITIAL_STOCK_FAILED"
+  | "CONFIRMING"
   | "DB_UNEXPECTED";
 
 export interface DomainError {
@@ -88,11 +92,33 @@ const CATALOG: Record<DomainErrorCode, DomainError> = {
     userMessage:
       "This idempotency key was already used for a different operation.",
   },
+  OWNERSHIP_INTENT_CONFLICT: {
+    code: "OWNERSHIP_INTENT_CONFLICT",
+    httpStatus: 409,
+    userMessage:
+      "This ownership transfer intent does not match the current request.",
+  },
+  STALE_GENERATION: {
+    code: "STALE_GENERATION",
+    httpStatus: 409,
+    userMessage:
+      "Warehouse ownership changed. Refresh before retrying the transfer.",
+  },
+  OWNERSHIP_INTENT_EXPIRED: {
+    code: "OWNERSHIP_INTENT_EXPIRED",
+    httpStatus: 409,
+    userMessage: "This ownership transfer intent has expired. Start again.",
+  },
   INITIAL_STOCK_FAILED: {
     code: "INITIAL_STOCK_FAILED",
     httpStatus: 422,
     userMessage:
       "Product creation was rolled back: initial stock could not be applied.",
+  },
+  CONFIRMING: {
+    code: "CONFIRMING",
+    httpStatus: 202,
+    userMessage: "Transaction is still confirming.",
   },
   DB_UNEXPECTED: {
     code: "DB_UNEXPECTED",
@@ -144,7 +170,35 @@ export function mapDbError(rawMessage: string): DomainError {
   if (/expected version .* but current|stale/i.test(message)) {
     return CATALOG.STALE_STOCK;
   }
-  if (/IDEMPOTENCY_CONFLICT/i.test(message)) {
+  if (/INTENT_NOT_FOUND|WAREHOUSE_NOT_FOUND/i.test(message)) {
+    return CATALOG.NOT_FOUND;
+  }
+  if (/ONLY_OWNER|OWNER_CHANGED|TARGET_CHANGED/i.test(message)) {
+    return CATALOG.FORBIDDEN;
+  }
+  if (
+    /WAREHOUSE_NOT_DEPLOYED|TARGET_NOT_MEMBER|TARGET_NOT_ACTIVE|TARGET_WALLET_NOT_VERIFIED/i.test(
+      message
+    )
+  ) {
+    return {
+      ...CATALOG.INVALID_INPUT,
+      userMessage: "Invalid ownership transfer request.",
+    };
+  }
+  if (/ALREADY_OWNER|TARGET_ALREADY_OWNER/i.test(message)) {
+    return CATALOG.OWNERSHIP_INTENT_CONFLICT;
+  }
+  if (/OWNERSHIP_INTENT_CONFLICT|OWNERSHIP_INTENT_PENDING/i.test(message)) {
+    return CATALOG.OWNERSHIP_INTENT_CONFLICT;
+  }
+  if (/STALE_GENERATION/i.test(message)) {
+    return CATALOG.STALE_GENERATION;
+  }
+  if (/OWNERSHIP_INTENT_EXPIRED/i.test(message)) {
+    return CATALOG.OWNERSHIP_INTENT_EXPIRED;
+  }
+  if (/IDEMPOTENCY_CONFLICT|PRODUCT_INTENT_CONFLICT/i.test(message)) {
     return CATALOG.IDEMPOTENCY_CONFLICT;
   }
   if (/\bFORBIDDEN\b|warehouse is suspended/i.test(message)) {

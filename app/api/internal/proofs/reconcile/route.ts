@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
 import { reconcileProofs } from "@/lib/proof/reconcile";
+import { proofReconcileUrl } from "@/lib/proof/qstash";
 import {
   verifyCronSecret,
   verifyQStashSignature,
@@ -16,10 +17,23 @@ import {
  * POST /api/internal/proofs/reconcile
  */
 
-export async function POST(request: Request) {
+async function handleReconcile(request: Request) {
+  const qstashPromise = (async () => {
+    try {
+      let expectedUrl: string | undefined;
+      try {
+        expectedUrl = proofReconcileUrl();
+      } catch {
+        expectedUrl = undefined;
+      }
+      return await verifyQStashSignature(request, expectedUrl);
+    } catch {
+      return false;
+    }
+  })();
   const [cronOk, qstashOk] = await Promise.all([
     verifyCronSecret(request),
-    verifyQStashSignature(request),
+    qstashPromise,
   ]);
   if (!cronOk && !qstashOk) {
     logger.warn("proof reconcile rejected: no valid auth");
@@ -30,5 +44,13 @@ export async function POST(request: Request) {
   }
 
   const result = await reconcileProofs();
-  return NextResponse.json(result, { status: 200 });
+  return NextResponse.json(result, { status: result.ok ? 200 : 500 });
+}
+
+export async function GET(request: Request) {
+  return handleReconcile(request);
+}
+
+export async function POST(request: Request) {
+  return handleReconcile(request);
 }

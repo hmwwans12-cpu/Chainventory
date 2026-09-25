@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { proofBaseUrl } from "@/lib/proof/qstash";
 import { verifyCronSecret } from "@/lib/proof/verify-request";
+import { currentRuntimeMode } from "@/lib/runtime/public-origin";
 
 /**
  * Health env deploy (P3 smoke BLOCKER — kategori "Environment & Deploy").
@@ -41,14 +42,18 @@ export async function GET(request: Request) {
       !/localhost|127\.0\.0\.1|0\.0\.0\.0/.test(url.hostname)
     : false;
 
-  return NextResponse.json({
-    ok: baseUrl !== null,
-    data: {
-      baseUrl,
-      isPublic,
-      hostname: url?.hostname ?? null,
-      mode: process.env.NODE_ENV,
-      source: baseUrl ? undefined : error,
+  const healthy = baseUrl !== null && isPublic;
+  return NextResponse.json(
+    {
+      ok: healthy,
+      data: {
+        baseUrl,
+        isPublic,
+        hostname: url?.hostname ?? null,
+        mode: currentRuntimeMode(),
+        source: error ?? undefined,
+      },
     },
-  });
+    { status: healthy ? 200 : 503 }
+  );
 }

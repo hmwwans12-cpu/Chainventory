@@ -37,7 +37,21 @@ export type PreparedIntent = {
   to: string;
   data: string;
   chainId: number;
+  actorWallet: string;
+  occurredAt?: string;
+  timestamp?: number;
+  status?: string;
 };
+
+export function isPendingIntentConfirmation(result: {
+  ok: boolean;
+  status: number;
+  errorCode?: string;
+}): boolean {
+  return (
+    !result.ok && result.status === 202 && result.errorCode === "RPC_FAILED"
+  );
+}
 
 export function prepareStockIntent(
   values: IntentPrepareInput,

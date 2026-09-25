@@ -61,11 +61,10 @@ export default async function SettingsPage({
   if (!user) redirect("/login");
 
   const [profileRes, walletRes, warehouses] = await Promise.all([
-    supabase
-      .from("users")
-      .select("display_name, email, notification_preferences")
-      .eq("id", user.id)
-      .maybeSingle(),
+    supabase.rpc("get_my_profile").then(({ data, error }) => ({
+      data: Array.isArray(data) ? data[0] : data,
+      error,
+    })),
     supabase
       .from("wallets")
       .select("address, verification_state")

@@ -105,29 +105,40 @@ export function NotificationPreferencesPanel({
             {t("settings.pref_th_email")}
           </span>
         </div>
-        {NOTIFICATION_CATEGORIES.map((cat) => (
-          <div
-            key={cat.key}
-            className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-t px-1 py-2.5 first:border-t-0"
-          >
-            <div className="min-w-0">
-              <p className="text-foreground text-sm font-medium">{cat.label}</p>
-              <p className="text-muted-foreground truncate text-sm">
-                {cat.description}
-              </p>
+        {NOTIFICATION_CATEGORIES.map((cat) => {
+          const label = t(cat.labelKey);
+          const description = t(cat.descriptionKey);
+          return (
+            <div
+              key={cat.key}
+              className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-t px-1 py-2.5 first:border-t-0"
+            >
+              <div className="min-w-0">
+                <p className="text-foreground text-sm font-medium">{label}</p>
+                <p
+                  id={`notification-pref-description-${cat.key}`}
+                  className="text-muted-foreground truncate text-sm"
+                >
+                  {description}
+                </p>
+              </div>
+              <ToggleCell
+                checked={prefs.in_app[cat.key]}
+                onChange={() => toggle("in_app", cat.key)}
+                descriptionId={`notification-pref-description-${cat.key}`}
+                channelLabel={t("settings.pref_th_inapp")}
+                label={t("settings.pref_inapp_aria", { label })}
+              />
+              <ToggleCell
+                checked={prefs.email[cat.key]}
+                onChange={() => toggle("email", cat.key)}
+                descriptionId={`notification-pref-description-${cat.key}`}
+                channelLabel={t("settings.pref_th_email")}
+                label={t("settings.pref_email_aria", { label })}
+              />
             </div>
-            <ToggleCell
-              checked={prefs.in_app[cat.key]}
-              onChange={() => toggle("in_app", cat.key)}
-              label={t("settings.pref_inapp_aria", { label: cat.label })}
-            />
-            <ToggleCell
-              checked={prefs.email[cat.key]}
-              onChange={() => toggle("email", cat.key)}
-              label={t("settings.pref_email_aria", { label: cat.label })}
-            />
-          </div>
-        ))}
+          );
+        })}
         <p className="text-muted-foreground mt-1 text-sm" aria-live="polite">
           {saving ? t("settings.saving") : " "}
         </p>
@@ -139,20 +150,28 @@ export function NotificationPreferencesPanel({
 function ToggleCell({
   checked,
   onChange,
+  descriptionId,
+  channelLabel,
   label,
 }: {
   checked: boolean;
   onChange: () => void;
+  descriptionId: string;
+  channelLabel: string;
   label: string;
 }) {
   return (
-    <div className="flex w-20 justify-center">
+    <div className="flex w-20 flex-col items-center gap-1 sm:justify-center">
+      <span className="text-muted-foreground text-xs leading-none sm:hidden">
+        {channelLabel}
+      </span>
       <input
         type="checkbox"
         role="switch"
         checked={checked}
         onChange={onChange}
         aria-label={label}
+        aria-describedby={descriptionId}
         className="border-border focus-visible:ring-ring bg-muted checked:bg-primary after:bg-background relative h-5 w-9 cursor-pointer appearance-none rounded-full transition-colors before:absolute before:-inset-[10px] before:content-[''] after:absolute after:top-0.5 after:left-0.5 after:size-4 after:rounded-full after:transition-transform checked:after:translate-x-4 focus-visible:ring-3 focus-visible:outline-none"
       />
     </div>

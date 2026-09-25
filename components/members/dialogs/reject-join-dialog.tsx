@@ -6,6 +6,7 @@ import { Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { ErrorAlert } from "@/components/shared/error-alert";
 import { toast } from "@/components/ui/toast";
 import { rejectJoin } from "@/lib/warehouses/members-client";
 import { useLocale } from "@/components/providers/locale-provider";
@@ -57,7 +58,6 @@ export function RejectJoinDialog({
       busy={busy}
       title={t("members.reject_title", { name: targetName })}
       description={t("members.reject_desc")}
-      error={error}
       cancelLabel={t("members.reject_keep")}
       primaryLabel={t("members.reject_confirm")}
       primaryVariant="destructive"
@@ -70,6 +70,11 @@ export function RejectJoinDialog({
       }
       onConfirm={reject}
     >
+      {error ? (
+        <ErrorAlert id="reject-form-error" size="md">
+          {error}
+        </ErrorAlert>
+      ) : null}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="reject-reason">
           {t("members.reject_reason_label")}
@@ -80,6 +85,8 @@ export function RejectJoinDialog({
           maxLength={500}
           onChange={(event) => setReason(event.target.value)}
           placeholder={t("members.reject_reason_placeholder")}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? "reject-form-error" : undefined}
         />
       </div>
     </ConfirmDialog>

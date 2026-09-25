@@ -114,6 +114,23 @@ describe("create-client", () => {
     }
   });
 
+  it("submitDeployment accepts pending confirmation status", async () => {
+    const data = {
+      status: "pending_confirmation",
+      warehouseId: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      deploymentId: "ffffffff-0000-1111-2222-333333333333",
+      warehouseCode: "CHV-AB2DEF34",
+      contractAddress: null,
+      txHash: "0x" + "ab".repeat(32),
+    };
+    const res = await submitDeployment(
+      {} as never,
+      mockFetch(202, { ok: true, data })
+    );
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.data.status).toBe("pending_confirmation");
+  });
+
   it("submitDeployment returns failure with errorCode when rejected", async () => {
     const fetcher = mockFetch(400, {
       ok: false,

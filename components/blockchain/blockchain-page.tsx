@@ -62,6 +62,8 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { openChannel } from "@/lib/realtime/channel";
 import { debounce } from "@/lib/realtime/debounce";
 import { cn, formatDateTime } from "@/lib/utils";
+import { localizedMetaLabel } from "@/lib/inventory/status-meta";
+import { localizedProofLabel } from "@/lib/blockchain/proof-meta";
 import {
   BASE_SEPOLIA_CHAIN_ID,
   PROOF_LIMIT,
@@ -70,7 +72,18 @@ import {
 
 function shortHash(hash: string, head = 10, tail = 8): string {
   if (hash.length <= head + tail + 3) return hash;
-  return `${hash.slice(0, head)}\u2026${hash.slice(-tail)}`;
+  return `${hash.slice(0, head)}…${hash.slice(-tail)}`;
+}
+
+type Translate = (key: string) => string;
+
+function proofLabel(
+  meta:
+    | { label: string; i18nKey?: string; short?: string; shortI18nKey?: string }
+    | undefined,
+  t: Translate
+): string {
+  return localizedProofLabel(meta, t);
 }
 
 async function fetchProofs(
@@ -110,7 +123,7 @@ export function BlockchainPage({
   totalProofs: number;
 }) {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   const [proofsState, setProofsState] = React.useState<ProofRow[]>(proofs);
   const [totalProofsState, setTotalProofsState] = React.useState(totalProofs);
@@ -137,10 +150,12 @@ export function BlockchainPage({
 
   const [supabase] = React.useState(() => createSupabaseClient());
   const [realtimeError, setRealtimeError] = React.useState<string | null>(null);
+  const [refreshingProofs, setRefreshingProofs] = React.useState(false);
 
   // Realtime (DESIGN §41) — status proof berubah → refresh daftar.
   // On failure we KEEP the last known data and surface a notice (UI/UX #8).
   const refreshProofsSafe = React.useCallback(async () => {
+    setRefreshingProofs(true);
     try {
       const next = await fetchProofs(supabase, warehouseId);
       if (next.error) throw new Error("refresh failed");
@@ -149,6 +164,8 @@ export function BlockchainPage({
       setRealtimeError(null);
     } catch {
       setRealtimeError(t("chain.live_failed"));
+    } finally {
+      setRefreshingProofs(false);
     }
   }, [supabase, warehouseId, t]);
 
@@ -218,7 +235,10 @@ export function BlockchainPage({
     deployed && contractAddress ? contractAddress : null;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div
+      className="flex flex-col gap-6"
+      aria-busy={refreshingProofs || busyProof !== null}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <Badge
@@ -293,7 +313,7 @@ export function BlockchainPage({
               {deploymentMeta ? (
                 <StatusBadge
                   tone={deploymentMeta.tone}
-                  label={deploymentMeta.label}
+                  label={localizedMetaLabel(deploymentMeta, t)}
                 />
               ) : null}
             </div>
@@ -409,9 +429,7 @@ export function BlockchainPage({
                     <div className="flex min-w-0 items-center gap-2.5">
                       <StatusBadge
                         tone={PROOF_STATUS_META[proof.status]?.tone ?? "failed"}
-                        label={
-                          PROOF_STATUS_META[proof.status]?.label ?? proof.status
-                        }
+                        label={proofLabel(PROOF_STATUS_META[proof.status], t)}
                       />
                       <span className="text-muted-foreground font-mono text-sm">
                         {shortHash(proof.payload_hash)}
@@ -462,6 +480,20 @@ export function BlockchainPage({
       ) : null}
 
       {/* Proofs ledger */}
+      <span
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {refreshingProofs || busyProof !== null
+          ? t("common.loading")
+          : (realtimeError ??
+            t("chain.showing_footer", {
+              n: String(proofsState.length),
+              total: totalProofsState.toLocaleString(),
+            }))}
+      </span>
       {proofsState.length === 0 ? (
         <EmptyState
           icon={Link2}
@@ -524,7 +556,10 @@ export function BlockchainPage({
                       </TableCell>
                       <TableCell>
                         {meta ? (
-                          <StatusBadge tone={meta.tone} label={meta.label} />
+                          <StatusBadge
+                            tone={meta.tone}
+                            label={proofLabel(meta, t)}
+                          />
                         ) : (
                           <span className="text-muted-foreground text-sm">
                             {proof.status.charAt(0).toUpperCase() +
@@ -570,7 +605,7 @@ export function BlockchainPage({
                         </span>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm tabular-nums">
-                        {formatDateTime(proof.created_at)}
+                        {formatDateTime(proof.created_at, locale)}
                       </TableCell>
                     </TableRow>
                   );
@@ -590,7 +625,10 @@ export function BlockchainPage({
                       {shortHash(proof.payload_hash)}
                     </span>
                     {meta ? (
-                      <StatusBadge tone={meta.tone} label={meta.label} />
+                      <StatusBadge
+                        tone={meta.tone}
+                        label={proofLabel(meta, t)}
+                      />
                     ) : (
                       <span className="text-muted-foreground text-sm">
                         {proof.status.charAt(0).toUpperCase() +
@@ -637,7 +675,7 @@ export function BlockchainPage({
                     </span>
                   </div>
                   <p className="text-muted-foreground text-sm tabular-nums">
-                    {formatDateTime(proof.created_at)}
+                    {formatDateTime(proof.created_at, locale)}
                   </p>
                 </li>
               );

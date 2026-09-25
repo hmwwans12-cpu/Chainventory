@@ -81,6 +81,8 @@ import {
   BASESCAN_URL,
 } from "@/components/inventory/movement-detail-sheet";
 import { getMovementRowView } from "@/lib/inventory/movement-row";
+import { localizedMetaLabel } from "@/lib/inventory/status-meta";
+import { localizedProofLabel } from "@/lib/blockchain/proof-meta";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { useSwitchWarehouse } from "@/lib/warehouses/use-switch-warehouse";
 import { useLiveStatus } from "@/hooks/use-live-status";
@@ -93,6 +95,24 @@ import { MOVEMENTS_PAGE_SIZE, REALTIME_DEBOUNCE_MS } from "@/lib/constants";
 import { useLocale } from "@/components/providers/locale-provider";
 
 const PAGE_SIZE = MOVEMENTS_PAGE_SIZE;
+
+type Translate = (key: string) => string;
+
+function metaLabel(
+  meta: { label: string; i18nKey?: string } | undefined,
+  t: Translate
+): string {
+  return localizedMetaLabel(meta, t);
+}
+
+function proofLabel(
+  meta:
+    | { label: string; i18nKey?: string; short?: string; shortI18nKey?: string }
+    | undefined,
+  t: Translate
+): string {
+  return localizedProofLabel(meta, t);
+}
 
 type FetchResult = { items: MovementListItem[]; error: boolean };
 
@@ -175,11 +195,17 @@ export function MovementsPage({
   /** Kata kunci pencarian server-side (?q=): reference/reason/wallet. */
   query: string;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const unknownProductLabel = t("movements.unknown_product");
   const memberLabel = t("movements.member_fallback");
   const resolveProductName = (name: string) =>
     name === "Unknown product" ? unknownProductLabel : name;
+  const movementActionLabel = (movement: MovementListItem) =>
+    t("movements.actions_for", {
+      type: `${resolveProductName(movement.productName)} · ${
+        movement.reference?.trim() || `#${movement.id.slice(0, 8)}`
+      }`,
+    });
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -239,6 +265,7 @@ export function MovementsPage({
   );
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [loadError, setLoadError] = React.useState(false);
+  const [refreshing, setRefreshing] = React.useState(false);
   // Sinkronisasi warehouse: tanpa ini, pindah warehouse A→B via
   // router.replace membuat props baru tapi list/offset lokal tetap milik A
   // (loadMore pakai movements.length yang salah). Ikuti pola members-page.
@@ -309,6 +336,7 @@ export function MovementsPage({
   // On failure we KEEP the last known data and surface a notice instead of
   // wiping the list to an empty state (UI/UX audit #8).
   const refreshMovements = React.useCallback(async () => {
+    setRefreshing(true);
     try {
       // APP-03: hormati flag error — fetchPage mengembalikan items=[] saat
       // gagal; tanpa cek ini list terhapus di depan mata user.
@@ -325,6 +353,8 @@ export function MovementsPage({
       setRealtimeError(null);
     } catch {
       setRealtimeError(t("movements.live_update_failed"));
+    } finally {
+      setRefreshing(false);
     }
   }, [supabase, warehouseId, query, t]);
 
@@ -391,7 +421,10 @@ export function MovementsPage({
   const switchWarehouse = useSwitchWarehouse(warehouseId);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div
+      className="flex flex-col gap-6"
+      aria-busy={isPending || loadingMore || refreshing}
+    >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Badge
@@ -560,6 +593,20 @@ export function MovementsPage({
         </PanelCard>
       ) : null}
 
+      <span
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {isPending || loadingMore || refreshing
+          ? t("dialogs.detail.loading")
+          : (realtimeError ??
+            `${t("sub.stock_movement")} · ${t(
+              "dialogs.detail.movements_total",
+              { count: String(movements.length) }
+            )}`)}
+      </span>
       {movements.length === 0 ? (
         <EmptyState
           icon={ArrowDownToLine}
@@ -648,10 +695,10 @@ export function MovementsPage({
                               />
                             }
                           >
-                            {formatTimeAgo(m.created_at)}
+                            {formatTimeAgo(m.created_at, locale)}
                           </TooltipTrigger>
                           <TooltipContent>
-                            {formatDateTime(m.created_at)}
+                            {formatDateTime(m.created_at, locale)}
                           </TooltipContent>
                         </Tooltip>
                       </TableCell>
@@ -688,7 +735,7 @@ export function MovementsPage({
                           )}
                         >
                           <typeMeta.icon aria-hidden="true" />
-                          {typeMeta.label}
+                          {metaLabel(typeMeta, t)}
                         </Badge>
                       </TableCell>
                       <TableCell
@@ -717,7 +764,7 @@ export function MovementsPage({
                                 ? "failed"
                                 : "pending"
                           }
-                          label={statusMeta.label}
+                          label={metaLabel(statusMeta, t)}
                         />
                       </TableCell>
                       <TableCell className="text-muted-foreground hidden font-mono text-sm lg:table-cell">
@@ -741,7 +788,7 @@ export function MovementsPage({
                         ) : proofMeta ? (
                           <StatusBadge
                             tone={proofMeta.tone}
-                            label={proofMeta.label}
+                            label={proofLabel(proofMeta, t)}
                           />
                         ) : (
                           <span className="text-muted-foreground text-sm">
@@ -756,9 +803,7 @@ export function MovementsPage({
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                aria-label={t("movements.actions_for", {
-                                  type: typeMeta.label,
-                                })}
+                                aria-label={movementActionLabel(m)}
                               />
                             }
                           >
@@ -820,14 +865,14 @@ export function MovementsPage({
                       </EntityName>
                       <StatusBadge
                         tone={statusMeta.tone}
-                        label={statusMeta.label}
+                        label={metaLabel(statusMeta, t)}
                       />
                     </div>
                     <p className="text-muted-foreground mt-0.5 font-mono text-sm">
                       {m.productSku}
                     </p>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      {typeMeta.label} ·{" "}
+                      {metaLabel(typeMeta, t)} ·{" "}
                       <span
                         className={
                           negative
@@ -851,10 +896,10 @@ export function MovementsPage({
                             />
                           }
                         >
-                          {formatTimeAgo(m.created_at)}
+                          {formatTimeAgo(m.created_at, locale)}
                         </TooltipTrigger>
                         <TooltipContent>
-                          {formatDateTime(m.created_at)}
+                          {formatDateTime(m.created_at, locale)}
                         </TooltipContent>
                       </Tooltip>
                     </p>
@@ -868,7 +913,7 @@ export function MovementsPage({
                       </BaseScanLink>
                     ) : proofMeta ? (
                       <p className="text-muted-foreground mt-1 text-sm">
-                        {proofMeta.label}
+                        {proofLabel(proofMeta, t)}
                       </p>
                     ) : null}
                   </div>
@@ -878,9 +923,7 @@ export function MovementsPage({
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={t("movements.actions_for", {
-                            type: typeMeta.label,
-                          })}
+                          aria-label={movementActionLabel(m)}
                         />
                       }
                     >
@@ -1037,7 +1080,7 @@ function ApproveDialog({
         type: "success",
         title: t("movements.approve_toast_title"),
         description: t("movements.approve_toast_desc", {
-          type: meta.label,
+          type: metaLabel(meta, t),
           quantity: movement.quantity,
           unit: movement.unit,
           product: displayProductName,
@@ -1056,7 +1099,7 @@ function ApproveDialog({
       open={open}
       onOpenChange={onOpenChange}
       busy={busy}
-      title={t("movements.approve_title", { type: meta.label })}
+      title={t("movements.approve_title", { type: metaLabel(meta, t) })}
       description={t("movements.approve_desc", {
         product: displayProductName,
         quantity: movement.quantity,
@@ -1122,7 +1165,7 @@ function RejectDialog({
         type: "success",
         title: t("movements.reject_toast_title"),
         description: t("movements.reject_toast_desc", {
-          type: meta.label,
+          type: metaLabel(meta, t),
           product: displayProductName,
         }),
       });
@@ -1138,7 +1181,7 @@ function RejectDialog({
       open={open}
       onOpenChange={onOpenChange}
       busy={busy}
-      title={t("movements.reject_title", { type: meta.label })}
+      title={t("movements.reject_title", { type: metaLabel(meta, t) })}
       description={t("movements.reject_desc", { product: displayProductName })}
       error={error}
       cancelLabel={t("common.cancel")}

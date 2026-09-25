@@ -10,10 +10,9 @@ import {
   type Abi,
   type Hex,
 } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-
+import { resolveFactoryByAddress } from "@/lib/blockchain/contracts";
+import { getVerifiedTreasuryAccount } from "@/lib/blockchain/treasury-signer";
 import { baseSepolia, createChainTransport } from "@/lib/blockchain/chains";
-import { env } from "@/lib/env";
 import type {
   ConfirmOutcome,
   ProofRecord,
@@ -38,6 +37,39 @@ import type {
  */
 
 const WAREHOUSE_ABI_PATH = "contracts/out/Warehouse.sol/Warehouse.json";
+
+const WAREHOUSE_FACTORY_READ_ABI = [
+  {
+    type: "function",
+    name: "factory",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ type: "address" }],
+  },
+] as const;
+
+export async function getFactoryForWarehouse(contractAddress: string) {
+  const client = createPublicClient({
+    chain: baseSepolia,
+    transport: createChainTransport(),
+  });
+  const factoryAddress = (await client.readContract({
+    address: contractAddress as Hex,
+    abi: WAREHOUSE_FACTORY_READ_ABI,
+    functionName: "factory",
+  })) as string;
+  return resolveFactoryByAddress(factoryAddress);
+}
+
+export async function isLegacyTreasuryWarehouse(
+  contractAddress: string
+): Promise<boolean> {
+  const factory = await getFactoryForWarehouse(contractAddress);
+  if (factory.proofMode === "unknown") {
+    throw new Error("Warehouse factory version is unknown");
+  }
+  return factory.proofMode === "legacy-v1";
+}
 
 // Fix BE-24: cache ABI di level modul (sebelumnya readFileSync + parse
 // setiap submit = block event-loop per request).
@@ -82,16 +114,26 @@ export function createTreasuryAdapter(): ProofTreasuryAdapter {
           error: "treasury submit requires warehouseAddress and actor",
         };
       }
-      const privateKey = env.TREASURY_PRIVATE_KEY;
-      if (!privateKey) {
-        return { ok: false, error: "TREASURY_PRIVATE_KEY not configured" };
+      let account: Awaited<ReturnType<typeof getVerifiedTreasuryAccount>>;
+      try {
+        const factory = await getFactoryForWarehouse(contractAddress);
+        if (factory.proofMode !== "legacy-v1") {
+          return {
+            ok: false,
+            error:
+              "treasury proofs are disabled for wallet-paid factory versions",
+          };
+        }
+        account = await getVerifiedTreasuryAccount(factory);
+      } catch (err) {
+        return {
+          ok: false,
+          error:
+            err instanceof Error
+              ? err.message
+              : "treasury signer verification failed",
+        };
       }
-      // Normalisasi: viem butuh prefix `0x`; env boleh tanpa prefix.
-      const hexKey: Hex = privateKey.startsWith("0x")
-        ? (privateKey as Hex)
-        : `0x${privateKey}`;
-
-      const account = privateKeyToAccount(hexKey);
       const walletClient = createWalletClient({
         account,
         chain: baseSepolia,

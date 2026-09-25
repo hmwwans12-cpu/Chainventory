@@ -111,7 +111,10 @@ export function StatCard({
           {Icon ? <Icon aria-hidden="true" className="size-[18px]" /> : null}
         </div>
         <div className="mt-3 flex flex-wrap items-baseline gap-2">
-          <CardTitle className="font-display text-3xl font-extrabold tracking-tight tabular-nums">
+          <CardTitle
+            as="div"
+            className="font-display text-3xl font-extrabold tracking-tight tabular-nums"
+          >
             {value}
           </CardTitle>
           {unit ? (

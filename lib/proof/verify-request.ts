@@ -25,17 +25,18 @@ export async function verifyCronSecret(request: Request): Promise<boolean> {
 }
 
 export async function verifyQStashSignature(
-  request: Request
+  request: Request,
+  expectedUrl?: string
 ): Promise<boolean> {
   const signature = request.headers.get("upstash-signature");
-  if (!signature) return false;
+  if (!signature || !expectedUrl) return false;
   const body = await request.clone().text();
   try {
     const receiver = new Receiver({
       currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
       nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
     });
-    return await receiver.verify({ signature, body });
+    return await receiver.verify({ signature, body, url: expectedUrl });
   } catch (err) {
     logger.warn({ err }, "QStash signature verification failed");
     return false;
@@ -53,10 +54,16 @@ export async function verifyQStashSignature(
  * semua kegagalan verifikasi -> 403, error lain diteruskan.
  */
 export function verifyQStashAppRouter(
-  handler: (request: Request) => Promise<Response> | Response
+  handler: (request: Request) => Promise<Response> | Response,
+  expectedUrl: () => string
 ) {
   return async (request: Request): Promise<Response> => {
-    const ok = await verifyQStashSignature(request);
+    let ok = false;
+    try {
+      ok = await verifyQStashSignature(request, expectedUrl());
+    } catch {
+      ok = false;
+    }
     if (!ok) {
       return new Response("invalid signature", { status: 403 });
     }

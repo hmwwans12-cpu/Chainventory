@@ -50,6 +50,8 @@ import {
 } from "@/components/inventory/movement-detail-sheet";
 import type { MovementListItem } from "@/lib/inventory/types";
 import { getMovementRowView } from "@/lib/inventory/movement-row";
+import { localizedMetaLabel } from "@/lib/inventory/status-meta";
+import { localizedProofLabel } from "@/lib/blockchain/proof-meta";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 import { hasPermission, PERMISSIONS, type Role } from "@/lib/auth/permissions";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
@@ -59,7 +61,25 @@ import { cn, formatDateTime } from "@/lib/utils";
 
 function shortWallet(wallet: string | null, fallback: string): string {
   if (!wallet) return fallback;
-  return `${wallet.slice(0, 6)}\u2026${wallet.slice(-4)}`;
+  return `${wallet.slice(0, 6)}…${wallet.slice(-4)}`;
+}
+
+type Translate = (key: string) => string;
+
+function metaLabel(
+  meta: { label: string; i18nKey?: string } | undefined,
+  t: Translate
+): string {
+  return localizedMetaLabel(meta, t);
+}
+
+function proofLabel(
+  meta:
+    | { label: string; i18nKey?: string; short?: string; shortI18nKey?: string }
+    | undefined,
+  t: Translate
+): string {
+  return localizedProofLabel(meta, t);
 }
 
 export function TransactionsPage({
@@ -86,7 +106,13 @@ export function TransactionsPage({
   /** Kata kunci pencarian server-side (?q=). */
   query: string;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const movementActionLabel = (movement: MovementListItem) =>
+    t("tx.actions_for", {
+      name: `${movement.productName} · ${
+        movement.reference?.trim() || `#${movement.id.slice(0, 8)}`
+      }`,
+    });
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -150,11 +176,13 @@ export function TransactionsPage({
   const switchWarehouse = (id: string) => {
     if (id === warehouseId) return;
     // P2-01: helper terpusat — preserve type/proof, reset pagination.
-    router.replace(switchWarehouseUrl(pathname, searchParams, id));
+    startTransition(() => {
+      router.replace(switchWarehouseUrl(pathname, searchParams, id));
+    });
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" aria-busy={isPending}>
       <div className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 shadow-(--shadow-card)">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-64">
@@ -228,8 +256,12 @@ export function TransactionsPage({
                 getLabel={(v) =>
                   v === "all"
                     ? t("tx.filter_all_types")
-                    : MOVEMENT_TYPE_META[v as keyof typeof MOVEMENT_TYPE_META]
-                        ?.label
+                    : metaLabel(
+                        MOVEMENT_TYPE_META[
+                          v as keyof typeof MOVEMENT_TYPE_META
+                        ],
+                        t
+                      )
                 }
               />
             </SelectTrigger>
@@ -239,9 +271,9 @@ export function TransactionsPage({
                 Object.keys(
                   MOVEMENT_TYPE_META
                 ) as (keyof typeof MOVEMENT_TYPE_META)[]
-              ).map((t) => (
-                <SelectItem key={t} value={t}>
-                  {MOVEMENT_TYPE_META[t].label}
+              ).map((movementType) => (
+                <SelectItem key={movementType} value={movementType}>
+                  {metaLabel(MOVEMENT_TYPE_META[movementType], t)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -328,8 +360,10 @@ export function TransactionsPage({
             <span className="bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
               {t("tx.chip_type", {
                 type:
-                  MOVEMENT_TYPE_META[type as keyof typeof MOVEMENT_TYPE_META]
-                    ?.label ?? type,
+                  metaLabel(
+                    MOVEMENT_TYPE_META[type as keyof typeof MOVEMENT_TYPE_META],
+                    t
+                  ) ?? type,
               })}
               <button
                 type="button"
@@ -364,6 +398,18 @@ export function TransactionsPage({
         </div>
       )}
 
+      <span
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {isPending
+          ? t("common.loading")
+          : totalCount === 1
+            ? t("tx.count_one", { count: String(totalCount) })
+            : t("tx.count_other", { count: String(totalCount) })}
+      </span>
       {items.length === 0 ? (
         <EmptyState
           icon={ArrowLeftRight}
@@ -449,7 +495,7 @@ export function TransactionsPage({
                           )}
                         >
                           <typeMeta.icon aria-hidden="true" />
-                          {typeMeta.label}
+                          {metaLabel(typeMeta, t)}
                         </Badge>
                       </TableCell>
                       <TableCell
@@ -478,7 +524,7 @@ export function TransactionsPage({
                                 ? "failed"
                                 : "pending"
                           }
-                          label={statusMeta.label}
+                          label={metaLabel(statusMeta, t)}
                         />
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
@@ -505,7 +551,7 @@ export function TransactionsPage({
                         ) : proofMeta ? (
                           <StatusBadge
                             tone={proofMeta.tone}
-                            label={proofMeta.label}
+                            label={proofLabel(proofMeta, t)}
                           />
                         ) : (
                           <span className="text-muted-foreground text-sm">
@@ -517,7 +563,7 @@ export function TransactionsPage({
                         {shortWallet(m.actorWallet, t("tx.member"))}
                       </TableCell>
                       <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
-                        {formatDateTime(m.created_at)}
+                        {formatDateTime(m.created_at, locale)}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -526,9 +572,7 @@ export function TransactionsPage({
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                aria-label={t("tx.actions_for", {
-                                  name: m.productName,
-                                })}
+                                aria-label={movementActionLabel(m)}
                               />
                             }
                           >
@@ -568,14 +612,14 @@ export function TransactionsPage({
                       </EntityName>
                       <StatusBadge
                         tone={statusMeta.tone}
-                        label={statusMeta.label}
+                        label={metaLabel(statusMeta, t)}
                       />
                     </div>
                     <p className="text-muted-foreground mt-0.5 font-mono text-sm">
                       {m.productSku} · {m.id.slice(0, 8)}
                     </p>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      {typeMeta.label} ·{" "}
+                      {metaLabel(typeMeta, t)} ·{" "}
                       <span
                         className={
                           negative
@@ -589,7 +633,7 @@ export function TransactionsPage({
                     </p>
                     <p className="text-muted-foreground mt-1 text-sm tabular-nums">
                       {shortWallet(m.actorWallet, t("tx.member"))} ·{" "}
-                      {formatDateTime(m.created_at)}
+                      {formatDateTime(m.created_at, locale)}
                     </p>
                     {m.proofTxHash && m.proofStatus === "confirmed" ? (
                       <BaseScanLink
@@ -601,7 +645,7 @@ export function TransactionsPage({
                       </BaseScanLink>
                     ) : proofMeta ? (
                       <p className="text-muted-foreground mt-1 text-sm">
-                        {proofMeta.label}
+                        {proofLabel(proofMeta, t)}
                       </p>
                     ) : null}
                   </div>
@@ -611,9 +655,7 @@ export function TransactionsPage({
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={t("tx.actions_for", {
-                            name: typeMeta.label,
-                          })}
+                          aria-label={movementActionLabel(m)}
                         />
                       }
                     >

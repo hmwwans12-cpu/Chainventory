@@ -117,20 +117,6 @@ async function adminDeleteUser(id: string): Promise<void> {
   );
 }
 
-async function login(email: string): Promise<string> {
-  const res = await send(
-    "/auth/v1/token?grant_type=password",
-    {
-      method: "POST",
-      body: JSON.stringify({ email, password: "Chainventory-Test-1" }),
-    },
-    PUBLISHABLE!,
-    PUBLISHABLE!
-  );
-  const body = await json<{ access_token: string }>(res);
-  return body.access_token;
-}
-
 async function insertRow(
   apiKey: string,
   bearer: string,
@@ -148,6 +134,20 @@ async function insertRow(
     bearer
   );
   return (await json<Record<string, unknown>[]>(res))[0];
+}
+
+async function insertVerifiedWallet(
+  userId: string,
+  address: string
+): Promise<void> {
+  await insertRow(SECRET!, SECRET!, "wallets", {
+    user_id: userId,
+    address,
+    wallet_type: "external",
+    is_primary: true,
+    verification_state: "verified",
+    verified_at: new Date().toISOString(),
+  });
 }
 
 async function selectRows(
@@ -180,14 +180,22 @@ async function deleteRow(
 }
 
 async function applyMovement(
-  token: string,
+  actorUserId: string,
+  actorWallet: string,
   params: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
   const res = await send(
     "/rest/v1/rpc/apply_stock_movement",
-    { method: "POST", body: JSON.stringify(params) },
-    PUBLISHABLE!,
-    token
+    {
+      method: "POST",
+      body: JSON.stringify({
+        ...params,
+        p_actor_user_id: actorUserId,
+        p_actor_wallet: actorWallet,
+      }),
+    },
+    SECRET!,
+    SECRET!
   );
   return (await json<Record<string, unknown>[]>(res))[0];
 }
@@ -229,7 +237,6 @@ async function sleep(ms: number): Promise<void> {
         // Setup DB (jalur nyata): user → warehouse ter-deploy → produk.
         const created = await adminCreateUser(email);
         userId = created.id;
-        const token = await login(email);
 
         const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
           warehouse_code: `QST-${suffix.slice(0, 8)}`,
@@ -249,6 +256,7 @@ async function sleep(ms: number): Promise<void> {
           status: "ACTIVE",
           joined_at: new Date().toISOString(),
         });
+        await insertVerifiedWallet(userId, DEPLOYED_OWNER);
 
         const product = await insertRow(SECRET!, SECRET!, "products", {
           warehouse_id: warehouseId,
@@ -272,13 +280,13 @@ async function sleep(ms: number): Promise<void> {
           reason: "qstash delivery e2e",
           reference: null,
           actorUserId: userId,
-          actorWallet: null,
+          actorWallet: DEPLOYED_OWNER,
           expectedBalanceVersion: "0",
           occurredAt: new Date().toISOString(),
         });
         const payloadHash = hashProofPayload(payload);
 
-        const r = await applyMovement(token, {
+        const r = await applyMovement(userId, DEPLOYED_OWNER, {
           p_warehouse_id: warehouseId,
           p_product_id: productId,
           p_movement_type: "stock_in",
@@ -287,12 +295,15 @@ async function sleep(ms: number): Promise<void> {
           p_reason: "qstash delivery e2e",
           p_reference: null,
           p_reversal_of: null,
-          p_idempotency_key: null,
-          p_actor_wallet: null,
+          p_idempotency_key: `QST-${suffix}`,
+          p_actor_wallet: DEPLOYED_OWNER,
           p_movement_id: movementId,
           p_proof_payload: payload,
           p_proof_payload_hash: payloadHash,
+          p_request_fingerprint: `QST-FP-${suffix}`,
+          p_actor_user_id: userId,
         });
+
         expect(r.error_code).toBeNull();
         expect(r.proof_pending).toBe(true);
 

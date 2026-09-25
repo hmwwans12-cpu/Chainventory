@@ -70,16 +70,24 @@ function leaseRow(overrides: Record<string, unknown> = {}) {
     payload,
     payload_hash: hashProofPayload(payload),
     attempt_count: 1,
+    lease_token: "lease-1",
     ...overrides,
   };
 }
 
 function makeSupabase(
-  rows: { lease?: unknown; warehouse?: unknown } = {}
+  rows: {
+    lease?: unknown;
+    warehouse?: unknown;
+    transition?: unknown;
+    rpcErrors?: Record<string, string>;
+  } = {}
 ): ClientLike {
   const rpc = vi.fn(async (fn: string) => {
-    if (fn === "proof_lease") return { data: rows.lease ?? null };
-    return { data: null };
+    const error = rows.rpcErrors?.[fn];
+    if (error) return { data: null, error: { message: error } };
+    if (fn === "proof_lease") return { data: rows.lease ?? null, error: null };
+    return { data: rows.transition ?? true, error: null };
   });
   const maybeSingle = vi.fn(async () => ({
     data: rows.warehouse ? { on_chain_owner_wallet: rows.warehouse } : null,
@@ -115,6 +123,21 @@ describe("processProof", () => {
     expect(await processProof("proof-1")).toEqual({ ok: true, processed: 0 });
   });
 
+  it("fails closed when the Supabase lease RPC is unavailable", async () => {
+    makeSupabase({ rpcErrors: { proof_lease: "supabase unavailable" } });
+    const submit = vi.fn();
+    mockTreasury.mockReturnValue({ submit, confirm: vi.fn() } as never);
+
+    const result = await processProof("proof-1");
+
+    expect(result).toEqual({
+      ok: false,
+      processed: 0,
+      error: "supabase unavailable",
+    });
+    expect(submit).not.toHaveBeenCalled();
+  });
+
   it("re-hash mismatch → manual_review, NEVER submits on-chain", async () => {
     makeSupabase({
       lease: leaseRow({ payload_hash: "0x" + "a".repeat(64) }),
@@ -133,6 +156,7 @@ describe("processProof", () => {
     const rpc = mockCreateClient.mock.results[0].value.rpc;
     expect(rpc).toHaveBeenCalledWith("proof_mark_manual", {
       p_proof_id: "proof-1",
+      p_lease_token: "lease-1",
       p_error: "payload hash mismatch on re-hash",
     });
   });
@@ -154,9 +178,32 @@ describe("processProof", () => {
     const rpc = mockCreateClient.mock.results[0].value.rpc;
     expect(rpc).toHaveBeenCalledWith("proof_complete", {
       p_proof_id: "proof-1",
+      p_lease_token: "lease-1",
       p_tx_hash: "0x" + "b".repeat(64),
       p_status: "submitted",
     });
+    expect(mockScheduleConfirm).toHaveBeenCalledWith("proof-1", 1);
+  });
+
+  it("keeps the submitted DB state when confirmation scheduling is unavailable", async () => {
+    makeSupabase({ lease: leaseRow() });
+    mockTreasury.mockReturnValue({
+      submit: vi.fn(async () => ({ ok: true, txHash: "0x" + "b".repeat(64) })),
+      confirm: vi.fn(),
+    } as never);
+    mockScheduleConfirm.mockRejectedValueOnce(new Error("qstash unavailable"));
+
+    const result = await processProof("proof-1");
+
+    expect(result).toEqual({
+      ok: true,
+      processed: 1,
+      txHash: "0x" + "b".repeat(64),
+    });
+    expect(mockCreateClient.mock.results[0].value.rpc).toHaveBeenCalledWith(
+      "proof_complete",
+      expect.objectContaining({ p_status: "submitted" })
+    );
     expect(mockScheduleConfirm).toHaveBeenCalledWith("proof-1", 1);
   });
 
@@ -206,9 +253,31 @@ describe("processProof", () => {
     const rpc = mockCreateClient.mock.results[0].value.rpc;
     expect(rpc).toHaveBeenCalledWith("proof_requeue", {
       p_proof_id: "proof-1",
+      p_lease_token: "lease-1",
       p_error: "nonce too low",
       p_next_attempt_at: expect.any(String),
     });
+    expect(mockScheduleRetry).toHaveBeenCalledWith("proof-1", 30);
+  });
+
+  it("keeps the requeued DB state when retry scheduling is unavailable", async () => {
+    makeSupabase({ lease: leaseRow() });
+    mockTreasury.mockReturnValue({
+      submit: vi.fn(async () => ({ ok: false, error: "nonce too low" })),
+      confirm: vi.fn(),
+    } as never);
+    mockScheduleRetry.mockRejectedValueOnce(new Error("qstash unavailable"));
+
+    const result = await processProof("proof-1");
+
+    expect(result).toEqual({ ok: false, processed: 1, error: "nonce too low" });
+    expect(mockCreateClient.mock.results[0].value.rpc).toHaveBeenCalledWith(
+      "proof_requeue",
+      expect.objectContaining({
+        p_proof_id: "proof-1",
+        p_next_attempt_at: expect.any(String),
+      })
+    );
     expect(mockScheduleRetry).toHaveBeenCalledWith("proof-1", 30);
   });
 
@@ -225,6 +294,7 @@ describe("processProof", () => {
     const rpc = mockCreateClient.mock.results[0].value.rpc;
     expect(rpc).toHaveBeenCalledWith("proof_requeue", {
       p_proof_id: "proof-1",
+      p_lease_token: "lease-1",
       p_error: "nonce too low",
       p_next_attempt_at: null,
     });
@@ -248,6 +318,7 @@ describe("processProof", () => {
     const rpc = mockCreateClient.mock.results[0].value.rpc;
     expect(rpc).toHaveBeenCalledWith("proof_mark_manual", {
       p_proof_id: "proof-1",
+      p_lease_token: "lease-1",
       p_error: "treasury submit returned no tx hash",
     });
   });
@@ -270,5 +341,69 @@ describe("processProof", () => {
       error: "no actor wallet resolved for proof",
     });
     expect(submit).not.toHaveBeenCalled();
+  });
+
+  it("missing lease token fails closed before chain submit", async () => {
+    makeSupabase({ lease: leaseRow({ lease_token: "" }) });
+    const submit = vi.fn();
+    mockTreasury.mockReturnValue({ submit, confirm: vi.fn() } as never);
+
+    const result = await processProof("proof-1");
+
+    expect(result).toEqual({
+      ok: false,
+      processed: 1,
+      error: "proof lease token missing",
+    });
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it("lost lease during completion does not schedule confirmation", async () => {
+    makeSupabase({ lease: leaseRow(), transition: false });
+    mockTreasury.mockReturnValue({
+      submit: vi.fn(async () => ({ ok: true, txHash: "0x" + "e".repeat(64) })),
+      confirm: vi.fn(),
+    } as never);
+
+    const result = await processProof("proof-1");
+
+    expect(result).toEqual({
+      ok: false,
+      processed: 1,
+      error: "proof completion lease lost",
+    });
+    expect(mockScheduleConfirm).not.toHaveBeenCalled();
+  });
+
+  it("lost lease during requeue does not schedule retry", async () => {
+    makeSupabase({ lease: leaseRow(), transition: false });
+    mockTreasury.mockReturnValue({
+      submit: vi.fn(async () => ({ ok: false, error: "nonce too low" })),
+      confirm: vi.fn(),
+    } as never);
+
+    await processProof("proof-1");
+
+    expect(mockScheduleRetry).not.toHaveBeenCalled();
+  });
+
+  it("completion RPC error fails closed and does not schedule confirmation", async () => {
+    makeSupabase({
+      lease: leaseRow(),
+      rpcErrors: { proof_complete: "database unavailable" },
+    });
+    mockTreasury.mockReturnValue({
+      submit: vi.fn(async () => ({ ok: true, txHash: "0x" + "f".repeat(64) })),
+      confirm: vi.fn(),
+    } as never);
+
+    const result = await processProof("proof-1");
+
+    expect(result).toEqual({
+      ok: false,
+      processed: 1,
+      error: "database unavailable",
+    });
+    expect(mockScheduleConfirm).not.toHaveBeenCalled();
   });
 });

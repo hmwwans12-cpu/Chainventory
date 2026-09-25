@@ -32,21 +32,49 @@ export function allowlistSet(): Set<string> {
   return parseAllowlist(env.DEVELOPER_ALLOWLIST);
 }
 
-/** Cek identitas user (email + wallet) terhadap allowlist. Pure & testable. */
+export interface ConsoleWalletIdentity {
+  address?: unknown;
+  is_primary?: unknown;
+  verification_state?: unknown;
+}
+
+export type ConsoleWalletInput =
+  string | ConsoleWalletIdentity | null | undefined;
+
+const ETHEREUM_ADDRESS = /^0x[0-9a-f]{40}$/i;
+
+export function verifiedPrimaryWalletAddresses(
+  wallets: readonly ConsoleWalletInput[] | null | undefined
+): string[] {
+  if (!Array.isArray(wallets)) return [];
+  return wallets.flatMap((wallet) => {
+    if (!wallet || typeof wallet !== "object") return [];
+    if (
+      wallet.is_primary !== true ||
+      wallet.verification_state !== "verified"
+    ) {
+      return [];
+    }
+    if (typeof wallet.address !== "string") return [];
+    const address = wallet.address.trim().toLowerCase();
+    return ETHEREUM_ADDRESS.test(address) ? [address] : [];
+  });
+}
+
 export function isDeveloperAllowed(
   identities: {
     emails: string[];
-    wallets: string[];
+    wallets: readonly ConsoleWalletInput[];
   },
   allowed?: Set<string>
 ): boolean {
   const set = allowed ?? allowlistSet();
   if (set.size === 0) return false;
   const emails = identities.emails ?? [];
-  const wallets = identities.wallets ?? [];
+  const wallets = verifiedPrimaryWalletAddresses(identities.wallets);
   return (
     emails.some((e) => e && set.has(e.trim().toLowerCase())) ||
-    wallets.some((w) => w && set.has(w.trim().toLowerCase()))
+    wallets.some((w) => set.has(w))
   );
 }
 
@@ -70,18 +98,24 @@ export async function getConsoleActor(
 
   const emails = user.email ? [user.email] : [];
 
-  let wallets: string[] = [];
-  const { data: walletRows } = await supabase
-    .from("wallets")
-    .select("address")
-    .eq("user_id", user.id);
-  if (walletRows) {
-    wallets = walletRows
-      .map((r) => (typeof r.address === "string" ? r.address : ""))
-      .filter(Boolean);
+  let walletRows: unknown;
+  try {
+    const result = await supabase
+      .from("wallets")
+      .select("address, is_primary, verification_state")
+      .eq("user_id", user.id)
+      .eq("is_primary", true)
+      .eq("verification_state", "verified");
+    walletRows = result.data;
+  } catch {
+    walletRows = null;
   }
+  const walletInputs = Array.isArray(walletRows)
+    ? (walletRows as ConsoleWalletInput[])
+    : [];
+  const wallets = verifiedPrimaryWalletAddresses(walletInputs);
 
-  if (!isDeveloperAllowed({ emails, wallets })) {
+  if (!isDeveloperAllowed({ emails, wallets: walletInputs })) {
     return {
       ok: false,
       res: forbidden("This account is not on the Developer Console allowlist."),

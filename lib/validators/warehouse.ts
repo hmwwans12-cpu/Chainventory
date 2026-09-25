@@ -49,6 +49,14 @@ export const createWarehouseSubmitSchema = createWarehouseMetaSchema.extend({
   expiry: uintSchema,
 });
 
+export const createWarehouseRecoverySchema = z.object({
+  deploymentId: z.string().uuid("Invalid deployment id."),
+  txHash: z
+    .string()
+    .trim()
+    .regex(/^0x[0-9a-fA-F]{64}$/, "Invalid transaction hash."),
+});
+
 export type CreateWarehousePrepareValues = z.infer<
   typeof createWarehousePrepareSchema
 >;

@@ -16,10 +16,18 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import {
-  confirmOwnershipTransfer,
+  pollOwnershipTransfer,
   previewTransferTarget,
+  resumeOwnershipTransfer,
   transferOwnership,
+  type OwnershipTransferIntent,
 } from "@/lib/warehouses/members-client";
+import { newIdempotencyKey } from "@/lib/api-client";
+import {
+  clearOwnershipTransferDraft,
+  readOwnershipTransferDraft,
+  writeOwnershipTransferDraft,
+} from "@/lib/warehouses/ownership-transfer";
 import { warehouseOwnershipAbi } from "@/lib/blockchain/ownership-proof";
 import { BASE_SEPOLIA_CHAIN_ID } from "@/lib/constants";
 import { useLocale } from "@/components/providers/locale-provider";
@@ -58,15 +66,16 @@ export function TransferOwnershipDialog({
   // Alur on-chain: wallet target hasil preview server (otoritatif).
   const [targetWallet, setTargetWallet] = React.useState<string | null>(null);
   const [previewBusy, setPreviewBusy] = React.useState(false);
-  const [previewKey, setPreviewKey] = React.useState<string | null>(null);
-  // Render-phase adjust (bukan setState-in-effect): reset preview saat
-  // target berubah + tandai busy; effect di bawah hanya mematikan busy
-  // di dalam continuation async (diizinkan linter).
-  if (open && isDeployed && previewKey !== targetId) {
-    setPreviewKey(targetId);
-    setTargetWallet(null);
-    setPreviewBusy(true);
-  }
+  const [intent, setIntent] = React.useState<OwnershipTransferIntent | null>(
+    null
+  );
+  const [idempotencyKey, setIdempotencyKey] = React.useState<string | null>(
+    null
+  );
+  const [pendingTxHash, setPendingTxHash] = React.useState<string | null>(null);
+  const [resumeSettled, setResumeSettled] = React.useState(false);
+  const resumeStartedRef = React.useRef(false);
+  const resumeBusy = open && isDeployed && !resumeSettled;
 
   const handleSelect = (value: string | null) => {
     // Hanya simpan pilihan — JANGAN langsung masuk step konfirmasi di sini.
@@ -74,7 +83,11 @@ export function TransferOwnershipDialog({
     // (dropdown terasa tidak berfungsi). Konfirmasi lewat tombol Continue.
     if (value !== null) {
       setTargetId(value);
+      setPreviewBusy(true);
       setTargetWallet(null);
+      setIntent(null);
+      setIdempotencyKey(null);
+      setPendingTxHash(null);
       setError(null);
     }
   };
@@ -83,6 +96,9 @@ export function TransferOwnershipDialog({
     setConfirming(false);
     setTargetId("");
     setTargetWallet(null);
+    setIntent(null);
+    setIdempotencyKey(null);
+    setPendingTxHash(null);
     setError(null);
   };
 
@@ -92,33 +108,100 @@ export function TransferOwnershipDialog({
       setConfirming(false);
       setTargetId("");
       setTargetWallet(null);
+      setIntent(null);
+      setIdempotencyKey(null);
+      setPendingTxHash(null);
       setError(null);
     }
     onOpenChange(next);
   };
 
-  // Preview wallet target begitu member dipilih (hanya alur on-chain).
-  // Tanpa ini user menandatangani "kucing dalam karung" — address tujuan
-  // harus terlihat SEBELUM signing.
   React.useEffect(() => {
-    if (!open || !isDeployed || !previewKey || confirming) return;
+    if (!open || !isDeployed || resumeStartedRef.current) return;
+    resumeStartedRef.current = true;
     let cancelled = false;
-    previewTransferTarget({ warehouseId, newOwnerId: previewKey }).then(
-      (result) => {
+    const draft = readOwnershipTransferDraft(warehouseId);
+    void resumeOwnershipTransfer({ warehouseId })
+      .then((result) => {
         if (cancelled) return;
-        setPreviewBusy(false);
-        if (result.ok) {
-          setTargetWallet(result.data.wallet);
-        } else {
-          setTargetWallet(null);
+        setResumeSettled(true);
+        if (!result.ok) {
           setError(result.error);
+          return;
         }
-      }
-    );
+        const active = result.data.intent;
+        if (!active) {
+          if (draft) clearOwnershipTransferDraft(warehouseId);
+          return;
+        }
+        if (!members.some((member) => member.userId === active.newOwnerId)) {
+          setError(t("ownership.target_unavailable"));
+          return;
+        }
+        const txHash =
+          active.txHash ??
+          (draft?.intentId === active.intentId ? draft.txHash : null);
+        setIntent(active);
+        setIdempotencyKey(active.idempotencyKey);
+        setTargetId(active.newOwnerId);
+        setTargetWallet(active.wallet);
+        setPendingTxHash(txHash);
+        setConfirming(true);
+        writeOwnershipTransferDraft(warehouseId, active, txHash);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setResumeSettled(true);
+          setError(t("ownership.resume_failed"));
+        }
+      });
     return () => {
       cancelled = true;
     };
-  }, [open, isDeployed, previewKey, confirming, warehouseId]);
+  }, [isDeployed, members, open, t, warehouseId]);
+
+  React.useEffect(() => {
+    if (
+      !open ||
+      !isDeployed ||
+      !targetId ||
+      confirming ||
+      intent?.newOwnerId === targetId
+    ) {
+      return;
+    }
+    let cancelled = false;
+    const key = idempotencyKey ?? newIdempotencyKey();
+    void previewTransferTarget({
+      warehouseId,
+      newOwnerId: targetId,
+      idempotencyKey: key,
+    }).then((result) => {
+      if (cancelled) return;
+      setPreviewBusy(false);
+      if (result.ok) {
+        setIntent(result.data);
+        setIdempotencyKey(result.data.idempotencyKey);
+        setTargetWallet(result.data.wallet);
+        writeOwnershipTransferDraft(warehouseId, result.data);
+      } else {
+        setIntent(null);
+        setTargetWallet(null);
+        setError(result.error);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    confirming,
+    idempotencyKey,
+    intent,
+    isDeployed,
+    open,
+    targetId,
+    warehouseId,
+  ]);
 
   const transfer = async () => {
     if (!targetId) {
@@ -127,59 +210,72 @@ export function TransferOwnershipDialog({
     }
     setBusy(true);
     setError(null);
-    // Alur on-chain untuk warehouse deployed.
     if (isDeployed) {
-      const wallet =
-        wallets.find((w) => w.address && w.walletClientType !== "guest") ??
-        wallets[0];
-      if (!wallet?.address || !contractAddress || !targetWallet) {
+      if (!intent || !targetWallet) {
         setBusy(false);
-        setError(t("ownership.error_no_wallet"));
+        setError(t("ownership.resume_failed"));
         return;
       }
-      let txHash: string;
-      try {
-        const provider = await wallet.getEthereumProvider();
-        const data = encodeFunctionData({
-          abi: warehouseOwnershipAbi,
-          functionName: "transferOwnership",
-          args: [targetWallet as `0x${string}`],
-        });
-        txHash = (await provider.request({
-          method: "eth_sendTransaction",
-          params: [
-            {
-              to: contractAddress,
-              data,
-              chainId: `0x${BASE_SEPOLIA_CHAIN_ID.toString(16)}`,
-            },
-          ],
-        })) as string;
-      } catch (err) {
-        const code = (err as { code?: number })?.code;
-        setBusy(false);
-        setError(
-          code === 4001
-            ? t("ownership.error_signature_cancelled")
-            : t("ownership.error_wallet_send")
-        );
-        return;
+      let txHash = pendingTxHash;
+      if (!txHash) {
+        const wallet =
+          wallets.find((w) => w.address && w.walletClientType !== "guest") ??
+          wallets[0];
+        const transferContract = intent.contractAddress ?? contractAddress;
+        if (!wallet?.address || !transferContract) {
+          setBusy(false);
+          setError(t("ownership.error_no_wallet"));
+          return;
+        }
+        try {
+          const provider = await wallet.getEthereumProvider();
+          const data = encodeFunctionData({
+            abi: warehouseOwnershipAbi,
+            functionName: "transferOwnership",
+            args: [targetWallet as `0x${string}`],
+          });
+          txHash = (await provider.request({
+            method: "eth_sendTransaction",
+            params: [
+              {
+                to: transferContract,
+                data,
+                chainId: `0x${BASE_SEPOLIA_CHAIN_ID.toString(16)}`,
+              },
+            ],
+          })) as string;
+        } catch (err) {
+          const code = (err as { code?: number })?.code;
+          setBusy(false);
+          setError(
+            code === 4001
+              ? t("ownership.error_signature_cancelled")
+              : t("ownership.error_wallet_send")
+          );
+          return;
+        }
+        if (!txHash || typeof txHash !== "string") {
+          setBusy(false);
+          setError(t("ownership.error_no_tx_hash"));
+          return;
+        }
+        setPendingTxHash(txHash);
+        writeOwnershipTransferDraft(warehouseId, intent, txHash);
       }
-      if (!txHash || typeof txHash !== "string") {
-        setBusy(false);
-        setError(t("ownership.error_no_tx_hash"));
-        return;
-      }
-      const confirmed = await confirmOwnershipTransfer({
+      const confirmed = await pollOwnershipTransfer({
         warehouseId,
         newOwnerId: targetId,
         txHash,
+        intentId: intent.intentId,
       });
       setBusy(false);
       if (!confirmed.ok) {
         setError(confirmed.error);
         return;
       }
+      clearOwnershipTransferDraft(warehouseId);
+      setIntent(null);
+      setPendingTxHash(null);
       onOpenChange(false);
       toast.add({
         type: "success",
@@ -209,7 +305,8 @@ export function TransferOwnershipDialog({
   };
 
   const selectedMember = members.find((m) => m.userId === targetId);
-  const reviewReady = !isDeployed || targetWallet !== null;
+  const reviewReady =
+    !isDeployed || (targetWallet !== null && intent !== null && !previewBusy);
 
   return (
     <ConfirmDialog
@@ -230,12 +327,18 @@ export function TransferOwnershipDialog({
           ? t("ownership.transferring")
           : confirming
             ? isDeployed
-              ? t("ownership.sign_transfer")
+              ? pendingTxHash
+                ? t("ownership.sync_transfer")
+                : t("ownership.sign_transfer")
               : t("ownership.submit")
             : t("ownership.continue")
       }
       primaryDisabled={
-        !targetId || members.length === 0 || (confirming && !reviewReady)
+        !targetId ||
+        members.length === 0 ||
+        resumeBusy ||
+        previewBusy ||
+        (confirming && !reviewReady)
       }
       primaryIcon={
         busy ? (

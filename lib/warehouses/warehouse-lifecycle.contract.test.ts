@@ -14,8 +14,8 @@ import { describe, expect, it } from "vitest";
  *  - `last_activity_at` di-reset oleh stock movement (aktivitas nyata) â†’ rantai
  *    inaktivitas diulang dari nol, tanpa spam notifikasi ulang.
  *  - GAP enforcement ditutup: warehouse `suspended` MENOLAK semua mutasi
- *    warehouse (apply_stock_movement â†’ FORBIDDEN; RPC raise â†’ error
- *    'warehouse is suspended').
+ *    warehouse (apply_stock_movement → FORBIDDEN; RPC raise → error
+ *    'warehouse is not active').
  *  - View `warehouse_summaries` mengekspos `last_activity_at` untuk member,
  *    tetap menutup outsider; `run_warehouse_lifecycle` hanya service_role.
  *
@@ -29,6 +29,9 @@ const SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const PUBLISHABLE = process.env.SUPABASE_PUBLISHABLE_KEY;
 
 const available = Boolean(BASE && SECRET && PUBLISHABLE);
+
+const testWalletAddress = (suffix: string, tag: number): string =>
+  `0x${suffix.replace(/-/g, "").slice(0, 32)}${tag.toString(16).padStart(8, "0")}`;
 
 async function send(
   path: string,
@@ -115,6 +118,20 @@ async function insertRow(
   );
   const rows = await json<Record<string, unknown>[]>(res);
   return rows[0];
+}
+
+async function insertVerifiedWallet(
+  userId: string,
+  address: string
+): Promise<void> {
+  await insertRow(SECRET!, SECRET!, "wallets", {
+    user_id: userId,
+    address,
+    wallet_type: "external",
+    is_primary: true,
+    verification_state: "verified",
+    verified_at: new Date().toISOString(),
+  });
 }
 
 async function updateRow(
@@ -220,6 +237,15 @@ const daysAgo = (days: number): string =>
       const [owner1, manager1, staff1, owner2, owner3] = created.map(
         (c) => c.id
       );
+      const outsiderId = created[5].id;
+      const wallets = {
+        owner1: testWalletAddress(suffix, 1),
+        manager1: testWalletAddress(suffix, 2),
+        staff1: testWalletAddress(suffix, 3),
+        owner2: testWalletAddress(suffix, 4),
+        owner3: testWalletAddress(suffix, 5),
+        outsider: testWalletAddress(suffix, 6),
+      };
 
       const wh1 = "00000000-0000-0000-0000-0000000000d1";
       const wh2 = "00000000-0000-0000-0000-0000000000d2";
@@ -232,7 +258,6 @@ const daysAgo = (days: number): string =>
         }
         const staffToken = tokens.get(emails.staff1)!;
         const owner1Token = tokens.get(emails.owner1)!;
-        const owner3Token = tokens.get(emails.owner3)!;
         const outsiderToken = tokens.get(emails.outsider)!;
 
         // --- Fixture: 3 warehouse (masing-masing owner unik karena
@@ -268,6 +293,16 @@ const daysAgo = (days: number): string =>
           makeMembership(wh2, owner2, "OWNER"),
           makeMembership(wh3, owner3, "OWNER"),
         ]);
+        for (const [userId, address] of [
+          [owner1, wallets.owner1],
+          [manager1, wallets.manager1],
+          [staff1, wallets.staff1],
+          [owner2, wallets.owner2],
+          [owner3, wallets.owner3],
+          [outsiderId, wallets.outsider],
+        ] as const) {
+          await insertVerifiedWallet(userId, address);
+        }
 
         // Produk di wh1 (untuk RPC apply_stock_movement) dan wh3 (untuk reset).
         const product1 = await insertRow(SECRET!, SECRET!, "products", {
@@ -340,28 +375,35 @@ const daysAgo = (days: number): string =>
         // =============================================================
         // B. Enforcement: warehouse suspended menolak SEMUA mutasi.
         // =============================================================
-        const movementRes = await callRpc(staffToken, "apply_stock_movement", {
-          p_warehouse_id: wh1,
-          p_product_id: String(product1.id),
-          p_movement_type: "stock_in",
-          p_quantity: 5,
-          p_expected_balance_version: 0,
-          p_reason: null,
-          p_reference: null,
-          p_reversal_of: null,
-          p_idempotency_key: null,
-          p_actor_wallet: null,
-          p_movement_id: null,
-          p_proof_payload: null,
-          p_proof_payload_hash: null,
-        });
+        const movementRes = await callRpc(
+          SECRET!,
+          "apply_stock_movement",
+          {
+            p_warehouse_id: wh1,
+            p_product_id: String(product1.id),
+            p_movement_type: "stock_in",
+            p_quantity: 5,
+            p_expected_balance_version: 0,
+            p_reason: null,
+            p_reference: null,
+            p_reversal_of: null,
+            p_idempotency_key: `LC-SUSP-${suffix}`,
+            p_actor_wallet: wallets.staff1,
+            p_movement_id: null,
+            p_proof_payload: null,
+            p_proof_payload_hash: null,
+            p_request_fingerprint: `LC-SUSP-FP-${suffix}`,
+            p_actor_user_id: staff1,
+          },
+          SECRET!
+        );
         expect(movementRes.status).toBe(200); // fungsi return-tuple â†’ 200
         const [movementRow] = JSON.parse(movementRes.text) as {
           error_code: string;
           message: string;
         }[];
         expect(movementRow.error_code).toBe("FORBIDDEN");
-        expect(movementRow.message).toBe("warehouse is suspended");
+        expect(movementRow.message).toBe("warehouse is not active");
 
         // RPC raise-style: update_member_role juga tertolak.
         const roleRes = await callRpc(owner1Token, "update_member_role", {
@@ -498,7 +540,7 @@ const daysAgo = (days: number): string =>
 
         // Aktivitas nyata (stock_in oleh OWNER) berhasil + mereset counter.
         const resetMovement = await callRpc(
-          owner3Token,
+          SECRET!,
           "apply_stock_movement",
           {
             p_warehouse_id: wh3,
@@ -509,12 +551,15 @@ const daysAgo = (days: number): string =>
             p_reason: null,
             p_reference: null,
             p_reversal_of: null,
-            p_idempotency_key: null,
-            p_actor_wallet: "0x1234567890abcdef1234567890abcdef12345678",
+            p_idempotency_key: `LC-RESET-${suffix}`,
+            p_actor_wallet: wallets.owner3,
             p_movement_id: null,
             p_proof_payload: null,
             p_proof_payload_hash: null,
-          }
+            p_request_fingerprint: `LC-RESET-FP-${suffix}`,
+            p_actor_user_id: owner3,
+          },
+          SECRET!
         );
         expect(resetMovement.status).toBe(200);
         const [resetRow] = JSON.parse(resetMovement.text) as {

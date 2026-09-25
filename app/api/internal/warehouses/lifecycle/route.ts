@@ -17,7 +17,7 @@ import { runWarehouseLifecycle } from "@/lib/warehouses/lifecycle";
  * POST /api/internal/warehouses/lifecycle
  */
 
-export async function POST(request: Request) {
+async function handleLifecycle(request: Request) {
   const cronOk = await verifyCronSecret(request);
   if (!cronOk) {
     logger.warn("warehouse lifecycle rejected: no valid cron auth");
@@ -29,4 +29,12 @@ export async function POST(request: Request) {
 
   const result = await runWarehouseLifecycle();
   return NextResponse.json(result, { status: result.ok ? 200 : 500 });
+}
+
+export async function GET(request: Request) {
+  return handleLifecycle(request);
+}
+
+export async function POST(request: Request) {
+  return handleLifecycle(request);
 }

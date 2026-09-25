@@ -25,9 +25,15 @@ const mockCreateClient = vi.mocked(createProofServiceClient);
 const mockTreasury = vi.mocked(createTreasuryAdapter);
 const mockScheduleConfirm = vi.mocked(scheduleProofConfirmation);
 
-function makeSupabase(proof: { status: string; tx_hash: string | null }) {
+function makeSupabase(
+  proof: { status: string; tx_hash: string | null },
+  error: { message: string } | null = null
+) {
   const rpc = vi.fn(async () => ({ data: null }));
-  const maybeSingle = vi.fn(async () => ({ data: proof }));
+  const maybeSingle = vi.fn(async () => ({
+    data: error ? null : proof,
+    error,
+  }));
   const from = vi.fn(() => ({
     select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle })) })),
   }));
@@ -58,6 +64,20 @@ describe("confirmProof", () => {
       ok: true,
       processed: 0,
     });
+  });
+
+  it("fails closed when the Supabase proof lookup is unavailable", async () => {
+    makeSupabase(
+      { status: "submitted", tx_hash: TX_HASH },
+      { message: "supabase unavailable" }
+    );
+
+    await expect(confirmProof("proof-1", 1)).resolves.toEqual({
+      ok: false,
+      processed: 0,
+      error: "supabase unavailable",
+    });
+    expect(mockTreasury).not.toHaveBeenCalled();
   });
 
   it("submitted without tx_hash → manual_review", async () => {
@@ -118,6 +138,25 @@ describe("confirmProof", () => {
       submit: vi.fn(),
       confirm: vi.fn(async () => ({ ok: true, confirmationCount: 1 })),
     } as never);
+
+    const result = await confirmProof("proof-1", 1);
+
+    expect(result).toEqual({ ok: true, processed: 1, confirmationCount: 1 });
+    expect(rpc).toHaveBeenCalledWith("proof_set_confirmation", {
+      p_proof_id: "proof-1",
+      p_count: 1,
+      p_status: "confirming",
+    });
+    expect(mockScheduleConfirm).toHaveBeenCalledWith("proof-1", 2);
+  });
+
+  it("keeps the confirming DB state when the next poll cannot be scheduled", async () => {
+    const { rpc } = makeSupabase({ status: "submitted", tx_hash: TX_HASH });
+    mockTreasury.mockReturnValue({
+      submit: vi.fn(),
+      confirm: vi.fn(async () => ({ ok: true, confirmationCount: 1 })),
+    } as never);
+    mockScheduleConfirm.mockRejectedValueOnce(new Error("qstash unavailable"));
 
     const result = await confirmProof("proof-1", 1);
 

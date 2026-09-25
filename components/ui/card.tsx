@@ -33,9 +33,17 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+type CardTitleProps = React.HTMLAttributes<HTMLElement> & {
+  as?: React.ElementType;
+};
+
+function CardTitle({
+  as: Component = "h3",
+  className,
+  ...props
+}: CardTitleProps) {
   return (
-    <div
+    <Component
       data-slot="card-title"
       className={cn(
         "text-base leading-snug font-semibold group-data-[size=sm]/card:text-sm",
@@ -46,9 +54,9 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+function CardDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
-    <div
+    <p
       data-slot="card-description"
       className={cn("text-muted-foreground text-sm", className)}
       {...props}

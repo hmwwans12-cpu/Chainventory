@@ -40,12 +40,14 @@ import {
   createProductWithInitialStock,
   updateProduct,
 } from "@/lib/inventory/products-client";
+import { isRetryableApiFailure, newIdempotencyKey } from "@/lib/api-client";
 import type { ProductRow, StockMovementRow } from "@/lib/inventory/types";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { formatDate } from "@/lib/utils";
 import {
   MOVEMENT_STATUS_META as SHARED_MOVEMENT_STATUS_META,
   MOVEMENT_TYPE_META as SHARED_MOVEMENT_TYPE_META,
+  localizedMetaLabel,
 } from "@/lib/inventory/status-meta";
 import { ErrorAlert } from "@/components/shared/error-alert";
 import { useLocale } from "@/components/providers/locale-provider";
@@ -83,8 +85,12 @@ export function CreateProductDialog({
   const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const idempotencyKey = React.useRef<string | null>(null);
 
   const handleSubmit = async (values: ProductFormValues) => {
+    if (!idempotencyKey.current) {
+      idempotencyKey.current = newIdempotencyKey();
+    }
     setBusy(true);
     setError(null);
     const result = await createProductWithInitialStock({
@@ -96,12 +102,17 @@ export function CreateProductDialog({
       lowStockThreshold: values.lowStockThreshold,
       description: values.description,
       initialQuantity: values.initialQuantity,
+      idempotencyKey: idempotencyKey.current,
     });
     setBusy(false);
     if (!result.ok) {
+      if (!isRetryableApiFailure(result)) {
+        idempotencyKey.current = null;
+      }
       setError(result.error);
       return;
     }
+    idempotencyKey.current = null;
     onOpenChange(false);
     onCreated();
     const warehouseShort = warehouseId.slice(0, 6);
@@ -123,7 +134,13 @@ export function CreateProductDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) idempotencyKey.current = null;
+        onOpenChange(next);
+      }}
+    >
       <DialogContent className="max-w-[480px] gap-0 rounded-2xl p-0">
         <DialogHeader>
           <div className="flex items-start justify-between gap-3 border-b px-6 pt-5 pb-4">
@@ -155,7 +172,10 @@ export function CreateProductDialog({
           mode="create"
           submitLabel={t("dialogs.create_product.submit")}
           busy={busy}
-          onCancel={() => onOpenChange(false)}
+          onCancel={() => {
+            idempotencyKey.current = null;
+            onOpenChange(false);
+          }}
           onSubmit={handleSubmit}
         />
       </DialogContent>
@@ -174,7 +194,7 @@ export function EditProductDialog({
   onOpenChange: (open: boolean) => void;
   onUpdated: () => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const unitLocked = product.movementCount > 0;
@@ -234,7 +254,7 @@ export function EditProductDialog({
           {product.updatedAt ? (
             <span>
               {t("dialogs.edit_product.updated", {
-                date: formatDate(product.updatedAt),
+                date: formatDate(product.updatedAt, locale),
               })}
             </span>
           ) : null}
@@ -389,7 +409,7 @@ export function ProductDetailSheet({
   /** Buka dialog Stock In dengan produk ini terpilih (opsional). */
   onRecordMovement?: (product: ProductRow) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [movements, setMovements] = React.useState<StockMovementRow[] | null>(
     null
   );
@@ -594,10 +614,10 @@ export function ProductDetailSheet({
                           <div className="flex min-w-0 items-center gap-2">
                             <StatusBadge
                               tone={typeMeta.tone}
-                              label={typeMeta.label}
+                              label={localizedMetaLabel(typeMeta, t)}
                             />
                             <span className="text-muted-foreground truncate text-[13px] tabular-nums">
-                              {formatDate(m.created_at)}
+                              {formatDate(m.created_at, locale)}
                             </span>
                           </div>
                           <span
@@ -619,7 +639,7 @@ export function ProductDetailSheet({
                           </span>
                           <StatusBadge
                             tone={statusMeta.tone}
-                            label={statusMeta.label}
+                            label={localizedMetaLabel(statusMeta, t)}
                           />
                         </div>
                       </li>

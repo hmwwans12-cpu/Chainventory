@@ -57,6 +57,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.open_command": "Open command palette",
     "common.search_placeholder": "Search products, movements, transactions…",
     "common.close": "Close",
+    "common.retry": "Try again",
+    "common.error_title": "Something went wrong",
+    "common.previous": "Previous",
+    "common.next": "Next",
+    "common.page_status": "Page {page} of {totalPages}",
     "common.cancel": "Cancel",
     "common.confirm": "Confirm",
     // Landing - Hero
@@ -980,6 +985,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "ownership.onchain_note":
       "Warehouse contract is live on Base Sepolia. Ownership must move on-chain from the owner wallet before the app record can follow.",
     "ownership.sign_transfer": "Sign & Transfer",
+    "ownership.sync_transfer": "Sync transfer",
+    "ownership.target_unavailable":
+      "This transfer target is no longer an active member. Start a new transfer.",
+    "ownership.resume_failed":
+      "Could not resume the ownership transfer. Reconnect and try again.",
     "ownership.loading_wallet": "Loading member wallet…",
     "ownership.error_no_wallet":
       "Owner wallet unavailable. Reconnect your wallet and try again.",
@@ -1338,6 +1348,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.recent_proof_verified": "Verified",
     "dashboard.recent_proof_verifying": "Verifying",
     "dashboard.recent_proof_failed": "Failed",
+    "dashboard.recent_proof_delayed": "Verification delayed",
+    "movements.status_committed": "Committed",
+    "roles.owner": "Owner",
+    "roles.manager": "Manager",
+    "roles.staff": "Staff",
+    "roles.auditor": "Auditor",
+    "roles.viewer": "Viewer",
+    "deployments.pending": "Deployment pending",
+    "deployments.submitting": "Submitting",
+    "deployments.submitted": "Submitted",
+    "deployments.confirmed": "Deployed",
+    "deployments.failed": "Deployment failed",
     "dashboard.recent_type_stock_in": "Stock In",
     "dashboard.recent_type_stock_out": "Stock Out",
     "dashboard.recent_type_adjustment": "Adjustment",
@@ -1392,6 +1414,24 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.pref_th_email": "Email",
     "settings.pref_inapp_aria": "In-app notifications for {label}",
     "settings.pref_email_aria": "Email notifications for {label}",
+    "settings.pref_category_member_requests": "Join requests",
+    "settings.pref_category_member_requests_desc":
+      "When someone asks to join the warehouse.",
+    "settings.pref_category_role_changes": "Role changes",
+    "settings.pref_category_role_changes_desc":
+      "When a member's role is changed or removed.",
+    "settings.pref_category_adjustment_pending": "Adjustment awaiting approval",
+    "settings.pref_category_adjustment_pending_desc":
+      "When a stock adjustment needs your approval.",
+    "settings.pref_category_proof_failed": "Proof failures",
+    "settings.pref_category_proof_failed_desc":
+      "When an on-chain proof fails or needs review.",
+    "settings.pref_category_ownership": "Ownership transfers",
+    "settings.pref_category_ownership_desc":
+      "When warehouse ownership changes.",
+    "settings.pref_category_low_stock": "Low stock",
+    "settings.pref_category_low_stock_desc":
+      "When a product drops to its low-stock threshold.",
     "settings.saving": "Saving…",
     // Products page
     "products.toast_archived_title": "Products archived",
@@ -1542,6 +1582,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.open_command": "Buka palette perintah",
     "common.search_placeholder": "Cari produk, pergerakan, transaksi…",
     "common.close": "Tutup",
+    "common.retry": "Coba lagi",
+    "common.error_title": "Terjadi kesalahan",
+    "common.previous": "Sebelumnya",
+    "common.next": "Berikutnya",
+    "common.page_status": "Halaman {page} dari {totalPages}",
     "common.cancel": "Batal",
     "common.confirm": "Konfirmasi",
     // Landing - Hero
@@ -2473,6 +2518,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "ownership.onchain_note":
       "Kontrak gudang live di Base Sepolia. Kepemilikan harus berpindah on-chain dari dompet owner sebelum catatan aplikasi menyusul.",
     "ownership.sign_transfer": "Tandatangani & Transfer",
+    "ownership.sync_transfer": "Sinkronkan transfer",
+    "ownership.target_unavailable":
+      "Target transfer ini bukan lagi anggota aktif. Mulai transfer baru.",
+    "ownership.resume_failed":
+      "Ownership transfer tidak dapat dilanjutkan. Sambungkan kembali dan coba lagi.",
     "ownership.loading_wallet": "Memuat dompet anggota…",
     "ownership.error_no_wallet":
       "Dompet owner tidak tersedia. Sambungkan ulang dompet Anda dan coba lagi.",
@@ -2835,6 +2885,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.recent_proof_verified": "Terverifikasi",
     "dashboard.recent_proof_verifying": "Memverifikasi",
     "dashboard.recent_proof_failed": "Gagal",
+    "dashboard.recent_proof_delayed": "Verifikasi tertunda",
+    "movements.status_committed": "Selesai",
+    "roles.owner": "Owner",
+    "roles.manager": "Manager",
+    "roles.staff": "Staf",
+    "roles.auditor": "Auditor",
+    "roles.viewer": "Viewer",
+    "deployments.pending": "Deployment tertunda",
+    "deployments.submitting": "Mengirim",
+    "deployments.submitted": "Terkirim",
+    "deployments.confirmed": "Terdeploy",
+    "deployments.failed": "Deployment gagal",
     "dashboard.recent_type_stock_in": "Stok Masuk",
     "dashboard.recent_type_stock_out": "Stok Keluar",
     "dashboard.recent_type_adjustment": "Penyesuaian",
@@ -2889,6 +2951,25 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.pref_th_email": "Email",
     "settings.pref_inapp_aria": "Notifikasi dalam aplikasi untuk {label}",
     "settings.pref_email_aria": "Notifikasi email untuk {label}",
+    "settings.pref_category_member_requests": "Permintaan bergabung",
+    "settings.pref_category_member_requests_desc":
+      "Saat seseorang meminta bergabung ke warehouse.",
+    "settings.pref_category_role_changes": "Perubahan peran",
+    "settings.pref_category_role_changes_desc":
+      "Saat peran anggota berubah atau dihapus.",
+    "settings.pref_category_adjustment_pending":
+      "Penyesuaian menunggu persetujuan",
+    "settings.pref_category_adjustment_pending_desc":
+      "Saat penyesuaian stok membutuhkan persetujuan Anda.",
+    "settings.pref_category_proof_failed": "Kegagalan proof",
+    "settings.pref_category_proof_failed_desc":
+      "Saat proof on-chain gagal atau perlu ditinjau.",
+    "settings.pref_category_ownership": "Transfer kepemilikan",
+    "settings.pref_category_ownership_desc":
+      "Saat kepemilikan warehouse berubah.",
+    "settings.pref_category_low_stock": "Stok menipis",
+    "settings.pref_category_low_stock_desc":
+      "Saat stok produk mencapai batas minimum.",
     "settings.saving": "Menyimpan…",
     // Halaman produk
     "products.toast_archived_title": "Produk diarsipkan",

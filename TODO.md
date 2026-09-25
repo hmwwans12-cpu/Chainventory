@@ -1,7 +1,7 @@
 # TODO.md
 
 **Status:** Sebagian besar tercapai - disinkronkan dari audit kode
-**Last Updated:** 2026-09-16 (release v0.5.5)
+**Last Updated:** 2026-09-25 (release v0.5.6)
 **Companion to:** `PRD.md`, `ARSITEKTUR.md`, `TECHSTACK.md`, `WORKFLOW.md`
 
 Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet → RBAC → Inventory → Proof pipeline**, lalu **P2**, lalu **P3**.
@@ -25,6 +25,14 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 > penuh untuk bukti live. Angka lama 2026-08-24: 223/30 — lihat AGENT.md §9
 > untuk changelog v0.4.x.)
 >
+> **Release v0.5.6 (2026-09-25):** full-stack audit hardening P1–P4,
+> durable ownership-transfer intent/generation + 24h retention (`0073`),
+> factory/signer fail-closed, canonical origin, recovery/reconciler,
+> UI/i18n/accessibility consistency, dan degraded dependency coverage.
+> Verifikasi lokal: 432 Vitest passed / 32 skipped, tsc, ESLint, Prettier,
+> i18n, build, preflight, secret scan, dan dependency audit hijau.
+> Live migration/remote E2E tetap memerlukan Supabase/project credentials.
+>
 > **Release v0.5.5 (2026-09-16):** fix P0-1 `transfer_confirm` on-chain
 > (ekspektasi `tx.from` dari `warehouses.on_chain_owner_wallet` DB
 > pra-transfer + post-condition `owner()` pasca-tx == wallet target via
@@ -39,18 +47,19 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 > ownership on-chain diumumkan ke user.
 >
 > **Audit v3 full-stack (2026-09-16, unreleased):** migrasi 0061
-> `rpc_trust_boundary_hardening` TER-APPLY live & terverifikasi
-> (signature + GRANT + guard dicek via Management API; live contract
-> test `rpc-hardening.contract.test.ts` hijau 8/8, cleanup bersih):
-> `transfer_ownership` tolak deployed (Fix A5 di DB); `verify_wallet`,
-> `proof_retry`, `confirm_ownership_transfer` EXECUTE service_role saja
-> (route via service client + actor eksplisit);
-> `set_warehouse_contract_address` format 0x + one-way latch.
-> `recordProof` tanpa access control = known-limitation v1 yang disengaja
-> (ADR-0008 + ARSITEKTUR §5.2: event log tidak standalone-trustworthy).
+> `rpc_trust_boundary_hardening` serta 0062–0073
+> `*_service_boundary`/P2 hardening menutup trust boundary movement,
+> intent, deployment, product, wallet, invitation, profile projection,
+> dan membership. `transfer_ownership` tolak deployed; mutation RPC
+> sensitive memakai service client + actor eksplisit; QStash callback
+> URL-bound; confirmation depth, deployment/faucet reconciler, pagination
+> bounds, v1/v2 proof-mode guard, dan idempotent invitation/product flow
+> sudah dikuatkan. `recordProof` tanpa access control
+> = known-limitation v1 yang disengaja (ADR-0008 + ARSITEKTUR §5.2:
+> event log tidak standalone-trustworthy).
 > `deps-audit` sudah punya `expires` per-entry (= acceptedUntil yang
 > diminta §7). Sisa manual: transfer Base Sepolia (setelah §2/§3),
-> switch factory v2 Vercel, 3 keputusan ADR-0007.
+> switch factory v2 Vercel, recovery tx-hash orphan, 3 keputusan ADR-0007.
 
 ---
 
@@ -178,6 +187,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 - [x] Tambahkan anti-abuse faucet dan observability klaim.
 - [x] Pastikan browser tidak dapat menjalankan direct mutation pada ledger/balance/proof.
 - [x] Uji RLS bypass, role escalation, rate-limit outage, dan secret leakage. (semua ✅: escalation + secret leakage; RLS bypass `rls-bypass.contract.test.ts` live-env; rate-limit outage `rate-limit.outage.test.ts` + `.unconfigured.test.ts`)
+- [x] P2 audit batch (0070–0073): product/archive/invitation/wallet/profile direct boundaries, membership lock+audit, email normalization, transaction bounds, stable pagination, v1/v2 proof-mode guard, QStash URL binding, two-confirmation checks, and cron reconcilers.
 
 ## P2 — UI, Realtime, dan Data Access
 
@@ -218,13 +228,20 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 
 ## P3 — Testing, Hardening, dan Release
 
+- [x] Factory manifest exact-address resolver dengan mode `legacy-v1|wallet-paid-v2|unknown` dan fail-closed unknown.
+- [x] Treasury signer diverifikasi terhadap registry + live `factory.proofRecorder()` sebelum deployment/proof relay.
+- [x] Canonical public-origin resolver untuk QStash, auth redirect, invitation, dan env-health.
+- [x] Deployment finalization resolve factory dari address tersimpan; owner-authorized recovery attach tx hash; unknown relay outcome tidak didestructive rollback.
+- [ ] Preview remote E2E memakai dedicated Supabase/QStash/factory/signer profile (workflow isolation).
+- [x] Durable ownership-transfer intent/generation dan 24h idempotency retention ledger. (✅ migration `0073`, resume client, cleanup cron)
+
 - [x] Unit test validation, decimal formatting, JCS hash, RBAC, idempotency, proof lifecycle.
 - [x] Integration test migration, RLS, trigger unit immutability, atomic stock, stale version, negative stock.
 - [x] Contract Forge/fuzz test dan Base Sepolia smoke test.
 - [x] Test QStash duplicate delivery, lease, retry, confirmation polling, manual review.
 - [x] Playwright E2E: login → wallet → deploy → member → product → Stock In/Out → realtime → proof. (✅ 2026-08-24 lokal penuh via cloudflared tunnel: smoke + main-flow 12 termasuk proof on-chain QStash NYATA + console 3 = hijau semua; eksekusi CI tinggal isi secret E2E_*)
 - [x] Test embedded dan external wallet.
-- [ ] Test fail-closed Redis dan degraded QStash/RPC/Supabase state. (fail-closed Redis ✅ 2 test faucet; degraded QStash/RPC/Supabase belum)
+- [x] Test fail-closed Redis dan degraded QStash/RPC/Supabase state. (✅ coverage mocked untuk QStash publish/retry/confirm, Supabase lease/lookup/upsert, dan RPC transitions)
 - [x] Review bundle size, dependency licenses, accessibility, mobile layout, SEO landing page.
 - [x] Jalankan release smoke test dan export manual sebelum demo.
 - [x] Dokumentasikan known limitations free tier dan recovery playbook.
@@ -245,7 +262,10 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
 10. **Verifikasi live RLS bypass test** — `rls-bypass.contract.test.ts` auto-skip tanpa env server; jalankan dengan env penuh untuk bukti live.
 11. ~~Apply migrasi 0025–0026 ke database live~~ ✅ (2026-08-24) — ternyata 0022 & 0024 juga belum ter-apply; seluruhnya sudah dieksekusi via `supabase db query --linked` dan terverifikasi live (tabel `faucet_claims`+`stock_intents`, RPC intents race-safe, trigger berbasis `auth.jwt()` tanpa sesi anonim lolos). BONUS: 3 bug fatal di 0022 ditemukan & diperbaiki sebelum apply pertama (predikat index memakai `now()` non-IMMUTABLE → 42P17; typo `end begin;`; panggilan `public.write_audit(7 arg)` yang tidak ada → diganti `private.write_audit(9 arg)` + cooldown 12 jam dicek eksplisit).
 12. **Rate limit mutasi sensitif (audit N-2, diimplementasikan 2026-08-23)** — limiter fail-closed per user+IP kini ada untuk stock movement/intent, product write (tunggal+bulk), warehouse create/deployment, membership/ownership, dan wallet sync (`lib/security/rate-limit.ts`); faucet tetap memakai cooldown 12 jam tersendiri. Belum terverifikasi live melawan Upstash production.
-13. **Audit 0.1.5 — P0/P1 security & integrity (2026-08-24)**:
+13. **Manual recovery untuk tx hash orphan** — deployment/faucet cron sekarang menandai unknown relay outcome sebagai failure, tetapi tetap perlu operator recovery path untuk claim/deployment yang broadcast-nya tidak pernah menyimpan hash.
+14. **Factory v2 untuk adjustment/reversal** — guard saat ini menolak operasi tersebut pada warehouse v2; perlu intent/approval contract design sebelum mengaktifkan kembali.
+15. **Ownership proof generation** — retry memakai hash yang sama dan polling confirmation; generation-aware stale-QStash guard masih menjadi P3 hardening.
+16. **Audit 0.1.5 — P0/P1 security & integrity (2026-08-24)**:
     - ~~P0-01/02: tutup direct product mutation~~ ✅ migration `0037` (REVOKE + `create_product_rpc`/`update_product_rpc`).
     - ~~P0-03: RLS test attacker authenticated~~ ✅ `rls-bypass.contract.test.ts` — STAFF/MANAGER direct INSERT/UPDATE/archive/unarchive + cross-tenant SELECT (live-env, auto-skip tanpa env server).
     - ~~P1-01/02/03: idempotency fingerprint + race + scope constraint~~ ✅ migration `0038` (`request_fingerprint`, partial unique `(warehouse_id, idempotency_key)`, `ON CONFLICT DO NOTHING` + re-select → `IDEMPOTENT`/`IDEMPOTENCY_CONFLICT`); BFF menghitung fingerprint (`lib/inventory/fingerprint.ts`). **REGRESI 0035 dipulihkan**: blok proof+outbox & notifikasi adjustment kembali dalam transaksi yang sama.
@@ -255,8 +275,8 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
     - P1-04 (reversal approval) diselesaikan sebagai keputusan bisnis: reversal langsung `committed` oleh MANAGER/OWNER — didokumentasikan di §4.2/ARSITEKTUR; separation-of-duties opsional menyusul.
     - ~~Sisa P2 UI refactor~~ ✅ (2026-08-24): `lib/warehouses/warehouse-url.ts` (switch terpusat: sidebar/products/movements/transactions/members/blockchain/analytics; preserve query, reset page), duplikasi filter products-page dihapus, realtime debounce 400ms (`lib/realtime/debounce.ts`) di dashboard hook + movements + blockchain, unread store bersama (`lib/notifications/unread-store.ts`) untuk badge sidebar ↔ bell.
     - **Verifikasi live 2026-08-24**: migrasi `0038–0039` TER-APPLY ke DB live via Management API (fingerprint arg ✓, kolom ✓, index scoped ✓, RPC atomik ✓); contract test live hijau — rls-bypass 3/3 (P0-03 terbukti), apply-stock-movement ✓, reversal-concurrency ✓, proof-pipeline ✓ (blok proof restore terbukti membuat proof+outbox).
-14. ~~Apply migrasi 0038–0039 ke database live~~ ✅ (2026-08-24, lihat item 13). Tersisa opsional: jalankan E2E penuh & deploy preview untuk verifikasi visual refactor UI.
-15. **Audit 0.1.6 → rilis 0.1.7 (inventory atomicity + fingerprint hardening, 2026-08-24)**:
+17. ~~Apply migrasi 0038–0039 ke database live~~ ✅ (2026-08-24, lihat item 13). Tersisa opsional: jalankan E2E penuh & deploy preview untuk verifikasi visual refactor UI.
+18. **Audit 0.1.6 → rilis 0.1.7 (inventory atomicity + fingerprint hardening, 2026-08-24)**:
     - ~~P1-01a fingerprint NULL bypass~~ ✅ `0040`: key ada tanpa fingerprint → `INVALID_INPUT` di RPC (DB final authority); compare strict `IS DISTINCT FROM`.
     - ~~P1-01b legacy fingerprint NULL~~ ✅ `0040`: backfill canonical SHA-256 + CHECK constraint `idempotency_key IS NULL OR request_fingerprint IS NOT NULL`.
     - ~~P1-06/P1-07 initial stock conditional atomicity~~ ✅ `0041`: SATU transaksi untuk SEMUA warehouse — product + ledger + balance + **proof/outbox intent** + audit; branch deployed/undeployed dihapus dari route/client/UI; productId/movementId di-generate BFF di muka agar proof payload bisa dibangun pre-tx.
@@ -265,20 +285,20 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
     - ~~P2 docs drift~~ ✅ komentar route/client disinkronkan implementasi BFF-only + atomic.
     - Contract test diperluas: key+fp NULL → INVALID_INPUT; fp beda → IDEMPOTENCY_CONFLICT.
     - **Keputusan arsitektur menyusul (butuh owner decision):** P1-11 movement RPC BFF-only vs authenticated-by-design (butuh refactor actor param + service client); P1-12 proof hash trust boundary (keccak tidak tersedia di plpgsql — opsi: verify di processor / move ke service-only path); P1-08 bulk import job server-side; error mapping via structured codes penuh (P1-09); effective-schema.md + invariants.md docs.
-16. **Full-sweep audit v0.1.7 → hotfix 0.1.7.1 (2026-08-25)**:
+19. **Full-sweep audit v0.1.7 → hotfix 0.1.7.1 (2026-08-25)**:
     - ~~Stale closure realtime notifications-page-view~~ ✅ ref mirror (`notificationsRef.current`) mencontoh pola bell yang benar — deteksi "added" akurat saat event beruntun.
     - ~~2× `<a href>` internal~~ ✅ `InactivityBanner` + bell "View all" → `next/link` (bug class EmptyState).
     - ~~`FOOTER_NAV_ITEMS` dead export~~ ✅ dihapus.
     - ~~`INACTIVITY_CRITICAL_DAYS` fitur nanggung~~ ✅ DIIMPLEMENTASIKAN (bukan dihapus): tier kritis ≥27 hari → banner merah + ikon AlertTriangle + judul dengan sisa hari (desain 3-tingkat PRD §20 kini lengkap: warning → critical → suspended).
     - ~~Realtime notifikasi tanpa debounce~~ ✅ 400ms di notifications-page-view (konsisten P2-05).
     - ~~try/catch dead branch create-warehouse-form~~ ✅ disederhanakan ke `.catch(() => undefined)`.
-17. **Audit bug/flow 0.1.7 → rilis 0.1.8 (bulk atomic + error code fix, 2026-08-25)**:
+20. **Audit bug/flow 0.1.7 → rilis 0.1.8 (bulk atomic + error code fix, 2026-08-25)**:
     - ~~#1 bulk import dua-fasa~~ ✅ route bulk kini menerima `initialQuantity` per baris; baris ber-stok dibuat via RPC atomic `create_product_with_initial_stock` (+proof intent bila deployed) — product+ledger+balance+proof SATU transaksi per baris; state "produk ada, stok kosong" tidak lagi mungkin. Fase-2 loop di dialog dihapus.
     - ~~#2 errorCode salah label STALE_STOCK~~ ✅ `INITIAL_STOCK_FAILED` kode sendiri (422) + `causeCode` penyebab asli diekstrak dari pesan RPC; dicek SEBELUM pola generik agar tak tersamar.
     - ~~#3 microcopy form basi~~ ✅ "Applied atomically with product creation — if either fails, nothing is saved."
     - ~~#4 BOM 3 file~~ ✅ distrip (products-client, notifications & products-list contract test).
     - #5 P1-12 proof hash trust boundary tetap tercatat sebagai info arsitektur (bukan actionable saat ini).
-18. **Audit UI/UX 0.1.8 → rilis 0.1.9 (konsistensi & polish, 2025-08-25)**:
+21. **Audit UI/UX 0.1.8 → rilis 0.1.9 (konsistensi & polish, 2025-08-25)**:
     - ~~§1.1 typo Tailwind hero~~ ✅ `absolute- top-5-` dst. diperbaiki — badge floating hero kini ter-posisi benar.
     - ~~§7 PanelCard~~ ✅ `components/shared/panel-card.tsx` (variant solid/dashed; padding none/compact/default/roomy) + migrasi 15+ file raw-div: shared empty/error states (dashed resmi), 6 loading.tsx skeleton, tabel products/movements/transactions/members/blockchain, panel notifikasi, kartu warehouse dashboard, info-panel & drop-zone form join/create, failure-recovery blockchain. Permukaan semantik berwarna (warning/destructive banner) SENGAJA raw div — warna border adalah bagian makna.
     - ~~§8.1 loading-state button~~ ✅ konvensi tunggal spinner+label stabil di semua confirm dialog: members (reject/remove/leave), movements (approve/reject).
@@ -288,7 +308,7 @@ Prioritas implementasi: selesaikan seluruh **P0**, lalu **P1 Identity/Wallet →
     - ~~§9 duplikasi sign-out~~ ✅ `hooks/use-sign-out.ts`.
     - **Ditunda (butuh keputusan produk/aset):** screenshot landing, social proof, dark mode wiring (+fix scoping fumadocs), docs content, i18n ID/EN, command palette ⌘K.
     - ~~products pagination server-side~~ ✅ (temuan audit #20: sudah live — server-side range/count query berparameter page) dan ~~mobile card-list tabel~~ ✅ (`<ul lg:hidden>` lengkap + checkbox/status/stok); keduanya dicoret dari daftar tunda 2026-09-13.
-19. **Follow-up verifikasi audit UI/UX → hotfix 0.1.9.1 (2025-08-25)**:
+22. **Follow-up verifikasi audit UI/UX → hotfix 0.1.9.1 (2025-08-25)**:
     - ~~Cursor-spotlight hero & feature cards (§2, sempat kelewat)~~ ✅ `components/marketing/spotlight-card.tsx` — overlay radial mengikuti kursor via **transform translate3d + spring** (compositor-only), opacity gate hover, nonaktif utk reduced-motion & pointer sentuh; dipasang di hero visual, cards Features/Security, dan halaman Features.
     - ~~InactivityBanner pengecualian valid~~ ✅ kini bermigrasi juga: varian baru `PanelCard variant="tinted"` (border solid netral; warna semantik via className) — banner warning/critical memakainya tanpa kehilangan makna warna.
     - ~~Toast konsistensi edge (§9)~~ ✅ `border` → `ring-1 ring-foreground/10`, sejajar sistem card.

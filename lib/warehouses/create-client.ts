@@ -42,7 +42,13 @@ export type PreparedDeployment = {
 };
 
 export type SubmitResult = {
-  status: "confirmed" | "submitted";
+  status:
+    | "confirmed"
+    | "submitted"
+    | "pending"
+    | "pending_confirmation"
+    | "submitting"
+    | "failed";
   warehouseId: string;
   deploymentId: string;
   warehouseCode: string;
@@ -133,8 +139,10 @@ export async function submitDeployment(
     fetcher
   );
   if (status === 200 || status === 202) {
-    const body = json as { ok: boolean; data: SubmitResult };
-    return { ok: true, status, data: body.data };
+    const body = json as { ok?: boolean; data?: SubmitResult };
+    if (body.ok === true && body.data) {
+      return { ok: true, status, data: body.data };
+    }
   }
   return toFailure<SubmitResult>(status, json);
 }

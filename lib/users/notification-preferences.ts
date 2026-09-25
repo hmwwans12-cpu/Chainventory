@@ -15,38 +15,38 @@ export interface NotificationPreferences {
 
 export const NOTIFICATION_CATEGORIES: {
   key: NotificationCategory;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
 }[] = [
   {
     key: "member_requests",
-    label: "Join requests",
-    description: "When someone asks to join the warehouse.",
+    labelKey: "settings.pref_category_member_requests",
+    descriptionKey: "settings.pref_category_member_requests_desc",
   },
   {
     key: "role_changes",
-    label: "Role changes",
-    description: "When a member's role is changed or removed.",
+    labelKey: "settings.pref_category_role_changes",
+    descriptionKey: "settings.pref_category_role_changes_desc",
   },
   {
     key: "adjustment_pending",
-    label: "Adjustment awaiting approval",
-    description: "When a stock adjustment needs your approval.",
+    labelKey: "settings.pref_category_adjustment_pending",
+    descriptionKey: "settings.pref_category_adjustment_pending_desc",
   },
   {
     key: "proof_failed",
-    label: "Proof failures",
-    description: "When an on-chain proof fails or needs review.",
+    labelKey: "settings.pref_category_proof_failed",
+    descriptionKey: "settings.pref_category_proof_failed_desc",
   },
   {
     key: "ownership",
-    label: "Ownership transfers",
-    description: "When warehouse ownership changes.",
+    labelKey: "settings.pref_category_ownership",
+    descriptionKey: "settings.pref_category_ownership_desc",
   },
   {
     key: "low_stock",
-    label: "Low stock",
-    description: "When a product drops to its low-stock threshold.",
+    labelKey: "settings.pref_category_low_stock",
+    descriptionKey: "settings.pref_category_low_stock_desc",
   },
 ];
 
@@ -71,11 +71,10 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
 
 /** Gabungkan prefs tersimpan (JSONB bebas) dengan default agar aman di UI. */
 export function normalizePreferences(raw: unknown): NotificationPreferences {
-  const base = DEFAULT_NOTIFICATION_PREFERENCES;
+  const base = structuredClone(DEFAULT_NOTIFICATION_PREFERENCES);
   // NBE-05: jangan kembalikan referensi default global — pemanggil yang
   // memutasi hasil akan meracuni default untuk request berikutnya.
-  if (!raw || typeof raw !== "object" || Array.isArray(raw))
-    return structuredClone(base);
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return base;
   const obj = raw as Partial<NotificationPreferences>;
   const merge = (
     channel: NotificationChannel
@@ -83,7 +82,9 @@ export function normalizePreferences(raw: unknown): NotificationPreferences {
     const src = (obj[channel] ?? {}) as Record<string, unknown>;
     const out = {} as Record<NotificationCategory, boolean>;
     for (const cat of NOTIFICATION_CATEGORIES) {
-      out[cat.key] = Boolean(src[cat.key] ?? base[channel][cat.key]);
+      const value = src[cat.key];
+      out[cat.key] =
+        typeof value === "boolean" ? value : base[channel][cat.key];
     }
     return out;
   };

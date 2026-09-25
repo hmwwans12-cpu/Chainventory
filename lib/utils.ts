@@ -6,60 +6,199 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/**
- * Formatter tanggal/waktu dengan locale TERKUNCI ("en-US").
- * Alasan: Date.toLocale*() tanpa locale eksplisit memakai locale runtime
- * (Node saat SSR, browser saat hidrasi) sehingga bisa hydration mismatch.
- *
- * Temuan audit #18: locale saja tidak cukup — tanpa timeZone eksplisit,
- * hasilnya memakai timezone runtime (server UTC vs browser WIB/WITA/WIT),
- * sehingga dekat pergantian hari tanggal tampil bisa beda 1 hari.
- * TimeZone dikunci ke Asia/Jakarta (target pasar UMKM).
- */
-const FIXED_LOCALE = "en-US";
-const FIXED_TIME_ZONE = "Asia/Jakarta";
+const DEFAULT_LOCALE = "en-US";
+const DEFAULT_TIME_ZONE = "Asia/Jakarta";
 
-export function formatDate(iso: string): string {
-  if (Number.isNaN(new Date(iso).getTime())) return "—";
-  return new Date(iso).toLocaleDateString(FIXED_LOCALE, {
+export type DateFormatOptions = {
+  locale?: string;
+  timeZone?: string;
+};
+
+export type RelativeTimeOptions = DateFormatOptions & {
+  now?: number;
+  style?: Intl.RelativeTimeFormatOptions["style"];
+  numeric?: Intl.RelativeTimeFormatOptions["numeric"];
+};
+
+type ResolvedDateFormatOptions = {
+  locale: string;
+  timeZone: string;
+};
+
+function resolveDateFormatOptions(
+  localeOrOptions?: string | DateFormatOptions,
+  timeZone?: string
+): ResolvedDateFormatOptions {
+  if (typeof localeOrOptions === "object" && localeOrOptions !== null) {
+    return {
+      locale: localeOrOptions.locale || DEFAULT_LOCALE,
+      timeZone: localeOrOptions.timeZone || DEFAULT_TIME_ZONE,
+    };
+  }
+  return {
+    locale: localeOrOptions || DEFAULT_LOCALE,
+    timeZone: timeZone || DEFAULT_TIME_ZONE,
+  };
+}
+
+function formatDateValue(
+  date: Date,
+  locale: string,
+  timeZone: string,
+  options: Intl.DateTimeFormatOptions
+): string {
+  try {
+    return new Intl.DateTimeFormat(locale, { ...options, timeZone }).format(
+      date
+    );
+  } catch {
+    return new Intl.DateTimeFormat(DEFAULT_LOCALE, {
+      ...options,
+      timeZone: DEFAULT_TIME_ZONE,
+    }).format(date);
+  }
+}
+
+export function formatDate(
+  iso: string,
+  localeOrOptions?: string | DateFormatOptions,
+  timeZone?: string
+): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  const { locale, timeZone: resolvedTimeZone } = resolveDateFormatOptions(
+    localeOrOptions,
+    timeZone
+  );
+  return formatDateValue(date, locale, resolvedTimeZone, {
     month: "short",
     day: "numeric",
     year: "numeric",
-    timeZone: FIXED_TIME_ZONE,
   });
 }
 
-export function formatDateTime(iso: string): string {
-  if (Number.isNaN(new Date(iso).getTime())) return "—";
-  return new Date(iso).toLocaleString(FIXED_LOCALE, {
+export function formatDateTime(
+  iso: string,
+  localeOrOptions?: string | DateFormatOptions,
+  timeZone?: string
+): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  const { locale, timeZone: resolvedTimeZone } = resolveDateFormatOptions(
+    localeOrOptions,
+    timeZone
+  );
+  return formatDateValue(date, locale, resolvedTimeZone, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: FIXED_TIME_ZONE,
   });
 }
 
-export function formatTimeAgo(iso: string): string {
-  if (Number.isNaN(new Date(iso).getTime())) return "—";
-  const diff = Date.now() - new Date(iso).getTime();
-  const sec = Math.floor(diff / 1000);
-  if (sec < 60) return `${sec}s ago`;
-  const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}m ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
-  const d = Math.floor(hr / 24);
-  if (d < 7) return `${d}d ago`;
-  return formatDate(iso);
+function createRelativeTimeFormatter(
+  locale: string,
+  style: Intl.RelativeTimeFormatOptions["style"],
+  numeric: Intl.RelativeTimeFormatOptions["numeric"]
+): Intl.RelativeTimeFormat {
+  try {
+    return new Intl.RelativeTimeFormat(locale, { style, numeric });
+  } catch {
+    return new Intl.RelativeTimeFormat(DEFAULT_LOCALE, {
+      style: "narrow",
+      numeric: "always",
+    });
+  }
 }
 
-export function formatChartDay(isoDay: string): string {
-  if (Number.isNaN(new Date(`${isoDay}T00:00:00`).getTime())) return "—";
-  return new Date(`${isoDay}T00:00:00`).toLocaleDateString(FIXED_LOCALE, {
+export function formatTimeAgo(
+  iso: string,
+  locale?: string,
+  now?: number
+): string;
+export function formatTimeAgo(
+  iso: string,
+  options?: RelativeTimeOptions
+): string;
+export function formatTimeAgo(
+  iso: string,
+  now?: number,
+  locale?: string
+): string;
+export function formatTimeAgo(
+  iso: string,
+  localeOrNowOrOptions: string | number | RelativeTimeOptions = DEFAULT_LOCALE,
+  nowOrLocale?: number | string | RelativeTimeOptions
+): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  let locale = DEFAULT_LOCALE;
+  let timeZone = DEFAULT_TIME_ZONE;
+  let now = Date.now();
+  let style: Intl.RelativeTimeFormatOptions["style"] = "narrow";
+  let numeric: Intl.RelativeTimeFormatOptions["numeric"] = "always";
+
+  if (typeof localeOrNowOrOptions === "string") {
+    locale = localeOrNowOrOptions;
+    if (typeof nowOrLocale === "number") {
+      now = nowOrLocale;
+    } else if (typeof nowOrLocale === "object" && nowOrLocale !== null) {
+      now = nowOrLocale.now ?? now;
+      locale = nowOrLocale.locale || locale;
+      timeZone = nowOrLocale.timeZone || timeZone;
+      style = nowOrLocale.style ?? style;
+      numeric = nowOrLocale.numeric ?? numeric;
+    }
+  } else if (typeof localeOrNowOrOptions === "number") {
+    now = localeOrNowOrOptions;
+    if (typeof nowOrLocale === "string") {
+      locale = nowOrLocale;
+    } else if (typeof nowOrLocale === "object" && nowOrLocale !== null) {
+      now = nowOrLocale.now ?? now;
+      locale = nowOrLocale.locale || locale;
+      timeZone = nowOrLocale.timeZone || timeZone;
+      style = nowOrLocale.style ?? style;
+      numeric = nowOrLocale.numeric ?? numeric;
+    }
+  } else if (localeOrNowOrOptions !== null) {
+    now = localeOrNowOrOptions.now ?? now;
+    locale = localeOrNowOrOptions.locale || locale;
+    timeZone = localeOrNowOrOptions.timeZone || timeZone;
+    style = localeOrNowOrOptions.style ?? style;
+    numeric = localeOrNowOrOptions.numeric ?? numeric;
+  }
+
+  if (!Number.isFinite(now)) return "—";
+  const formatter = createRelativeTimeFormatter(locale, style, numeric);
+  const diff = now - date.getTime();
+  const seconds = Math.floor(diff / 1000);
+  const absoluteSeconds = Math.abs(seconds);
+  if (absoluteSeconds < 60) return formatter.format(-seconds, "second");
+  const minutes = Math.floor(absoluteSeconds / 60);
+  if (minutes < 60)
+    return formatter.format(Math.trunc(-seconds / 60), "minute");
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return formatter.format(Math.trunc(-seconds / 3600), "hour");
+  const days = Math.floor(hours / 24);
+  if (days < 7) return formatter.format(Math.trunc(-seconds / 86400), "day");
+  return formatDate(iso, { locale, timeZone });
+}
+
+export function formatChartDay(
+  isoDay: string,
+  localeOrOptions?: string | DateFormatOptions,
+  timeZone?: string
+): string {
+  const date = new Date(`${isoDay}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return "—";
+  const { locale, timeZone: resolvedTimeZone } = resolveDateFormatOptions(
+    localeOrOptions,
+    timeZone
+  );
+  return formatDateValue(date, locale, resolvedTimeZone, {
     month: "short",
     day: "numeric",
-    timeZone: FIXED_TIME_ZONE,
   });
 }
 

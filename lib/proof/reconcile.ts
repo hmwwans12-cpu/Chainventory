@@ -23,11 +23,26 @@ export type ReconcileResult =
       republished: string[];
       scheduledConfirms: string[];
     }
-  | { ok: false; processed: number; error: string };
+  | {
+      ok: false;
+      processed: number;
+      republished: string[];
+      scheduledConfirms: string[];
+      error: string;
+    };
 
 interface Candidate {
   kind: "republish" | "orphan" | "confirm";
   proof_id: string;
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return String(error);
 }
 
 export async function reconcileProofs(): Promise<ReconcileResult> {
@@ -36,17 +51,29 @@ export async function reconcileProofs(): Promise<ReconcileResult> {
   const { data, error } = await supabase.rpc("proof_reconcile_candidates");
   if (error) {
     logger.error({ err: error.message }, "proof reconcile candidates failed");
-    return { ok: false, processed: 0, error: error.message };
+    return {
+      ok: false,
+      processed: 0,
+      republished: [],
+      scheduledConfirms: [],
+      error: error.message,
+    };
   }
 
   const candidates = (Array.isArray(data) ? data : []) as Candidate[];
   const republished: string[] = [];
   const scheduledConfirms: string[] = [];
+  const failures: string[] = [];
 
   for (const c of candidates) {
     try {
       if (c.kind === "republish") {
-        await supabase.rpc("proof_republish", { p_proof_id: c.proof_id });
+        const { data: recovered, error: recoverError } = await supabase.rpc(
+          "proof_republish",
+          { p_proof_id: c.proof_id }
+        );
+        if (recoverError) throw recoverError;
+        if (recovered === false) continue;
         await republishProofJob(c.proof_id);
         republished.push(c.proof_id);
       } else if (c.kind === "orphan") {
@@ -76,6 +103,7 @@ export async function reconcileProofs(): Promise<ReconcileResult> {
         { proofId: c.proof_id, kind: c.kind, err },
         "reconcile item failed"
       );
+      failures.push(errorMessage(err));
     }
   }
 
@@ -83,6 +111,16 @@ export async function reconcileProofs(): Promise<ReconcileResult> {
     { processed: candidates.length, republished, scheduledConfirms },
     "proof reconciliation finished"
   );
+  if (failures.length > 0) {
+    return {
+      ok: false,
+      processed: candidates.length,
+      republished,
+      scheduledConfirms,
+      error: failures.join("; "),
+    };
+  }
+
   return {
     ok: true,
     processed: candidates.length,

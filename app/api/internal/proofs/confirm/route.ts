@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { confirmProof } from "@/lib/proof/confirmation";
+import { proofConfirmUrl } from "@/lib/proof/qstash";
 import { verifyQStashAppRouter } from "@/lib/proof/verify-request";
 
 /**
@@ -34,4 +35,4 @@ async function handler(request: Request) {
   return NextResponse.json(result, { status: 200 });
 }
 
-export const POST = verifyQStashAppRouter(handler);
+export const POST = verifyQStashAppRouter(handler, proofConfirmUrl);

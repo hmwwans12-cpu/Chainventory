@@ -128,9 +128,12 @@ export function AppSidebar({
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
+                render={<div />}
                 size="lg"
-                aria-label={t("common.active_warehouse")}
-                className="bg-card cursor-default border shadow-sm"
+                role="status"
+                tabIndex={-1}
+                aria-label={`${t("common.active_warehouse")}: ${active.name} (${active.code})`}
+                className="bg-card pointer-events-none border shadow-sm"
               >
                 <span className="bg-sidebar-primary text-sidebar-primary-foreground flex size-8 shrink-0 items-center justify-center rounded-lg">
                   <Warehouse aria-hidden="true" className="size-4" />
@@ -180,7 +183,9 @@ export function AppSidebar({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
                   <DropdownMenuGroup>
-                    <DropdownMenuLabel>Active warehouse</DropdownMenuLabel>
+                    <DropdownMenuLabel>
+                      {t("common.active_warehouse")}
+                    </DropdownMenuLabel>
                     {warehouses.map((w) => (
                       <DropdownMenuItem
                         key={w.id}

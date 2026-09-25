@@ -27,6 +27,7 @@ export type CreateProductInput = {
   lowStockThreshold?: string;
   description?: string;
   initialQuantity?: string;
+  idempotencyKey?: string;
 };
 
 export type UpdateProductInput = {
@@ -59,6 +60,11 @@ export type BulkCreateResult = {
   results: BulkRowResult[];
 };
 
+export type BulkCreateOptions = {
+  idempotencyKey?: string;
+  fetcher?: Fetcher;
+};
+
 export type CreateProductWithInitialStockInput = CreateProductInput & {
   initialQuantity?: string;
 };
@@ -66,21 +72,29 @@ export type CreateProductWithInitialStockInput = CreateProductInput & {
 export type CreateProductWithInitialStockResult = {
   productId: string;
   initialStockApplied: boolean;
+  proofPending?: boolean;
 };
 
 export async function createProduct(
   values: CreateProductInput,
   fetcher: Fetcher = fetch
-): Promise<ApiResult<{ id: string; initialStockApplied?: boolean }>> {
+): Promise<
+  ApiResult<{
+    id: string;
+    initialStockApplied?: boolean;
+    proofPending?: boolean;
+  }>
+> {
   const { status, json } = await sendJson(
     PRODUCTS_ROUTE,
     { body: values },
     fetcher
   );
-  return parseSuccess<{ id: string; initialStockApplied?: boolean }>(
-    status,
-    json
-  );
+  return parseSuccess<{
+    id: string;
+    initialStockApplied?: boolean;
+    proofPending?: boolean;
+  }>(status, json);
 }
 
 export async function updateProduct(
@@ -111,11 +125,25 @@ export async function archiveProduct(
 export async function bulkCreateProducts(
   warehouseId: string,
   products: BulkProductRow[],
-  fetcher: Fetcher = fetch
+  optionsOrFetcher?: BulkCreateOptions | Fetcher | string,
+  legacyFetcher?: Fetcher
 ): Promise<ApiResult<BulkCreateResult>> {
+  const options =
+    typeof optionsOrFetcher === "function"
+      ? { fetcher: optionsOrFetcher }
+      : typeof optionsOrFetcher === "string"
+        ? { idempotencyKey: optionsOrFetcher }
+        : (optionsOrFetcher ?? {});
+  const fetcher = options.fetcher ?? legacyFetcher ?? fetch;
   const { status, json } = await sendJson(
     PRODUCTS_BULK_ROUTE,
-    { body: { warehouseId, products } },
+    {
+      body: {
+        warehouseId,
+        products,
+        idempotencyKey: options.idempotencyKey,
+      },
+    },
     fetcher
   );
   return parseSuccess<BulkCreateResult>(status, json);
@@ -141,6 +169,7 @@ export async function createProductWithInitialStock(
     data: {
       productId: created.data.id,
       initialStockApplied: created.data.initialStockApplied === true,
+      proofPending: created.data.proofPending,
     },
   };
 }

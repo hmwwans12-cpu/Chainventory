@@ -22,7 +22,11 @@ import {
   MOVEMENT_STATUS_META,
   MOVEMENT_TYPE_META,
 } from "@/lib/inventory/status-meta";
-import { PROOF_STATUS_META as SHARED_PROOF_STATUS_META } from "@/lib/blockchain/proof-meta";
+import { localizedMetaLabel } from "@/lib/inventory/status-meta";
+import {
+  PROOF_STATUS_META as SHARED_PROOF_STATUS_META,
+  localizedProofLabel,
+} from "@/lib/blockchain/proof-meta";
 import type { MovementListItem } from "@/lib/inventory/types";
 import { cn, formatDateTime } from "@/lib/utils";
 import { BASESCAN_URL } from "@/lib/constants";
@@ -46,7 +50,7 @@ export function MovementDetailSheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   if (!movement) return null;
 
   const typeMeta = MOVEMENT_TYPE_META[movement.movementType];
@@ -66,7 +70,7 @@ export function MovementDetailSheet({
 
   steps.push({
     label: t("movements.timeline_submitted"),
-    detail: `${shortWallet(movement.actorWallet, memberLabel)} \u00b7 ${formatDateTime(movement.created_at)}`,
+    detail: `${shortWallet(movement.actorWallet, memberLabel)} \u00b7 ${formatDateTime(movement.created_at, locale)}`,
     tone: "done",
   });
 
@@ -98,7 +102,7 @@ export function MovementDetailSheet({
       label: t("movements.timeline_blockchain"),
       detail:
         movement.proofError ||
-        PROOF_STATUS_META[movement.proofStatus]?.label ||
+        localizedProofLabel(PROOF_STATUS_META[movement.proofStatus], t) ||
         movement.proofStatus,
       tone: failed ? "failed" : "pending",
     });
@@ -122,7 +126,7 @@ export function MovementDetailSheet({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <typeMeta.icon aria-hidden="true" className="size-4" />
-            {typeMeta.label}
+            {localizedMetaLabel(typeMeta, t)}
             <span className="text-muted-foreground font-mono text-sm font-normal">
               {movement.id.slice(0, 8)}
             </span>
@@ -145,7 +149,10 @@ export function MovementDetailSheet({
                 </span>
               </span>
             </div>
-            <StatusBadge tone={statusMeta.tone} label={statusMeta.label} />
+            <StatusBadge
+              tone={statusMeta.tone}
+              label={localizedMetaLabel(statusMeta, t)}
+            />
           </div>
 
           {movement.reason ? (
@@ -228,10 +235,10 @@ export function MovementDetailSheet({
                     tone={
                       PROOF_STATUS_META[movement.proofStatus]?.tone ?? "pending"
                     }
-                    label={
-                      PROOF_STATUS_META[movement.proofStatus]?.label ??
-                      movement.proofStatus
-                    }
+                    label={localizedProofLabel(
+                      PROOF_STATUS_META[movement.proofStatus],
+                      t
+                    )}
                   />
                 </div>
                 <p className="text-muted-foreground truncate font-mono text-sm">
@@ -263,8 +270,10 @@ export function MovementDetailSheet({
               <div className="flex flex-col gap-1 border-t px-3 py-3">
                 <span className="text-muted-foreground text-sm">
                   {t("movements.proof_status")}:{" "}
-                  {PROOF_STATUS_META[movement.proofStatus]?.label ??
-                    movement.proofStatus}
+                  {localizedProofLabel(
+                    PROOF_STATUS_META[movement.proofStatus],
+                    t
+                  )}
                 </span>
               </div>
             </details>

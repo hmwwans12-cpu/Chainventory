@@ -3,7 +3,11 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { getWarehouseFactory } from "@/lib/blockchain/contracts";
+import {
+  getFactoryProofMode,
+  getWarehouseFactory,
+  resolveFactoryByAddress,
+} from "@/lib/blockchain/contracts";
 
 // Test ini membaca artifact forge (contracts/out/...) — auto-skip di
 // lingkungan tanpa build kontrak (mis. CI) agar suite tetap hijau.
@@ -23,6 +27,7 @@ describe.skipIf(!existsSync(ABI_ARTIFACT))(
       expect(c.chainId).toBe(84532);
       expect(c.address).toBe("0x5e44f80585Ec50CBB64a76b3ffD099A156502e10");
       expect(c.version).toBe("1.0.0");
+      expect(c.proofMode).toBe("legacy-v1");
       expect(c.deploymentBlock).toBe(45470275);
       expect(c.proofRecorder).toBe(
         "0x463841123df8f45F2d58bBFCD276493750Bbf004"
@@ -35,6 +40,18 @@ describe.skipIf(!existsSync(ABI_ARTIFACT))(
       expect(fns).toContain("activeWarehouse");
       expect(fns).toContain("proofRecorder");
       expect(fns).toContain("onOwnershipTransfer");
+    });
+
+    it("classifies registered versions and rejects unknown addresses", () => {
+      expect(
+        getFactoryProofMode("0x3811b69b5eBC07DDA11DB72412cCd8Ec68a8Bf48")
+      ).toBe("wallet-paid-v2");
+      expect(
+        getFactoryProofMode("0x0000000000000000000000000000000000000001")
+      ).toBe("unknown");
+      expect(() =>
+        resolveFactoryByAddress("0x0000000000000000000000000000000000000001")
+      ).toThrow(/not in the registry/);
     });
   }
 );

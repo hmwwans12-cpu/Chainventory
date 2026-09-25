@@ -47,12 +47,18 @@ export function getPrivyClient(): PrivyClient {
   return privyClient;
 }
 
+export interface VerifiedPrivyWallet {
+  address: string;
+  chainId?: string | number;
+}
+
 export interface VerifiedPrivyToken {
   appId: string;
   userId: string;
   sessionId: string;
   issuedAt: number;
   expiration: number;
+  wallets?: VerifiedPrivyWallet[];
 }
 
 /**
@@ -63,16 +69,45 @@ export async function verifyPrivyAccessToken(
   token: string
 ): Promise<VerifiedPrivyToken | null> {
   try {
-    const claims = await getPrivyClient()
-      .utils()
-      .auth()
-      .verifyAccessToken(token);
+    const client = getPrivyClient();
+    const claims = await client.utils().auth().verifyAccessToken(token);
+    const user = await client.users()._get(claims.user_id);
+    if (!user || user.id !== claims.user_id) return null;
+
+    const accounts = user.linked_accounts as unknown as Array<
+      Record<string, unknown>
+    >;
+    const wallets = accounts.flatMap((account) => {
+      const address = account.address;
+      const chainType = account.chain_type;
+      const accountType = account.type;
+      const verifiedAt = account.verified_at;
+      if (
+        typeof address !== "string" ||
+        !/^0x[0-9a-f]{40}$/i.test(address) ||
+        (chainType !== "ethereum" && accountType !== "smart_wallet") ||
+        typeof verifiedAt !== "number" ||
+        verifiedAt <= 0
+      ) {
+        return [];
+      }
+      const chainId =
+        typeof account.chain_id === "string" ? account.chain_id : undefined;
+      return [
+        {
+          address: address.toLowerCase(),
+          ...(chainId ? { chainId } : {}),
+        },
+      ];
+    });
+
     return {
       appId: claims.app_id,
       userId: claims.user_id,
       sessionId: claims.session_id,
       issuedAt: claims.issued_at,
       expiration: claims.expiration,
+      wallets,
     };
   } catch (err) {
     if (err instanceof InvalidAuthTokenError) {
