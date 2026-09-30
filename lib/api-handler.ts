@@ -22,6 +22,7 @@ import {
   type Role,
 } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthLookup } from "@/lib/supabase/auth-lookup";
 import {
   enforceMutationRateLimit,
   enforceReadRateLimit,
@@ -36,6 +37,7 @@ export type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 export type ErrorCode =
   | "INVALID_INPUT"
   | "UNAUTHENTICATED"
+  | "AUTH_UNAVAILABLE"
   | "FORBIDDEN"
   | "NOT_FOUND"
   | "INSUFFICIENT_STOCK"
@@ -63,6 +65,7 @@ export type AuthResult =
 const RPC_ERROR_STATUS: Record<string, number> = {
   INVALID_INPUT: 400,
   UNAUTHENTICATED: 401,
+  AUTH_UNAVAILABLE: 503,
   UNSUPPORTED_NETWORK: 400,
   PRIVY_VERIFICATION_FAILED: 401,
   FORBIDDEN: 403,
@@ -88,6 +91,9 @@ export const invalid = (message = "Invalid input.") =>
   error(message, "INVALID_INPUT", 400);
 export const unauthorized = (message = "Unauthorized.") =>
   error(message, "UNAUTHENTICATED", 401);
+export const authUnavailable = (
+  message = "Authentication is temporarily unavailable. Please try again."
+) => error(message, "AUTH_UNAVAILABLE", 503);
 export const forbidden = (message = "Forbidden.") =>
   error(message, "FORBIDDEN", 403);
 export const notFound = (message = "Not found.") =>
@@ -149,11 +155,15 @@ export async function readJson(request: Request) {
 export async function requireUser(
   supabase: SupabaseClient
 ): Promise<AuthResult> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { user: null, res: unauthorized() };
-  return { user, res: null };
+  const auth = await getAuthLookup(supabase);
+  if (auth.status === "authenticated") {
+    return { user: auth.user, res: null };
+  }
+  if (auth.status === "unavailable") {
+    logger.warn({ err: auth.error }, "Supabase auth unavailable");
+    return { user: null, res: authUnavailable() };
+  }
+  return { user: null, res: unauthorized() };
 }
 
 /** Role member ACTIVE user di warehouse, atau null bila bukan member. */

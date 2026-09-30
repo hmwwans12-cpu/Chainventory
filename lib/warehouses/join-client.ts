@@ -31,11 +31,23 @@ async function postJson(
   body: unknown,
   fetcher: Fetcher
 ): Promise<{ status: number; json: unknown }> {
-  const res = await fetcher(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetcher(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return {
+      status: 503,
+      json: {
+        ok: false,
+        error: "Network request failed. Please try again.",
+        errorCode: "NETWORK_ERROR",
+      },
+    };
+  }
   let json: unknown = null;
   try {
     json = await res.json();
@@ -72,8 +84,10 @@ export async function requestJoin(
     fetcher
   );
   if (status === 200) {
-    const body = json as { ok: boolean; data: JoinRequestResult };
-    return { ok: true, status, data: body.data };
+    const body = json as { ok?: boolean; data?: JoinRequestResult } | null;
+    if (body?.ok === true && body.data) {
+      return { ok: true, status, data: body.data };
+    }
   }
   return toFailure<JoinRequestResult>(status, json);
 }

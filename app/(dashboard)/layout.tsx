@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -9,9 +10,10 @@ import { getMyWarehouses } from "@/lib/warehouses/current-warehouse";
 import { isDeveloperAllowed } from "@/lib/console/guard";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CommandMenu } from "@/components/shared/command-menu";
+import { AuthUnavailableState } from "@/components/auth/auth-unavailable-state";
 import { LocaleProvider } from "@/components/providers/locale-provider";
-import { PrivyProviderLazy } from "@/components/providers/privy-provider-lazy";
 import { getLocale } from "@/lib/i18n/server";
+import { getAuthLookup } from "@/lib/supabase/auth-lookup";
 
 // Audit v0.3.11 M-01: per AGENT.md §6, all authenticated pages must be
 // dynamic. This layout reads cookies and the Supabase session, so it
@@ -31,9 +33,19 @@ export default async function DashboardLayout({
   const defaultOpen = sidebarState ? sidebarState.value === "true" : true;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const auth = await getAuthLookup(supabase);
+  if (auth.status === "missing") redirect("/login");
+  if (auth.status === "unavailable") {
+    const initialLocale = await getLocale();
+    return (
+      <LocaleProvider initialLocale={initialLocale}>
+        <main className="bg-surface-container flex flex-1 items-center justify-center p-6">
+          <AuthUnavailableState />
+        </main>
+      </LocaleProvider>
+    );
+  }
+  const user = auth.user;
 
   const initialLocale = await getLocale();
 
@@ -62,19 +74,38 @@ export default async function DashboardLayout({
 
   return (
     <LocaleProvider initialLocale={initialLocale}>
-      {/* Temuan audit #26: chunk wallet (Privy/wagmi) hanya dimuat di area
-          app yang memakainya — tidak lagi di root layout / landing. */}
-      <PrivyProviderLazy>
-        <SidebarProvider defaultOpen={defaultOpen}>
-          <a
-            href="#dashboard-main"
-            className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[var(--z-modal)] focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
-          >
-            Skip to dashboard content
-          </a>
-          <Suspense fallback={null}>
-            <AppSidebar
-              warehouses={warehouses ?? []}
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <a
+          href="#dashboard-main"
+          className="bg-primary text-primary-foreground focus-visible:ring-ring sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[var(--z-modal)] focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
+        >
+          Skip to dashboard content
+        </a>
+        <Suspense fallback={null}>
+          <AppSidebar
+            warehouses={warehouses ?? []}
+            user={
+              user
+                ? {
+                    name: profile?.display_name ?? null,
+                    email: profile?.email ?? user.email ?? null,
+                  }
+                : null
+            }
+            isDeveloper={isDeveloper}
+          />
+        </Suspense>
+        <SidebarInset
+          id="dashboard-main"
+          tabIndex={-1}
+          className="outline-none"
+        >
+          <Suspense fallback={<div className="h-14 shrink-0 border-b" />}>
+            <SiteHeader
+              warehouses={(warehouses ?? []).map((w) => ({
+                id: w.id,
+                name: w.name,
+              }))}
               user={
                 user
                   ? {
@@ -83,45 +114,22 @@ export default async function DashboardLayout({
                     }
                   : null
               }
-              isDeveloper={isDeveloper}
             />
           </Suspense>
-          <SidebarInset
-            id="dashboard-main"
-            tabIndex={-1}
-            className="outline-none"
+          <main
+            className="bg-surface-container flex-1"
+            aria-label="Dashboard content"
           >
-            <Suspense fallback={<div className="h-14 shrink-0 border-b" />}>
-              <SiteHeader
-                warehouses={(warehouses ?? []).map((w) => ({
-                  id: w.id,
-                  name: w.name,
-                }))}
-                user={
-                  user
-                    ? {
-                        name: profile?.display_name ?? null,
-                        email: profile?.email ?? user.email ?? null,
-                      }
-                    : null
-                }
-              />
-            </Suspense>
-            <main
-              className="bg-surface-container flex-1"
-              aria-label="Dashboard content"
-            >
-              {/* Skeleton resmi dashboard-01: container query scope + ritme halaman.
+            {/* Skeleton resmi dashboard-01: container query scope + ritme halaman.
               max-w 1600px: konten dashboard tidak meregang tak terbatas di
               ultrawide (konsistensi visual, temuan audit UI #9). */}
-              <div className="@container/main mx-auto w-full max-w-[1600px] min-w-0 px-4 py-6 md:p-8">
-                <PageTransition>{children}</PageTransition>
-              </div>
-            </main>
-          </SidebarInset>
-          <CommandMenu isDeveloper={isDeveloper} />
-        </SidebarProvider>
-      </PrivyProviderLazy>
+            <div className="@container/main mx-auto w-full max-w-[1600px] min-w-0 px-4 py-6 md:p-8">
+              <PageTransition>{children}</PageTransition>
+            </div>
+          </main>
+        </SidebarInset>
+        <CommandMenu isDeveloper={isDeveloper} />
+      </SidebarProvider>
     </LocaleProvider>
   );
 }

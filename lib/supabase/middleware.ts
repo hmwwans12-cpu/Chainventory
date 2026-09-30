@@ -1,8 +1,21 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getAuthLookup } from "@/lib/supabase/auth-lookup";
 import { supabaseClientKey, supabaseUrl } from "@/lib/supabase/config";
 import { AUTH_ROUTES, PROTECTED_ROUTES } from "@/lib/routes";
+
+function copyResponseMetadata(
+  source: NextResponse,
+  target: NextResponse
+): NextResponse {
+  source.cookies.getAll().forEach((cookie) => target.cookies.set(cookie));
+  for (const key of ["cache-control", "expires", "pragma"]) {
+    const value = source.headers.get(key);
+    if (value) target.headers.set(key, value);
+  }
+  return target;
+}
 
 /**
  * Supabase session refresh for middleware (Auth Foundation).
@@ -33,21 +46,21 @@ export async function updateSession(request: NextRequest) {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value)
         );
-        // Preserve cookies from previous response before replacing.
-        const prevCookies = supabaseResponse.cookies.getAll();
+        const previousResponse = supabaseResponse;
         supabaseResponse = NextResponse.next({
           request,
         });
-        prevCookies.forEach(({ name, value }) =>
-          supabaseResponse.cookies.set(name, value)
-        );
+        copyResponseMetadata(previousResponse, supabaseResponse);
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options)
         );
+        Object.entries(headers).forEach(([name, value]) => {
+          supabaseResponse.headers.set(name, value);
+        });
       },
     },
   });
@@ -57,14 +70,11 @@ export async function updateSession(request: NextRequest) {
   // 5xx on the auth endpoint) does not cascade into a 500 for every
   // protected page. The route handler is the primary authorization
   // boundary per AGENT.md §3 — proxy.ts is only doing session refresh.
-  let user: { id: string; email?: string | null } | null = null;
-  try {
-    const result = await supabase.auth.getUser();
-    user = result.data.user;
-  } catch (err) {
-    // Log but do not block. Protected routes will reject the request via
-    // the in-route `requireUser` helper which is the actual auth gate.
-    console.warn("[proxy] supabase.auth.getUser failed:", err);
+  const auth = await getAuthLookup(supabase);
+  const user = auth.status === "authenticated" ? auth.user : null;
+
+  if (auth.status === "unavailable") {
+    console.warn("[proxy] Supabase Auth unavailable; allowing request");
   }
 
   const pathname = request.nextUrl.pathname;
@@ -76,6 +86,10 @@ export async function updateSession(request: NextRequest) {
   const isProtected = matchesRoute(PROTECTED_ROUTES);
   const isAuthPage = matchesRoute(AUTH_ROUTES);
 
+  if (auth.status === "unavailable") {
+    return supabaseResponse;
+  }
+
   if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -83,13 +97,13 @@ export async function updateSession(request: NextRequest) {
       "next",
       request.nextUrl.pathname + request.nextUrl.search
     );
-    return NextResponse.redirect(url);
+    return copyResponseMetadata(supabaseResponse, NextResponse.redirect(url));
   }
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    return copyResponseMetadata(supabaseResponse, NextResponse.redirect(url));
   }
 
   // Audit ronde-3 C3: token invite tak dikenal harus 404 asli, bukan
@@ -112,11 +126,7 @@ export async function updateSession(request: NextRequest) {
           const url = request.nextUrl.clone();
           url.pathname = "/__missing-invitation__";
           const rewrite = NextResponse.rewrite(url, { request });
-          // Jangan hilangkan cookie refresh yang sudah di-set supabase.
-          for (const { name, value } of supabaseResponse.cookies.getAll()) {
-            rewrite.cookies.set(name, value);
-          }
-          return rewrite;
+          return copyResponseMetadata(supabaseResponse, rewrite);
         }
       } catch {
         // Fail-open: page akan menangani via notFound()/InviteError.

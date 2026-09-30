@@ -81,7 +81,7 @@ export async function signupAction(
 
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
@@ -89,6 +89,7 @@ export async function signupAction(
         display_name: parsed.data.name,
         gender: parsed.data.gender,
       },
+      emailRedirectTo: `${resolvePublicOrigin()}/auth/confirm?next=/onboarding`,
     },
   });
 
@@ -122,6 +123,13 @@ export async function signupAction(
       "signup rejected"
     );
     return { error: userMessage };
+  }
+
+  if (!data.session) {
+    return {
+      error:
+        "Check your email to confirm your account, then return here to sign in.",
+    };
   }
 
   redirect("/onboarding");

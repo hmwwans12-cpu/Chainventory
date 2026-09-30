@@ -12,6 +12,18 @@ export const syncWalletSchema = z.object({
   walletType: z.enum(walletTypeEnum).default("embedded"),
   /** Network guard (TECHSTACK §1): hanya Base Sepolia (84532). */
   chainId: z.number().int().default(BASE_SEPOLIA_CHAIN_ID),
+  /**
+   * Bukti kepemilikan opsional untuk fallback saat daftar `wallets` di token
+   * Privy kosong (server `hasServerWalletProof`). Format 4-baris dari
+   * `buildBoundWalletProof` + `personal_sign`. Tanpa ini sync deadlock bila
+   * Privy tidak mengembalikan wallet list.
+   */
+  verificationMessage: z.string().min(1).max(500).optional(),
+  verificationSignature: z
+    .string()
+    .trim()
+    .regex(/^0x[0-9a-fA-F]{130}$/, "Enter a valid wallet signature (0x…).")
+    .optional(),
 });
 
 export type SyncWalletValues = z.infer<typeof syncWalletSchema>;

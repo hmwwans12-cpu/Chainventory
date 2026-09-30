@@ -87,11 +87,23 @@ async function postJson(
   json: unknown;
   retryAfterSeconds?: number;
 }> {
-  const res = await fetcher(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetcher(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return {
+      status: 503,
+      json: {
+        ok: false,
+        error: "Network request failed. Please try again.",
+        errorCode: "NETWORK_ERROR",
+      },
+    };
+  }
   let json: unknown = null;
   try {
     json = await res.json();
@@ -140,8 +152,10 @@ export async function prepareDeployment(
     fetcher
   );
   if (status === 200) {
-    const body = json as { ok: boolean; data: PreparedDeployment };
-    return { ok: true, status, data: body.data };
+    const body = json as { ok?: boolean; data?: PreparedDeployment } | null;
+    if (body?.ok === true && body.data) {
+      return { ok: true, status, data: body.data };
+    }
   }
   return toFailure<PreparedDeployment>(status, json, retryAfterSeconds);
 }
@@ -157,8 +171,8 @@ async function submitDeploymentRequest(
     fetcher
   );
   if (status === 200 || status === 202) {
-    const body = json as { ok?: boolean; data?: SubmitResult };
-    if (body.ok === true && body.data) {
+    const body = json as { ok?: boolean; data?: SubmitResult } | null;
+    if (body?.ok === true && body.data) {
       return { ok: true, status, data: body.data };
     }
   }

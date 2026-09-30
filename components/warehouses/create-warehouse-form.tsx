@@ -25,13 +25,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AuthUnavailableState } from "@/components/auth/auth-unavailable-state";
+import { VerifyWalletButton } from "@/components/settings/verify-wallet-button";
 import { FormField } from "@/components/auth/form-field";
+import { usePrivySession } from "@/components/providers/privy-provider";
+import { WalletBootstrapState } from "@/components/auth/wallet-bootstrap-state";
 import {
   DeploymentSteps,
   type DeploymentStep,
   type DeploymentStepState,
 } from "@/components/warehouses/deployment-steps";
-import { useWalletSync } from "@/lib/wallets/use-wallet-sync";
 import { useLocale } from "@/components/providers/locale-provider";
 import {
   prepareDeployment,
@@ -146,8 +149,26 @@ export function CreateWarehouseForm() {
   const { t } = useLocale();
   const { ready, authenticated } = usePrivy();
   const { wallets } = useWallets();
+  const {
+    supabaseUserId,
+    supabaseLoading,
+    authError,
+    walletAddress,
+    walletState,
+    walletError,
+    walletSync,
+    retryAuth,
+    retryWallet,
+  } = usePrivySession();
+  const sessionReady = !supabaseLoading && Boolean(supabaseUserId);
+  const walletReady = walletState === "ready" && walletSync.synced.length > 0;
+  const walletDisplayState = walletSync.error
+    ? "error"
+    : walletState === "ready" && !walletReady
+      ? "creating"
+      : walletState;
+  const walletDisplayError = walletSync.error ?? walletError;
   const { signTypedData } = useSignTypedData();
-  const walletSync = useWalletSync();
 
   const [name, setName] = React.useState("");
   const [companyName, setCompanyName] = React.useState("");
@@ -288,6 +309,22 @@ export function CreateWarehouseForm() {
       redirectLogin();
       return;
     }
+    if (code === "NETWORK_ERROR") {
+      fail({
+        title: t("warehouses.network_error_title"),
+        detail: t("warehouses.network_error_detail"),
+        action: "retry",
+      });
+      return;
+    }
+    if (code === "AUTH_UNAVAILABLE" || status === 503) {
+      fail({
+        title: t("warehouses.auth_unavailable_title"),
+        detail: t("warehouses.auth_unavailable_detail"),
+        action: "retry",
+      });
+      return;
+    }
     if (status === 409) {
       fail({
         title: t("warehouses.create_fail_active_title"),
@@ -330,6 +367,22 @@ export function CreateWarehouseForm() {
   ) {
     if (status === 401) {
       redirectLogin();
+      return;
+    }
+    if (code === "NETWORK_ERROR") {
+      fail({
+        title: t("warehouses.network_error_title"),
+        detail: t("warehouses.network_error_detail"),
+        action: "retry",
+      });
+      return;
+    }
+    if (code === "AUTH_UNAVAILABLE" || status === 503) {
+      fail({
+        title: t("warehouses.auth_unavailable_title"),
+        detail: t("warehouses.auth_unavailable_detail"),
+        action: "retry",
+      });
       return;
     }
     if (status === 409 && /already have an active warehouse/i.test(message)) {
@@ -514,6 +567,14 @@ export function CreateWarehouseForm() {
       const res = await pollDeployment(payload);
       if (!res.ok) return res;
       if (res.data.status === "confirmed") return res;
+      if (res.data.status === "failed") {
+        return {
+          ok: false,
+          status: 409,
+          error: "Warehouse deployment failed.",
+          errorCode: "RPC_FAILED",
+        };
+      }
     }
     const failure: ApiFailure = {
       ok: false,
@@ -525,6 +586,7 @@ export function CreateWarehouseForm() {
   }
 
   function startCreate() {
+    if (!sessionReady || !walletReady) return;
     if (!validate()) return;
     setError(null);
     setResult(null);
@@ -654,6 +716,8 @@ export function CreateWarehouseForm() {
             </h1>
           </div>
 
+          {authError ? <AuthUnavailableState onRetry={retryAuth} /> : null}
+
           <div
             role="alert"
             className="border-destructive/30 bg-destructive/15 text-destructive flex flex-col gap-1.5 rounded-lg border p-4"
@@ -677,21 +741,31 @@ export function CreateWarehouseForm() {
               size="lg"
               className="h-11 w-full text-base"
               onClick={startCreate}
-              disabled={!ready || !authenticated}
+              disabled={
+                !ready || !authenticated || !sessionReady || !walletReady
+              }
               title={
-                !authenticated ? t("warehouses.signin_retry_title") : undefined
+                !sessionReady
+                  ? t("warehouses.signin_retry_title")
+                  : !walletReady
+                    ? "Preparing your wallet"
+                    : undefined
               }
             >
               <Blocks aria-hidden="true" />
               {t("warehouses.retry")}
             </Button>
           )}
-          {!ready || !authenticated ? (
+          {!sessionReady ? (
             <p className="text-muted-foreground text-center text-sm">
-              {!authenticated
-                ? t("warehouses.signin_retry_desc")
-                : t("warehouses.preparing_desc")}
+              {t("warehouses.signin_retry_desc")}
             </p>
+          ) : !walletReady ? (
+            <WalletBootstrapState
+              state={walletDisplayState}
+              error={walletDisplayError}
+              onRetry={retryWallet}
+            />
           ) : null}
           {error.action === "connect-wallet" ? (
             <p className="text-muted-foreground text-sm">
@@ -702,6 +776,11 @@ export function CreateWarehouseForm() {
                   ? t("warehouses.create_synced")
                   : t("warehouses.create_sync_waiting")}
             </p>
+          ) : null}
+          {error.action === "connect-wallet" && walletSync.error ? (
+            <Button type="button" variant="outline" onClick={walletSync.retry}>
+              Retry wallet sync
+            </Button>
           ) : null}
         </div>
       </PhaseFade>
@@ -786,9 +865,30 @@ export function CreateWarehouseForm() {
               {t("warehouses.create_desc")}
             </p>
           </div>
+          {walletAddress ? (
+            <div className="border-border flex items-center justify-between gap-3 border-b pb-4">
+              <span className="text-muted-foreground text-sm">
+                Wallet ready
+              </span>
+              <VerifyWalletButton address={walletAddress} />
+            </div>
+          ) : null}
         </div>
 
-        {!ready || !authenticated ? (
+        {authError ? (
+          <AuthUnavailableState onRetry={retryAuth} />
+        ) : supabaseLoading ? (
+          <PanelCard
+            variant="dashed"
+            className="bg-card/50 flex items-center gap-3"
+          >
+            <Loader2
+              aria-hidden="true"
+              className="text-primary size-5 animate-spin"
+            />
+            <p className="text-foreground text-sm">Checking your session…</p>
+          </PanelCard>
+        ) : !supabaseUserId ? (
           <PanelCard
             variant="dashed"
             className="bg-card/50 flex flex-col items-start gap-3"
@@ -796,10 +896,24 @@ export function CreateWarehouseForm() {
             <p className="text-foreground text-sm">
               {t("warehouses.signin_prompt")}
             </p>
-            <Button variant="outline" size="sm" render={<Link href="/login" />}>
+            <Button
+              variant="outline"
+              size="sm"
+              render={
+                <Link
+                  href={`/login?next=${encodeURIComponent("/onboarding/create")}`}
+                />
+              }
+            >
               {t("warehouses.go_login")}
             </Button>
           </PanelCard>
+        ) : !walletReady ? (
+          <WalletBootstrapState
+            state={walletDisplayState}
+            error={walletDisplayError}
+            onRetry={retryWallet}
+          />
         ) : (
           <form
             onSubmit={(event) => {
@@ -879,7 +993,12 @@ export function CreateWarehouseForm() {
                 size="lg"
                 className="w-full text-base"
                 disabled={
-                  busy || walletSync.syncing || !ready || !authenticated
+                  busy ||
+                  walletSync.syncing ||
+                  !ready ||
+                  !authenticated ||
+                  !sessionReady ||
+                  !walletReady
                 }
               >
                 {walletSync.syncing ? (

@@ -148,7 +148,7 @@ describe("create-client", () => {
     }
   });
 
-  it("pollDeployment uses the read-limited polling endpoint", async () => {
+  it("pollDeployment uses the finalization polling endpoint", async () => {
     const data = {
       status: "pending_confirmation",
       warehouseId: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
@@ -183,6 +183,20 @@ describe("create-client", () => {
     if (!res.ok) {
       expect(res.retryAfterSeconds).toBe(17);
     }
+  });
+
+  it("maps rejected fetches to a retryable network failure", async () => {
+    const fetcher = vi
+      .fn()
+      .mockRejectedValue(new Error("offline")) as unknown as typeof fetch;
+    const res = await prepareDeployment(META, fetcher);
+
+    expect(res).toEqual({
+      ok: false,
+      status: 503,
+      error: "Network request failed. Please try again.",
+      errorCode: "NETWORK_ERROR",
+    });
   });
 
   it("maps non-JSON responses to a generic failure", async () => {

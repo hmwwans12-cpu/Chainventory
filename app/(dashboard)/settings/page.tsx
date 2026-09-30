@@ -65,13 +65,28 @@ export default async function SettingsPage({
       data: Array.isArray(data) ? data[0] : data,
       error,
     })),
-    supabase
-      .from("wallets")
-      .select("address, verification_state")
-      .eq("user_id", user.id)
-      .eq("is_primary", true)
-      .limit(1)
-      .maybeSingle(),
+    (async () => {
+      // Primary dulu; fallback ke wallet mana pun bila flag primary belum
+      // terbentuk (mis. race sync) agar halaman tidak tampil "no_wallet"
+      // padahal baris wallet sudah ada.
+      const primary = await supabase
+        .from("wallets")
+        .select("address, verification_state")
+        .eq("user_id", user.id)
+        .eq("is_primary", true)
+        .limit(1)
+        .maybeSingle();
+      if (primary.data ?? primary.error) {
+        if (primary.data) return primary;
+      }
+      return supabase
+        .from("wallets")
+        .select("address, verification_state")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+    })(),
     getMyWarehouses(supabase, user.id),
   ]);
 

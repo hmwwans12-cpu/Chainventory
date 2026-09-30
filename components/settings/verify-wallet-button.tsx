@@ -21,14 +21,31 @@ import { buildVerifyMessage } from "@/lib/wallets/verify";
  */
 export function VerifyWalletButton({ address }: { address: string }) {
   const router = useRouter();
-  const { wallets } = useWallets();
+  const { wallets, ready: walletsReady } = useWallets();
   const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
 
   const verify = async () => {
+    // Tunggu Privy siap: sebelumnya klik saat wallets masih loading langsung
+    // toast "unavailable" walau wallet sebenarnya ada.
+    if (!walletsReady) {
+      toast.add({
+        type: "error",
+        title: t("settings.verify_wallet_failed"),
+        description: t("settings.verify_wallet_signing"),
+      });
+      return;
+    }
     const target = address.toLowerCase();
     const wallet =
-      wallets.find((w) => w.address?.toLowerCase() === target) ?? wallets[0];
+      wallets.find(
+        (w) =>
+          w.address?.toLowerCase() === target &&
+          w.walletClientType !== "guest"
+      ) ??
+      // Fallback: wallet cocok tapi bertipe guest / metadata minim — coba
+      // pakai apa adanya daripada langsung gagal.
+      wallets.find((w) => w.address?.toLowerCase() === target);
     if (!wallet?.address) {
       toast.add({
         type: "error",
@@ -73,11 +90,16 @@ export function VerifyWalletButton({ address }: { address: string }) {
       });
       // Badge + guard server baca ulang baris wallets yang baru diverifikasi.
       router.refresh();
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      // User menolak signing di wallet — bedakan dari error sistem agar
+      // tidak dikira bug verify.
+      const rejected =
+        /rejected|denied|cancelled|canceled|user.*decline/i.test(msg);
       toast.add({
         type: "error",
         title: t("settings.verify_wallet_failed"),
-        description: t("settings.verify_wallet_failed"),
+        description: rejected ? msg : t("settings.verify_wallet_failed"),
       });
     } finally {
       setBusy(false);
@@ -91,7 +113,7 @@ export function VerifyWalletButton({ address }: { address: string }) {
         variant="outline"
         size="sm"
         onClick={verify}
-        disabled={busy}
+        disabled={busy || !walletsReady}
         className="relative h-8 px-3 text-xs font-semibold before:absolute before:-inset-y-2 before:content-['']"
       >
         {busy ? (

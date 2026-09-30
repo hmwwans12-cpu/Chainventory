@@ -2,7 +2,8 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { env } from "@/lib/env";
-import { forbidden, unauthorized } from "@/lib/api-handler";
+import { authUnavailable, forbidden, unauthorized } from "@/lib/api-handler";
+import { getAuthLookup } from "@/lib/supabase/auth-lookup";
 
 /**
  * Developer Console access guard (ARSITEKTUR §7.4).
@@ -90,11 +91,14 @@ export type ConsoleActorResult =
 export async function getConsoleActor(
   supabase: SupabaseClient
 ): Promise<ConsoleActorResult> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
+  const auth = await getAuthLookup(supabase);
+  if (auth.status === "unavailable") {
+    return { ok: false, res: authUnavailable() };
+  }
+  if (auth.status === "missing") {
     return { ok: false, res: unauthorized("Sign in to access the console.") };
+  }
+  const user = auth.user;
 
   const emails = user.email ? [user.email] : [];
 

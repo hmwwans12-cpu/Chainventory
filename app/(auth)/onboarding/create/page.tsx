@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { AuthShell } from "@/components/auth/auth-shell";
+import { AuthUnavailableState } from "@/components/auth/auth-unavailable-state";
 import { CreateWarehouseForm } from "@/components/warehouses/create-warehouse-form";
 import {
   redirectIfOwnsActiveWarehouse,
@@ -22,7 +24,18 @@ export const dynamic = "force-dynamic";
 export default async function CreateWarehousePage() {
   // FE-02: belum login → /login?next=...; sudah own warehouse aktif →
   // /dashboard (create pasti 409 — cegah sebelum user sign).
-  const { supabase, user } = await requireOnboardingUser("/onboarding/create");
-  await redirectIfOwnsActiveWarehouse(supabase, user.id);
-  return <CreateWarehouseForm />;
+  const auth = await requireOnboardingUser("/onboarding/create");
+  if (auth.authUnavailable) {
+    return (
+      <AuthShell wide>
+        <AuthUnavailableState />
+      </AuthShell>
+    );
+  }
+  await redirectIfOwnsActiveWarehouse(auth.supabase, auth.user.id);
+  return (
+    <AuthShell wide>
+      <CreateWarehouseForm />
+    </AuthShell>
+  );
 }

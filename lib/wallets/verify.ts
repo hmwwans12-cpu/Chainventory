@@ -23,6 +23,26 @@ export function buildVerifyMessage(address: string, issuedAt: Date): string {
   ].join("\n");
 }
 
+/**
+ * Challenge terikat user untuk fallback sync (server `parseBoundWalletProof`
+ * di `lib/wallets/sync.ts` mengharapkan 4 baris: title + address + `User:`
+ * + issued-at). Dipakai saat token Privy valid tapi daftar `wallets`-nya
+ * kosong — tanpa ini sync deadlock "wallet data unavailable" karena client
+ * tidak pernah mengirim proof apa pun.
+ */
+export function buildBoundWalletProof(
+  address: string,
+  userId: string,
+  issuedAt: Date
+): string {
+  return [
+    "Chainventory wallet verification",
+    `Address: ${address.toLowerCase()}`,
+    `User: ${userId}`,
+    `Issued at: ${issuedAt.toISOString()}`,
+  ].join("\n");
+}
+
 export type ParsedVerifyMessage =
   { ok: true; address: string; issuedAt: number } | { ok: false };
 

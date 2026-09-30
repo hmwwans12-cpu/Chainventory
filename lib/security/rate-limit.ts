@@ -41,6 +41,8 @@ export const MUTATION_RATE_LIMITS = {
   "product-write": { user: 30, ip: 120 },
   /** deploy warehouse (prepare/submit EIP-712 relay). */
   "warehouse-create": { user: 5, ip: 15 },
+  /** finalize a submitted warehouse deployment after relay. */
+  "warehouse-create-finalize": { user: 30, ip: 60 },
   /** join/approve/reject/remove/change_role. Looser than ownership transfer. */
   membership: { user: 20, ip: 60 },
   /**
@@ -55,6 +57,7 @@ export const MUTATION_RATE_LIMITS = {
    * cannot drain the ownership-transfer budget.
    */
   "ownership-transfer": { user: 3, ip: 10 },
+  "ownership-transfer-finalize": { user: 30, ip: 60 },
   /** sinkronisasi wallet Privy. */
   "wallet-sync": { user: 10, ip: 30 },
   /** verifikasi kepemilikan wallet (personal_sign challenge). */
@@ -73,7 +76,6 @@ export const READ_RATE_LIMITS = {
   export: { user: 30, ip: 120 },
   /** cek saldo wallet publik (fail-open; sebelumnya salah pakai bucket export). */
   "wallet-balance": { user: 30, ip: 120 },
-  "warehouse-create-status": { user: 30, ip: 60 },
 } as const;
 
 export type MutationAction = keyof typeof MUTATION_RATE_LIMITS;

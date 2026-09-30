@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   checkMutationRateLimit,
+  MUTATION_RATE_LIMITS,
+  READ_RATE_LIMITS,
   RATE_LIMIT_WINDOW_MS,
   type RateLimitStore,
 } from "@/lib/security/rate-limit";
@@ -89,6 +91,21 @@ describe("checkMutationRateLimit", () => {
     const decision = await checkMutationRateLimit({ ...BASE, ip: null, store });
     expect(decision.allowed).toBe(true);
     expect(keys.every((k) => k.includes(":user:"))).toBe(true);
+  });
+
+  it("finalisasi deployment memakai bucket mutation fail-closed", async () => {
+    expect(MUTATION_RATE_LIMITS["warehouse-create-finalize"]).toEqual({
+      user: 30,
+      ip: 60,
+    });
+    expect("warehouse-create-status" in READ_RATE_LIMITS).toBe(false);
+
+    const decision = await checkMutationRateLimit({
+      ...BASE,
+      action: "warehouse-create-finalize",
+      store: null,
+    });
+    expect(decision.allowed).toBe(false);
   });
 
   it("resetMs jatuh sebelum window berikutnya", async () => {

@@ -21,18 +21,39 @@ describe("P2 reliability boundaries (static)", () => {
     );
   });
 
-  it("does not destructively roll back a deployment after ambiguous relay errors", () => {
+  it("persists relay hashes before broadcast and never rolls back ambiguous broadcasts", () => {
     const route = file("app/api/warehouses/create/route.ts");
-    const catchStart = route.indexOf("deployWarehouse relay outcome unknown");
-    expect(catchStart).toBeGreaterThan(0);
-    const catchEnd = route.indexOf("const { error: statusError }", catchStart);
-    expect(catchEnd).toBeGreaterThan(catchStart);
-    expect(route.slice(catchStart, catchEnd)).not.toContain(
+    const prepareAt = route.indexOf(
+      "prepareDeployWarehouseRelay(authTuple, signature)"
+    );
+    const claimAt = route.indexOf(
+      '"create_warehouse_and_deployment_with_relay"'
+    );
+    const payloadAt = route.indexOf(
+      "p_relay_payload: prepared.rawTransaction",
+      claimAt
+    );
+    const broadcastAt = route.indexOf(
+      "broadcastPreparedWarehouseRelay(prepared)"
+    );
+    expect(prepareAt).toBeGreaterThan(0);
+    expect(claimAt).toBeGreaterThan(prepareAt);
+    expect(payloadAt).toBeGreaterThan(claimAt);
+    expect(broadcastAt).toBeGreaterThan(payloadAt);
+    const broadcastCatch = route.indexOf(
+      "deployWarehouse broadcast outcome unknown"
+    );
+    expect(broadcastCatch).toBeGreaterThan(0);
+    expect(route.slice(broadcastCatch)).not.toContain(
       "rollback_warehouse_creation"
     );
-    expect(route).toContain("DEPLOYMENT_RECOVERY_PENDING");
+    expect(route).toContain('"create_warehouse_and_deployment_with_relay"');
     expect(route).toContain('action === "recover"');
     expect(route).toContain("createWarehouseRecoverySchema");
+    expect(route).toContain('requireRateLimit("warehouse-create-finalize"');
+    expect(route).not.toContain(
+      'requireReadRateLimit(\n        "warehouse-create-status"'
+    );
   });
 
   it("requires two confirmations for wallet-paid state transitions", () => {

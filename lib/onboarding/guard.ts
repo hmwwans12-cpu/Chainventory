@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getAuthLookup } from "@/lib/supabase/auth-lookup";
 
 /**
  * Server guard alur onboarding (FE-02).
@@ -19,11 +20,14 @@ import { createClient } from "@/lib/supabase/server";
  */
 export async function requireOnboardingUser(path: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect(`/login?next=${encodeURIComponent(path)}`);
-  return { supabase, user };
+  const auth = await getAuthLookup(supabase);
+  if (auth.status === "missing") {
+    redirect(`/login?next=${encodeURIComponent(path)}`);
+  }
+  if (auth.status === "unavailable") {
+    return { supabase, user: null, authUnavailable: true as const };
+  }
+  return { supabase, user: auth.user, authUnavailable: false as const };
 }
 
 export async function redirectIfOwnsActiveWarehouse(

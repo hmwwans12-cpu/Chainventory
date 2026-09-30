@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { ok, error, readJson } from "@/lib/api-handler";
+import { authUnavailable, ok, error, readJson } from "@/lib/api-handler";
+import { getAuthLookup } from "@/lib/supabase/auth-lookup";
 import { claimFaucet } from "@/lib/faucet/claim";
 import { logger } from "@/lib/logger";
 
@@ -21,13 +22,12 @@ export async function POST(request: Request) {
   const supabase = await createClient();
 
   // Auth check
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  const auth = await getAuthLookup(supabase);
+  if (auth.status === "unavailable") return authUnavailable();
+  if (auth.status === "missing") {
     return error("Sign in to claim faucet ETH.", "UNAUTHENTICATED", 401);
   }
+  const user = auth.user;
 
   // Parse request body
   const { ok: parsed, body } = await readJson(request);

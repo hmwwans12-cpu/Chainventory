@@ -105,6 +105,34 @@ describe("warehouse deployment service boundary (0064, static)", () => {
     }
   });
 
+  it("keeps the relay outbox atomic and service-only", () => {
+    const sql = readRepositoryFile(
+      "supabase/migrations/20260925143242_warehouse_deployment_relay_outbox.sql"
+    );
+    expect(sql).toContain("add column if not exists relay_payload text");
+    expect(sql).toContain(
+      "add column if not exists relay_attempts integer not null default 0"
+    );
+    expect(sql).toContain(
+      "create or replace function public.create_warehouse_and_deployment_with_relay"
+    );
+    const createAt = sql.indexOf(
+      "from public.create_warehouse_and_deployment("
+    );
+    const statusAt = sql.indexOf(
+      "perform public.update_warehouse_deployment_status("
+    );
+    const payloadAt = sql.indexOf("set relay_payload = p_relay_payload");
+    expect(createAt).toBeGreaterThan(0);
+    expect(statusAt).toBeGreaterThan(createAt);
+    expect(payloadAt).toBeGreaterThan(statusAt);
+    expect(sql).toContain(
+      "revoke execute on function public.create_warehouse_and_deployment_with_relay"
+    );
+    expect(sql).toContain(
+      "grant execute on function public.create_warehouse_and_deployment_with_relay"
+    );
+  });
   it("keeps create and lifecycle invariants inside the database functions", () => {
     const sql = migration();
 
@@ -137,13 +165,18 @@ describe("warehouse deployment service boundary (0064, static)", () => {
     expect(source).toContain("const service = createServiceClient();");
     expect(source).toMatch(/supabase\s*\.from\("warehouses"\)/);
     expect(source).toMatch(/supabase\s*\.from\("warehouse_deployments"\)/);
-    expect(source).not.toContain("service.from");
+    expect(source).toContain(
+      'service.rpc(\n    "create_warehouse_and_deployment_with_relay"'
+    );
+    expect(source).not.toContain(
+      'service.rpc("create_warehouse_and_deployment"'
+    );
 
     for (const contract of functionContracts) {
-      if (contract.name === "rollback_warehouse_creation") {
-        expect(source).not.toContain(
-          'service.rpc("rollback_warehouse_creation"'
-        );
+      if (
+        contract.name === "rollback_warehouse_creation" ||
+        contract.name === "create_warehouse_and_deployment"
+      ) {
         continue;
       }
       expect(source).toMatch(

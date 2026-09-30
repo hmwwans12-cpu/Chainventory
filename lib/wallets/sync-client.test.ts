@@ -62,14 +62,14 @@ describe("walletToSyncBody", () => {
 });
 
 describe("syncWallets", () => {
-  it("sends nothing without an access token", async () => {
+  it("reports a retryable failure without an access token", async () => {
     const fetcher = vi.fn(async () => true);
     const result = await syncWallets({
       wallets: [ethWallet()],
       getToken: async () => null,
       fetcher,
     });
-    expect(result).toEqual({ synced: [], failed: [] });
+    expect(result).toEqual({ synced: [], failed: [DEFAULT_LOWER], skipped: [] });
     expect(fetcher).not.toHaveBeenCalled();
   });
 
@@ -131,7 +131,58 @@ describe("syncWallets", () => {
       fetcher,
     });
     expect(result.synced).toEqual([DEFAULT_LOWER]);
+    expect(result.skipped).toEqual([
+      ethWallet({ chainId: "eip155:1" }).address.toLowerCase(),
+    ]);
     expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("attaches a bound proof when signer is available", async () => {
+    const fetcher = vi.fn(async () => true);
+    const signMessage = vi.fn(async () => `0x${"a".repeat(130)}`);
+    const result = await syncWallets({
+      wallets: [ethWallet()],
+      getToken: async () => "tok",
+      fetcher,
+      getUserId: () => "u-1",
+      signMessage,
+    });
+    expect(result.synced).toEqual([DEFAULT_LOWER]);
+    expect(signMessage).toHaveBeenCalledTimes(1);
+    const sentBody = (fetcher.mock.calls as unknown[][])[0]?.[0] as unknown as {
+      verificationMessage?: string;
+      verificationSignature?: string;
+    };
+    expect(sentBody?.verificationMessage ?? "").toContain("User: u-1");
+    expect(sentBody?.verificationSignature ?? "").toMatch(
+      /^0x[0-9a-fA-F]{130}$/
+    );
+  });
+
+  it("retries once with proof when server asks proofRequired", async () => {
+    const sig = `0x${"b".repeat(130)}`;
+    // Proaktif gagal dulu (null) → server minta proof → retry signing sukses.
+    const signMessage = vi
+      .fn<(...args: unknown[]) => Promise<string | null>>()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(sig);
+    const fetcher = vi.fn(
+      async (input: { verificationSignature?: string }) =>
+        input.verificationSignature
+          ? true
+          : { ok: false, proofRequired: true },
+    );
+    const result = await syncWallets({
+      wallets: [ethWallet()],
+      getToken: async () => "tok",
+      fetcher,
+      getUserId: () => "u-1",
+      signMessage,
+    });
+    expect(result.synced).toEqual([DEFAULT_LOWER]);
+    expect(result.failed).toEqual([]);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(signMessage).toHaveBeenCalledTimes(2);
   });
 
   it("allows wallets with unparseable chainId (server defaults to 84532)", async () => {

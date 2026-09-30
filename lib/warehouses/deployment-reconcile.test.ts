@@ -19,23 +19,30 @@ beforeEach(() => {
   mockFinalize.mockResolvedValue(undefined);
   mockFrom.mockImplementation((table: string) => {
     if (table === "warehouse_deployments") {
+      const query = {
+        not: () => query,
+        is: () => ({
+          order: () => ({
+            limit: async () => ({ data: [], error: null }),
+          }),
+        }),
+        order: () => ({
+          limit: async () => ({
+            data: [
+              {
+                id: "deployment-1",
+                status: "submitted",
+                tx_hash: "0xabc",
+                warehouse_id: "warehouse-1",
+              },
+            ],
+            error: null,
+          }),
+        }),
+      };
       return {
         select: () => ({
-          in: () => ({
-            order: () => ({
-              limit: async () => ({
-                data: [
-                  {
-                    id: "deployment-1",
-                    status: "submitted",
-                    tx_hash: "0xabc",
-                    warehouse_id: "warehouse-1",
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          }),
+          in: () => query,
           eq: () => ({
             maybeSingle: async () => ({
               data: { status: "confirmed" },

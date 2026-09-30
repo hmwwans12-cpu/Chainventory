@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { AuthShell } from "@/components/auth/auth-shell";
+import { AuthUnavailableState } from "@/components/auth/auth-unavailable-state";
 import { JoinWarehouseForm } from "@/components/warehouses/join-warehouse-form";
 import { requireOnboardingUser } from "@/lib/onboarding/guard";
 
@@ -19,6 +21,17 @@ export const dynamic = "force-dynamic";
 export default async function JoinWarehousePage() {
   // FE-02: belum login → /login?next=.... Sengaja TANPA redirect dashboard
   // bila sudah punya warehouse — user boleh join warehouse lain.
-  await requireOnboardingUser("/onboarding/join");
-  return <JoinWarehouseForm />;
+  const auth = await requireOnboardingUser("/onboarding/join");
+  if (auth.authUnavailable) {
+    return (
+      <AuthShell wide>
+        <AuthUnavailableState />
+      </AuthShell>
+    );
+  }
+  return (
+    <AuthShell wide>
+      <JoinWarehouseForm />
+    </AuthShell>
+  );
 }

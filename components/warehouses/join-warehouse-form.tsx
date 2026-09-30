@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { usePrivy } from "@privy-io/react-auth";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, Check, Clock, KeyRound, Loader2 } from "lucide-react";
 
@@ -17,7 +16,10 @@ import {
   WAREHOUSE_CODE_RE,
 } from "@/lib/warehouses/warehouse-code";
 import { cn } from "@/lib/utils";
+import { AuthUnavailableState } from "@/components/auth/auth-unavailable-state";
 import { useLocale } from "@/components/providers/locale-provider";
+import { usePrivySession } from "@/components/providers/privy-provider";
+import { WalletBootstrapState } from "@/components/auth/wallet-bootstrap-state";
 
 // Kunci terjemahan (i18n FE-16) — label di-resolve via t() di body render
 // agar ikut locale aktif, bukan string Inggris statis.
@@ -75,8 +77,17 @@ function PhaseFade({
 
 export function JoinWarehouseForm() {
   const router = useRouter();
-  const { ready, authenticated } = usePrivy();
   const { t } = useLocale();
+  const {
+    authError,
+    supabaseUserId,
+    supabaseLoading,
+    walletState,
+    walletError,
+    retryAuth,
+    retryWallet,
+  } = usePrivySession();
+  const sessionReady = !supabaseLoading && Boolean(supabaseUserId);
 
   const [code, setCode] = React.useState("");
   const [fieldError, setFieldError] = React.useState<string | undefined>(
@@ -335,6 +346,8 @@ export function JoinWarehouseForm() {
             </h1>
           </div>
 
+          {authError ? <AuthUnavailableState onRetry={retryAuth} /> : null}
+
           <div
             role="alert"
             className="border-destructive/30 bg-destructive/5 flex flex-col gap-1.5 rounded-lg border p-4"
@@ -359,20 +372,16 @@ export function JoinWarehouseForm() {
                 size="lg"
                 className="h-11 w-full text-base"
                 onClick={retry}
-                disabled={!ready || !authenticated}
+                disabled={!sessionReady}
                 title={
-                  !authenticated
-                    ? t("warehouses.signin_retry_title")
-                    : undefined
+                  !sessionReady ? t("warehouses.signin_retry_title") : undefined
                 }
               >
                 {t("warehouses.retry")}
               </Button>
-              {!ready || !authenticated ? (
+              {!sessionReady ? (
                 <p className="text-muted-foreground text-center text-sm">
-                  {!authenticated
-                    ? t("warehouses.signin_retry_desc")
-                    : t("warehouses.preparing_desc")}
+                  {t("warehouses.signin_retry_desc")}
                 </p>
               ) : null}
             </>
@@ -399,7 +408,20 @@ export function JoinWarehouseForm() {
           </div>
         </div>
 
-        {!ready || !authenticated ? (
+        {authError ? (
+          <AuthUnavailableState onRetry={retryAuth} />
+        ) : supabaseLoading ? (
+          <PanelCard
+            variant="dashed"
+            className="bg-card/50 flex items-center gap-3"
+          >
+            <Loader2
+              aria-hidden="true"
+              className="text-primary size-5 animate-spin"
+            />
+            <p className="text-foreground text-sm">Checking your session…</p>
+          </PanelCard>
+        ) : !supabaseUserId ? (
           <PanelCard
             variant="dashed"
             className="bg-card/50 flex flex-col items-start gap-3"
@@ -407,7 +429,6 @@ export function JoinWarehouseForm() {
             <p className="text-foreground text-sm">
               {t("warehouses.signin_prompt")}
             </p>
-            {/* NFE-10: bawa ?next agar post-login kembali ke join. */}
             <Button
               variant="outline"
               size="sm"
@@ -475,6 +496,15 @@ export function JoinWarehouseForm() {
             </div>
           </form>
         )}
+
+        {sessionReady ? (
+          <WalletBootstrapState
+            state={walletState}
+            error={walletError}
+            onRetry={retryWallet}
+            compact
+          />
+        ) : null}
 
         <ol
           className="grid grid-cols-3 gap-2"

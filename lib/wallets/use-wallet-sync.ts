@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 import {
@@ -27,12 +27,17 @@ export interface WalletSyncState {
   syncing: boolean;
   synced: string[];
   error: string | null;
+  retry: () => void;
 }
+
+export type WalletSyncFetcherResult =
+  | boolean
+  | { ok: boolean; proofRequired?: boolean };
 
 async function defaultFetcher(
   input: WalletSyncInput,
   token: string
-): Promise<boolean> {
+): Promise<WalletSyncFetcherResult> {
   const res = await fetch("/api/wallets/sync", {
     method: "POST",
     headers: {
@@ -41,24 +46,54 @@ async function defaultFetcher(
     },
     body: JSON.stringify(input),
   });
-  return res.ok;
+  if (res.ok) return true;
+  // Deteksi fallback proof: server menolak karena wallet list Privy kosong.
+  // Kembalikan proofRequired agar sync-client retry sekali dengan signature.
+  try {
+    const body = (await res.clone().json()) as {
+      error?: string;
+      errorCode?: string;
+      proofRequired?: boolean;
+    };
+    if (body?.proofRequired === true) {
+      return { ok: false, proofRequired: true };
+    }
+    const msg = body?.error ?? "";
+    if (
+      body?.errorCode === "PRIVY_VERIFICATION_FAILED" &&
+      /wallet data is unavailable|verification challenge/i.test(msg)
+    ) {
+      return { ok: false, proofRequired: true };
+    }
+  } catch {
+    // Abaikan — anggap gagal biasa.
+  }
+  return false;
 }
 
 export function useWalletSync(
   fetcher: (
     input: WalletSyncInput,
     token: string
-  ) => Promise<boolean> = defaultFetcher
+  ) => Promise<WalletSyncFetcherResult> = defaultFetcher,
+  enabled = true,
+  supabaseUserId: string | null = null
 ): WalletSyncState {
-  const { ready, authenticated, getAccessToken } = usePrivy();
+  const { ready, authenticated, getAccessToken, user } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
-  const [state, setState] = useState<WalletSyncState>({
+  const [retryNonce, setRetryNonce] = useState(0);
+  const [state, setState] = useState<Omit<WalletSyncState, "retry">>({
     syncing: false,
     synced: [],
     error: null,
   });
-  // Address yang sudah dicoba (sukses/gagal) — dedupe antar-render.
   const attemptedRef = useRef<Set<string>>(new Set());
+  const privyUserId = user?.id ?? null;
+  const retry = useCallback(() => {
+    attemptedRef.current.clear();
+    setState({ syncing: false, synced: [], error: null });
+    setRetryNonce((value) => value + 1);
+  }, []);
 
   // Audit v0.3.2 §9.6: derive signature stabil dari address list.
   // Privy returns new wallet array tiap render — pakai signature string
@@ -67,12 +102,16 @@ export function useWalletSync(
   const syncableWallets: SyncableWallet[] = useMemo(
     () =>
       wallets
-        .filter((wallet) => wallet.type === "ethereum")
+        .filter(
+          (wallet) =>
+            wallet.type === "ethereum" && wallet.walletClientType !== "guest"
+        )
         .map((wallet) => ({
           type: wallet.type,
           address: wallet.address,
           chainId: wallet.chainId,
           connectorType: wallet.connectorType,
+          walletClientType: wallet.walletClientType,
         })),
     [wallets]
   );
@@ -86,7 +125,15 @@ export function useWalletSync(
   );
 
   useEffect(() => {
-    if (!ready || !authenticated || !walletsReady) return;
+    attemptedRef.current.clear();
+    const reset = async () => {
+      setState({ syncing: false, synced: [], error: null });
+    };
+    void reset();
+  }, [privyUserId]);
+
+  useEffect(() => {
+    if (!enabled || !ready || !authenticated || !walletsReady) return;
     if (syncableWallets.length === 0) return;
     let cancelled = false;
 
@@ -97,18 +144,50 @@ export function useWalletSync(
         getToken: getAccessToken,
         fetcher,
         skip: attemptedRef.current,
+        // Proof terikat user Supabase (server cek `User: <supabaseUserId>`).
+        // Fallback ke privy user id bila supabase id belum tersedia agar
+        // signing tetap bisa dicoba; server menolak bila tidak cocok.
+        getUserId: () => supabaseUserId ?? privyUserId,
+        signMessage: async (target, message) => {
+          const original = wallets.find(
+            (w) =>
+              w.address?.toLowerCase() ===
+              target.address.toLowerCase()
+          );
+          const provider = await original?.getEthereumProvider?.();
+          if (!provider || !original?.address) return null;
+          try {
+            const sig = (await provider.request({
+              method: "personal_sign",
+              params: [message, original.address],
+            })) as string;
+            return typeof sig === "string" ? sig : null;
+          } catch {
+            return null;
+          }
+        },
       });
       if (cancelled) return;
 
       for (const address of result.synced) attemptedRef.current.add(address);
-      for (const address of result.failed) attemptedRef.current.add(address);
+      for (const address of [...result.failed, ...result.skipped]) {
+        attemptedRef.current.add(address);
+      }
+      const parts: string[] = [];
+      if (result.failed.length > 0) {
+        parts.push(
+          `${result.failed.length} wallet(s) gagal disinkronkan. Coba lagi.`
+        );
+      }
+      if (result.skipped.length > 0) {
+        parts.push(
+          `${result.skipped.length} wallet dilewati (bukan Base Sepolia — pindah ke Base Sepolia lalu retry).`
+        );
+      }
       setState((current) => ({
         syncing: false,
         synced: [...current.synced, ...result.synced],
-        error:
-          result.failed.length > 0
-            ? `${result.failed.length} wallet(s) gagal disinkronkan.`
-            : null,
+        error: parts.length > 0 ? parts.join(" ") : null,
       }));
     };
 
@@ -129,7 +208,17 @@ export function useWalletSync(
     // getAccessToken dari Privy returns new ref tiap render — sengaja
     // TIDAK dimasukkan; effect re-runs hanya saat wallet address set berubah.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, authenticated, walletsReady, walletSignature, fetcher]);
+  }, [
+    ready,
+    authenticated,
+    walletsReady,
+    walletSignature,
+    fetcher,
+    retryNonce,
+    privyUserId,
+    supabaseUserId,
+    enabled,
+  ]);
 
-  return state;
+  return { ...state, retry };
 }

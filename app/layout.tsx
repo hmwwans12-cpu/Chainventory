@@ -6,6 +6,7 @@ import "./globals.css";
 
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PrivyProviderLazy } from "@/components/providers/privy-provider-lazy";
 
 // Self-hosted via next/font/local for offline build robustness (audit §3).
 // Stitch type system: Manrope (headings/data summaries), Hanken Grotesk
@@ -107,12 +108,11 @@ export default function RootLayout({
           }}
         />
         <TooltipProvider delay={150}>
-          {/* Temuan audit #26: PrivyProvider TIDAK di root agar chunk
-              wallet tidak ikut ke landing/login/signup — dipasang per-grup
-              via PrivyProviderLazy di (dashboard) + (auth)/onboarding. */}
-          <div id="main-content" className="flex min-h-dvh flex-1 flex-col">
-            {children}
-          </div>
+          <PrivyProviderLazy>
+            <div id="main-content" className="flex min-h-dvh flex-1 flex-col">
+              {children}
+            </div>
+          </PrivyProviderLazy>
           <Toaster />
         </TooltipProvider>
       </body>

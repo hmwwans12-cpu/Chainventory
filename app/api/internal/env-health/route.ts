@@ -42,7 +42,9 @@ export async function GET(request: Request) {
       !/localhost|127\.0\.0\.1|0\.0\.0\.0/.test(url.hostname)
     : false;
 
-  const healthy = baseUrl !== null && isPublic;
+  const mode = currentRuntimeMode();
+  const localRuntime = mode === "local" || mode === "e2e";
+  const healthy = baseUrl !== null && (isPublic || localRuntime);
   return NextResponse.json(
     {
       ok: healthy,
@@ -50,7 +52,7 @@ export async function GET(request: Request) {
         baseUrl,
         isPublic,
         hostname: url?.hostname ?? null,
-        mode: currentRuntimeMode(),
+        mode,
         source: error ?? undefined,
       },
     },

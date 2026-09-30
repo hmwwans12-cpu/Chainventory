@@ -49,9 +49,17 @@ export async function POST(request: Request) {
   );
 
   if (!result.ok) {
-    logger.warn({ errorCode: result.errorCode }, "wallet sync rejected");
+    logger.warn(
+      { errorCode: result.errorCode, reason: result.error },
+      "wallet sync rejected"
+    );
     return json(
-      { ok: false, error: result.error, errorCode: result.errorCode },
+      {
+        ok: false,
+        error: result.error,
+        errorCode: result.errorCode,
+        ...(result.proofRequired ? { proofRequired: true as const } : {}),
+      },
       rpcErrorStatus(result.errorCode)
     );
   }

@@ -1195,6 +1195,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     "warehouses.retry": "Try Again",
     "warehouses.signin_retry_title": "Sign in first, then retry",
     "warehouses.signin_retry_desc": "Sign in first, then try again.",
+    "warehouses.auth_unavailable_title": "Session temporarily unavailable",
+    "warehouses.auth_unavailable_detail":
+      "Your sign-in may still be valid. Please try again without signing out.",
+    "warehouses.network_error_title": "Connection interrupted",
+    "warehouses.network_error_detail":
+      "We could not reach Chainventory. Check your connection and try again.",
     "warehouses.preparing_desc":
       "Still preparing. Wait a moment, then try again.",
     "warehouses.code_label": "Warehouse code",
@@ -2736,6 +2742,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     "warehouses.retry": "Coba Lagi",
     "warehouses.signin_retry_title": "Masuk dulu, lalu coba lagi.",
     "warehouses.signin_retry_desc": "Masuk dulu, lalu coba lagi.",
+    "warehouses.auth_unavailable_title": "Sesi sementara tidak tersedia",
+    "warehouses.auth_unavailable_detail":
+      "Login Anda mungkin masih valid. Coba lagi tanpa keluar dari akun.",
+    "warehouses.network_error_title": "Koneksi terputus",
+    "warehouses.network_error_detail":
+      "Kami tidak dapat menghubungi Chainventory. Periksa koneksi lalu coba lagi.",
     "warehouses.preparing_desc":
       "Masih menyiapkan. Tunggu sebentar, lalu coba lagi.",
     "warehouses.code_label": "Kode gudang",

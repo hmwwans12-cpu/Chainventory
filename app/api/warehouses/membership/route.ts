@@ -96,10 +96,11 @@ export async function POST(request: Request) {
   const rateLimited = await requireRateLimit(
     action === "transfer" ||
       action === "transfer_preview" ||
-      action === "transfer_resume" ||
-      action === "transfer_confirm"
+      action === "transfer_resume"
       ? "ownership-transfer"
-      : "membership",
+      : action === "transfer_confirm"
+        ? "ownership-transfer-finalize"
+        : "membership",
     auth.user.id,
     request
   );

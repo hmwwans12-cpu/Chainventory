@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { fromPostgrestError } from "@/lib/api-handler";
+import { getAuthLookup } from "@/lib/supabase/auth-lookup";
 
 export type UpdateProfileState = {
   error: string | null;
@@ -32,12 +33,16 @@ export async function updateDisplayNameAction(
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
+  const auth = await getAuthLookup(supabase);
+  if (auth.status === "unavailable") {
+    return {
+      error: "Your session is temporarily unavailable. Please try again.",
+    };
+  }
+  if (auth.status === "missing") {
     return { error: "You must be signed in to update your profile." };
   }
+  const user = auth.user;
 
   const { error } = await supabase
     .from("users")

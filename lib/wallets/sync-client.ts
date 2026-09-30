@@ -18,25 +18,45 @@ export interface SyncableWallet {
   /** Chain ID format CAIP-2, mis. `"eip155:84532"`. */
   chainId: string;
   connectorType?: string;
+  walletClientType?: string;
 }
 
 export interface WalletSyncInput {
   address: string;
   walletType: WalletType;
   chainId?: number;
+  /** Proof opsional untuk fallback server saat wallet list Privy kosong. */
+  verificationMessage?: string;
+  verificationSignature?: `0x${string}` | string;
 }
 
 export interface SyncWalletsParams {
   wallets: SyncableWallet[];
   getToken: () => Promise<string | null>;
-  fetcher: (input: WalletSyncInput, token: string) => Promise<boolean>;
+  fetcher: (
+    input: WalletSyncInput,
+    token: string
+  ) => Promise<boolean | { ok: boolean; proofRequired?: boolean }>;
   /** Address (lowercase) yang sudah dicoba — dilewati (dedupe). */
   skip?: ReadonlySet<string>;
+  /**
+   * Fallback proof saat token Privy tanpa wallet list: user id Supabase
+   * untuk baris `User:` + signer `personal_sign` per wallet. Bila keduanya
+   * ada, tiap body sync otomatis dilampiri proof segar sehingga server bisa
+   * verifikasi via `hasServerWalletProof` alih-alih menolak deadlock.
+   */
+  getUserId?: () => string | null;
+  signMessage?: (
+    wallet: SyncableWallet,
+    message: string
+  ) => Promise<string | null>;
 }
 
 export interface SyncWalletsResult {
   synced: string[];
   failed: string[];
+  /** Wallet dilewati karena chain tidak didukung (sebelumnya silent). */
+  skipped: string[];
 }
 
 /** CAIP-2 chain reference → chain id numerik (0x-hex atau decimal). */
@@ -74,28 +94,95 @@ export function isSupportedChain(wallet: SyncableWallet): boolean {
 
 /**
  * Sinkronkan semua wallet ethereum terhubung ke server. Mengembalikan
- * daftar address (lowercase) yang berhasil/gagal; address di `skip` tidak
- * dicoba ulang. Tanpa token, tidak ada yang dikirim (aman).
+ * daftar address (lowercase) yang berhasil/gagal/dilewati; address di
+ * `skip` tidak dicoba ulang. Tanpa token, tidak ada yang dikirim (aman).
  *
- * Wallet pada chain yang tidak didukung (bukan Base Sepolia) dilewati
- * untuk menghindari UNSUPPORTED_NETWORK error dari server.
+ * Wallet pada chain yang tidak didukung (bukan Base Sepolia) masuk
+ * `skipped` (sebelumnya silent `continue`) supaya UI bisa memberi tahu
+ * user untuk pindah ke Base Sepolia alih-alih diam.
+ *
+ * Bila `getUserId` + `signMessage` tersedia, tiap body otomatis dilampiri
+ * proof 4-baris (`buildBoundWalletProof`) sehingga server bisa lolos via
+ * `hasServerWalletProof` saat wallet list Privy kosong. Bila server
+ * membalas `{ proofRequired: true }`, client menandatangani lalu retry
+ * sekali dengan proof.
  */
 export async function syncWallets(
   params: SyncWalletsParams
 ): Promise<SyncWalletsResult> {
   const token = await params.getToken();
-  if (!token) return { synced: [], failed: [] };
-
-  const result: SyncWalletsResult = { synced: [], failed: [] };
+  const result: SyncWalletsResult = { synced: [], failed: [], skipped: [] };
+  if (!token) {
+    result.failed = params.wallets
+      .filter((wallet) => wallet.type === "ethereum")
+      .map((wallet) => wallet.address.toLowerCase());
+    return result;
+  }
+  const userId = params.getUserId?.() ?? null;
   for (const wallet of params.wallets) {
     if (wallet.type !== "ethereum") continue;
-    if (!isSupportedChain(wallet)) continue;
+    if (!isSupportedChain(wallet)) {
+      result.skipped.push(wallet.address.toLowerCase());
+      continue;
+    }
     const body = walletToSyncBody(wallet);
     const address = body.address.toLowerCase();
     if (params.skip?.has(address)) continue;
 
-    const ok = await params.fetcher(body, token);
-    (ok ? result.synced : result.failed).push(address);
+    // Lampiri proof proaktif bila bisa tanda tangan — server mengabaikannya
+    // saat wallet list tersedia, memakainya saat list kosong.
+    if (userId && params.signMessage) {
+      try {
+        const { buildBoundWalletProof } = await import("./verify");
+        const message = buildBoundWalletProof(address, userId, new Date());
+        const signature = await params.signMessage(wallet, message);
+        if (signature && /^0x[0-9a-fA-F]{130}$/.test(signature.trim())) {
+          body.verificationMessage = message;
+          body.verificationSignature = signature.trim();
+        }
+      } catch {
+        // Lanjut tanpa proof — server yang memutuskan.
+      }
+    }
+
+    const raw = await params.fetcher(body, token);
+    const ok = typeof raw === "boolean" ? raw : raw.ok;
+    const proofRequired =
+      typeof raw === "object" && raw.proofRequired === true;
+    if (ok) {
+      result.synced.push(address);
+      continue;
+    }
+    // Retry sekali dengan proof bila server meminta eksplisit dan body
+    // pertama belum bawa proof.
+    if (
+      proofRequired &&
+      !body.verificationSignature &&
+      userId &&
+      params.signMessage
+    ) {
+      try {
+        const { buildBoundWalletProof } = await import("./verify");
+        const message = buildBoundWalletProof(address, userId, new Date());
+        const signature = await params.signMessage(wallet, message);
+        if (signature && /^0x[0-9a-fA-F]{130}$/.test(signature.trim())) {
+          const retry = await params.fetcher(
+            {
+              ...body,
+              verificationMessage: message,
+              verificationSignature: signature.trim(),
+            },
+            token
+          );
+          const retryOk = typeof retry === "boolean" ? retry : retry.ok;
+          (retryOk ? result.synced : result.failed).push(address);
+          continue;
+        }
+      } catch {
+        // Jatuh ke failed di bawah.
+      }
+    }
+    result.failed.push(address);
   }
   return result;
 }

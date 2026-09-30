@@ -14,7 +14,6 @@ import {
   notFound,
   ok,
   readJson,
-  requireReadRateLimit,
   requireRateLimit,
   requireUser,
   serverError,
@@ -38,7 +37,9 @@ import {
 import {
   readDeploymentNonce,
   readHasActiveWarehouse,
-  relayDeployWarehouse,
+  prepareDeployWarehouseRelay,
+  broadcastPreparedWarehouseRelay,
+  rebroadcastPreparedWarehouseRelay,
   simulateDeployWarehouse,
 } from "@/lib/warehouses/chain";
 import { finalizeIfMined } from "@/lib/warehouses/deployment-finalize";
@@ -104,6 +105,7 @@ async function primaryWallet(
     .select("address")
     .eq("user_id", userId)
     .eq("is_primary", true)
+    .eq("verification_state", "verified")
     .maybeSingle();
   return data?.address ?? null;
 }
@@ -121,6 +123,102 @@ async function ensureNoActiveWarehouse(
   return data ? "has-active" : "ok";
 }
 
+type ExistingDeployment = {
+  id: string;
+  status: string;
+  tx_hash: string | null;
+  warehouse_id: string | null;
+  factory_address?: string | null;
+  chain_id?: number | string | null;
+  relay_payload?: string | null;
+};
+
+async function respondWithExistingDeployment(
+  supabase: Supabase,
+  service: Supabase,
+  existing: ExistingDeployment,
+  userId: string,
+  fallbackWarehouseCode: string
+) {
+  if (existing.warehouse_id) {
+    const { data: owner, error: ownerError } = await service
+      .from("warehouses")
+      .select("owner_user_id")
+      .eq("id", existing.warehouse_id)
+      .maybeSingle();
+    if (ownerError) {
+      return serverError("Could not verify deployment ownership.");
+    }
+    if (owner?.owner_user_id !== userId) {
+      return forbidden("You do not have access to this deployment.");
+    }
+  }
+  const { data: relayRow, error: relayError } = await service
+    .from("warehouse_deployments")
+    .select("tx_hash, factory_address, chain_id, relay_payload")
+    .eq("id", existing.id)
+    .maybeSingle();
+  if (relayError) {
+    return serverError("Could not read deployment relay metadata.");
+  }
+  const relay = { ...existing, ...(relayRow ?? {}) };
+  if (
+    relay.tx_hash &&
+    relay.relay_payload &&
+    relay.factory_address &&
+    relay.chain_id
+  ) {
+    try {
+      await rebroadcastPreparedWarehouseRelay({
+        txHash: relay.tx_hash as Hex,
+        rawTransaction: relay.relay_payload as Hex,
+        factoryAddress: relay.factory_address as Hex,
+        chainId: Number(relay.chain_id),
+      });
+    } catch (err) {
+      logger.warn(
+        { err, deploymentId: existing.id },
+        "deployment relay rebroadcast failed; finalization will retry"
+      );
+    }
+  }
+  await finalizeIfMined(supabase, service, relay, userId);
+  const { data: settledDeployment, error: settledError } = await service
+    .from("warehouse_deployments")
+    .select("id, status, tx_hash, warehouse_id")
+    .eq("id", existing.id)
+    .maybeSingle();
+  if (settledError) {
+    return serverError("Could not read deployment status.");
+  }
+  const current = settledDeployment ?? existing;
+  const { data: warehouse } = current.warehouse_id
+    ? await service
+        .from("warehouses")
+        .select("contract_address, warehouse_code")
+        .eq("id", current.warehouse_id)
+        .maybeSingle()
+    : { data: null };
+  const { data: summary } = current.warehouse_id
+    ? await service
+        .from("warehouse_summaries")
+        .select("warehouse_code")
+        .eq("id", current.warehouse_id)
+        .maybeSingle()
+    : { data: null };
+  return ok({
+    status: current.status,
+    deploymentId: current.id,
+    warehouseId: current.warehouse_id,
+    warehouseCode:
+      summary?.warehouse_code ??
+      warehouse?.warehouse_code ??
+      fallbackWarehouseCode,
+    txHash: current.tx_hash,
+    contractAddress: warehouse?.contract_address ?? null,
+  });
+}
+
 export async function POST(request: Request) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action") as Action | null;
@@ -136,11 +234,7 @@ export async function POST(request: Request) {
   const isDeploymentPoll =
     action === "submit" && url.searchParams.get("poll") === "1";
   const rateLimited = isDeploymentPoll
-    ? await requireReadRateLimit(
-        "warehouse-create-status",
-        auth.user.id,
-        request
-      )
+    ? await requireRateLimit("warehouse-create-finalize", auth.user.id, request)
     : await requireRateLimit("warehouse-create", auth.user.id, request);
   if (rateLimited) return rateLimited;
 
@@ -153,7 +247,9 @@ export async function POST(request: Request) {
     const service = createServiceClient();
     const { data: deployment } = await service
       .from("warehouse_deployments")
-      .select("id, status, tx_hash, warehouse_id")
+      .select(
+        "id, status, tx_hash, warehouse_id, factory_address, chain_id, relay_payload"
+      )
       .eq("id", parsed.data.deploymentId)
       .maybeSingle();
     if (!deployment?.warehouse_id) return notFound("Deployment not found.");
@@ -175,21 +271,51 @@ export async function POST(request: Request) {
     if (deployment.status !== "pending" && deployment.status !== "submitted") {
       return invalid("This deployment is no longer recoverable.");
     }
-    const { error: updateError } = await service.rpc(
-      "update_warehouse_deployment_status",
-      {
-        p_deployment_id: deployment.id,
-        p_status: "submitted",
-        p_tx_hash: parsed.data.txHash,
-        p_error: null,
-        p_actor_user_id: auth.user.id,
+    if (
+      deployment.tx_hash &&
+      deployment.tx_hash.toLowerCase() !== parsed.data.txHash.toLowerCase()
+    ) {
+      return invalid(
+        "The recovery transaction hash does not match the deployment."
+      );
+    }
+    const txHash = deployment.tx_hash ?? parsed.data.txHash;
+    if (
+      deployment.relay_payload &&
+      deployment.factory_address &&
+      deployment.chain_id
+    ) {
+      try {
+        await rebroadcastPreparedWarehouseRelay({
+          txHash: txHash as Hex,
+          rawTransaction: deployment.relay_payload as Hex,
+          factoryAddress: deployment.factory_address as Hex,
+          chainId: Number(deployment.chain_id),
+        });
+      } catch (err) {
+        logger.warn(
+          { err, deploymentId: deployment.id },
+          "deployment recovery relay rebroadcast failed"
+        );
       }
-    );
-    if (updateError) return fromPostgrestError(updateError.message);
+    }
+    if (deployment.status === "pending") {
+      const { error: updateError } = await service.rpc(
+        "update_warehouse_deployment_status",
+        {
+          p_deployment_id: deployment.id,
+          p_status: "submitted",
+          p_tx_hash: txHash,
+          p_error: null,
+          p_actor_user_id: auth.user.id,
+        }
+      );
+      if (updateError) return fromPostgrestError(updateError.message);
+    }
     await finalizeIfMined(
       undefined,
       service,
-      { ...deployment, tx_hash: parsed.data.txHash },
+      { ...deployment, tx_hash: txHash },
       auth.user.id
     );
     const { data: settled } = await service
@@ -203,7 +329,7 @@ export async function POST(request: Request) {
         data: {
           deploymentId: deployment.id,
           status: settled?.status ?? "submitted",
-          txHash: settled?.tx_hash ?? parsed.data.txHash,
+          txHash: settled?.tx_hash ?? txHash,
         },
       },
       settled?.status === "confirmed" ? 200 : 202
@@ -215,7 +341,9 @@ export async function POST(request: Request) {
     if (!parsed.success) return invalid(parsed.error.issues[0]?.message);
 
     const owner = await primaryWallet(supabase, auth.user.id);
-    if (!owner) return invalid("Connect a wallet before creating a warehouse.");
+    if (!owner) {
+      return invalid("Verify your wallet before creating a warehouse.");
+    }
 
     let factory;
     try {
@@ -295,6 +423,32 @@ export async function POST(request: Request) {
   const owner = parsed.data.owner as Hex;
   const signature = parsed.data.signature as Hex;
 
+  if (isDeploymentPoll) {
+    const { data: polledDeployment } = await supabase
+      .from("warehouse_deployments")
+      .select("id, status, tx_hash, warehouse_id")
+      .eq("idempotency_key", parsed.data.idempotencyKey)
+      .maybeSingle();
+    if (!polledDeployment) return notFound("Deployment not found.");
+    if (polledDeployment.warehouse_id) {
+      const { data: ownerCheck } = await supabase
+        .from("warehouses")
+        .select("id")
+        .eq("id", polledDeployment.warehouse_id)
+        .eq("owner_user_id", auth.user.id)
+        .maybeSingle();
+      if (!ownerCheck)
+        return forbidden("You do not have access to this deployment.");
+    }
+    return respondWithExistingDeployment(
+      supabase,
+      createServiceClient(),
+      polledDeployment,
+      auth.user.id,
+      parsed.data.warehouseCode
+    );
+  }
+
   const nowSec = Math.floor(Date.now() / 1000);
   const expiry = Number(parsed.data.expiry);
   if (expiry <= nowSec || expiry > nowSec + DEPLOYMENT_EXPIRY_MAX_SECONDS) {
@@ -305,7 +459,7 @@ export async function POST(request: Request) {
 
   const wallet = await primaryWallet(supabase, auth.user.id);
   if (!wallet || wallet.toLowerCase() !== owner.toLowerCase()) {
-    return invalid("Sign with your primary wallet.");
+    return invalid("Verify your primary wallet before creating a warehouse.");
   }
 
   let factory;
@@ -326,10 +480,6 @@ export async function POST(request: Request) {
     .eq("idempotency_key", parsed.data.idempotencyKey)
     .maybeSingle();
 
-  if (isDeploymentPoll && !existing) {
-    return notFound("Deployment not found.");
-  }
-
   if (existing?.warehouse_id) {
     const { data: ownerCheck } = await supabase
       .from("warehouses")
@@ -349,33 +499,13 @@ export async function POST(request: Request) {
   const service = createServiceClient();
 
   if (existing) {
-    await finalizeIfMined(supabase, service, existing, auth.user.id);
-    // Audit v0.3.2 §2.7: warehouseCode dari request body dapat stale
-    // (client lost original) — ambil dari warehouses row, bukan dari
-    // parsed.data. Fallback ke body hanya jika DB read gagal (transient).
-    const { data: warehouse } = await supabase
-      .from("warehouses")
-      .select("contract_address, warehouse_code")
-      .eq("id", existing.warehouse_id)
-      .maybeSingle();
-    const { data: ws } = warehouse
-      ? await supabase
-          .from("warehouse_summaries")
-          .select("warehouse_code")
-          .eq("id", existing.warehouse_id)
-          .maybeSingle()
-      : { data: null };
-    return ok({
-      status: existing.status,
-      deploymentId: existing.id,
-      warehouseId: existing.warehouse_id,
-      warehouseCode:
-        ws?.warehouse_code ??
-        warehouse?.warehouse_code ??
-        parsed.data.warehouseCode,
-      txHash: existing.tx_hash,
-      contractAddress: warehouse?.contract_address ?? null,
-    });
+    return respondWithExistingDeployment(
+      supabase,
+      service,
+      existing,
+      auth.user.id,
+      parsed.data.warehouseCode
+    );
   }
 
   // Nonce harus cocok dengan state live Factory (PRD §7.4 no. 1 — bukan tebakan).
@@ -473,9 +603,20 @@ export async function POST(request: Request) {
     );
   }
 
+  let prepared: Awaited<ReturnType<typeof prepareDeployWarehouseRelay>>;
+  try {
+    prepared = await prepareDeployWarehouseRelay(authTuple, signature);
+  } catch (err) {
+    logger.error(
+      { err },
+      "deployWarehouse relay preparation failed before claim"
+    );
+    return serverError("Could not prepare the deployment transaction.");
+  }
+
   // Klaim atomik (write-intent) sebelum relay.
   const { data: created, error: createError } = await service.rpc(
-    "create_warehouse_and_deployment",
+    "create_warehouse_and_deployment_with_relay",
     {
       p_warehouse_code: parsed.data.warehouseCode,
       p_name: parsed.data.name,
@@ -490,10 +631,26 @@ export async function POST(request: Request) {
       p_signature: signature,
       p_idempotency_key: parsed.data.idempotencyKey,
       p_actor_user_id: auth.user.id,
+      p_tx_hash: prepared.txHash,
+      p_relay_payload: prepared.rawTransaction,
     }
   );
 
   if (createError) {
+    const { data: racedDeployment } = await service
+      .from("warehouse_deployments")
+      .select("id, status, tx_hash, warehouse_id")
+      .eq("idempotency_key", parsed.data.idempotencyKey)
+      .maybeSingle();
+    if (racedDeployment) {
+      return respondWithExistingDeployment(
+        supabase,
+        service,
+        racedDeployment,
+        auth.user.id,
+        parsed.data.warehouseCode
+      );
+    }
     if (createError.message.includes("already has an active warehouse")) {
       return json(
         {
@@ -525,49 +682,31 @@ export async function POST(request: Request) {
   const warehouseId = String(row.created_warehouse_id);
   const deploymentId = String(row.created_deployment_id);
 
-  // Relay via treasury.
-  let txHash: Hex;
+  const txHash = prepared.txHash;
+
   try {
-    txHash = await relayDeployWarehouse(authTuple, signature);
+    await broadcastPreparedWarehouseRelay(prepared);
   } catch (err) {
     logger.error(
-      { err, warehouseId, deploymentId },
-      "deployWarehouse relay outcome unknown"
+      { err, warehouseId, deploymentId, txHash },
+      "deployWarehouse broadcast outcome unknown"
     );
     return json(
       {
-        ok: false,
-        error:
-          "Deployment relay outcome is not yet known. The warehouse was retained for recovery; retry with the same request.",
-        errorCode: "DEPLOYMENT_RECOVERY_PENDING",
-        deploymentId,
+        ok: true,
+        data: {
+          status: "pending_confirmation",
+          warehouseId,
+          deploymentId,
+          warehouseCode: parsed.data.warehouseCode,
+          contractAddress: null,
+          txHash,
+        },
       },
       202
     );
   }
 
-  const { error: statusError } = await service.rpc(
-    "update_warehouse_deployment_status",
-    {
-      p_deployment_id: deploymentId,
-      p_status: "submitted",
-      p_tx_hash: txHash,
-      p_error: null,
-      p_actor_user_id: auth.user.id,
-    }
-  );
-  if (statusError) {
-    logger.error(
-      { err: statusError.message, deploymentId },
-      "warehouse deployment submitted status update failed"
-    );
-  }
-
-  // Fix A4: JANGAN tunggu receipt di dalam request (melanggar PRD §6.4/§15:
-  // "blockchain confirmation async, tidak block request"). Relay 45-90s
-  // menyebabkan timeout Vercel Hobby + retry client menumpuk relay.
-  // Return 202 segera; client poll dengan idempotencyKey sama →
-  // finalizeIfMined menfinalisasi confirmed/reverted saat receipt mined.
   logger.info(
     { warehouseId, deploymentId, txHash },
     "warehouse deployment relayed, awaiting async confirmation"
@@ -576,7 +715,7 @@ export async function POST(request: Request) {
     {
       ok: true,
       data: {
-        status: statusError ? "pending_confirmation" : "submitted",
+        status: "submitted",
         warehouseId,
         deploymentId,
         warehouseCode: parsed.data.warehouseCode,

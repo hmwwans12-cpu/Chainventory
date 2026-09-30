@@ -144,6 +144,24 @@ async function postSubmit(
   );
 }
 
+async function pollUntilSettled(
+  prepareData: PreparedData,
+  signature: Hex
+): Promise<SubmitData> {
+  const deadline = Date.now() + 180_000;
+  while (Date.now() < deadline) {
+    const response = await postSubmit(prepareData, signature, true);
+    const body = await response.json();
+    expect(response.status, JSON.stringify(body)).toBe(200);
+    expect(body.ok, JSON.stringify(body)).toBe(true);
+    if (body.data.status === "confirmed" || body.data.status === "failed") {
+      return body.data as SubmitData;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+  }
+  throw new Error("Deployment did not settle before the smoke deadline.");
+}
+
 let eoa: ReturnType<typeof privateKeyToAccount>;
 let userId: string;
 let admin: SupabaseClient;
@@ -191,6 +209,8 @@ let submitData: SubmitData;
         address: eoa.address.toLowerCase(),
         wallet_type: "external",
         is_primary: true,
+        verification_state: "verified",
+        verified_at: new Date().toISOString(),
       });
       expect(walletErr).toBeNull();
 
@@ -264,7 +284,7 @@ let submitData: SubmitData;
       );
     }, 30_000);
 
-    it("submit — relay treasury (tx nyata) → confirmed, contract_address cocok on-chain", async () => {
+    it("submit — relay treasury (tx nyata) → 202 lalu confirmed via poll", async () => {
       // Sign EIP-712 dengan EOA (di produksi: Privy wallet sign).
       const typedData = buildDeploymentTypedData({
         factoryAddress: prepareData.typedData.domain.verifyingContract as Hex,
@@ -277,13 +297,19 @@ let submitData: SubmitData;
       const res = await postSubmit(prepareData, signature);
       const body = await res.json();
       console.log("[smoke] submit HTTP", res.status, JSON.stringify(body));
-      expect([200, 202]).toContain(res.status);
+      expect(res.status).toBe(202);
       expect(body.ok).toBe(true);
       submitData = body.data as SubmitData;
 
       expect(submitData.warehouseId).toBeTruthy();
       expect(submitData.deploymentId).toBeTruthy();
       expect(submitData.txHash).toMatch(/^0x[0-9a-f]{64}$/);
+      expect(["submitted", "pending_confirmation"]).toContain(
+        submitData.status
+      );
+      expect(submitData.contractAddress).toBeNull();
+
+      submitData = await pollUntilSettled(prepareData, signature);
       expect(submitData.status).toBe("confirmed");
       expect(submitData.contractAddress).toBeTruthy();
     }, 300_000);
@@ -306,14 +332,9 @@ let submitData: SubmitData;
 
       // Bila receipt > timeout di submit (202), finalisasi via resubmit
       // idempotent (finalizeIfMined) lalu baca ulang.
-      if (deployment.status === "submitted") {
-        const retry = await postSubmit(prepareData, signature, true);
-        const retryBody = await retry.json();
-        console.log(
-          "[smoke] finalisasi retry HTTP",
-          retry.status,
-          JSON.stringify(retryBody)
-        );
+      if (!deployment || !["confirmed", "failed"].includes(deployment.status)) {
+        const settled = await pollUntilSettled(prepareData, signature);
+        submitData = settled;
         const reRead = await admin
           .from("warehouse_deployments")
           .select("*")

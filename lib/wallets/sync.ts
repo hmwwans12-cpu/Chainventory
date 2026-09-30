@@ -40,6 +40,8 @@ export interface WalletSyncResult {
   wallet?: WalletRow;
   errorCode?: WalletSyncErrorCode;
   error?: string;
+  /** True bila client boleh retry dengan proof 4-baris (wallet list kosong). */
+  proofRequired?: boolean;
 }
 
 export type PrivyVerifier = (
@@ -240,6 +242,22 @@ export async function syncWallet(
     };
   }
 
+  // Fix BE-14 (confused-deputy): token Privy valid milik user A tidak boleh
+  // dipakai sesi Supabase user B untuk mendaftarkan wallet A ke akun B.
+  // Diambil AWAL karena fallback proof di bawah butuh sessionUser.id.
+  const {
+    data: { user: sessionUser },
+  } = await supabase.auth.getUser();
+  if (!sessionUser) {
+    return {
+      ok: false,
+      errorCode: "UNAUTHENTICATED",
+      error: "Session expired.",
+    };
+  }
+
+  const redact = (a: string) =>
+    a.length >= 10 ? `${a.slice(0, 6)}…${a.slice(-4)}` : "invalid";
   const verifiedWallets = verified.wallets;
   if (verifiedWallets?.length) {
     const addressMatches = verifiedWallets.some((wallet) => {
@@ -252,25 +270,42 @@ export async function syncWallet(
       );
     });
     if (!addressMatches) {
-      return {
-        ok: false,
-        errorCode: "PRIVY_VERIFICATION_FAILED",
-        error: "Submitted wallet is not linked to the verified Privy user.",
-      };
+      // External wallet terhubung di frontend tapi belum ter-link di objek
+      // Privy server (atau chainId tercatat beda) — terima bila ada proof
+      // signature 4-baris terikat user ini, tolak bila tidak ada.
+      const proofOk = await hasServerWalletProof(
+        input,
+        address,
+        sessionUser.id
+      );
+      if (!proofOk) {
+        logger.warn(
+          {
+            submitted: redact(address.toLowerCase()),
+            verified: verifiedWallets.map((w) =>
+              redact(
+                typeof w?.address === "string"
+                  ? w.address.trim().toLowerCase()
+                  : "invalid"
+              )
+            ),
+            chains: verifiedWallets.map((w) => w?.chainId ?? null),
+          },
+          "wallet sync rejected: address not linked and no bound proof"
+        );
+        return {
+          ok: false,
+          errorCode: "PRIVY_VERIFICATION_FAILED",
+          error:
+            "Submitted wallet is not linked to the verified Privy user. Sign the verification challenge in your wallet and retry.",
+          proofRequired: true,
+        };
+      }
+      logger.info(
+        { submitted: redact(address.toLowerCase()) },
+        "wallet sync accepted via bound proof (unlinked address)"
+      );
     }
-  }
-
-  // Fix BE-14 (confused-deputy): token Privy valid milik user A tidak boleh
-  // dipakai sesi Supabase user B untuk mendaftarkan wallet A ke akun B.
-  const {
-    data: { user: sessionUser },
-  } = await supabase.auth.getUser();
-  if (!sessionUser) {
-    return {
-      ok: false,
-      errorCode: "UNAUTHENTICATED",
-      error: "Session expired.",
-    };
   }
   if (
     !verifiedWallets?.length &&
@@ -281,6 +316,7 @@ export async function syncWallet(
       errorCode: "PRIVY_VERIFICATION_FAILED",
       error:
         "Privy wallet data is unavailable; complete the server wallet verification challenge first.",
+      proofRequired: true,
     };
   }
   const { data: profileData, error: profileError } =

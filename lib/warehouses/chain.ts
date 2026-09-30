@@ -4,6 +4,8 @@ import {
   decodeEventLog,
   encodeFunctionData,
   isAddress,
+  keccak256,
+  TransactionNotFoundError,
   type Hex,
 } from "viem";
 
@@ -93,11 +95,17 @@ export async function simulateDeployWarehouse(
   });
 }
 
-/** Relay deployment via treasury signer → tx hash (tanpa menunggu mined). */
-export async function relayDeployWarehouse(
+export type PreparedWarehouseRelay = {
+  txHash: Hex;
+  rawTransaction: Hex;
+  factoryAddress: Hex;
+  chainId: number;
+};
+
+export async function prepareDeployWarehouseRelay(
   auth: DeploymentAuth,
   signature: Hex
-): Promise<Hex> {
+): Promise<PreparedWarehouseRelay> {
   const factory = getWarehouseFactory();
   const account = await getVerifiedTreasuryAccount(factory);
   const client = createWalletClient({
@@ -105,12 +113,83 @@ export async function relayDeployWarehouse(
     chain: baseSepolia,
     transport: createChainTransport(),
   });
-  const txHash = await client.writeContract({
-    address: factory.address,
+  const data = encodeFunctionData({
     abi: factory.abi,
     functionName: "deployWarehouse",
     args: [{ ...auth }, signature],
   });
+  const request = await client.prepareTransactionRequest({
+    account,
+    to: factory.address,
+    data,
+    value: 0n,
+  });
+  const rawTransaction = await client.signTransaction(request);
+  return {
+    txHash: keccak256(rawTransaction),
+    rawTransaction,
+    factoryAddress: factory.address,
+    chainId: factory.chainId,
+  };
+}
+
+export async function broadcastPreparedWarehouseRelay(
+  prepared: PreparedWarehouseRelay
+): Promise<Hex> {
+  const client = createPublicClient({
+    chain: baseSepolia,
+    transport: createChainTransport(),
+  });
+  const txHash = await client.sendRawTransaction({
+    serializedTransaction: prepared.rawTransaction,
+  });
+  if (txHash.toLowerCase() !== prepared.txHash.toLowerCase()) {
+    throw new Error("Broadcast transaction hash does not match prepared hash");
+  }
+  logger.info(
+    { txHash, factoryAddress: prepared.factoryAddress },
+    "warehouse deployment broadcast"
+  );
+  return txHash;
+}
+
+export async function rebroadcastPreparedWarehouseRelay(
+  prepared: PreparedWarehouseRelay
+): Promise<void> {
+  if (
+    keccak256(prepared.rawTransaction).toLowerCase() !==
+    prepared.txHash.toLowerCase()
+  ) {
+    throw new Error("Prepared relay hash does not match raw transaction");
+  }
+  const client = createPublicClient({
+    chain: baseSepolia,
+    transport: createChainTransport(),
+  });
+  let existing;
+  try {
+    existing = await client.getTransaction({ hash: prepared.txHash });
+  } catch (err) {
+    if (
+      !(err instanceof TransactionNotFoundError) &&
+      (err as { name?: string }).name !== "TransactionNotFoundError"
+    ) {
+      throw err;
+    }
+  }
+  if (existing) return;
+  await client.sendRawTransaction({
+    serializedTransaction: prepared.rawTransaction,
+  });
+}
+
+/** Relay deployment via treasury signer → tx hash (tanpa menunggu mined). */
+export async function relayDeployWarehouse(
+  auth: DeploymentAuth,
+  signature: Hex
+): Promise<Hex> {
+  const prepared = await prepareDeployWarehouseRelay(auth, signature);
+  const txHash = await broadcastPreparedWarehouseRelay(prepared);
   logger.info({ txHash, owner: auth.owner }, "warehouse deployment relayed");
   return txHash;
 }

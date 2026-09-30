@@ -74,10 +74,29 @@ export async function verifyPrivyAccessToken(
     const user = await client.users()._get(claims.user_id);
     if (!user || user.id !== claims.user_id) return null;
 
-    const accounts = user.linked_accounts as unknown as Array<
-      Record<string, unknown>
-    >;
-    const wallets = accounts.flatMap((account) => {
+    const accounts = Array.isArray(user.linked_accounts)
+      ? (user.linked_accounts as unknown as Array<Record<string, unknown>>)
+      : [];
+    // Embedded wallet Privy juga bisa muncul di top-level `wallet` /
+    // `embedded_wallets` (bukan cuma `linked_accounts`) — kumpulkan semua
+    // kandidat lalu dedupe per address. Tanpa ini `wallets` sering `[]`
+    // walau sesi valid → sync selalu ditolak "wallet data unavailable".
+    const candidates: Array<Record<string, unknown>> = [...accounts];
+    const topWallet = (user as unknown as Record<string, unknown>).wallet;
+    if (topWallet && typeof topWallet === "object") {
+      candidates.push(topWallet as Record<string, unknown>);
+    }
+    const embeddedWallets = (user as unknown as Record<string, unknown>)
+      .embedded_wallets;
+    if (Array.isArray(embeddedWallets)) {
+      for (const w of embeddedWallets) {
+        if (w && typeof w === "object") {
+          candidates.push(w as Record<string, unknown>);
+        }
+      }
+    }
+    const seen = new Set<string>();
+    const wallets = candidates.flatMap((account) => {
       const address = account.address;
       const chainType = account.chain_type;
       const accountType = account.type;
@@ -85,17 +104,33 @@ export async function verifyPrivyAccessToken(
       if (
         typeof address !== "string" ||
         !/^0x[0-9a-f]{40}$/i.test(address) ||
-        (chainType !== "ethereum" && accountType !== "smart_wallet") ||
-        typeof verifiedAt !== "number" ||
-        verifiedAt <= 0
+        (chainType !== "ethereum" &&
+          accountType !== "smart_wallet" &&
+          // Top-level wallet / embedded entries sering tanpa chain_type —
+          // jangan tolak hanya karena metadata minim, address valid cukup.
+          chainType !== undefined)
       ) {
         return [];
       }
+      // `verified_at` tidak lagi wajib: embedded wallet via custom-auth
+      // sering tanpa field ini. Tolak hanya bila eksplisit tidak valid
+      // (angka <= 0), bukan bila tidak ada.
+      if (typeof verifiedAt === "number" && verifiedAt <= 0) {
+        return [];
+      }
+      const rawChainId = account.chain_id;
       const chainId =
-        typeof account.chain_id === "string" ? account.chain_id : undefined;
+        typeof rawChainId === "string"
+          ? rawChainId
+          : typeof rawChainId === "number"
+            ? `eip155:${rawChainId}`
+            : undefined;
+      const normalized = address.toLowerCase();
+      if (seen.has(normalized)) return [];
+      seen.add(normalized);
       return [
         {
-          address: address.toLowerCase(),
+          address: normalized,
           ...(chainId ? { chainId } : {}),
         },
       ];

@@ -43,15 +43,19 @@ export const getMyWarehouses = cache(
       .eq("status", "ACTIVE")
       .order("joined_at", { ascending: true });
 
-    if (error || !memberships || memberships.length === 0) return [];
+    if (error) throw new Error("Could not load warehouse memberships.");
+    if (!memberships || memberships.length === 0) return [];
 
     const ids = memberships.map((m) => m.warehouse_id);
-    const { data: warehouses } = await supabase
+    const { data: warehouses, error: warehouseError } = await supabase
       .from("warehouse_summaries")
       .select(
         "id, name, warehouse_code, contract_address, status, last_activity_at"
       )
       .in("id", ids);
+    if (warehouseError) {
+      throw new Error("Could not load warehouse summaries.");
+    }
 
     const byId = new Map((warehouses ?? []).map((w) => [w.id, w]));
     const list: WarehouseSummary[] = [];

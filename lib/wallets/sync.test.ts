@@ -147,6 +147,44 @@ describe("syncWallet", () => {
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
+  it("accepts a bound proof for an unlinked address (external wallet)", async () => {
+    const account = privateKeyToAccount(generatePrivateKey());
+    const message = [
+      "Chainventory wallet verification",
+      `Address: ${account.address.toLowerCase()}`,
+      "User: u-1",
+      `Issued at: ${new Date().toISOString()}`,
+    ].join("\n");
+    const signature = await account.signMessage({ message });
+    const wallet = {
+      id: "w-1",
+      user_id: "u-1",
+      address: account.address.toLowerCase(),
+      wallet_type: "external" as const,
+      is_primary: true,
+      verification_state: "unverified" as const,
+      verified_at: null,
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    };
+    const supabase = mockSupabase(() => ({ data: wallet, error: null }));
+    // Verifier berisi wallet LAIN (non-empty) — address tersubmit tidak ada
+    // di list, tapi proof valid → diterima via fallback.
+    const result = await syncWallet(
+      supabase,
+      {
+        address: account.address,
+        walletType: "external",
+        chainId: 84532,
+        verificationMessage: message,
+        verificationSignature: signature,
+      },
+      "valid-token",
+      okVerifier
+    );
+    expect(result.ok).toBe(true);
+  });
+
   it("fails closed when Privy wallet data and a server proof are unavailable", async () => {
     const noWalletDataVerifier: PrivyVerifier = async () => ({
       ...VALID_CLAIMS,
