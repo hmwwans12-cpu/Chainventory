@@ -16,7 +16,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
-import { roleLabel } from "@/lib/auth/permissions";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -144,7 +143,7 @@ export default async function InvitePage({
           <CardDescription>
             {t("invite.success_desc", {
               warehouse: inv.warehouse_name,
-              role: roleLabel(inv.role),
+              role: t(`roles.${(inv.role ?? "").toLowerCase()}`),
             })}
           </CardDescription>
         </CardHeader>

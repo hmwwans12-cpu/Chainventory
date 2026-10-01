@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/auth/form-field";
 import { resetPasswordAction } from "@/app/actions/auth";
 import { toast } from "@/components/ui/toast";
+import { useLocale } from "@/components/providers/locale-provider";
 import { Loader2 } from "lucide-react";
 
 export function ForgotPasswordForm() {
+  const { t } = useLocale();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -31,11 +33,11 @@ export function ForgotPasswordForm() {
     if (success) {
       toast.add({
         type: "success",
-        title: "Reset link sent",
-        description: "Check your inbox for the password reset link.",
+        title: t("auth.forgot_sent_title"),
+        description: t("auth.forgot_sent_desc"),
       });
     }
-  }, [success]);
+  }, [success, t]);
 
   if (success) {
     return (
@@ -44,7 +46,7 @@ export function ForgotPasswordForm() {
         aria-live="polite"
         className="border-primary/30 bg-primary/15 text-primary rounded-lg border px-3 py-2 text-sm"
       >
-        Check your email for a password reset link.
+        {t("auth.forgot_sent_body")}
       </div>
     );
   }
@@ -61,7 +63,7 @@ export function ForgotPasswordForm() {
         </div>
       ) : null}
 
-      <FormField id="email" label="Email">
+      <FormField id="email" label={t("auth.email_label")}>
         <Input
           id="email"
           name="email"
@@ -78,7 +80,7 @@ export function ForgotPasswordForm() {
         {pending ? (
           <Loader2 aria-hidden="true" className="animate-spin" />
         ) : null}
-        {pending ? "Sending reset link…" : "Send reset link"}
+        {pending ? t("auth.forgot_sending") : t("auth.forgot_send")}
       </Button>
     </form>
   );

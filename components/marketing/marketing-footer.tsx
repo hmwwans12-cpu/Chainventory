@@ -7,18 +7,18 @@ import { translate } from "@/lib/i18n/translations";
 
 const FOOTER_GROUPS = [
   {
-    group: "Product",
+    groupKey: "marketing.footer_product",
     links: [
-      { href: "/#product", label: "Product" },
-      { href: "/#proof", label: "Proof" },
-      { href: "/#faq", label: "FAQ" },
+      { href: "/#product", labelKey: "marketing.nav_product" },
+      { href: "/#proof", labelKey: "marketing.nav_proof" },
+      { href: "/#faq", labelKey: "marketing.nav_faq" },
     ],
   },
   {
-    group: "Get Started",
+    groupKey: "marketing.footer_get_started",
     links: [
-      { href: "/signup", label: "Create Warehouse" },
-      { href: "/login", label: "Login" },
+      { href: "/signup", labelKey: "dashboard.create_warehouse" },
+      { href: "/login", labelKey: "marketing.nav_login" },
     ],
   },
 ];
@@ -38,23 +38,22 @@ export async function MarketingFooter() {
             homeLabel={translate(locale, "brand.home_aria", { app: APP_NAME })}
           />
           <p className="text-muted-foreground max-w-sm text-sm leading-relaxed text-pretty">
-            Modern warehouse inventory management with verifiable cryptographic
-            proof stamping for every critical movement.
+            {translate(locale, "marketing.footer_tagline")}
           </p>
           <span className="text-muted-foreground bg-background border-border mt-1 inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium">
             <span className="bg-primary size-1.5 animate-pulse rounded-full" />
-            Base Sepolia · test network
+            {translate(locale, "marketing.footer_network")}
           </span>
         </div>
 
         {FOOTER_GROUPS.map((group) => (
           <nav
-            key={group.group}
+            key={group.groupKey}
             className="flex flex-col gap-3"
-            aria-label={group.group}
+            aria-label={translate(locale, group.groupKey)}
           >
             <span className="text-foreground text-sm font-semibold">
-              {group.group}
+              {translate(locale, group.groupKey)}
             </span>
             {group.links.map((link) => (
               <Link
@@ -62,7 +61,7 @@ export async function MarketingFooter() {
                 href={link.href}
                 className="text-muted-foreground hover:text-foreground min-h-11 w-fit rounded-md px-2 py-2.5 text-sm transition-colors"
               >
-                {link.label}
+                {translate(locale, link.labelKey)}
               </Link>
             ))}
           </nav>
@@ -72,10 +71,10 @@ export async function MarketingFooter() {
       <div className="border-border border-t">
         <div className="text-muted-foreground mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs sm:flex-row sm:px-6">
           <span>
-            © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
-            Verifiable Warehouse Operations.
+            © {new Date().getFullYear()} {APP_NAME}.{" "}
+            {translate(locale, "marketing.footer_rights")}
           </span>
-          <span>Blockchain verification on Base Sepolia</span>
+          <span>{translate(locale, "marketing.footer_chain")}</span>
         </div>
       </div>
     </footer>

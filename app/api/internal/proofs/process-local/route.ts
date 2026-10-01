@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { requireReadRateLimit } from "@/lib/api-handler";
 import { logger } from "@/lib/logger";
 import { driveLocalProofs } from "@/lib/proof/local-worker";
 import { verifyCronSecret } from "@/lib/proof/verify-request";
@@ -42,6 +43,8 @@ export async function POST(request: Request) {
       { status: 401 }
     );
   }
+  const limited = await requireReadRateLimit("cron-internal", "cron", request);
+  if (limited) return limited;
   const result = await driveLocalProofs();
   return NextResponse.json(result, { status: result.ok ? 200 : 500 });
 }

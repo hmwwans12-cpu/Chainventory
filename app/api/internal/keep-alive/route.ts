@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { requireReadRateLimit } from "@/lib/api-handler";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { supabaseClientKey, supabaseUrl } from "@/lib/supabase/config";
@@ -44,6 +45,8 @@ export async function GET(request: NextRequest) {
     logger.warn("keep-alive rejected: invalid CRON_SECRET");
     return NextResponse.json({ status: "unauthorized" }, { status: 401 });
   }
+  const limited = await requireReadRateLimit("cron-internal", "cron", request);
+  if (limited) return limited;
 
   const start = performance.now();
   const result = await runDatabaseHealthCheck();

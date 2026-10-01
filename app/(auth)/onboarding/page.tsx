@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { requireOnboardingUser } from "@/lib/onboarding/guard";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { AuthUnavailableState } from "@/components/auth/auth-unavailable-state";
@@ -28,6 +30,9 @@ export const dynamic = "force-dynamic";
 export default async function OnboardingPage() {
   // FE-02: guard server — belum login dialihkan sebelum render.
   const auth = await requireOnboardingUser("/onboarding");
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   if (auth.authUnavailable) {
     return (
       <AuthShell wide>
@@ -40,11 +45,10 @@ export default async function OnboardingPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-foreground text-2xl font-semibold text-balance">
-            Welcome to Chainventory
+            {t("auth.onboarding_title")}
           </h1>
           <p className="text-muted-foreground text-sm">
-            Get started by creating a warehouse for your team, or join one with
-            a warehouse code.
+            {t("auth.onboarding_desc")}
           </p>
         </div>
 
@@ -58,10 +62,10 @@ export default async function OnboardingPage() {
               </span>
               <div className="flex flex-col gap-1">
                 <h2 className="font-display text-foreground text-base font-semibold">
-                  Create Warehouse
+                  {t("dashboard.create_warehouse")}
                 </h2>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Start a new warehouse. You automatically become its owner.
+                  {t("auth.onboarding_create_desc")}
                 </p>
               </div>
               <Button
@@ -70,7 +74,7 @@ export default async function OnboardingPage() {
                 className="w-full"
                 render={<Link href="/onboarding/create" />}
               >
-                Create Warehouse
+                {t("dashboard.create_warehouse")}
               </Button>
             </CardContent>
           </Card>
@@ -82,11 +86,10 @@ export default async function OnboardingPage() {
               </span>
               <div className="flex flex-col gap-1">
                 <h2 className="font-display text-foreground text-base font-semibold">
-                  Join Warehouse
+                  {t("dashboard.join_warehouse")}
                 </h2>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Already have a warehouse code? Request access to an existing
-                  team.
+                  {t("auth.onboarding_join_desc")}
                 </p>
               </div>
               <Button
@@ -95,7 +98,7 @@ export default async function OnboardingPage() {
                 className="w-full"
                 render={<Link href="/onboarding/join" />}
               >
-                Join Warehouse
+                {t("dashboard.join_warehouse")}
               </Button>
             </CardContent>
           </Card>

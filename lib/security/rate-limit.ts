@@ -82,6 +82,8 @@ export const READ_RATE_LIMITS = {
   "wallet-balance": { user: 30, ip: 120 },
   /** startup health dashboard (fail-open, jarang dipanggil). */
   "startup-health": { user: 10, ip: 30 },
+  /** cron/QStash internal (fail-open; user/pseudo-user "cron" + IP). */
+  "cron-internal": { user: 60, ip: 120 },
 } as const;
 
 export type MutationAction = keyof typeof MUTATION_RATE_LIMITS;

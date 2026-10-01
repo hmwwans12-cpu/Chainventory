@@ -6,7 +6,23 @@ import { Button } from "@/components/ui/button";
 
 /**
  * Global error boundary.
+ *
+ * Tanpa LocaleProvider (menggantikan root layout) — kamus inline EN/ID
+ * mengikuti cookie locale, pola yang sama dipakai app/error.tsx versi
+ * ber-provider. Jangan tambah copy di sini selain fallback kritis.
  */
+const COPY = {
+  en: {
+    title: "Something went wrong",
+    desc: "We're sorry. An unexpected error occurred.",
+    retry: "Try again",
+  },
+  id: {
+    title: "Terjadi kesalahan",
+    desc: "Maaf. Terjadi kesalahan tak terduga.",
+    retry: "Coba lagi",
+  },
+} as const;
 export default function GlobalError({
   error,
   reset,
@@ -25,6 +41,7 @@ export default function GlobalError({
     /(?:^|;\s*)locale=id(?:;|$)/.test(document.cookie)
       ? "id"
       : "en";
+  const copy = COPY[lang];
 
   return (
     <html lang={lang}>
@@ -33,13 +50,13 @@ export default function GlobalError({
           Error
         </p>
         <h1 className="font-display text-foreground max-w-xl text-3xl font-semibold">
-          Something went wrong
+          {copy.title}
         </h1>
         <p className="text-muted-foreground max-w-md text-base">
-          We&apos;re sorry. An unexpected error occurred.
+          {copy.desc}
           {error.digest ? ` Reference: ${error.digest}` : null}
         </p>
-        <Button onClick={reset}>Try again</Button>
+        <Button onClick={reset}>{copy.retry}</Button>
       </body>
     </html>
   );

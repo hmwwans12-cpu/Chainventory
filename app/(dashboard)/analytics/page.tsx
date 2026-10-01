@@ -149,7 +149,7 @@ export default async function AnalyticsPage({
               Stock In / Out Trend
             </CardTitle>
             <CardDescription>
-              Daily volume comparison for the last {range} days.
+              {t("analytics.volume_desc", { n: String(range) })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -160,18 +160,20 @@ export default async function AnalyticsPage({
                   className="bg-primary size-3 rounded-full"
                 />
                 <span className="text-foreground text-xs font-semibold">
-                  Stock In (+
-                  {Number(analytics.period.stockIn).toLocaleString()})
+                  {t("analytics.legend_in", {
+                    n: Number(analytics.period.stockIn).toLocaleString(),
+                  })}
                 </span>
               </span>
               <span className="flex items-center gap-2">
                 <span
                   aria-hidden="true"
-                  className="size-3 rounded-full bg-[#D97706]"
+                  className="bg-warning size-3 rounded-full"
                 />
                 <span className="text-foreground text-xs font-semibold">
-                  Stock Out (−
-                  {Number(analytics.period.stockOut).toLocaleString()})
+                  {t("analytics.legend_out", {
+                    n: Number(analytics.period.stockOut).toLocaleString(),
+                  })}
                 </span>
               </span>
             </div>
@@ -181,9 +183,11 @@ export default async function AnalyticsPage({
 
         <Card>
           <CardHeader className="border-b">
-            <CardTitle className="t-headline-sm">Top Products</CardTitle>
+            <CardTitle className="t-headline-sm">
+              {t("analytics.top_title")}
+            </CardTitle>
             <CardDescription>
-              Highest turnover in the last {range} days.
+              {t("analytics.top_desc", { n: String(range) })}
             </CardDescription>
           </CardHeader>
           <CardContent>

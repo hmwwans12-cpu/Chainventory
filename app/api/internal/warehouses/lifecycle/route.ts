@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { requireReadRateLimit } from "@/lib/api-handler";
 import { logger } from "@/lib/logger";
 import { verifyCronSecret } from "@/lib/proof/verify-request";
 import { runWarehouseLifecycle } from "@/lib/warehouses/lifecycle";
@@ -26,6 +27,8 @@ async function handleLifecycle(request: Request) {
       { status: 401 }
     );
   }
+  const limited = await requireReadRateLimit("cron-internal", "cron", request);
+  if (limited) return limited;
 
   const result = await runWarehouseLifecycle();
   return NextResponse.json(result, { status: result.ok ? 200 : 500 });

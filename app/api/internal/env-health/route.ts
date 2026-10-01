@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { requireReadRateLimit } from "@/lib/api-handler";
 import { logger } from "@/lib/logger";
 import { proofBaseUrl } from "@/lib/proof/qstash";
 import { verifyCronSecret } from "@/lib/proof/verify-request";
@@ -27,6 +28,8 @@ export async function GET(request: Request) {
       { status: 401 }
     );
   }
+  const limited = await requireReadRateLimit("cron-internal", "cron", request);
+  if (limited) return limited;
 
   let baseUrl: string | null = null;
   let error: string | null = null;

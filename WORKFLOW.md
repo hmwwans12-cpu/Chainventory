@@ -228,6 +228,12 @@ Migration additive/expand berjalan **sebelum** kode baru live. Untuk perubahan b
 
 Smoke test rilis wajib mencakup: login, wallet external/embedded, deploy warehouse, Stock In/Out, status proof, Realtime, dan akses role.
 
+**No-paste-no-claim (aturan dokumen, pelajaran ADR-0004):** klaim status
+di ADR/TODO/WORKFLOW ("sudah menunjuk v2", "sudah di-push") WAJIB
+disertai bukti tempel (output perintah + tanggal): `schema_migrations`
+untuk migrasi, `eth_getCode`/`proofRecorder()` untuk kontrak, dan
+`/api/health/startup` untuk env. Tanpa bukti = belum selesai.
+
 ## 10. Definition of Done
 
 Sebuah task selesai bila:

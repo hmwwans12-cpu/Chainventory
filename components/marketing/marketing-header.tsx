@@ -22,18 +22,18 @@ import { LocaleToggle } from "@/components/shared/locale-toggle";
 import { cn } from "@/lib/utils";
 
 const PAGE_LINKS = [
-  { href: "/features", label: "Features" },
-  { href: "/about", label: "About" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/docs", label: "Docs" },
+  { href: "/features", labelKey: "marketing.nav_features" },
+  { href: "/about", labelKey: "marketing.nav_about" },
+  { href: "/faq", labelKey: "marketing.nav_faq" },
+  { href: "/docs", labelKey: "marketing.nav_docs" },
 ];
 
 // Reference anchor nav (landing only): Product / Proof / FAQ + Docs page.
 const ANCHOR_LINKS = [
-  { href: "/#product", label: "Product" },
-  { href: "/#proof", label: "Proof" },
-  { href: "/#faq", label: "FAQ" },
-  { href: "/docs", label: "Docs" },
+  { href: "/#product", labelKey: "marketing.nav_product" },
+  { href: "/#proof", labelKey: "marketing.nav_proof" },
+  { href: "/#faq", labelKey: "marketing.nav_faq" },
+  { href: "/docs", labelKey: "marketing.nav_docs" },
 ];
 
 /**
@@ -72,7 +72,7 @@ export function MarketingHeader({
 
         <nav
           className="bg-muted mx-auto hidden items-center gap-1 rounded-full border p-1 md:flex"
-          aria-label="Primary"
+          aria-label={t("marketing.nav_primary")}
         >
           {NAV_LINKS.map((link) => {
             const active = isActive(link.href);
@@ -88,7 +88,7 @@ export function MarketingHeader({
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {link.label}
+                {t(link.labelKey)}
               </Link>
             );
           })}
@@ -106,7 +106,7 @@ export function MarketingHeader({
           </span>
           {authenticated ? (
             <Button size="sm" render={<Link href="/dashboard" />}>
-              Dashboard
+              {t("marketing.nav_dashboard")}
             </Button>
           ) : (
             <>
@@ -116,7 +116,7 @@ export function MarketingHeader({
                 className="hidden lg:inline-flex"
                 render={<Link href="/login" />}
               >
-                Login
+                {t("marketing.nav_login")}
               </Button>
               <Button
                 variant="default"
@@ -124,7 +124,7 @@ export function MarketingHeader({
                 className="rounded-full"
                 render={<Link href="/signup" />}
               >
-                Get Started
+                {t("marketing.nav_get_started")}
               </Button>
             </>
           )}
@@ -136,7 +136,7 @@ export function MarketingHeader({
                   variant="outline"
                   size="icon"
                   className="lg:hidden"
-                  aria-label="Open menu"
+                  aria-label={t("marketing.nav_open_menu")}
                 />
               }
             >
@@ -144,14 +144,14 @@ export function MarketingHeader({
             </SheetTrigger>
             <SheetContent side="right">
               <SheetHeader>
-                <SheetTitle>Menu</SheetTitle>
+                <SheetTitle>{t("marketing.nav_menu")}</SheetTitle>
                 <SheetDescription>
-                  Everything you need to get started.
+                  {t("marketing.nav_menu_desc")}
                 </SheetDescription>
               </SheetHeader>
               <nav
                 className="flex flex-col gap-1 px-4"
-                aria-label="Primary mobile"
+                aria-label={t("marketing.nav_primary_mobile")}
               >
                 {NAV_LINKS.map((link) => {
                   const active = isActive(link.href);
@@ -175,7 +175,7 @@ export function MarketingHeader({
                           active ? "bg-primary" : "bg-transparent"
                         )}
                       />
-                      {link.label}
+                      {t(link.labelKey)}
                     </Link>
                   );
                 })}
@@ -192,7 +192,7 @@ export function MarketingHeader({
                       <Link href="/dashboard" onClick={() => setOpen(false)} />
                     }
                   >
-                    Dashboard
+                    {t("marketing.nav_dashboard")}
                   </Button>
                 ) : (
                   <>
@@ -203,7 +203,7 @@ export function MarketingHeader({
                         <Link href="/signup" onClick={() => setOpen(false)} />
                       }
                     >
-                      Get Started
+                      {t("marketing.nav_get_started")}
                     </Button>
                     <Button
                       size="lg"
@@ -212,7 +212,7 @@ export function MarketingHeader({
                         <Link href="/login" onClick={() => setOpen(false)} />
                       }
                     >
-                      Login
+                      {t("marketing.nav_login")}
                     </Button>
                   </>
                 )}

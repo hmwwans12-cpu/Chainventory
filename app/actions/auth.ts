@@ -3,6 +3,9 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
+import { translateAuthMessage } from "@/lib/auth/auth-errors";
 import { resolvePublicOrigin } from "@/lib/runtime/public-origin";
 import { loginSchema, signupSchema } from "@/lib/validators/auth";
 import { mapDbError } from "@/lib/domain/errors";
@@ -33,13 +36,21 @@ export async function loginAction(
   _prevState: unknown,
   formData: FormData
 ): Promise<{ error: string | null } | never> {
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return {
+      error: translateAuthMessage(
+        t,
+        parsed.error.issues[0]?.message,
+        t("auth.error_invalid_input")
+      ),
+    };
   }
 
   const supabase = await createClient();
@@ -50,7 +61,7 @@ export async function loginAction(
   });
 
   if (error) {
-    return { error: "Invalid email or password." };
+    return { error: t("auth.error_invalid_credentials") };
   }
 
   // H-01: hormati tujuan awal user (?next=) — sudah di-whitelist.
@@ -61,6 +72,8 @@ export async function signupAction(
   _prevState: unknown,
   formData: FormData
 ): Promise<{ error: string | null } | never> {
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
   // FLO-03: FormData.get mengembalikan null bila key absen (gender opsional
   // tidak dikirim client) — sedangkan skema .optional() hanya terima
   // undefined. Tanpa normalisasi, signup tanpa gender selalu gagal.
@@ -76,7 +89,13 @@ export async function signupAction(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return {
+      error: translateAuthMessage(
+        t,
+        parsed.error.issues[0]?.message,
+        t("auth.error_invalid_input")
+      ),
+    };
   }
 
   const supabase = await createClient();
@@ -104,18 +123,16 @@ export async function signupAction(
     if (authCode === "user_already_exists" || authCode === "email_exists") {
       // Sengaja generic: tidak memberi tahu password problem biar tidak
       // jadi oracle. Suruh user sign in.
-      userMessage =
-        "An account with this email already exists. Try signing in, or use a different email.";
+      userMessage = t("auth.error_user_exists");
     } else if (authCode === "weak_password") {
-      userMessage =
-        "Password is too weak. Use at least 8 characters with a mix of letters and numbers.";
+      userMessage = t("auth.error_weak_password");
     } else if (authCode === "email_address_invalid") {
-      userMessage = "This email address is not accepted. Use a valid one.";
+      userMessage = t("auth.error_email_invalid");
     } else {
       const mapped = mapDbError(error.message);
       userMessage =
         mapped.code === "DB_UNEXPECTED"
-          ? "Could not create your account. Please try again."
+          ? t("auth.error_signup_failed")
           : mapped.userMessage;
     }
     logger.warn(
@@ -127,8 +144,7 @@ export async function signupAction(
 
   if (!data.session) {
     return {
-      error:
-        "Check your email to confirm your account, then return here to sign in.",
+      error: t("auth.error_confirm_email"),
     };
   }
 
@@ -139,9 +155,11 @@ export async function resetPasswordAction(
   _prevState: unknown,
   formData: FormData
 ): Promise<{ error: string | null; success?: boolean }> {
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
   const email = formData.get("email");
   if (!email || typeof email !== "string") {
-    return { error: "Please enter your email address." };
+    return { error: t("auth.error_enter_email") };
   }
 
   // H-02: recovery code dari email ditukar sesi lewat /auth/confirm
@@ -162,7 +180,7 @@ export async function resetPasswordAction(
     return {
       error:
         mapped.code === "DB_UNEXPECTED"
-          ? "We couldn't send the reset link. Please try again."
+          ? t("auth.error_reset_failed")
           : mapped.userMessage,
     };
   }

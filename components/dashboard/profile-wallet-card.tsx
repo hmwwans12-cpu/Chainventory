@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { getLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/translations";
 import { getInitials, shortenAddress } from "@/lib/utils";
-import { roleLabel } from "@/lib/auth/permissions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WalletBalance } from "@/components/shared/wallet-balance";
@@ -60,7 +59,9 @@ export async function ProfileWalletCard({
                 <span className="t-headline-sm text-foreground truncate">
                   {name}
                 </span>
-                <Badge variant="success">{roleLabel(role)}</Badge>
+                <Badge variant="success">
+                  {translate(locale, `roles.${role.toLowerCase()}`)}
+                </Badge>
               </div>
               {/* Secondary — warehouse name + code */}
               {warehouseName ? (

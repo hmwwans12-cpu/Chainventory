@@ -1,13 +1,19 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 /**
- * Global loading fallback (DESIGN §45 — skeleton states).
+ * Global loading fallback (P2 audit A2) — skeleton netral tanpa teks,
+ * jadi tidak ada masalah locale. Segmen dengan loading.tsx sendiri
+ * (console/blockchain) memakai versi mereka yang lebih kaya.
  */
-export default function Loading() {
+export default function GlobalLoading() {
   return (
-    <div className="bg-background flex min-h-dvh items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="border-border border-t-primary size-8 animate-spin rounded-full border-2" />
-        <p className="text-muted-foreground text-sm">Loading…</p>
+    <main className="mx-auto flex w-full max-w-[960px] flex-col gap-4 px-4 py-8">
+      <Skeleton className="h-9 w-56 rounded-lg" />
+      <Skeleton className="h-4 w-80 rounded" />
+      <div className="grid gap-4 md:grid-cols-2">
+        <Skeleton className="min-h-[180px] rounded-xl" />
+        <Skeleton className="min-h-[180px] rounded-xl" />
       </div>
-    </div>
+    </main>
   );
 }

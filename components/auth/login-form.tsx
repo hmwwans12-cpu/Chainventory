@@ -11,6 +11,8 @@ import { GoogleButton, OAuthDivider } from "@/components/auth/google-button";
 import { ErrorAlert } from "@/components/shared/error-alert";
 import { loginAction } from "@/app/actions/auth";
 import { loginSchema, type LoginValues } from "@/lib/validators/auth";
+import { translateAuthMessage } from "@/lib/auth/auth-errors";
+import { useLocale } from "@/components/providers/locale-provider";
 import { Loader2 } from "lucide-react";
 
 export function LoginForm({
@@ -20,6 +22,7 @@ export function LoginForm({
   initialError?: string;
   next?: string;
 }) {
+  const { t } = useLocale();
   const [serverError, setServerError] = useState<string | null>(
     initialError ?? null
   );
@@ -55,8 +58,8 @@ export function LoginForm({
 
         <FormField
           id="email"
-          label="Email"
-          error={errors.email?.message}
+          label={t("auth.email_label")}
+          error={translateAuthMessage(t, errors.email?.message)}
           describedBy={serverError ? "login-error" : undefined}
         >
           <Input
@@ -69,8 +72,8 @@ export function LoginForm({
 
         <FormField
           id="password"
-          label="Password"
-          error={errors.password?.message}
+          label={t("auth.password_label")}
+          error={translateAuthMessage(t, errors.password?.message)}
           describedBy={serverError ? "login-error" : undefined}
         >
           <Input
@@ -85,12 +88,12 @@ export function LoginForm({
           {pending ? (
             <Loader2 aria-hidden="true" className="animate-spin" />
           ) : null}
-          {pending ? "Signing in…" : "Sign in"}
+          {pending ? t("auth.signin_pending") : t("auth.signin_submit")}
         </Button>
       </form>
 
       <OAuthDivider />
-      <GoogleButton />
+      <GoogleButton label={t("auth.google_continue")} />
     </>
   );
 }

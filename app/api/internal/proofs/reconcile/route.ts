@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { requireReadRateLimit } from "@/lib/api-handler";
 import { logger } from "@/lib/logger";
 import { reconcileProofs } from "@/lib/proof/reconcile";
 import { proofReconcileUrl } from "@/lib/proof/qstash";
@@ -42,6 +43,8 @@ async function handleReconcile(request: Request) {
       { status: 401 }
     );
   }
+  const limited = await requireReadRateLimit("cron-internal", "cron", request);
+  if (limited) return limited;
 
   const result = await reconcileProofs();
   return NextResponse.json(result, { status: result.ok ? 200 : 500 });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { requireReadRateLimit } from "@/lib/api-handler";
 import { verifyCronSecret } from "@/lib/proof/verify-request";
 import { reconcileDeployments } from "@/lib/warehouses/deployment-reconcile";
 
@@ -10,6 +11,8 @@ export async function GET(request: Request) {
       { status: 401 }
     );
   }
+  const limited = await requireReadRateLimit("cron-internal", "cron", request);
+  if (limited) return limited;
   const result = await reconcileDeployments();
   return NextResponse.json(result, { status: result.ok ? 200 : 500 });
 }

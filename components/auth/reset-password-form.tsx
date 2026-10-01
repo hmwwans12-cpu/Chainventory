@@ -8,9 +8,13 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/auth/form-field";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/ui/toast";
+import { translateAuthMessage } from "@/lib/auth/auth-errors";
+import { useLocale } from "@/components/providers/locale-provider";
 import { Loader2 } from "lucide-react";
 
 export function ResetPasswordForm() {
+  const { t } = useLocale();
+  const tr = (message: string | undefined) => translateAuthMessage(t, message);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -29,11 +33,11 @@ export function ResetPasswordForm() {
     if (success) {
       toast.add({
         type: "success",
-        title: "Password updated",
-        description: "Redirecting to your dashboard…",
+        title: t("auth.reset_done_title"),
+        description: t("auth.reset_done_desc"),
       });
     }
-  }, [success]);
+  }, [success, t]);
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,12 +48,12 @@ export function ResetPasswordForm() {
     const confirmPassword = formData.get("confirmPassword") as string;
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("auth.reset_mismatch"));
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("auth.error_password"));
       return;
     }
 
@@ -58,7 +62,7 @@ export function ResetPasswordForm() {
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
-        setError(error.message);
+        setError(tr(error.message));
       } else {
         setSuccess(true);
         redirectTimerRef.current = window.setTimeout(
@@ -77,7 +81,7 @@ export function ResetPasswordForm() {
           aria-live="polite"
           className="border-primary/30 bg-primary/15 text-primary rounded-lg border px-3 py-2 text-sm"
         >
-          Password updated! Redirecting to dashboard…
+          {t("auth.reset_done_body")}
         </div>
       </div>
     );
@@ -95,7 +99,7 @@ export function ResetPasswordForm() {
         </div>
       ) : null}
 
-      <FormField id="password" label="New password">
+      <FormField id="password" label={t("auth.reset_new")}>
         <Input
           id="password"
           name="password"
@@ -108,7 +112,7 @@ export function ResetPasswordForm() {
         />
       </FormField>
 
-      <FormField id="confirmPassword" label="Confirm password">
+      <FormField id="confirmPassword" label={t("auth.reset_confirm")}>
         <Input
           id="confirmPassword"
           name="confirmPassword"
@@ -125,7 +129,7 @@ export function ResetPasswordForm() {
         {pending ? (
           <Loader2 aria-hidden="true" className="animate-spin" />
         ) : null}
-        {pending ? "Updating…" : "Update password"}
+        {pending ? t("auth.reset_updating") : t("auth.reset_submit")}
       </Button>
     </form>
   );

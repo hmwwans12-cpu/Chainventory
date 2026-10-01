@@ -104,8 +104,6 @@ export function BulkAddDialog({
         return t("dialogs.bulk.error_csv_empty");
       case "Missing product name.":
         return t("dialogs.bulk.error_missing_name");
-      case "Missing SKU.":
-        return t("dialogs.bulk.error_missing_sku");
       case "Missing unit.":
         return t("dialogs.bulk.error_missing_unit");
       case "SKU is too long.":

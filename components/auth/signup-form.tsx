@@ -19,11 +19,13 @@ import { GoogleButton, OAuthDivider } from "@/components/auth/google-button";
 import { ErrorAlert } from "@/components/shared/error-alert";
 import { signupAction } from "@/app/actions/auth";
 import { signupSchema, type SignupValues } from "@/lib/validators/auth";
+import { translateAuthMessage } from "@/lib/auth/auth-errors";
 import { useLocale } from "@/components/providers/locale-provider";
 import { Loader2, X } from "lucide-react";
 
 export function SignupForm() {
   const { t } = useLocale();
+  const tr = (message: string | undefined) => translateAuthMessage(t, message);
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   // FE-03: validasi client memakai signupSchema yang SAMA dengan server.
@@ -68,23 +70,23 @@ export function SignupForm() {
 
         <FormField
           id="name"
-          label="Full Name"
-          error={errors.name?.message}
+          label={t("auth.name_label")}
+          error={tr(errors.name?.message)}
           describedBy={serverError ? "signup-error" : undefined}
         >
           <Input
             id="name"
             type="text"
             autoComplete="name"
-            placeholder="e.g. Sam Carter"
+            placeholder={t("auth.name_placeholder")}
             {...register("name")}
           />
         </FormField>
 
         <FormField
           id="email"
-          label="Email"
-          error={errors.email?.message}
+          label={t("auth.email_label")}
+          error={tr(errors.email?.message)}
           describedBy={serverError ? "signup-error" : undefined}
         >
           <Input
@@ -98,13 +100,13 @@ export function SignupForm() {
 
         <FormField
           id="gender"
-          label="Gender"
+          label={t("auth.gender_label")}
           labelSuffix={
             <span className="border-border text-muted-foreground rounded-full border px-2 py-0.5 text-xs">
-              Optional.
+              {t("auth.gender_optional")}
             </span>
           }
-          error={errors.gender?.message}
+          error={tr(errors.gender?.message)}
         >
           <Controller
             control={control}
@@ -116,15 +118,21 @@ export function SignupForm() {
               >
                 <SelectTrigger id="gender" className="h-11 w-full">
                   <SelectValue
-                    placeholder="Select gender"
+                    placeholder={t("auth.gender_placeholder")}
                     getLabel={(v) =>
-                      v === "MALE" ? "Male" : v === "FEMALE" ? "Female" : v
+                      v === "MALE"
+                        ? t("auth.gender_male")
+                        : v === "FEMALE"
+                          ? t("auth.gender_female")
+                          : v
                     }
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MALE">Male</SelectItem>
-                  <SelectItem value="FEMALE">Female</SelectItem>
+                  <SelectItem value="MALE">{t("auth.gender_male")}</SelectItem>
+                  <SelectItem value="FEMALE">
+                    {t("auth.gender_female")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -133,9 +141,9 @@ export function SignupForm() {
 
         <FormField
           id="password"
-          label="Password"
-          hint="At least 8 characters."
-          error={errors.password?.message}
+          label={t("auth.password_label")}
+          hint={t("auth.password_hint")}
+          error={tr(errors.password?.message)}
           describedBy={serverError ? "signup-error" : undefined}
         >
           <PasswordInput
@@ -158,12 +166,12 @@ export function SignupForm() {
           {pending ? (
             <Loader2 aria-hidden="true" className="animate-spin" />
           ) : null}
-          {pending ? "Creating account…" : "Sign Up"}
+          {pending ? t("auth.signup_pending") : t("auth.signup_submit")}
         </Button>
       </form>
 
       <OAuthDivider />
-      <GoogleButton label="Sign up with Google" />
+      <GoogleButton label={t("auth.google_signup")} />
     </>
   );
 }

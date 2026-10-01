@@ -5,20 +5,21 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLocale } from "@/components/providers/locale-provider";
 
 export function AuthUnavailableState({ onRetry }: { onRetry?: () => void }) {
   const router = useRouter();
+  const { t } = useLocale();
 
   return (
     <Card role="alert">
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-foreground text-xl font-semibold">
-            We couldn&apos;t verify your session
+            {t("auth.session_title")}
           </h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Your sign-in may still be valid. Check your connection and try again
-            before continuing.
+            {t("auth.session_desc")}
           </p>
         </div>
         <Button
@@ -26,7 +27,7 @@ export function AuthUnavailableState({ onRetry }: { onRetry?: () => void }) {
           onClick={onRetry ?? (() => router.refresh())}
         >
           <RefreshCw aria-hidden="true" />
-          Try again
+          {t("common.retry")}
         </Button>
       </CardContent>
     </Card>

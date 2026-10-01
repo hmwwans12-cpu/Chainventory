@@ -1,17 +1,24 @@
 import { AuthSplitShell } from "@/components/auth/auth-split-shell";
+import { LocaleProvider } from "@/components/providers/locale-provider";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
-export default function LoginLayout({
+export default async function LoginLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const initialLocale = await getLocale();
+  const t = (key: string) => translate(initialLocale, key);
   return (
-    <AuthSplitShell
-      headline="Your warehouse never stopped moving"
-      subcopy="Log in to see live stock, pending approvals, and proofs confirmed while you were away."
-      skipLabel="Skip to log-in form"
-    >
-      {children}
-    </AuthSplitShell>
+    <LocaleProvider initialLocale={initialLocale}>
+      <AuthSplitShell
+        headline={t("auth.split_login_headline")}
+        subcopy={t("auth.split_login_sub")}
+        skipLabel={t("auth.split_login_skip")}
+      >
+        {children}
+      </AuthSplitShell>
+    </LocaleProvider>
   );
 }

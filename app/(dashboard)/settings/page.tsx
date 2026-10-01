@@ -33,7 +33,6 @@ import { PageHeader } from "@/components/shared/page-header";
 import { NotificationPreferencesPanel } from "@/components/shared/notification-preferences";
 import { normalizePreferences } from "@/lib/users/notification-preferences";
 import { basescanAddressUrl } from "@/lib/constants";
-import { roleLabel } from "@/lib/auth/permissions";
 
 // Seluruh halaman dashboard membaca sesi/cookies -> wajib dynamic
 // (AGENT.md §6); cegah percobaan prerender saat env build minim.
@@ -144,7 +143,9 @@ export default async function SettingsPage({
                 <span className="text-muted-foreground text-sm">
                   {t("settings.role")}
                 </span>
-                <Badge variant="success">{roleLabel(active.role)}</Badge>
+                <Badge variant="success">
+                  {t(`roles.${active.role.toLowerCase()}`)}
+                </Badge>
               </div>
             ) : null}
           </CardContent>

@@ -89,7 +89,7 @@ export async function TopProducts({
               ) : null}
               {outQty > 0 ? (
                 <div
-                  className="h-full bg-[#D97706]"
+                  className="bg-warning h-full"
                   style={{ width: `${outPct}%` }}
                 />
               ) : null}

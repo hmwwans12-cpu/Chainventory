@@ -47,7 +47,7 @@ import {
 import { NAV_SECTIONS, DEV_NAV_ITEM, type NavItem } from "@/lib/navigation";
 import { getInitials } from "@/lib/utils";
 import { useLocale } from "@/components/providers/locale-provider";
-import { hasPermission, roleLabel, type Role } from "@/lib/auth/permissions";
+import { hasPermission, type Role } from "@/lib/auth/permissions";
 import { switchWarehouseUrl } from "@/lib/warehouses/warehouse-url";
 import type { WarehouseSummary } from "@/lib/warehouses/current-warehouse";
 
@@ -267,7 +267,7 @@ export function AppSidebar({
           <>
             <SidebarSeparator />
             <SidebarGroup>
-              <SidebarGroupLabel>Developer</SidebarGroupLabel>
+              <SidebarGroupLabel>{t("group.developer")}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
@@ -314,8 +314,8 @@ export function AppSidebar({
                         <span className="text-sidebar-accent-foreground/70 truncate text-sm">
                           {role
                             ? active?.name
-                              ? `${roleLabel(role)} · ${active.name}`
-                              : roleLabel(role)
+                              ? `${t(`roles.${role.toLowerCase()}`)} · ${active.name}`
+                              : t(`roles.${role.toLowerCase()}`)
                             : user.email}
                         </span>
                       </span>

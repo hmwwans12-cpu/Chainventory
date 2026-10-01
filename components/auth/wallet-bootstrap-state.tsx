@@ -4,6 +4,7 @@ import { Loader2, RefreshCw, WalletCards } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PanelCard } from "@/components/shared/panel-card";
+import { useLocale } from "@/components/providers/locale-provider";
 
 type WalletState = "idle" | "creating" | "ready" | "error";
 
@@ -18,6 +19,7 @@ export function WalletBootstrapState({
   onRetry: () => void;
   compact?: boolean;
 }) {
+  const { t } = useLocale();
   if (state === "ready") return null;
 
   if (state === "error") {
@@ -33,16 +35,16 @@ export function WalletBootstrapState({
           />
           <div className="flex flex-col gap-1">
             <p className="text-foreground text-sm font-medium">
-              Wallet setup needs attention
+              {t("auth.wallet_setup_title")}
             </p>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              {error ?? "Your wallet could not be prepared."}
+              {error ?? t("auth.wallet_setup_fallback")}
             </p>
           </div>
         </div>
         <Button type="button" variant="outline" onClick={onRetry}>
           <RefreshCw aria-hidden="true" />
-          Try again
+          {t("common.retry")}
         </Button>
       </PanelCard>
     );
@@ -59,11 +61,11 @@ export function WalletBootstrapState({
       />
       <div className="flex flex-col gap-1">
         <p className="text-foreground text-sm font-medium">
-          Preparing your wallet
+          {t("auth.wallet_preparing")}
         </p>
         {!compact ? (
           <p className="text-muted-foreground text-sm leading-relaxed">
-            This usually takes a moment. You can stay on this page.
+            {t("auth.wallet_preparing_desc")}
           </p>
         ) : null}
       </div>

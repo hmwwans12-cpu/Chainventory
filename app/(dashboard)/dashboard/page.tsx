@@ -366,7 +366,7 @@ export default async function DashboardPage({
                         n: String(needsAttention),
                       })}
                 </h2>
-                <span className="text-[11px] font-bold tracking-wider text-[#B45309] uppercase">
+                <span className="text-status-warn-fg text-[11px] font-bold tracking-wider uppercase">
                   {t("dashboard.urgent_action")}
                 </span>
               </div>
@@ -388,7 +388,7 @@ export default async function DashboardPage({
                     </span>
                     <Link
                       href={`/inventory/products?${whQuery}`}
-                      className="focus-visible:ring-ring shrink-0 text-xs font-bold text-[#B45309] outline-none hover:text-[#92400E] focus-visible:ring-3"
+                      className="focus-visible:ring-ring text-status-warn-fg hover:text-warning shrink-0 text-xs font-bold outline-none focus-visible:ring-3"
                     >
                       {t("dashboard.review_products")} →
                     </Link>
@@ -410,7 +410,7 @@ export default async function DashboardPage({
                     </span>
                     <Link
                       href={`/members?${whQuery}`}
-                      className="focus-visible:ring-ring shrink-0 text-xs font-bold text-[#B45309] outline-none hover:text-[#92400E] focus-visible:ring-3"
+                      className="focus-visible:ring-ring text-status-warn-fg hover:text-warning shrink-0 text-xs font-bold outline-none focus-visible:ring-3"
                     >
                       {t("dashboard.review_members")} →
                     </Link>
@@ -685,7 +685,7 @@ export default async function DashboardPage({
                 <span className="flex items-center gap-2">
                   <span
                     aria-hidden="true"
-                    className="size-3 rounded-full bg-[#D97706]"
+                    className="bg-warning size-3 rounded-full"
                   />
                   <span className="text-foreground text-xs font-semibold">
                     {t("dashboard.stock_out")} (−

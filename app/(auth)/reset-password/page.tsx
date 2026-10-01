@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
 export const metadata: Metadata = {
   title: "Reset Password",
@@ -10,16 +12,18 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function ResetPasswordPage() {
+export default async function ResetPasswordPage() {
+  const locale = await getLocale();
+  const t = (key: string) => translate(locale, key);
   return (
     <AuthShell>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-foreground text-2xl font-semibold text-balance">
-            Set new password
+            {t("auth.reset_title")}
           </h1>
           <p className="text-muted-foreground text-sm">
-            Choose a strong password for your account.
+            {t("auth.reset_desc")}
           </p>
         </div>
 
@@ -27,12 +31,12 @@ export default function ResetPasswordPage() {
 
         <div className="border-border border-t pt-4 text-center text-sm">
           <p className="text-muted-foreground">
-            Remember your password?{" "}
+            {t("auth.remember")}{" "}
             <Link
               href="/login"
               className="text-primary hover:text-primary/80 font-medium underline underline-offset-2"
             >
-              Log in
+              {t("auth.login_link")}
             </Link>
           </p>
         </div>
