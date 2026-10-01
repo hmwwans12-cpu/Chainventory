@@ -27,6 +27,7 @@ import {
   VerifiedWalletBadge,
   VerifyWalletButton,
 } from "@/components/settings/verify-wallet-button";
+import { WarehouseLifecycleButton } from "@/components/settings/warehouse-lifecycle-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { NotificationPreferencesPanel } from "@/components/shared/notification-preferences";
@@ -241,11 +242,21 @@ export default async function SettingsPage({
                   {active.code}
                 </p>
               </div>
-              <Badge
-                variant={active.status === "active" ? "success" : "destructive"}
-              >
-                {active.status === "active" ? "Active" : "Suspended"}
-              </Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant={
+                    active.status === "active" ? "success" : "destructive"
+                  }
+                >
+                  {active.status === "active" ? "Active" : "Suspended"}
+                </Badge>
+                {active.role === "OWNER" ? (
+                  <WarehouseLifecycleButton
+                    warehouseId={active.id}
+                    status={active.status}
+                  />
+                ) : null}
+              </div>
             </div>
             {active.contractAddress ? (
               <div className="flex flex-col gap-2 border-t pt-4">

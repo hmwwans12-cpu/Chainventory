@@ -40,8 +40,7 @@ export function VerifyWalletButton({ address }: { address: string }) {
     const wallet =
       wallets.find(
         (w) =>
-          w.address?.toLowerCase() === target &&
-          w.walletClientType !== "guest"
+          w.address?.toLowerCase() === target && w.walletClientType !== "guest"
       ) ??
       // Fallback: wallet cocok tapi bertipe guest / metadata minim — coba
       // pakai apa adanya daripada langsung gagal.
@@ -94,8 +93,9 @@ export function VerifyWalletButton({ address }: { address: string }) {
       const msg = err instanceof Error ? err.message : "";
       // User menolak signing di wallet — bedakan dari error sistem agar
       // tidak dikira bug verify.
-      const rejected =
-        /rejected|denied|cancelled|canceled|user.*decline/i.test(msg);
+      const rejected = /rejected|denied|cancelled|canceled|user.*decline/i.test(
+        msg
+      );
       toast.add({
         type: "error",
         title: t("settings.verify_wallet_failed"),

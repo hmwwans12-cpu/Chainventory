@@ -2,8 +2,10 @@ import Link from "next/link";
 
 import { Logo } from "@/components/shared/logo";
 import { APP_NAME } from "@/lib/constants";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
-export function AuthShell({
+export async function AuthShell({
   children,
   wide = false,
 }: {
@@ -11,6 +13,7 @@ export function AuthShell({
   wide?: boolean;
 }) {
   const year = new Date().getFullYear();
+  const locale = await getLocale();
 
   return (
     <div className="bg-muted flex min-h-dvh flex-col items-center justify-center px-4 py-12">
@@ -21,7 +24,9 @@ export function AuthShell({
         Skip to sign-in form
       </a>
       <div className="mb-8">
-        <Logo />
+        <Logo
+          homeLabel={translate(locale, "brand.home_aria", { app: APP_NAME })}
+        />
       </div>
       <main
         id="auth-main"

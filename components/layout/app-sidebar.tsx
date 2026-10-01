@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { Logo } from "@/components/shared/logo";
+import { APP_NAME } from "@/lib/constants";
 import { useSignOut } from "@/hooks/use-sign-out";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import {
@@ -112,13 +113,14 @@ export function AppSidebar({
     <Sidebar
       variant="sidebar"
       collapsible="icon"
-      aria-label="Primary navigation"
+      aria-label={t("common.primary_nav")}
     >
       <SidebarHeader className="gap-2">
         <div className="border-sidebar-border flex h-14 items-center overflow-hidden px-2 group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
           <Logo
             href="/dashboard"
             className="group-data-[collapsible=icon]:[&>span:last-child]:hidden"
+            homeLabel={t("brand.home_aria", { app: APP_NAME })}
           />
         </div>
 

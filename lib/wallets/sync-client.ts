@@ -147,8 +147,7 @@ export async function syncWallets(
 
     const raw = await params.fetcher(body, token);
     const ok = typeof raw === "boolean" ? raw : raw.ok;
-    const proofRequired =
-      typeof raw === "object" && raw.proofRequired === true;
+    const proofRequired = typeof raw === "object" && raw.proofRequired === true;
     if (ok) {
       result.synced.push(address);
       continue;

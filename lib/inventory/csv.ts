@@ -13,7 +13,9 @@ import { neutralizeFormula } from "@/lib/csv/formula-injection";
 export const MAX_IMPORT_ROWS = 1_000;
 export const MAX_CSV_BYTES = 1_000_000;
 
-const REQUIRED_COLUMNS = ["name", "sku", "unit"] as const;
+// Kolom `sku` tidak wajib: baris tanpa SKU mendapat SKU otomatis dari
+// server. Header tanpa kolom sku = semua baris auto-generate.
+const REQUIRED_COLUMNS = ["name", "unit"] as const;
 const OPTIONAL_COLUMNS = [
   "category",
   "description",
@@ -22,6 +24,7 @@ const OPTIONAL_COLUMNS = [
 ] as const;
 const KNOWN_COLUMNS: readonly string[] = [
   ...REQUIRED_COLUMNS,
+  "sku",
   ...OPTIONAL_COLUMNS,
 ];
 
@@ -174,7 +177,7 @@ export function parseProductsCsv(input: string): ProductCsvParseResult {
     const unit = at("unit");
 
     if (!name) return errors.push({ index, message: "Missing product name." });
-    if (!sku) return errors.push({ index, message: "Missing SKU." });
+    // SKU kosong = server generate otomatis (lib/inventory/sku.ts).
     if (!unit) return errors.push({ index, message: "Missing unit." });
     if (sku.length > SKU_MAX)
       return errors.push({ index, message: "SKU is too long." });

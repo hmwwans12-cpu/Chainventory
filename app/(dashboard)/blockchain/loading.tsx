@@ -3,11 +3,17 @@ import { Link2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { PanelCard } from "@/components/shared/panel-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
-export default function Loading() {
+export default async function Loading() {
+  const locale = await getLocale();
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Audit Explorer" description="Loading audit trail…" />
+      <PageHeader
+        title={translate(locale, "chain.loading_title")}
+        description={translate(locale, "chain.loading_desc")}
+      />
       {/* Toolbar: live badge + warehouse + chain chip */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
@@ -36,7 +42,7 @@ export default function Loading() {
         <div className="flex items-center justify-center gap-2 border-b px-6 py-4">
           <Link2 aria-hidden="true" className="text-muted-foreground size-4" />
           <span className="text-muted-foreground text-sm">
-            Loading proofs...
+            {translate(locale, "chain.proofs_loading")}
           </span>
         </div>
         {Array.from({ length: 5 }).map((_, i) => (

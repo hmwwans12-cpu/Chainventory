@@ -25,15 +25,15 @@ describe("inventory validators", () => {
     ).toBe(true);
   });
 
-  it("rejects blank sku/name/unit", () => {
-    expect(
-      createProductSchema.safeParse({
-        warehouseId: WID,
-        sku: " ",
-        name: "x",
-        unit: "pcs",
-      }).success
-    ).toBe(false);
+  it("accepts blank sku (server auto-generates) but rejects blank name/unit", () => {
+    const blankSku = createProductSchema.safeParse({
+      warehouseId: WID,
+      sku: " ",
+      name: "x",
+      unit: "pcs",
+    });
+    expect(blankSku.success).toBe(true);
+    if (blankSku.success) expect(blankSku.data.sku).toBe("");
     expect(
       createProductSchema.safeParse({
         warehouseId: WID,
@@ -48,6 +48,17 @@ describe("inventory validators", () => {
         sku: "x",
         name: "x",
         unit: " ",
+      }).success
+    ).toBe(false);
+  });
+
+  it("still requires sku on update", () => {
+    expect(
+      updateProductSchema.safeParse({
+        productId: PID,
+        sku: " ",
+        name: "Bolts",
+        unit: "box",
       }).success
     ).toBe(false);
   });

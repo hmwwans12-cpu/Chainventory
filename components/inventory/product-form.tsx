@@ -194,17 +194,21 @@ export function ProductForm({
             <FieldHead
               htmlFor="product-sku"
               label={t("dialogs.product_form.sku_label")}
-              required
             />
             <Input
               id="product-sku"
-              required
               {...register("sku")}
-              placeholder={t("dialogs.product_form.sku_placeholder")}
+              placeholder={t("dialogs.product_form.sku_auto_placeholder")}
               className="px-3 py-2 font-mono text-xs"
               aria-invalid={Boolean(errors.sku)}
-              aria-describedby={errors.sku ? "err-product-sku" : undefined}
+              aria-describedby="sku-auto-hint err-product-sku"
             />
+            <p
+              id="sku-auto-hint"
+              className="text-muted-foreground text-xs leading-relaxed"
+            >
+              {t("dialogs.product_form.sku_auto_hint")}
+            </p>
             <FieldError
               id="err-product-sku"
               message={translateError(errors.sku?.message)}

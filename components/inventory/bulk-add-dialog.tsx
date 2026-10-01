@@ -142,11 +142,7 @@ export function BulkAddDialog({
             index: valid.length + bad.length + 1,
             reason: t("dialogs.bulk.error_missing_name"),
           });
-        if (!row.sku)
-          return bad.push({
-            index: valid.length + bad.length + 1,
-            reason: t("dialogs.bulk.error_missing_sku"),
-          });
+        // SKU kosong = server generate otomatis.
         if (!row.unit)
           return bad.push({
             index: valid.length + bad.length + 1,
@@ -826,7 +822,11 @@ export function BulkAddDialog({
                             {r.name}
                           </span>
                           <span className="text-primary col-span-3 truncate font-mono">
-                            {r.sku}
+                            {r.sku || (
+                              <span className="text-muted-foreground italic">
+                                {t("dialogs.bulk.sku_auto")}
+                              </span>
+                            )}
                           </span>
                           <span className="text-muted-foreground col-span-2 truncate">
                             {r.unit}

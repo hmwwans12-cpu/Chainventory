@@ -153,10 +153,31 @@ export async function POST(request: Request) {
     return ok(
       {
         id: existingProduct.id,
+        sku: (existingProduct as { sku?: string }).sku ?? "",
         initialStockApplied: Boolean(existingIntent.initial_stock_applied),
         proofPending,
       },
       200
+    );
+  }
+
+  // SKU auto-generate: fingerprint di atas sengaja memakai SKU mentah agar
+  // idempotency stabil; SKU final deterministik dari productIdempotencyKey
+  // (retry key sama = SKU sama). Cek tabrakan per warehouse.
+  let sku = parsed.data.sku.trim();
+  if (!sku) {
+    const { generateUniqueSku } = await import("@/lib/inventory/sku");
+    sku = await generateUniqueSku(
+      async (candidate) => {
+        const { data } = await supabase
+          .from("products")
+          .select("id")
+          .eq("warehouse_id", parsed.data.warehouseId)
+          .eq("sku", candidate)
+          .maybeSingle();
+        return Boolean(data);
+      },
+      { name: parsed.data.name, seed: productIdempotencyKey }
     );
   }
 
@@ -229,7 +250,7 @@ export async function POST(request: Request) {
         warehouseId: parsed.data.warehouseId,
         warehouseAddress: contractAddress,
         productId,
-        sku: parsed.data.sku,
+        sku,
         unit: parsed.data.unit,
         movementType: "stock_in",
         quantity: initialQtyRaw,
@@ -249,7 +270,7 @@ export async function POST(request: Request) {
     "create_product_with_initial_stock",
     {
       p_warehouse_id: parsed.data.warehouseId,
-      p_sku: parsed.data.sku,
+      p_sku: sku,
       p_name: parsed.data.name,
       p_category: parsed.data.category || null,
       p_unit: parsed.data.unit,
@@ -324,6 +345,7 @@ export async function POST(request: Request) {
   return ok(
     {
       id: createdProductId,
+      sku,
       initialStockApplied: hasInitialQty,
       proofPending: proofCreated,
     },

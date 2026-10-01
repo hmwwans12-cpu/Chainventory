@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { authUnavailable, ok, error, readJson } from "@/lib/api-handler";
+import {
+  authUnavailable,
+  ok,
+  error,
+  readJson,
+  requireRateLimit,
+} from "@/lib/api-handler";
 import { getAuthLookup } from "@/lib/supabase/auth-lookup";
 import { claimFaucet } from "@/lib/faucet/claim";
 import { logger } from "@/lib/logger";
@@ -28,6 +34,12 @@ export async function POST(request: Request) {
     return error("Sign in to claim faucet ETH.", "UNAUTHENTICATED", 401);
   }
   const user = auth.user;
+
+  // Burst/IP protection di atas cooldown 12 jam per user (claimFaucet):
+  // menahan N-akun-dari-1-IP menguras treasury + fail murah sebelum logika
+  // chain. Cooldown DB tetap penegak utama.
+  const rateLimited = await requireRateLimit("faucet-claim", user.id, request);
+  if (rateLimited) return rateLimited;
 
   // Parse request body
   const { ok: parsed, body } = await readJson(request);

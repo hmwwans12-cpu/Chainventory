@@ -69,7 +69,11 @@ describe("syncWallets", () => {
       getToken: async () => null,
       fetcher,
     });
-    expect(result).toEqual({ synced: [], failed: [DEFAULT_LOWER], skipped: [] });
+    expect(result).toEqual({
+      synced: [],
+      failed: [DEFAULT_LOWER],
+      skipped: [],
+    });
     expect(fetcher).not.toHaveBeenCalled();
   });
 
@@ -166,11 +170,8 @@ describe("syncWallets", () => {
       .fn<(...args: unknown[]) => Promise<string | null>>()
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(sig);
-    const fetcher = vi.fn(
-      async (input: { verificationSignature?: string }) =>
-        input.verificationSignature
-          ? true
-          : { ok: false, proofRequired: true },
+    const fetcher = vi.fn(async (input: { verificationSignature?: string }) =>
+      input.verificationSignature ? true : { ok: false, proofRequired: true }
     );
     const result = await syncWallets({
       wallets: [ethWallet()],

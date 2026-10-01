@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SearchableProductSelect } from "@/components/inventory/searchable-product-select";
+import { ApiErrorActionButton } from "@/components/shared/api-error-action";
 import {
   applyMovement,
   type MovementType,
@@ -103,6 +104,14 @@ export function StockMovementDialog({
   const [reason, setReason] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // Kode error API terakhir untuk aksi lanjutan (F4). `fail()` adalah
+  // satu-satunya penulis error+code agar banner dan tombol aksi tidak
+  // pernah berpasangan salah (validasi form selalu code null).
+  const [errorCode, setErrorCode] = React.useState<string | null>(null);
+  const fail = (message: string | null, code: string | null = null) => {
+    setError(message);
+    setErrorCode(code);
+  };
   const [stale, setStale] = React.useState(false);
   const [currentBalance, setCurrentBalance] = React.useState<string | null>(
     null
@@ -209,12 +218,12 @@ export function StockMovementDialog({
 
   const submitViaIntent = async (
     qty: string
-  ): Promise<{ handled: boolean }> => {
+  ): Promise<{ handled: boolean; fallbackToStandard?: boolean }> => {
     const wallet =
       wallets.find((w) => w.address && w.walletClientType !== "guest") ??
       wallets[0];
     if (!wallet?.address) {
-      setError(t("dialogs.movement.error_wallet_connect"));
+      fail(t("dialogs.movement.error_wallet_connect"));
       return { handled: true };
     }
 
@@ -237,17 +246,27 @@ export function StockMovementDialog({
       actorWallet: wallet.address,
     });
     if (!prep.ok) {
+      if (prep.errorCode === "UNSUPPORTED_PROOF_MODE") {
+        // Warehouse treasury v1: intent wallet-paid tidak didukung —
+        // fallback ke standard movement (treasury yang membayar gas).
+        // Server sendiri mengarahkan ke sini ("use a standard stock
+        // movement instead").
+        idempotencyKey.current = null;
+        setPhase(null);
+        fail(null);
+        return { handled: true, fallbackToStandard: true };
+      }
       if (!isRetryableApiFailure(prep)) {
         idempotencyKey.current = null;
       }
-      setError(prep.error);
+      fail(prep.error, prep.errorCode ?? null);
       return { handled: true };
     }
 
     if (prep.data.status === "failed" || prep.data.status === "cancelled") {
       idempotencyKey.current = null;
       setPhase(null);
-      setError(t("dialogs.movement.error_still_waiting"));
+      fail(t("dialogs.movement.error_still_waiting"));
       return { handled: true };
     }
     const replayableIntent =
@@ -261,7 +280,7 @@ export function StockMovementDialog({
       if (!signingWallet) {
         idempotencyKey.current = null;
         setPhase(null);
-        setError(t("dialogs.movement.error_wallet_connect"));
+        fail(t("dialogs.movement.error_wallet_connect"));
         return { handled: true };
       }
 
@@ -285,7 +304,7 @@ export function StockMovementDialog({
           idempotencyKey.current = null;
         }
         setPhase(null);
-        setError(
+        fail(
           code === 4001
             ? t("dialogs.movement.error_signature_cancelled")
             : t("dialogs.movement.error_wallet_send")
@@ -294,7 +313,7 @@ export function StockMovementDialog({
       }
       if (!txHash || typeof txHash !== "string") {
         setPhase(null);
-        setError(t("dialogs.movement.error_no_tx_hash"));
+        fail(t("dialogs.movement.error_no_tx_hash"));
         return { handled: true };
       }
 
@@ -365,7 +384,7 @@ export function StockMovementDialog({
             idempotencyKey.current = null;
           }
           setPhase(null);
-          setError(submitted.error);
+          fail(submitted.error, submitted.errorCode ?? null);
           return { handled: true };
         }
       }
@@ -417,7 +436,7 @@ export function StockMovementDialog({
       if (!fin.ok) {
         if (fin.errorCode === "STALE_STOCK") {
           setStale(true);
-          setError(t("dialogs.movement.error_stale"));
+          fail(t("dialogs.movement.error_stale"));
           setTimeout(() => {
             idempotencyKey.current = null;
             onOpenChange(false);
@@ -434,17 +453,17 @@ export function StockMovementDialog({
             idempotencyKey.current = null;
             const balance = await readCurrentBalance(warehouseId, selected!.id);
             setCurrentBalance(balance);
-            setError(t("dialogs.movement.error_insufficient"));
+            fail(t("dialogs.movement.error_insufficient"));
           } else {
             idempotencyKey.current = null;
-            setError(fin.error);
+            fail(fin.error, fin.errorCode ?? null);
           }
           return { handled: true };
         }
         if (!isRetryableApiFailure(fin)) {
           idempotencyKey.current = null;
           setPhase(null);
-          setError(fin.error);
+          fail(fin.error, fin.errorCode ?? null);
           return { handled: true };
         }
       }
@@ -452,20 +471,20 @@ export function StockMovementDialog({
     }
 
     setPhase(null);
-    setError(t("dialogs.movement.error_still_waiting"));
+    fail(t("dialogs.movement.error_still_waiting"));
     return { handled: true };
   };
 
   const submit = async () => {
     if (!selected) {
-      setError(t("dialogs.movement.error_select_product"));
+      fail(t("dialogs.movement.error_select_product"));
       return;
     }
 
     let qty: string;
     if (movementType === "reversal") {
       if (!selectedTarget) {
-        setError(t("dialogs.movement.error_select_target"));
+        fail(t("dialogs.movement.error_select_target"));
         return;
       }
       qty = selectedTarget.quantity;
@@ -476,7 +495,7 @@ export function StockMovementDialog({
         Number(candidate) <= 0 ||
         Number(candidate) > 1_000_000_000_000
       ) {
-        setError(t("dialogs.movement.error_invalid_quantity"));
+        fail(t("dialogs.movement.error_invalid_quantity"));
         quantityRef.current?.focus();
         return;
       }
@@ -488,23 +507,24 @@ export function StockMovementDialog({
       movementType !== "stock_out" &&
       !reason.trim()
     ) {
-      setError(t("dialogs.movement.error_reason_required"));
+      fail(t("dialogs.movement.error_reason_required"));
       reasonRef.current?.focus();
       return;
     }
 
     safeSetBusy(true);
-    setError(null);
+    fail(null);
     setStale(false);
     setCurrentBalance(null);
 
     if (movementType === "stock_in" || movementType === "stock_out") {
-      try {
-        await submitViaIntent(qty);
-        return;
-      } finally {
+      const viaIntent = await submitViaIntent(qty);
+      if (!viaIntent.fallbackToStandard) {
         safeSetBusy(false);
+        return;
       }
+      // Fallback treasury v1: lanjut ke applyMovement di bawah (busy tetap
+      // true, kunci idempotency fresh karena sudah di-null-kan di atas).
     }
 
     if (!idempotencyKey.current) {
@@ -541,6 +561,38 @@ export function StockMovementDialog({
             name: selected.name,
           }),
         });
+      } else if (movementType === "stock_in" || movementType === "stock_out") {
+        // Fallback treasury v1: sukses tanpa movementId on-chain di tangan
+        // (proof di-submit treasury async) → pakai toast simple.
+        const movementId = result.data?.movementId;
+        toast.add({
+          type: "success",
+          title: typeLabel,
+          description:
+            movementType === "stock_in"
+              ? movementId
+                ? t("dialogs.movement.toast_stock_in_with_id", {
+                    qty,
+                    unit: selected.unit,
+                    name: selected.name,
+                  })
+                : t("dialogs.movement.toast_stock_in_simple", {
+                    qty,
+                    unit: selected.unit,
+                    name: selected.name,
+                  })
+              : movementId
+                ? t("dialogs.movement.toast_stock_out_with_id", {
+                    qty,
+                    unit: selected.unit,
+                    name: selected.name,
+                  })
+                : t("dialogs.movement.toast_stock_out_simple", {
+                    qty,
+                    unit: selected.unit,
+                    name: selected.name,
+                  }),
+        });
       } else {
         toast.add({
           type: "success",
@@ -557,7 +609,7 @@ export function StockMovementDialog({
 
     if (result.errorCode === "STALE_STOCK") {
       setStale(true);
-      setError(t("dialogs.movement.error_stale"));
+      fail(t("dialogs.movement.error_stale"));
       setTimeout(() => {
         onOpenChange(false);
         onSuccess();
@@ -568,11 +620,11 @@ export function StockMovementDialog({
     if (result.errorCode === "INSUFFICIENT_STOCK") {
       const balance = await readCurrentBalance(warehouseId, selected.id);
       setCurrentBalance(balance);
-      setError(t("dialogs.movement.error_insufficient"));
+      fail(t("dialogs.movement.error_insufficient"));
       return;
     }
 
-    setError(result.error);
+    fail(result.error, result.errorCode ?? null);
   };
 
   return (
@@ -645,7 +697,12 @@ export function StockMovementDialog({
                 {t("dialogs.movement.error_stale")}
               </p>
             ) : null}
-            {error && !stale ? <ErrorBanner message={error} /> : null}
+            {error && !stale ? (
+              <>
+                <ErrorBanner message={error} />
+                <ApiErrorActionButton errorCode={errorCode} />
+              </>
+            ) : null}
             {phase ? (
               <p
                 aria-live="polite"

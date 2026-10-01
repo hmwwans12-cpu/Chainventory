@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { Logo } from "@/components/shared/logo";
 import { APP_NAME } from "@/lib/constants";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
 const FOOTER_GROUPS = [
   {
@@ -26,12 +28,15 @@ const FOOTER_GROUPS = [
  * getting-started links, and network status with a copyable chain id
  * (NFE-21: tombol salin kini benar ada, sesuai komentar).
  */
-export function MarketingFooter() {
+export async function MarketingFooter() {
+  const locale = await getLocale();
   return (
     <footer className="border-border bg-card border-t">
       <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
         <div className="flex flex-col gap-4 md:col-span-2">
-          <Logo />
+          <Logo
+            homeLabel={translate(locale, "brand.home_aria", { app: APP_NAME })}
+          />
           <p className="text-muted-foreground max-w-sm text-sm leading-relaxed text-pretty">
             Modern warehouse inventory management with verifiable cryptographic
             proof stamping for every critical movement.

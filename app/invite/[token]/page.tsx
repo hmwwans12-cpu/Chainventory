@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { CheckCircle2, MailWarning, XCircle } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@/components/shared/sign-out-button";
 import {
@@ -37,6 +39,9 @@ export default async function InvitePage({
 }) {
   const { token } = await params;
   const sp = await searchParams;
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   const supabase = await createClient();
   const {
     data: { user },
@@ -82,8 +87,9 @@ export default async function InvitePage({
     }
     return (
       <InviteError
-        title="Invitation has expired"
-        detail="This invitation link has expired or was already used. Ask the sender to send a new one."
+        t={t}
+        title={t("invite.expired_title")}
+        detail={t("invite.expired_detail")}
       />
     );
   }
@@ -94,9 +100,10 @@ export default async function InvitePage({
   if ((inv.email ?? "").toLowerCase() !== userEmail) {
     return (
       <InviteError
-        title="Signed-in email does not match"
-        detail={`This invitation is for ${inv.email}. Sign out, then sign in with that email to accept.`}
-        secondary={<SignOutButton label="Sign out and switch account" />}
+        t={t}
+        title={t("invite.mismatch_title")}
+        detail={t("invite.mismatch_detail", { email: inv.email ?? "" })}
+        secondary={<SignOutButton label={t("invite.sign_out_switch")} />}
       />
     );
   }
@@ -113,8 +120,9 @@ export default async function InvitePage({
     );
     return (
       <InviteError
-        title="Invitation could not be accepted"
-        detail="This invitation link is no longer valid, has been revoked, or is for a different email address. Ask the sender to invite you again, or join with the warehouse code."
+        t={t}
+        title={t("invite.failed_title")}
+        detail={t("invite.failed_detail")}
       />
     );
   }
@@ -126,32 +134,34 @@ export default async function InvitePage({
 
   return (
     <main className="mx-auto flex w-full max-w-[560px] flex-col gap-6 py-10">
-      <PageHeader title="Accept invitation" />
+      <PageHeader title={t("invite.accept_title")} />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckCircle2 aria-hidden="true" className="text-primary size-5" />
-            You&apos;re in!
+            {t("invite.success_title")}
           </CardTitle>
           <CardDescription>
-            You have joined {inv.warehouse_name} as {roleLabel(inv.role)}. Open
-            it from your dashboard.
+            {t("invite.success_desc", {
+              warehouse: inv.warehouse_name,
+              role: roleLabel(inv.role),
+            })}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-2">
             <Button size="lg" render={<Link href="/dashboard" />}>
-              Go to dashboard
+              {t("invite.go_dashboard")}
             </Button>
             {sp.next && next !== "/dashboard" ? (
               <Button variant="outline" render={<Link href={next} />}>
-                Continue
+                {t("invite.continue")}
               </Button>
             ) : null}
           </div>
           <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
             <MailWarning aria-hidden="true" className="size-3.5" />
-            Tip: invitations are bound to the email address they were sent to.
+            {t("invite.tip")}
           </p>
         </CardContent>
       </Card>
@@ -163,14 +173,16 @@ function InviteError({
   title,
   detail,
   secondary,
+  t,
 }: {
   title: string;
   detail: string;
   secondary?: ReactNode;
+  t: (key: string, params?: Record<string, string>) => string;
 }) {
   return (
     <main className="mx-auto flex w-full max-w-[560px] flex-col gap-6 py-10">
-      <PageHeader title="Accept invitation" />
+      <PageHeader title={t("invite.accept_title")} />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -182,7 +194,7 @@ function InviteError({
         <CardContent>
           <div className="flex flex-wrap gap-2">
             <Button size="lg" render={<Link href="/dashboard" />}>
-              Go to dashboard
+              {t("invite.go_dashboard")}
             </Button>
             {secondary}
           </div>

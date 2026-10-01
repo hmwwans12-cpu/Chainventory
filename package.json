@@ -21,7 +21,9 @@
     "e2e:serve": "node scripts/e2e/serve.mjs",
     "e2e:test": "playwright test",
     "analyze": "next experimental-analyze --output",
-    "analyze:ui": "next experimental-analyze"
+    "analyze:ui": "next experimental-analyze",
+    "db:push:verify": "node scripts/db/push-verify.mjs",
+    "worker:dev": "node scripts/dev/outbox-worker.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

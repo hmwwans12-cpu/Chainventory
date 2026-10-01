@@ -8,6 +8,7 @@ import {
   pickActiveWarehouse,
 } from "@/lib/warehouses/current-warehouse";
 import { RetryErrorState } from "@/components/shared/retry-error-state";
+import { isDeveloperAllowed } from "@/lib/console/guard";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoWarehouse } from "@/components/shared/no-warehouse";
 import { Badge } from "@/components/ui/badge";
@@ -81,7 +82,7 @@ export default async function StockMovementsPageRoute({
   const movementsBase = supabase
     .from("stock_movements")
     .select(
-      "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(status, tx_hash, error)"
+      "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(id, status, tx_hash, error)"
     )
     .eq("warehouse_id", active.id);
   const [movementsResult, productsResult] = await Promise.all([
@@ -109,13 +110,13 @@ export default async function StockMovementsPageRoute({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Stock Movement"
-          description={`${active.name} · ledger.`}
+          title={t("sub.stock_movement")}
+          description={t("movements.ledger_desc", { name: active.name })}
         />
         <RetryErrorState
           icon="arrow-down-to-line"
-          title="Unable to load movements."
-          description="Something went wrong while retrieving the ledger. Please try again."
+          title={t("movements.load_failed_title")}
+          description={t("movements.load_failed_desc")}
         />
       </div>
     );
@@ -138,6 +139,7 @@ export default async function StockMovementsPageRoute({
       proofStatus: row.proofs?.[0]?.status ?? null,
       proofTxHash: row.proofs?.[0]?.tx_hash ?? null,
       proofError: row.proofs?.[0]?.error ?? null,
+      proofId: (row.proofs?.[0] as { id?: string } | undefined)?.id ?? null,
     })
   );
 
@@ -178,6 +180,10 @@ export default async function StockMovementsPageRoute({
         products={products}
         initialMovements={movements}
         query={rawQ}
+        isDeveloper={isDeveloperAllowed({
+          emails: [user.email ?? ""],
+          wallets: [],
+        })}
       />
     </div>
   );

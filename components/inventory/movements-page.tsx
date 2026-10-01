@@ -138,7 +138,7 @@ async function fetchPage(
   let req = supabase
     .from("stock_movements")
     .select(
-      "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(status, tx_hash, error)"
+      "id, movement_type, quantity, status, reason, reference, actor_wallet, expected_balance_version, created_at, products(id, name, sku, unit), proofs(id, status, tx_hash, error)"
     )
     .eq("warehouse_id", warehouseId);
   if (escaped) {
@@ -170,6 +170,7 @@ async function fetchPage(
       proofStatus: row.proofs?.[0]?.status ?? null,
       proofTxHash: row.proofs?.[0]?.tx_hash ?? null,
       proofError: row.proofs?.[0]?.error ?? null,
+      proofId: (row.proofs?.[0] as { id?: string } | undefined)?.id ?? null,
     })),
   };
 }
@@ -186,6 +187,7 @@ export function MovementsPage({
   products,
   initialMovements,
   query,
+  isDeveloper = false,
 }: {
   warehouseId: string;
   warehouses: WarehouseSummary[];
@@ -194,6 +196,8 @@ export function MovementsPage({
   initialMovements: MovementListItem[];
   /** Kata kunci pencarian server-side (?q=): reference/reason/wallet. */
   query: string;
+  /** Developer (allowlist) melihat tombol retry proof gagal. */
+  isDeveloper?: boolean;
 }) {
   const { t, locale } = useLocale();
   const unknownProductLabel = t("movements.unknown_product");
@@ -993,6 +997,11 @@ export function MovementsPage({
           open
           onOpenChange={(open) => {
             if (!open) setDetailTarget(null);
+          }}
+          isDeveloper={isDeveloper}
+          onRetrySuccess={() => {
+            router.refresh();
+            void refreshMovements();
           }}
         />
       ) : null}

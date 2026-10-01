@@ -53,7 +53,7 @@ import { logger } from "@/lib/logger";
 export const maxDuration = 60;
 
 type RowResult =
-  | { index: number; ok: true; productId: string }
+  | { index: number; ok: true; productId: string; sku: string }
   | { index: number; ok: false; error: string };
 
 export async function POST(request: Request) {
@@ -218,7 +218,7 @@ export async function POST(request: Request) {
       const { data: existingProduct, error: existingProductError } =
         await supabase
           .from("products")
-          .select("id")
+          .select("id, sku")
           .eq("id", existingIntent.product_id)
           .eq("warehouse_id", parsed.data.warehouseId)
           .maybeSingle();
@@ -232,8 +232,33 @@ export async function POST(request: Request) {
         continue;
       }
       created += 1;
-      results.push({ index: idx, ok: true, productId: existingProduct.id });
+      results.push({
+        index: idx,
+        ok: true,
+        productId: existingProduct.id,
+        sku: (existingProduct as { sku?: string }).sku ?? item.sku.trim(),
+      });
       continue;
+    }
+
+    // SKU auto-generate (sama seperti single create): fingerprint di atas
+    // memakai SKU mentah agar idempotency stabil; SKU final deterministik
+    // dari row idempotency key.
+    const { generateUniqueSku } = await import("@/lib/inventory/sku");
+    let sku = item.sku.trim();
+    if (!sku) {
+      sku = await generateUniqueSku(
+        async (candidate) => {
+          const { data } = await supabase
+            .from("products")
+            .select("id")
+            .eq("warehouse_id", parsed.data.warehouseId)
+            .eq("sku", candidate)
+            .maybeSingle();
+          return Boolean(data);
+        },
+        { name: item.name, seed: productIdempotencyKey }
+      );
     }
 
     if (hasQty && !actorWallet) {
@@ -272,7 +297,7 @@ export async function POST(request: Request) {
         warehouseId: parsed.data.warehouseId,
         warehouseAddress: contractAddress,
         productId: productIdNew,
-        sku: item.sku,
+        sku,
         unit: item.unit,
         movementType: "stock_in",
         quantity: qtyRaw,
@@ -289,7 +314,7 @@ export async function POST(request: Request) {
 
     const res = await service.rpc("create_product_with_initial_stock", {
       p_warehouse_id: parsed.data.warehouseId,
-      p_sku: item.sku,
+      p_sku: sku,
       p_name: item.name,
       p_category: item.category || null,
       p_unit: item.unit,
@@ -373,7 +398,7 @@ export async function POST(request: Request) {
     }
 
     created += 1;
-    results.push({ index: idx, ok: true, productId });
+    results.push({ index: idx, ok: true, productId, sku });
   }
 
   return ok({ created, failed, results });

@@ -79,24 +79,27 @@ export default async function AnalyticsPage({
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Analytics"
-          description={`${active.name} · overview.`}
+          title={t("analytics.title")}
+          description={t("analytics.header_overview", { name: active.name })}
         />
         <RetryErrorState
-          title="Analytics unavailable"
-          description="We could not load analytics for this warehouse. Please refresh the page to try again."
+          title={t("analytics.unavailable_title")}
+          description={t("analytics.unavailable_desc")}
         />
       </div>
     );
   }
 
-  const rangeHint = `vs previous ${range} days`;
+  const rangeHint = t("analytics.vs_previous", { n: String(range) });
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Analytics"
-        description={`${active.name} · ${active.code} · inventory volume and movement trends.`}
+        title={t("analytics.title")}
+        description={t("analytics.header_full", {
+          name: active.name,
+          code: active.code,
+        })}
         actions={
           <AnalyticsControls warehouses={warehouses} activeId={active.id}>
             <RangeTabs warehouseId={active.id} range={range} />

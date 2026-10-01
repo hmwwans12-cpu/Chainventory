@@ -129,8 +129,8 @@ export default async function ProductsPageRoute({
         />
         <RetryErrorState
           icon="package"
-          title="Unable to load inventory."
-          description="Something went wrong while retrieving your inventory. Please try again."
+          title={t("products.load_failed_title")}
+          description={t("products.load_failed_desc")}
         />
       </div>
     );

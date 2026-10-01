@@ -50,6 +50,7 @@ import {
   localizedMetaLabel,
 } from "@/lib/inventory/status-meta";
 import { ErrorAlert } from "@/components/shared/error-alert";
+import { ApiErrorActionButton } from "@/components/shared/api-error-action";
 import { useLocale } from "@/components/providers/locale-provider";
 
 // Re-export from canonical source (audit A — single source of truth)
@@ -85,6 +86,7 @@ export function CreateProductDialog({
   const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [errorCode, setErrorCode] = React.useState<string | null>(null);
   const idempotencyKey = React.useRef<string | null>(null);
 
   const handleSubmit = async (values: ProductFormValues) => {
@@ -93,6 +95,7 @@ export function CreateProductDialog({
     }
     setBusy(true);
     setError(null);
+    setErrorCode(null);
     const result = await createProductWithInitialStock({
       warehouseId,
       sku: values.sku,
@@ -110,24 +113,26 @@ export function CreateProductDialog({
         idempotencyKey.current = null;
       }
       setError(result.error);
+      setErrorCode(result.errorCode ?? null);
       return;
     }
     idempotencyKey.current = null;
     onOpenChange(false);
     onCreated();
     const warehouseShort = warehouseId.slice(0, 6);
+    const finalSku = result.data.sku || values.sku;
     toast.add({
       type: "success",
       title: t("dialogs.create_product.toast_title", { name: values.name }),
       description: result.data.initialStockApplied
         ? t("dialogs.create_product.toast_desc_with_stock", {
-            sku: values.sku,
+            sku: finalSku,
             warehouse: warehouseShort,
             quantity: values.initialQuantity,
             unit: values.unit,
           })
         : t("dialogs.create_product.toast_desc_ready", {
-            sku: values.sku,
+            sku: finalSku,
             warehouse: warehouseShort,
           }),
     });
@@ -166,6 +171,7 @@ export function CreateProductDialog({
         {error ? (
           <div className="px-6 pt-4">
             <ErrorBanner message={error} />
+            <ApiErrorActionButton errorCode={errorCode} />
           </div>
         ) : null}
         <ProductForm
@@ -197,11 +203,13 @@ export function EditProductDialog({
   const { t, locale } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [errorCode, setErrorCode] = React.useState<string | null>(null);
   const unitLocked = product.movementCount > 0;
 
   const handleSubmit = async (values: ProductFormValues) => {
     setBusy(true);
     setError(null);
+    setErrorCode(null);
     const result = await updateProduct({
       productId: product.id,
       sku: values.sku,
@@ -214,6 +222,7 @@ export function EditProductDialog({
     setBusy(false);
     if (!result.ok) {
       setError(result.error);
+      setErrorCode(result.errorCode ?? null);
       return;
     }
     onOpenChange(false);
@@ -262,6 +271,7 @@ export function EditProductDialog({
         {error ? (
           <div className="px-6 pt-4">
             <ErrorBanner message={error} />
+            <ApiErrorActionButton errorCode={errorCode} />
           </div>
         ) : null}
         <ProductForm
@@ -301,14 +311,17 @@ export function ArchiveProductDialog({
   const { t } = useLocale();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [errorCode, setErrorCode] = React.useState<string | null>(null);
 
   const confirm = async () => {
     setBusy(true);
     setError(null);
+    setErrorCode(null);
     const result = await archiveProduct(warehouseId, product.id);
     setBusy(false);
     if (!result.ok) {
       setError(result.error);
+      setErrorCode(result.errorCode ?? null);
       return;
     }
     onOpenChange(false);
@@ -360,7 +373,12 @@ export function ArchiveProductDialog({
             />
             {t("dialogs.archive_product.restorable")}
           </p>
-          {error ? <ErrorBanner message={error} /> : null}
+          {error ? (
+            <>
+              <ErrorBanner message={error} />
+              <ApiErrorActionButton errorCode={errorCode} />
+            </>
+          ) : null}
         </div>
         <div className="border-border flex flex-col-reverse gap-2.5 border-t px-6 py-4 sm:flex-row sm:justify-end">
           <Button

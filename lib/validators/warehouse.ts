@@ -63,3 +63,11 @@ export type CreateWarehousePrepareValues = z.infer<
 export type CreateWarehouseSubmitValues = z.infer<
   typeof createWarehouseSubmitSchema
 >;
+
+/** Suspend/reactivate warehouse oleh owner (0074, self-service). */
+export const warehouseLifecycleSchema = z.object({
+  warehouseId: z.string().uuid("Invalid warehouse id."),
+  action: z.enum(["suspend", "reactivate"], { message: "Invalid action." }),
+});
+
+export type WarehouseLifecycleValues = z.infer<typeof warehouseLifecycleSchema>;

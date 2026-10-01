@@ -14,6 +14,7 @@
 import * as React from "react";
 
 import { ErrorState } from "@/components/shared/error-state";
+import { useLocale } from "@/components/providers/locale-provider";
 
 export default function DashboardError({
   error,
@@ -22,16 +23,19 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useLocale();
   React.useEffect(() => {
     console.error("[DashboardError]", error);
   }, [error]);
 
   return (
     <ErrorState
-      title="Something went wrong"
-      description={`An unexpected error occurred while rendering this page.${
-        error.digest ? ` Reference: ${error.digest}` : ""
-      }`}
+      title={t("common.error_title")}
+      description={
+        error.digest
+          ? t("common.error_desc_ref", { digest: error.digest })
+          : t("common.error_desc")
+      }
       onRetry={reset}
     />
   );

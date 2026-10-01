@@ -43,9 +43,21 @@ const productIdempotencyKeySchema = z
   .optional()
   .default("");
 
+/**
+ * SKU opsional saat create: string kosong = server generate otomatis
+ * (`lib/inventory/sku.ts`, deterministik per idempotency key). Terlalu
+ * panjang tetap ditolak; blank tidak lagi ditolak.
+ */
+export const optionalSkuSchema = z
+  .string()
+  .trim()
+  .max(64, "SKU is too long.")
+  .optional()
+  .default("");
+
 export const createProductSchema = z.object({
   warehouseId: z.string().uuid("Invalid warehouse id."),
-  sku: z.string().trim().min(1, "Enter a SKU.").max(64, "SKU is too long."),
+  sku: optionalSkuSchema,
   name: z
     .string()
     .trim()
@@ -70,7 +82,7 @@ export const createProductSchema = z.object({
 });
 
 export const bulkProductRowSchema = z.object({
-  sku: z.string().trim().min(1, "Enter a SKU.").max(64, "SKU is too long."),
+  sku: optionalSkuSchema,
   name: z
     .string()
     .trim()
@@ -106,6 +118,9 @@ export const updateProductSchema = createProductSchema
   .omit({ warehouseId: true, idempotencyKey: true })
   .extend({
     productId: z.string().uuid("Invalid product id."),
+    // Update existing: SKU wajib (tidak auto-generate — blank di form edit
+    // berarti "jangan ubah" ditangani client, bukan server).
+    sku: z.string().trim().min(1, "Enter a SKU.").max(64, "SKU is too long."),
   });
 
 /**
@@ -131,9 +146,10 @@ export const productFormSchema = z.object({
     .trim()
     .min(1, "Enter a product name.")
     .max(200, "Name is too long."),
-  sku: z.string().trim().min(1, "Enter a SKU.").max(64, "SKU is too long."),
+  sku: z.string().trim().max(64, "SKU is too long."),
   // Tanpa .default(): RHF selalu memasok string via defaultValues, sehingga
-  // tipe input = output (tidak ada mismatch Resolver). Nilai "" = kosong.
+  // tipe input = output (tidak ada mismatch Resolver). Nilai "" = kosong =
+  // server generate otomatis.
   category: z.string().trim().max(100, "Category is too long."),
   unit: z.string().trim().min(1, "Enter a unit.").max(20, "Unit is too long."),
   lowStockThreshold: decimal3,

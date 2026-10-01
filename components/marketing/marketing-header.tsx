@@ -15,6 +15,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Logo } from "@/components/shared/logo";
+import { APP_NAME } from "@/lib/constants";
+import { useLocale } from "@/components/providers/locale-provider";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LocaleToggle } from "@/components/shared/locale-toggle";
 import { cn } from "@/lib/utils";
@@ -49,6 +51,7 @@ export function MarketingHeader({
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { t } = useLocale();
   // /docs owns its full-viewport chrome (fumadocs nav + collapsible
   // sidebar). Rendering the floating pill above it buries the sidebar's
   // collapsed expand-trigger (header z-40 over fumadocs panel z-10), making
@@ -64,7 +67,7 @@ export function MarketingHeader({
     <header className="sticky top-4 z-40 px-4 md:px-12">
       <div className="border-border/80 bg-background/80 mx-auto flex h-12 w-full max-w-6xl items-center gap-2 rounded-full border px-3 shadow-(--shadow-elevated) backdrop-blur-md sm:gap-4 sm:px-5">
         <span className="flex items-center gap-2">
-          <Logo />
+          <Logo homeLabel={t("brand.home_aria", { app: APP_NAME })} />
         </span>
 
         <nav

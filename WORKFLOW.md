@@ -179,6 +179,10 @@ pipeline v1, RLS/RPC, ABI (`out/` kompatibel — interface factory sama).
 - Setelah itu `manual_review`; hanya Developer Console dapat menjadwalkan retry ulang.
 - Reconciliation harian mencari outbox/proof yang tertinggal.
 - Setiap status perubahan proof menghasilkan audit log dan, bila relevan, notifikasi in-app.
+- Dev lokal: QStash tidak bisa callback ke localhost — jalankan
+  `pnpm worker:dev` (poll `POST /api/internal/proofs/process-local` pakai
+  CRON_SECRET; menolak di production) agar submit→confirm teruji end-to-end
+  tanpa deploy.
 
 ## 7. Workflow Keamanan
 

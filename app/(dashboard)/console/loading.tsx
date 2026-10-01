@@ -1,12 +1,15 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
-export default function ConsoleLoading() {
+export default async function ConsoleLoading() {
+  const locale = await getLocale();
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Developer Console"
-        description="Loading platform status…"
+        title={translate(locale, "console.title")}
+        description={translate(locale, "console.loading_desc")}
       />
       {/* Tabs */}
       <Skeleton className="h-11 w-full max-w-xl rounded-lg" />

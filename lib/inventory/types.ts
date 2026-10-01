@@ -64,4 +64,6 @@ export type MovementListItem = {
   proofStatus: string | null;
   proofTxHash: string | null;
   proofError: string | null;
+  /** Proof id untuk aksi retry (null bila tidak ada proof). */
+  proofId: string | null;
 };

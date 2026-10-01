@@ -6,6 +6,8 @@ import {
   Clock,
   ExternalLink,
   FileText,
+  Loader2,
+  RotateCw,
   XCircle,
 } from "lucide-react";
 
@@ -30,6 +32,7 @@ import {
 import type { MovementListItem } from "@/lib/inventory/types";
 import { cn, formatDateTime } from "@/lib/utils";
 import { BASESCAN_URL } from "@/lib/constants";
+import { toast } from "@/components/ui/toast";
 import { useLocale } from "@/components/providers/locale-provider";
 
 export { BASESCAN_URL };
@@ -45,13 +48,62 @@ export function MovementDetailSheet({
   movement,
   open,
   onOpenChange,
+  isDeveloper = false,
+  onRetrySuccess,
 }: {
   movement: MovementListItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Developer (allowlist console) boleh retry proof gagal via route console. */
+  isDeveloper?: boolean;
+  onRetrySuccess?: () => void;
 }) {
   const { t, locale } = useLocale();
+  const [retryBusy, setRetryBusy] = React.useState(false);
   if (!movement) return null;
+
+  const proofRetryable =
+    isDeveloper &&
+    Boolean(movement.proofId) &&
+    (movement.proofStatus === "failed" ||
+      movement.proofStatus === "manual_review");
+
+  const retryProof = async () => {
+    if (!movement.proofId || retryBusy) return;
+    setRetryBusy(true);
+    try {
+      const res = await fetch(
+        `/api/console/proofs/${encodeURIComponent(movement.proofId)}/retry`,
+        { method: "POST" }
+      );
+      const body = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+      } | null;
+      if (!res.ok || !body?.ok) {
+        toast.add({
+          type: "error",
+          title: t("movements.proof_retry_failed"),
+          description: body?.error ?? t("movements.proof_retry_failed"),
+        });
+        return;
+      }
+      toast.add({
+        type: "success",
+        title: t("movements.proof_retry_queued_title"),
+        description: t("movements.proof_retry_queued_desc"),
+      });
+      onRetrySuccess?.();
+    } catch {
+      toast.add({
+        type: "error",
+        title: t("movements.proof_retry_failed"),
+        description: t("movements.proof_retry_failed"),
+      });
+    } finally {
+      setRetryBusy(false);
+    }
+  };
 
   const typeMeta = MOVEMENT_TYPE_META[movement.movementType];
   const statusMeta = MOVEMENT_STATUS_META[movement.status];
@@ -289,6 +341,22 @@ export function MovementDetailSheet({
                 {t("movements.proof_failed_notice")}
               </p>
             </div>
+          ) : null}
+          {proofRetryable ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={retryProof}
+              disabled={retryBusy}
+            >
+              {retryBusy ? (
+                <Loader2 aria-hidden="true" className="animate-spin" />
+              ) : (
+                <RotateCw aria-hidden="true" />
+              )}
+              {t("movements.proof_retry")}
+            </Button>
           ) : null}
         </div>
       </SheetContent>

@@ -31,8 +31,7 @@ export interface WalletSyncState {
 }
 
 export type WalletSyncFetcherResult =
-  | boolean
-  | { ok: boolean; proofRequired?: boolean };
+  boolean | { ok: boolean; proofRequired?: boolean };
 
 async function defaultFetcher(
   input: WalletSyncInput,
@@ -150,9 +149,7 @@ export function useWalletSync(
         getUserId: () => supabaseUserId ?? privyUserId,
         signMessage: async (target, message) => {
           const original = wallets.find(
-            (w) =>
-              w.address?.toLowerCase() ===
-              target.address.toLowerCase()
+            (w) => w.address?.toLowerCase() === target.address.toLowerCase()
           );
           const provider = await original?.getEthereumProvider?.();
           if (!provider || !original?.address) return null;

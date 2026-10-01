@@ -51,7 +51,7 @@ export type BulkProductRow = {
 };
 
 export type BulkRowResult =
-  | { index: number; ok: true; productId: string }
+  | { index: number; ok: true; productId: string; sku?: string }
   | { index: number; ok: false; error: string };
 
 export type BulkCreateResult = {
@@ -71,6 +71,8 @@ export type CreateProductWithInitialStockInput = CreateProductInput & {
 
 export type CreateProductWithInitialStockResult = {
   productId: string;
+  /** SKU final (terisi otomatis bila request kosong). */
+  sku?: string;
   initialStockApplied: boolean;
   proofPending?: boolean;
 };
@@ -81,6 +83,7 @@ export async function createProduct(
 ): Promise<
   ApiResult<{
     id: string;
+    sku?: string;
     initialStockApplied?: boolean;
     proofPending?: boolean;
   }>
@@ -92,6 +95,7 @@ export async function createProduct(
   );
   return parseSuccess<{
     id: string;
+    sku?: string;
     initialStockApplied?: boolean;
     proofPending?: boolean;
   }>(status, json);
@@ -168,6 +172,7 @@ export async function createProductWithInitialStock(
     status: created.status,
     data: {
       productId: created.data.id,
+      sku: created.data.sku,
       initialStockApplied: created.data.initialStockApplied === true,
       proofPending: created.data.proofPending,
     },

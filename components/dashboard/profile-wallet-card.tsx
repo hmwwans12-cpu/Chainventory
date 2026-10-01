@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ChevronRight, Wallet } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import { getInitials, shortenAddress } from "@/lib/utils";
 import { roleLabel } from "@/lib/auth/permissions";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +20,7 @@ import { WalletBalance } from "@/components/shared/wallet-balance";
  * Saldo di-stream via <WalletBalance> (Suspense) — halaman tidak memblock
  * menunggu RPC (audit #7).
  */
-export function ProfileWalletCard({
+export async function ProfileWalletCard({
   name,
   role,
   walletAddress,
@@ -36,13 +38,14 @@ export function ProfileWalletCard({
   contractAddress?: string | null;
 }) {
   const initial = getInitials(name, null, "?");
+  const locale = await getLocale();
 
   return (
     <Link
       href={warehouseId ? `/settings?warehouse=${warehouseId}` : "/settings"}
       // FE-19: label gabungan agar SR tidak mendengar "ETH + saldo" terpotong
       // tanpa konteks (nilai saldo async tetap diumumkan terpisah).
-      aria-label={`${name}, open profile and wallet settings`}
+      aria-label={translate(locale, "settings.open_profile_aria", { name })}
       className="focus-visible:ring-ring group hover:border-primary block rounded-xl transition-all hover:shadow-(--shadow-elevated) focus-visible:ring-3 focus-visible:outline-none"
     >
       <Card className="p-4">

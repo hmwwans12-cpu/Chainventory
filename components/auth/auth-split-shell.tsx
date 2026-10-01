@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Boxes, ShieldCheck, Users, Zap } from "lucide-react";
 
 import { APP_NAME } from "@/lib/constants";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
 /**
  * Shell split-screen auth (referensi Stitch `*_split_screen`): panel brand
@@ -18,7 +20,7 @@ const BRAND_POINTS = [
   { icon: Zap, text: "<1 day — average team onboarding" },
 ];
 
-export function AuthSplitShell({
+export async function AuthSplitShell({
   headline,
   subcopy,
   skipLabel,
@@ -30,6 +32,7 @@ export function AuthSplitShell({
   children: React.ReactNode;
 }) {
   const year = new Date().getFullYear();
+  const locale = await getLocale();
 
   return (
     <div className="bg-dawn-pink flex min-h-dvh flex-col md:flex-row">
@@ -42,7 +45,7 @@ export function AuthSplitShell({
 
       {/* Panel brand — desktop only (mobile langsung ke form). */}
       <aside
-        aria-label={`${APP_NAME} overview`}
+        aria-label={translate(locale, "auth.overview_aria", { app: APP_NAME })}
         className="bg-primary text-primary-foreground relative hidden w-[45%] flex-col justify-between overflow-hidden p-8 md:flex lg:p-12"
       >
         <div

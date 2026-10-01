@@ -77,6 +77,16 @@ describe("parseProductsCsv", () => {
     );
   });
 
+  it("sku kosong / kolom sku absen -> lolos (server auto-generate)", () => {
+    const blank = parseProductsCsv(`${HEADER}\nSteel Rod,,Raw,pcs,,,\n`);
+    expect(blank.errors).toHaveLength(0);
+    expect(blank.rows[0]?.sku).toBe("");
+
+    const noCol = parseProductsCsv("name,unit\nRod,pcs\n");
+    expect(noCol.errors).toHaveLength(0);
+    expect(noCol.rows[0]).toMatchObject({ sku: "", name: "Rod" });
+  });
+
   it("baris valid penuh + stok awal", () => {
     const result = parseProductsCsv(
       `${HEADER}\nSteel Rod,SR-1,Raw,pcs,"Heavy, duty",5,120.5\n`

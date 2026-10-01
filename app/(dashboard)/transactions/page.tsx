@@ -158,6 +158,7 @@ export default async function TransactionsPageRoute({
     proofStatus: row.proof?.status ?? null,
     proofTxHash: row.proof?.tx_hash ?? null,
     proofError: row.proof?.error ?? null,
+    proofId: row.proof?.id ?? null,
   }));
 
   return (

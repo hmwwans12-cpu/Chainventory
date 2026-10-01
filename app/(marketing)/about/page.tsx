@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/shared/page-header";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 
 export const metadata: Metadata = {
   title: "About",
@@ -9,12 +11,13 @@ export const metadata: Metadata = {
   alternates: { canonical: "/about" },
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const locale = await getLocale();
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-16 sm:px-6 md:py-24">
       <PageHeader
-        title="About Chainventory"
-        description="Inventory management that feels like a normal SaaS, with verification built underneath."
+        title={translate(locale, "about.page_title")}
+        description={translate(locale, "about.page_desc")}
       />
       <div className="text-muted-foreground flex flex-col gap-4 text-base leading-relaxed">
         <p>

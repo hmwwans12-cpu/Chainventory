@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import { PageHeader } from "@/components/shared/page-header";
 import { DeveloperConsole } from "@/components/console/developer-console";
 import { allowlistSet, getConsoleActor } from "@/lib/console/guard";
@@ -23,6 +25,9 @@ export const metadata = {
 
 export default async function DeveloperConsolePage() {
   const supabase = await createClient();
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   const actor = await getConsoleActor(supabase);
   if (!actor.ok) redirect("/dashboard");
 
@@ -57,8 +62,8 @@ export default async function DeveloperConsolePage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Developer Console"
-        description="Platform-wide operations, on-chain health, and manual proof recovery."
+        title={t("console.title")}
+        description={t("console.page_desc")}
       />
       {/* APP-17: daftar console fallback ke [] saat DB gagal — tanpa banner
           ini operator mengira "sehat & kosong". */}
@@ -67,8 +72,7 @@ export default async function DeveloperConsolePage() {
           role="alert"
           className="border-warning/30 bg-warning/10 text-warning-foreground rounded-lg border px-4 py-3 text-sm"
         >
-          Console data may be incomplete. The database probe failed. Numbers
-          below could be stale; retry shortly.
+          {t("console.health_stale")}
         </p>
       ) : null}
       <DeveloperConsole initial={initial} />

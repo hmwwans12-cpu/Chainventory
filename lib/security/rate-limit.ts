@@ -43,6 +43,10 @@ export const MUTATION_RATE_LIMITS = {
   "warehouse-create": { user: 5, ip: 15 },
   /** finalize a submitted warehouse deployment after relay. */
   "warehouse-create-finalize": { user: 30, ip: 60 },
+  /** owner-initiated suspend/reactivate (jarang, sensitif). */
+  "warehouse-lifecycle": { user: 10, ip: 30 },
+  /** klaim faucet testnet (biaya treasury nyata walau testnet). */
+  "faucet-claim": { user: 5, ip: 20 },
   /** join/approve/reject/remove/change_role. Looser than ownership transfer. */
   membership: { user: 20, ip: 60 },
   /**
@@ -76,6 +80,8 @@ export const READ_RATE_LIMITS = {
   export: { user: 30, ip: 120 },
   /** cek saldo wallet publik (fail-open; sebelumnya salah pakai bucket export). */
   "wallet-balance": { user: 30, ip: 120 },
+  /** startup health dashboard (fail-open, jarang dipanggil). */
+  "startup-health": { user: 10, ip: 30 },
 } as const;
 
 export type MutationAction = keyof typeof MUTATION_RATE_LIMITS;

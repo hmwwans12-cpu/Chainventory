@@ -97,7 +97,10 @@ export function SiteHeader({
 
   return (
     <header className="bg-card sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b px-4 sm:gap-3 md:px-8">
-      <SidebarTrigger aria-label="Toggle sidebar" className="-ml-1" />
+      <SidebarTrigger
+        aria-label={t("common.toggle_sidebar")}
+        className="-ml-1"
+      />
       <Separator
         orientation="vertical"
         className="mr-1 data-[orientation=vertical]:h-4"

@@ -10,9 +10,11 @@ import { getMyWarehouses } from "@/lib/warehouses/current-warehouse";
 import { isDeveloperAllowed } from "@/lib/console/guard";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CommandMenu } from "@/components/shared/command-menu";
+import { StartupHealthBanner } from "@/components/shared/startup-health-banner";
 import { AuthUnavailableState } from "@/components/auth/auth-unavailable-state";
 import { LocaleProvider } from "@/components/providers/locale-provider";
 import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import { getAuthLookup } from "@/lib/supabase/auth-lookup";
 
 // Audit v0.3.11 M-01: per AGENT.md §6, all authenticated pages must be
@@ -118,12 +120,13 @@ export default async function DashboardLayout({
           </Suspense>
           <main
             className="bg-surface-container flex-1"
-            aria-label="Dashboard content"
+            aria-label={translate(initialLocale, "common.dashboard_content")}
           >
             {/* Skeleton resmi dashboard-01: container query scope + ritme halaman.
               max-w 1600px: konten dashboard tidak meregang tak terbatas di
               ultrawide (konsistensi visual, temuan audit UI #9). */}
             <div className="@container/main mx-auto w-full max-w-[1600px] min-w-0 px-4 py-6 md:p-8">
+              <StartupHealthBanner />
               <PageTransition>{children}</PageTransition>
             </div>
           </main>

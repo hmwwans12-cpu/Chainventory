@@ -64,6 +64,45 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.page_status": "Page {page} of {totalPages}",
     "common.cancel": "Cancel",
     "common.confirm": "Confirm",
+    "common.toggle_sidebar": "Toggle sidebar",
+    "common.primary_nav": "Primary navigation",
+    "common.dashboard_content": "Dashboard content",
+    "common.error_desc":
+      "An unexpected error occurred while rendering this page.",
+    "common.error_desc_ref":
+      "An unexpected error occurred while rendering this page. Reference: {digest}",
+    // A11y + page titles (A1: tanpa string literal)
+    "wallet.retry_sync": "Retry wallet sync",
+    "auth.dismiss_error": "Dismiss error",
+    "auth.overview_aria": "{app} overview",
+    "brand.home_aria": "{app} home",
+    "settings.open_profile_aria": "{name}, open profile and wallet settings",
+    "analytics.unavailable_title": "Analytics unavailable",
+    "analytics.title": "Analytics",
+    "analytics.header_overview": "{name} · overview.",
+    "analytics.header_full":
+      "{name} · {code} · inventory volume and movement trends.",
+    "analytics.unavailable_desc":
+      "We could not load analytics for this warehouse. Please refresh the page to try again.",
+    "analytics.vs_previous": "vs previous {n} days",
+    "products.load_failed_title": "Unable to load inventory.",
+    "products.load_failed_desc":
+      "Something went wrong while retrieving your inventory. Please try again.",
+    "console.title": "Developer Console",
+    "console.page_desc":
+      "Platform-wide operations, on-chain health, and manual proof recovery.",
+    "console.loading_desc": "Loading platform status…",
+    "console.health_stale":
+      "Console data may be incomplete. The database probe failed. Numbers below could be stale; retry shortly.",
+    "chain.loading_title": "Audit Explorer",
+    "chain.loading_desc": "Loading audit trail…",
+    "chain.proofs_loading": "Loading proofs…",
+    "about.page_title": "About Chainventory",
+    "about.page_desc":
+      "Inventory management that feels like a normal SaaS, with verification built underneath.",
+    // Error follow-up actions (F4: errorCode → aksi)
+    "errors.action_sign_in": "Sign in again",
+    "errors.action_open_settings": "Open Settings",
     // Landing - Hero
     "landing.hero.badge": "Blockchain verification on Base Sepolia",
     "landing.hero.title_main": "Inventory management with",
@@ -316,6 +355,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.faq.a6":
       "No. Your operational data lives in a secure database. Only proof records (not your full inventory) are anchored for verification.",
     // Dashboard
+    "health.startup_degraded":
+      "Environment issue detected — some features may not work:",
     "dashboard.title": "Dashboard",
     "dashboard.description":
       "Overview of your warehouse inventory and activity.",
@@ -428,6 +469,22 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.warehouse": "Warehouse",
     "settings.warehouse_desc": "Active warehouse and on-chain contract.",
     "settings.no_contract": "No contract deployed yet.",
+    "settings.warehouse_suspend": "Suspend",
+    "settings.warehouse_reactivate": "Reactivate",
+    "settings.warehouse_suspend_title": "Suspend warehouse?",
+    "settings.warehouse_suspend_body":
+      "All stock movements and membership changes will be paused. You can reactivate it anytime. Suspending frees your slot to create a new warehouse.",
+    "settings.warehouse_suspend_confirm": "Suspend warehouse",
+    "settings.warehouse_reactivate_title": "Reactivate warehouse?",
+    "settings.warehouse_reactivate_body":
+      "The warehouse becomes active again. Only one warehouse can be active at a time.",
+    "settings.warehouse_reactivate_confirm": "Reactivate",
+    "settings.warehouse_suspended_title": "Warehouse suspended",
+    "settings.warehouse_suspended_desc":
+      "Mutations are paused. You can now create a new warehouse.",
+    "settings.warehouse_reactivated_title": "Warehouse reactivated",
+    "settings.warehouse_reactivated_desc": "The warehouse is active again.",
+    "settings.warehouse_status_failed": "Could not change warehouse status.",
     "settings.account": "Account",
     "settings.signed_in": "Signed in as {email}",
     "settings.no_warehouse": "No warehouse yet",
@@ -522,6 +579,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "movements.record_stock_in": "Record Stock In",
     "movements.record_stock_out": "Record Stock Out",
     "movements.load_failed_title": "Couldn't load movements",
+    "movements.load_failed_desc":
+      "Something went wrong while retrieving the ledger. Please try again.",
+    "movements.ledger_desc": "{name} · ledger.",
     "movements.col_timestamp": "Timestamp",
     "movements.col_type": "Type",
     "movements.col_quantity": "Quantity",
@@ -572,6 +632,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "movements.view_proof": "View blockchain proof",
     "movements.proof_failed_notice":
       "Blockchain confirmation failed. Your inventory data was not lost. This proof will be retried automatically.",
+    "movements.proof_retry": "Retry proof",
+    "movements.proof_retry_queued_title": "Proof requeued",
+    "movements.proof_retry_queued_desc":
+      "The proof was sent back to the queue. Watch its status here.",
+    "movements.proof_retry_failed": "Could not requeue the proof.",
     "movements.product_search_placeholder": "Search product…",
     "movements.select_product_aria": "Select product",
     "movements.no_products_found": "No products found.",
@@ -624,6 +689,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dialogs.product_form.name_placeholder": "e.g. Steel Rod 12mm",
     "dialogs.product_form.sku_label": "SKU / Code",
     "dialogs.product_form.sku_placeholder": "e.g. SR-12-001",
+    "dialogs.product_form.sku_auto_placeholder": "Auto (e.g. STE-7X2K9Q)",
+    "dialogs.product_form.sku_auto_hint":
+      "Leave empty to auto-generate a unique SKU.",
     "dialogs.product_form.category_label": "Category",
     "dialogs.product_form.category_placeholder": "e.g. Raw Material",
     "dialogs.product_form.unit_label": "Unit of Measure",
@@ -799,6 +867,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dialogs.bulk.desc_result": "Import complete. Review results.",
     "dialogs.bulk.field_name": "Product name",
     "dialogs.bulk.field_sku": "SKU",
+    "dialogs.bulk.sku_auto": "Auto",
     "dialogs.bulk.placeholder_unit": "e.g. pcs",
     "dialogs.bulk.placeholder_category": "Optional",
     "dialogs.bulk.remove_row": "Remove row",
@@ -904,6 +973,25 @@ export const translations: Record<Locale, Record<string, string>> = {
     "members.no_teammates_desc":
       "Invite teammates with the warehouse code, or share the invite link above to get started.",
     "members.invite_member": "Invite member",
+    // Invite accept page (app/invite/[token])
+    "invite.accept_title": "Accept invitation",
+    "invite.expired_title": "Invitation has expired",
+    "invite.expired_detail":
+      "This invitation link has expired or was already used. Ask the sender to send a new one.",
+    "invite.mismatch_title": "Signed-in email does not match",
+    "invite.mismatch_detail":
+      "This invitation is for {email}. Sign out, then sign in with that email to accept.",
+    "invite.sign_out_switch": "Sign out and switch account",
+    "invite.failed_title": "Invitation could not be accepted",
+    "invite.failed_detail":
+      "This invitation link is no longer valid, has been revoked, or is for a different email address. Ask the sender to invite you again, or join with the warehouse code.",
+    "invite.success_title": "You're in!",
+    "invite.success_desc":
+      "You have joined {warehouse} as {role}. Open it from your dashboard.",
+    "invite.go_dashboard": "Go to dashboard",
+    "invite.continue": "Continue",
+    "invite.tip":
+      "Tip: invitations are bound to the email address they were sent to.",
     "members.team_title": "Team Members",
     "members.team_count": "{n} of {n} members.",
     "members.th_member": "Member",
@@ -1598,6 +1686,45 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.page_status": "Halaman {page} dari {totalPages}",
     "common.cancel": "Batal",
     "common.confirm": "Konfirmasi",
+    "common.toggle_sidebar": "Buka/tutup sidebar",
+    "common.primary_nav": "Navigasi utama",
+    "common.dashboard_content": "Konten dasbor",
+    "common.error_desc":
+      "Terjadi kesalahan tak terduga saat merender halaman ini.",
+    "common.error_desc_ref":
+      "Terjadi kesalahan tak terduga saat merender halaman ini. Referensi: {digest}",
+    // A11y + judul halaman (A1: tanpa string literal)
+    "wallet.retry_sync": "Coba sinkronisasi ulang wallet",
+    "auth.dismiss_error": "Tutup pesan error",
+    "auth.overview_aria": "{app} ringkasan",
+    "brand.home_aria": "{app} beranda",
+    "settings.open_profile_aria": "{name}, buka pengaturan profil dan wallet",
+    "analytics.unavailable_title": "Analitik tidak tersedia",
+    "analytics.title": "Analitik",
+    "analytics.header_overview": "{name} · ringkasan.",
+    "analytics.header_full":
+      "{name} · {code} · volume inventaris dan tren pergerakan.",
+    "analytics.unavailable_desc":
+      "Analitik gudang ini tidak dapat dimuat. Muat ulang halaman untuk mencoba lagi.",
+    "analytics.vs_previous": "vs {n} hari sebelumnya",
+    "products.load_failed_title": "Gagal memuat inventaris.",
+    "products.load_failed_desc":
+      "Terjadi kesalahan saat mengambil inventaris. Silakan coba lagi.",
+    "console.title": "Konsol Developer",
+    "console.page_desc":
+      "Operasi platform, kesehatan on-chain, dan pemulihan bukti manual.",
+    "console.loading_desc": "Memuat status platform…",
+    "console.health_stale":
+      "Data konsol mungkin tidak lengkap. Probe database gagal. Angka di bawah bisa basi; coba lagi segera.",
+    "chain.loading_title": "Penjelajah Audit",
+    "chain.loading_desc": "Memuat jejak audit…",
+    "chain.proofs_loading": "Memuat bukti…",
+    "about.page_title": "Tentang Chainventory",
+    "about.page_desc":
+      "Manajemen inventaris yang terasa seperti SaaS biasa, dengan verifikasi di bawahnya.",
+    // Aksi lanjutan error (F4: errorCode → aksi)
+    "errors.action_sign_in": "Masuk lagi",
+    "errors.action_open_settings": "Buka Pengaturan",
     // Landing - Hero
     "landing.hero.badge": "Verifikasi blockchain di Base Sepolia",
     "landing.hero.title_main": "Manajemen inventaris dengan",
@@ -1852,6 +1979,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "landing.faq.a6":
       "Tidak. Data operasional hidup di database aman. Hanya catatan bukti (bukan seluruh inventaris) yang ditambatkan untuk verifikasi.",
     // Dashboard
+    "health.startup_degraded":
+      "Masalah environment terdeteksi — sebagian fitur mungkin tidak jalan:",
     "dashboard.title": "Dasbor",
     "dashboard.description": "Ikhtisar inventaris dan aktivitas gudang Anda.",
     "dashboard.empty_title": "Belum ada gudang",
@@ -1963,6 +2092,22 @@ export const translations: Record<Locale, Record<string, string>> = {
     "settings.warehouse": "Gudang",
     "settings.warehouse_desc": "Gudang aktif dan kontrak on-chain.",
     "settings.no_contract": "Belum ada kontrak yang dideploy.",
+    "settings.warehouse_suspend": "Suspend",
+    "settings.warehouse_reactivate": "Aktifkan lagi",
+    "settings.warehouse_suspend_title": "Suspend gudang?",
+    "settings.warehouse_suspend_body":
+      "Semua pergerakan stok dan perubahan anggota dijeda. Bisa diaktifkan lagi kapan saja. Suspend membebaskan slot untuk membuat gudang baru.",
+    "settings.warehouse_suspend_confirm": "Suspend gudang",
+    "settings.warehouse_reactivate_title": "Aktifkan gudang lagi?",
+    "settings.warehouse_reactivate_body":
+      "Gudang menjadi aktif kembali. Hanya satu gudang yang boleh aktif dalam satu waktu.",
+    "settings.warehouse_reactivate_confirm": "Aktifkan",
+    "settings.warehouse_suspended_title": "Gudang di-suspend",
+    "settings.warehouse_suspended_desc":
+      "Mutasi dijeda. Kamu sekarang bisa membuat gudang baru.",
+    "settings.warehouse_reactivated_title": "Gudang aktif lagi",
+    "settings.warehouse_reactivated_desc": "Gudang sudah aktif kembali.",
+    "settings.warehouse_status_failed": "Gagal mengubah status gudang.",
     "settings.account": "Akun",
     "settings.signed_in": "Masuk sebagai {email}",
     "settings.no_warehouse": "Belum ada gudang",
@@ -2058,6 +2203,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "movements.record_stock_in": "Catat Stok Masuk",
     "movements.record_stock_out": "Catat Stok Keluar",
     "movements.load_failed_title": "Gagal memuat pergerakan",
+    "movements.load_failed_desc":
+      "Terjadi kesalahan saat mengambil buku besar. Silakan coba lagi.",
+    "movements.ledger_desc": "{name} · buku besar.",
     "movements.col_timestamp": "Waktu",
     "movements.col_type": "Jenis",
     "movements.col_quantity": "Kuantitas",
@@ -2108,6 +2256,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "movements.view_proof": "Lihat bukti blockchain",
     "movements.proof_failed_notice":
       "Konfirmasi blockchain gagal. Data inventaris Anda tidak hilang. Bukti ini akan dicoba ulang secara otomatis.",
+    "movements.proof_retry": "Coba ulang bukti",
+    "movements.proof_retry_queued_title": "Bukti masuk antrean",
+    "movements.proof_retry_queued_desc":
+      "Bukti dikirim kembali ke antrean. Pantau statusnya di sini.",
+    "movements.proof_retry_failed": "Gagal memasukkan bukti ke antrean.",
     "movements.product_search_placeholder": "Cari produk…",
     "movements.select_product_aria": "Pilih produk",
     "movements.no_products_found": "Tidak ada produk ditemukan.",
@@ -2160,6 +2313,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dialogs.product_form.name_placeholder": "cth. Steel Rod 12mm",
     "dialogs.product_form.sku_label": "SKU/Kode",
     "dialogs.product_form.sku_placeholder": "cth. SR-12-001",
+    "dialogs.product_form.sku_auto_placeholder": "Otomatis (cth. STE-7X2K9Q)",
+    "dialogs.product_form.sku_auto_hint":
+      "Kosongkan untuk membuat SKU unik otomatis.",
     "dialogs.product_form.category_label": "Kategori",
     "dialogs.product_form.category_placeholder": "cth. Bahan Baku",
     "dialogs.product_form.unit_label": "Satuan Ukur",
@@ -2337,6 +2493,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dialogs.bulk.desc_result": "Impor selesai. Tinjau hasil.",
     "dialogs.bulk.field_name": "Nama produk",
     "dialogs.bulk.field_sku": "SKU",
+    "dialogs.bulk.sku_auto": "Otomatis",
     "dialogs.bulk.placeholder_unit": "cth. pcs",
     "dialogs.bulk.placeholder_category": "Opsional",
     "dialogs.bulk.remove_row": "Hapus baris",
@@ -2445,6 +2602,24 @@ export const translations: Record<Locale, Record<string, string>> = {
     "members.no_teammates_desc":
       "Undang rekan tim dengan kode gudang, atau bagikan tautan undangan di atas untuk memulai.",
     "members.invite_member": "Undang anggota",
+    // Halaman terima undangan (app/invite/[token])
+    "invite.accept_title": "Terima undangan",
+    "invite.expired_title": "Undangan kedaluwarsa",
+    "invite.expired_detail":
+      "Tautan undangan ini kedaluwarsa atau sudah dipakai. Minta pengirim mengirim yang baru.",
+    "invite.mismatch_title": "Email masuk tidak cocok",
+    "invite.mismatch_detail":
+      "Undangan ini untuk {email}. Keluar, lalu masuk dengan email tersebut untuk menerima.",
+    "invite.sign_out_switch": "Keluar dan ganti akun",
+    "invite.failed_title": "Undangan tidak bisa diterima",
+    "invite.failed_detail":
+      "Tautan undangan ini tidak valid lagi, sudah dicabut, atau untuk alamat email lain. Minta pengirim mengundang lagi, atau gabung dengan kode gudang.",
+    "invite.success_title": "Berhasil bergabung!",
+    "invite.success_desc":
+      "Kamu telah bergabung ke {warehouse} sebagai {role}. Buka dari dasbor.",
+    "invite.go_dashboard": "Ke dasbor",
+    "invite.continue": "Lanjut",
+    "invite.tip": "Tips: undangan terikat pada alamat email tujuan pengiriman.",
     "members.team_title": "Anggota Tim",
     "members.team_count": "{n} dari {n} anggota.",
     "members.th_member": "Anggota",

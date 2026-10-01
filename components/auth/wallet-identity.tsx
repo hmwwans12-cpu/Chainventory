@@ -6,6 +6,7 @@ import { AuthUnavailableState } from "@/components/auth/auth-unavailable-state";
 import { VerifyWalletButton } from "@/components/settings/verify-wallet-button";
 import { Button } from "@/components/ui/button";
 import { usePrivySession } from "@/components/providers/privy-provider";
+import { useLocale } from "@/components/providers/locale-provider";
 import { WalletBootstrapState } from "@/components/auth/wallet-bootstrap-state";
 import { shortenAddress } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ export function WalletIdentity() {
     retryAuth,
     retryWallet,
   } = usePrivySession();
+  const { t } = useLocale();
 
   if (authError) {
     return <AuthUnavailableState onRetry={retryAuth} />;
@@ -51,7 +53,7 @@ export function WalletIdentity() {
             variant="ghost"
             size="sm"
             onClick={walletSync.retry}
-            aria-label="Retry wallet sync"
+            aria-label={t("wallet.retry_sync")}
           >
             <RefreshCw aria-hidden="true" />
             Retry sync

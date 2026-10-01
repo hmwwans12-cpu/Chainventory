@@ -19,9 +19,11 @@ import { GoogleButton, OAuthDivider } from "@/components/auth/google-button";
 import { ErrorAlert } from "@/components/shared/error-alert";
 import { signupAction } from "@/app/actions/auth";
 import { signupSchema, type SignupValues } from "@/lib/validators/auth";
+import { useLocale } from "@/components/providers/locale-provider";
 import { Loader2, X } from "lucide-react";
 
 export function SignupForm() {
+  const { t } = useLocale();
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   // FE-03: validasi client memakai signupSchema yang SAMA dengan server.
@@ -56,7 +58,7 @@ export function SignupForm() {
             <button
               type="button"
               onClick={() => setServerError(null)}
-              aria-label="Dismiss error"
+              aria-label={t("auth.dismiss_error")}
               className="text-destructive hover:bg-destructive/10 focus-visible:ring-ring -mr-1 shrink-0 rounded-full p-1.5 transition-colors focus-visible:ring-3 focus-visible:outline-none"
             >
               <X aria-hidden="true" className="size-4" />
