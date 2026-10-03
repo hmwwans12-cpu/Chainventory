@@ -3,11 +3,11 @@
 [![Release](https://img.shields.io/github/v/release/hmwwans12-cpu/Chainventory?sort=semver)](https://github.com/hmwwans12-cpu/Chainventory/releases)
 [![CI](https://github.com/hmwwans12-cpu/Chainventory/actions/workflows/ci.yml/badge.svg)](https://github.com/hmwwans12-cpu/Chainventory/actions/workflows/ci.yml)
 [![Base Sepolia](https://img.shields.io/badge/chain-Base%20Sepolia-0052FF)](https://sepolia.basescan.org)
-[![Bilingual](https://img.shields.io/badge/i18n-EN%20%7C%20ID-green)]()
-[![License](https://img.shields.io/badge/license-proprietary-red)]()
+[![Bilingual](https://img.shields.io/badge/i18n-EN%20%7C%20ID-green)](<>)
+[![License](https://img.shields.io/badge/license-proprietary-red)](<>)
 
 > **Sistem inventaris gudang untuk UMKM — dengan bukti blockchain untuk setiap pergerakan stok penting.**
-> *Warehouse inventory management with verifiable on-chain proof for every critical stock movement.*
+> _Warehouse inventory management with verifiable on-chain proof for every critical stock movement._
 
 ```text
 Barang masuk/keluar → tercatat di ledger → proof di-anchor on-chain → bisa diverifikasi siapa pun di BaseScan
@@ -17,14 +17,15 @@ Barang masuk/keluar → tercatat di ledger → proof di-anchor on-chain → bisa
 
 ## ✨ Kenapa Chainventory?
 
-| Untuk operasional harian | Untuk kepercayaan & audit |
-| --- | --- |
-| 🏭 Multi-warehouse + multi-user (5 role: Owner → Viewer) | 🔗 Setiap movement penting punya proof on-chain |
+| Untuk operasional harian                                        | Untuk kepercayaan & audit                       |
+| --------------------------------------------------------------- | ----------------------------------------------- |
+| 🏭 Multi-warehouse + multi-user (5 role: Owner → Viewer)        | 🔗 Setiap movement penting punya proof on-chain |
 | 📝 Stock in/out, adjustment (4 mata), reversal, bulk CSV import | 🔍 Audit explorer + BaseScan link per transaksi |
-| 🔢 SKU auto-generate + threshold stok rendah + notifikasi | 🛡️ Tak ada yang bisa ubah history diam-diam |
-| 🌏 Antarmuka bilingual penuh (Indonesia / English) | 📜 Ledger append-only + audit log di database |
+| 🔢 SKU auto-generate + threshold stok rendah + notifikasi       | 🛡️ Tak ada yang bisa ubah history diam-diam     |
+| 🌏 Antarmuka bilingual penuh (Indonesia / English)              | 📜 Ledger append-only + audit log di database   |
 
 **Dua mode proof** mengikuti umur kontrak gudangmu — otomatis dipilihkan aplikasi:
+
 - 🏛️ **Treasury flow (kontrak v1)** — gas dibayar treasury, user tinggal klik.
 - 👛 **Wallet-paid flow (kontrak v2)** — wallet member menandatangani + membayar gas sendiri, dengan estimasi fee transparan sebelum sign.
 
@@ -131,14 +132,14 @@ corepack pnpm e2e:test
 
 ## ✅ Testing
 
-| Layer              | Tool                | Status                                   |
-| ------------------ | ------------------- | ---------------------------------------- |
-| Unit + Integration | Vitest              | 533 passed (live-gated skip terisolasi)  |
-| Kontrak RPC↔DB     | Vitest (statis)     | Paritas 44 RPC × migrasi (overload-aware)|
-| Smart Contract     | Forge               | Factory, Warehouse, EIP-712 suites       |
-| E2E                | Playwright          | Main flow, console, smoke                |
-| A11y               | check-contrast      | Otomatis (WCAG AA) + preflight 7/7      |
-| Supply chain       | deps-audit          | Gate high/critical + allowlist kedaluwarsa |
+| Layer              | Tool            | Status                                     |
+| ------------------ | --------------- | ------------------------------------------ |
+| Unit + Integration | Vitest          | 533 passed (live-gated skip terisolasi)    |
+| Kontrak RPC↔DB     | Vitest (statis) | Paritas 44 RPC × migrasi (overload-aware)  |
+| Smart Contract     | Forge           | Factory, Warehouse, EIP-712 suites         |
+| E2E                | Playwright      | Main flow, console, smoke                  |
+| A11y               | check-contrast  | Otomatis (WCAG AA) + preflight 7/7         |
+| Supply chain       | deps-audit      | Gate high/critical + allowlist kedaluwarsa |
 
 ## 🔒 Security Model
 
@@ -156,16 +157,16 @@ Direct table mutation dari authenticated **ditolak** (INSERT/UPDATE/DELETE revok
 
 ## 📚 Dokumentasi
 
-| Dokumen                        | Isi                                 |
-| ------------------------------ | ----------------------------------- |
-| [PRD.md](PRD.md)               | Product requirements (frozen v2.1)  |
-| [ARSITEKTUR.md](ARSITEKTUR.md) | Technical architecture              |
-| [DESIGN.md](DESIGN.md)         | Design system & UI/UX spec (§1-84)  |
-| [TECHSTACK.md](TECHSTACK.md)   | Technology decisions                |
-| [WORKFLOW.md](WORKFLOW.md)     | Development workflow                |
-| [AGENT.md](AGENT.md)           | Operating manual untuk AI/developer |
-| [TODO.md](TODO.md)             | Implementation tracker              |
-| [Releases](https://github.com/hmwwans12-cpu/Chainventory/releases) | Catatan rilis per versi |
+| Dokumen                                                            | Isi                                 |
+| ------------------------------------------------------------------ | ----------------------------------- |
+| [PRD.md](PRD.md)                                                   | Product requirements (frozen v2.1)  |
+| [ARSITEKTUR.md](ARSITEKTUR.md)                                     | Technical architecture              |
+| [DESIGN.md](DESIGN.md)                                             | Design system & UI/UX spec (§1-84)  |
+| [TECHSTACK.md](TECHSTACK.md)                                       | Technology decisions                |
+| [WORKFLOW.md](WORKFLOW.md)                                         | Development workflow                |
+| [AGENT.md](AGENT.md)                                               | Operating manual untuk AI/developer |
+| [TODO.md](TODO.md)                                                 | Implementation tracker              |
+| [Releases](https://github.com/hmwwans12-cpu/Chainventory/releases) | Catatan rilis per versi             |
 
 ## 🚢 Deployment
 
