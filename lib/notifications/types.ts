@@ -100,6 +100,7 @@ export const NOTIFICATION_TYPE_META: Record<string, NotificationTypeMeta> = {
     icon: Ban,
     tone: "danger",
   },
+  low_stock: { label: "Low stock", icon: AlertTriangle, tone: "warning" },
 };
 
 /**
@@ -124,6 +125,7 @@ const NOTIFICATION_ROUTES: Record<string, string> = {
   proof_manual_review: "/blockchain",
   warehouse_inactivity_warning: "/inventory/movements",
   warehouse_suspended: "/dashboard",
+  low_stock: "/inventory/products",
 };
 
 const DEFAULT_NOTIFICATION_ROUTE = "/dashboard";

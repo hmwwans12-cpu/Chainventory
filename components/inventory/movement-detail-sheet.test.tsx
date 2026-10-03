@@ -39,7 +39,7 @@ function movement(patch: Partial<MovementListItem> = {}): MovementListItem {
 }
 
 describe("MovementDetailSheet proof retry", () => {
-  it("shows retry for failed proofs to developers and calls console route", async () => {
+  it("shows retry for failed proofs and calls the given endpoint", async () => {
     const fetchMock = vi.fn(
       async () => new Response(JSON.stringify({ ok: true }), { status: 200 })
     );
@@ -51,14 +51,14 @@ describe("MovementDetailSheet proof retry", () => {
           movement={movement()}
           open
           onOpenChange={() => undefined}
-          isDeveloper
+          retryEndpoint="/api/warehouses/proofs/p-1/retry"
           onRetrySuccess={onRetrySuccess}
         />
       );
       fireEvent.click(screen.getByText("movements.proof_retry"));
       await waitFor(() => {
         expect(fetchMock).toHaveBeenCalledWith(
-          "/api/console/proofs/p-1/retry",
+          "/api/warehouses/proofs/p-1/retry",
           expect.objectContaining({ method: "POST" })
         );
       });
@@ -68,7 +68,7 @@ describe("MovementDetailSheet proof retry", () => {
     }
   });
 
-  it("hides retry from non-developers", () => {
+  it("hides retry without an endpoint", () => {
     render(
       <MovementDetailSheet
         movement={movement()}
@@ -79,13 +79,13 @@ describe("MovementDetailSheet proof retry", () => {
     expect(screen.queryByText("movements.proof_retry")).toBeNull();
   });
 
-  it("hides retry for confirmed proofs even for developers", () => {
+  it("hides retry for confirmed proofs even with an endpoint", () => {
     render(
       <MovementDetailSheet
         movement={movement({ proofStatus: "confirmed", proofTxHash: "0xabc" })}
         open
         onOpenChange={() => undefined}
-        isDeveloper
+        retryEndpoint="/api/warehouses/proofs/p-1/retry"
       />
     );
     expect(screen.queryByText("movements.proof_retry")).toBeNull();

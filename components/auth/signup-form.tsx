@@ -93,7 +93,8 @@ export function SignupForm() {
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="budi.darmawan@depot01.id"
+            spellCheck={false}
+            placeholder={t("auth.email_placeholder")}
             {...register("email")}
           />
         </FormField>

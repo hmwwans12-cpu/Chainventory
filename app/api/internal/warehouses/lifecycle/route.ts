@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { requireReadRateLimit } from "@/lib/api-handler";
 import { logger } from "@/lib/logger";
 import { verifyCronSecret } from "@/lib/proof/verify-request";
-import { runWarehouseLifecycle } from "@/lib/warehouses/lifecycle";
+import {
+  archiveOldLogs,
+  digestLowStock,
+  runWarehouseLifecycle,
+} from "@/lib/warehouses/lifecycle";
 
 /**
  * Warehouse lifecycle harian (PRD §20) — cron TERPISAH dari keep-alive.
@@ -31,7 +35,30 @@ async function handleLifecycle(request: Request) {
   if (limited) return limited;
 
   const result = await runWarehouseLifecycle();
-  return NextResponse.json(result, { status: result.ok ? 200 : 500 });
+  // Digest low-stock menumpang cron yang sama (tanpa cron baru — limit
+  // Hobby). Gagal digest tidak menggagalkan lifecycle.
+  let lowStockNotified = 0;
+  try {
+    const digest = await digestLowStock();
+    lowStockNotified = digest.notified;
+  } catch (err) {
+    logger.error(
+      { err: err instanceof Error ? err.message : String(err) },
+      "low-stock digest threw"
+    );
+  }
+  let archivedLogs = 0;
+  try {
+    const archived = await archiveOldLogs();
+    archivedLogs = archived.moved;
+  } catch (err) {
+    logger.error(
+      { err: err instanceof Error ? err.message : String(err) },
+      "archive old logs threw"
+    );
+  }
+  const body = { ...result, lowStockNotified, archivedLogs };
+  return NextResponse.json(body, { status: result.ok ? 200 : 500 });
 }
 
 export async function GET(request: Request) {

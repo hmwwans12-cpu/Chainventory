@@ -85,6 +85,7 @@ export function StockMovementDialog({
   warehouseId,
   products,
   product,
+  initialQuantity,
   movementType,
   open,
   onOpenChange,
@@ -93,6 +94,8 @@ export function StockMovementDialog({
   warehouseId: string;
   products: ProductRow[];
   product?: ProductRow;
+  /** Prefill qty (fitur "ulangi movement"). */
+  initialQuantity?: string;
   movementType: MovementType;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -100,7 +103,7 @@ export function StockMovementDialog({
 }) {
   const { t } = useLocale();
   const [selectedId, setSelectedId] = React.useState(product?.id ?? "");
-  const [quantity, setQuantity] = React.useState("");
+  const [quantity, setQuantity] = React.useState(initialQuantity ?? "");
   const [reason, setReason] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -112,6 +115,16 @@ export function StockMovementDialog({
     setError(message);
     setErrorCode(code);
   };
+  // BE-002: tahan refresh/back saat polling intent/submit berjalan agar
+  // idempotency key tidak terbuang dan user tidak submit ganda.
+  React.useEffect(() => {
+    if (!busy) return;
+    const guard = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", guard);
+    return () => window.removeEventListener("beforeunload", guard);
+  }, [busy]);
+  // Estimasi fee pra-sign flow intent (user membayar gas sendiri).
+  const [gasEstimate, setGasEstimate] = React.useState<string | null>(null);
   const [stale, setStale] = React.useState(false);
   const [currentBalance, setCurrentBalance] = React.useState<string | null>(
     null
@@ -285,6 +298,32 @@ export function StockMovementDialog({
       }
 
       setPhase(t("dialogs.movement.phase_sign"));
+      // Estimasi fee pra-sign (best-effort, tidak memblokir): user membayar
+      // gas sendiri di flow intent — tampilkan angka sebelum popup wallet.
+      setGasEstimate(null);
+      try {
+        const [{ createPublicClient }, chains, { formatEthValue }] =
+          await Promise.all([
+            import("viem"),
+            import("@/lib/blockchain/chains"),
+            import("@/lib/utils"),
+          ]);
+        const client = createPublicClient({
+          chain: chains.baseSepolia,
+          transport: chains.createChainTransport(),
+        });
+        const [gas, price] = await Promise.all([
+          client.estimateGas({
+            to: prep.data.to as `0x${string}`,
+            data: prep.data.data as `0x${string}`,
+            account: prep.data.actorWallet as `0x${string}`,
+          }),
+          client.getGasPrice(),
+        ]);
+        setGasEstimate(formatEthValue(gas * price));
+      } catch {
+        // Estimasi gagal (RPC sibuk) — lanjut tanpa angka.
+      }
       const provider = await signingWallet.getEthereumProvider();
       let txHash: string;
       try {
@@ -514,6 +553,7 @@ export function StockMovementDialog({
 
     safeSetBusy(true);
     fail(null);
+    setGasEstimate(null);
     setStale(false);
     setCurrentBalance(null);
 
@@ -717,6 +757,13 @@ export function StockMovementDialog({
                   <span className="opacity-90">
                     {t("dialogs.movement.phase_leave_hint")}
                   </span>
+                  {gasEstimate ? (
+                    <span className="font-mono tabular-nums">
+                      {t("movements.gas_estimate", {
+                        value: gasEstimate,
+                      })}
+                    </span>
+                  ) : null}
                 </span>
               </p>
             ) : null}

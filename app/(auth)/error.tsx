@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { ErrorState } from "@/components/shared/error-state";
+import { APP_NAME } from "@/lib/constants";
 import { useLocale } from "@/components/providers/locale-provider";
 
 /**
@@ -23,7 +24,11 @@ export default function AuthError({
   }, [error]);
 
   return (
-    <AuthShell>
+    <AuthShell
+      homeLabel={t("brand.home_aria", { app: APP_NAME })}
+      skipLabel={t("auth.skip_auth_form")}
+      backLabel={t("auth.back_home")}
+    >
       <ErrorState
         title={t("common.error_title")}
         description={

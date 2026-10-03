@@ -2,18 +2,22 @@ import Link from "next/link";
 
 import { Logo } from "@/components/shared/logo";
 import { APP_NAME } from "@/lib/constants";
-import { getLocale } from "@/lib/i18n/server";
-import { translate } from "@/lib/i18n/translations";
 
-export async function AuthShell({
+export function AuthShell({
   children,
   wide = false,
+  homeLabel,
+  skipLabel = "Skip to sign-in form",
+  backLabel = "Back to home",
 }: {
   children: React.ReactNode;
   wide?: boolean;
+  /** Teks terjemahan dari caller ber-locale; default Inggris. */
+  homeLabel?: string;
+  skipLabel?: string;
+  backLabel?: string;
 }) {
   const year = new Date().getFullYear();
-  const locale = await getLocale();
 
   return (
     <div className="bg-muted flex min-h-dvh flex-col items-center justify-center px-4 py-12">
@@ -21,12 +25,10 @@ export async function AuthShell({
         href="#auth-main"
         className="bg-primary text-primary-foreground sr-only rounded-lg px-4 py-2 text-sm font-medium focus-visible:not-sr-only"
       >
-        Skip to sign-in form
+        {skipLabel}
       </a>
       <div className="mb-8">
-        <Logo
-          homeLabel={translate(locale, "brand.home_aria", { app: APP_NAME })}
-        />
+        <Logo homeLabel={homeLabel} />
       </div>
       <main
         id="auth-main"
@@ -43,7 +45,7 @@ export async function AuthShell({
           href="/"
           className="hover:text-foreground underline underline-offset-2"
         >
-          Back to home
+          {backLabel}
         </Link>
       </footer>
     </div>

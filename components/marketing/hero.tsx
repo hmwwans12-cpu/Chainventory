@@ -121,7 +121,7 @@ export function Hero() {
           >
             <Button
               size="lg"
-              className="group px-6 py-3 shadow-md transition-all duration-150 active:scale-95"
+              className="group px-6 py-3 shadow-md transition-transform duration-150 active:scale-95"
               render={<Link href="/signup" />}
             >
               {t("landing.hero.cta_primary")}

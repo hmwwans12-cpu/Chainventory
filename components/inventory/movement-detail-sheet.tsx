@@ -48,34 +48,37 @@ export function MovementDetailSheet({
   movement,
   open,
   onOpenChange,
-  isDeveloper = false,
+  retryEndpoint = null,
   onRetrySuccess,
+  onRepeat,
 }: {
   movement: MovementListItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Developer (allowlist console) boleh retry proof gagal via route console. */
-  isDeveloper?: boolean;
+  /**
+   * Endpoint retry proof (null = tidak boleh retry). Developer → route
+   * console; OWNER/MANAGER → route warehouse (RBAC + budget ketat).
+   */
+  retryEndpoint?: string | null;
   onRetrySuccess?: () => void;
+  /** Ulangi movement (stock in/out → prefill dialog baru). */
+  onRepeat?: (movement: MovementListItem) => void;
 }) {
   const { t, locale } = useLocale();
   const [retryBusy, setRetryBusy] = React.useState(false);
   if (!movement) return null;
 
   const proofRetryable =
-    isDeveloper &&
+    Boolean(retryEndpoint) &&
     Boolean(movement.proofId) &&
     (movement.proofStatus === "failed" ||
       movement.proofStatus === "manual_review");
 
   const retryProof = async () => {
-    if (!movement.proofId || retryBusy) return;
+    if (!retryEndpoint || !movement.proofId || retryBusy) return;
     setRetryBusy(true);
     try {
-      const res = await fetch(
-        `/api/console/proofs/${encodeURIComponent(movement.proofId)}/retry`,
-        { method: "POST" }
-      );
+      const res = await fetch(retryEndpoint, { method: "POST" });
       const body = (await res.json().catch(() => null)) as {
         ok?: boolean;
         error?: string;
@@ -356,6 +359,19 @@ export function MovementDetailSheet({
                 <RotateCw aria-hidden="true" />
               )}
               {t("movements.proof_retry")}
+            </Button>
+          ) : null}
+          {onRepeat &&
+          (movement.movementType === "stock_in" ||
+            movement.movementType === "stock_out") ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => onRepeat(movement)}
+            >
+              <RotateCw aria-hidden="true" />
+              {t("movements.repeat")}
             </Button>
           ) : null}
         </div>

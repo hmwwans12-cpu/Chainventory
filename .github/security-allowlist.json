@@ -40,6 +40,62 @@
       "reason": "Query-parser fragment handling inside @wagmi/connectors>porto (client-side). Same non-reachability assessment as the other hono entries.",
       "addedIn": "v0.5.4",
       "expires": "2026-12-12"
+    },
+    {
+      "id": "GHSA-c29m-xwm3-cm6r",
+      "package": "axios",
+      "severity": "high",
+      "reason": "ReDoS in fromDataURI. Transitive via @coinbase/cdp-sdk inside the Privy/wagmi wallet bundle (axios@1.19.0 nested). Zero imports of axios/coinbase/x402 in app|lib|components (verified grep); all server HTTP uses fetch/viem/supabase-js, never axios. Each advisory requires attacker-controlled input INTO axios (data: URLs, proxy/hostnames, form-data options, HTTP/2, redirect chains) — unreachable: the SDK calls fixed CDP endpoints. Forcing override risks breaking wallet signing flows unverifiable without E2E; reassess on SDK upgrade.",
+      "addedIn": "audit-2026-10",
+      "expires": "2026-12-31"
+    },
+    {
+      "id": "GHSA-mghh-pgcx-3jjj",
+      "package": "axios",
+      "severity": "high",
+      "reason": "ReDoS in shouldBypassProxy. Transitive via @coinbase/cdp-sdk inside the Privy/wagmi wallet bundle (axios@1.19.0 nested). Zero imports of axios/coinbase/x402 in app|lib|components (verified grep); all server HTTP uses fetch/viem/supabase-js, never axios. Each advisory requires attacker-controlled input INTO axios (data: URLs, proxy/hostnames, form-data options, HTTP/2, redirect chains) — unreachable: the SDK calls fixed CDP endpoints. Forcing override risks breaking wallet signing flows unverifiable without E2E; reassess on SDK upgrade.",
+      "addedIn": "audit-2026-10",
+      "expires": "2026-12-31"
+    },
+    {
+      "id": "GHSA-x97p-jq2g-jp4f",
+      "package": "axios",
+      "severity": "high",
+      "reason": "Prototype Pollution Gadget in toFormData. Transitive via @coinbase/cdp-sdk inside the Privy/wagmi wallet bundle (axios@1.19.0 nested). Zero imports of axios/coinbase/x402 in app|lib|components (verified grep); all server HTTP uses fetch/viem/supabase-js, never axios. Each advisory requires attacker-controlled input INTO axios (data: URLs, proxy/hostnames, form-data options, HTTP/2, redirect chains) — unreachable: the SDK calls fixed CDP endpoints. Forcing override risks breaking wallet signing flows unverifiable without E2E; reassess on SDK upgrade.",
+      "addedIn": "audit-2026-10",
+      "expires": "2026-12-31"
+    },
+    {
+      "id": "GHSA-3pq3-5fj3-cg6v",
+      "package": "axios",
+      "severity": "high",
+      "reason": "HTTP/2 adapter bypasses DNS/proxy controls. Transitive via @coinbase/cdp-sdk inside the Privy/wagmi wallet bundle (axios@1.19.0 nested). Zero imports of axios/coinbase/x402 in app|lib|components (verified grep); all server HTTP uses fetch/viem/supabase-js, never axios. Each advisory requires attacker-controlled input INTO axios (data: URLs, proxy/hostnames, form-data options, HTTP/2, redirect chains) — unreachable: the SDK calls fixed CDP endpoints. Forcing override risks breaking wallet signing flows unverifiable without E2E; reassess on SDK upgrade.",
+      "addedIn": "audit-2026-10",
+      "expires": "2026-12-31"
+    },
+    {
+      "id": "GHSA-542g-h47m-68v8",
+      "package": "axios",
+      "severity": "high",
+      "reason": "DoS via unhandled error event (HTTP/2). Transitive via @coinbase/cdp-sdk inside the Privy/wagmi wallet bundle (axios@1.19.0 nested). Zero imports of axios/coinbase/x402 in app|lib|components (verified grep); all server HTTP uses fetch/viem/supabase-js, never axios. Each advisory requires attacker-controlled input INTO axios (data: URLs, proxy/hostnames, form-data options, HTTP/2, redirect chains) — unreachable: the SDK calls fixed CDP endpoints. Forcing override risks breaking wallet signing flows unverifiable without E2E; reassess on SDK upgrade.",
+      "addedIn": "audit-2026-10",
+      "expires": "2026-12-31"
+    },
+    {
+      "id": "GHSA-m8m8-qj5v-23w3",
+      "package": "axios",
+      "severity": "high",
+      "reason": "Socket hijack via inherited options. Transitive via @coinbase/cdp-sdk inside the Privy/wagmi wallet bundle (axios@1.19.0 nested). Zero imports of axios/coinbase/x402 in app|lib|components (verified grep); all server HTTP uses fetch/viem/supabase-js, never axios. Each advisory requires attacker-controlled input INTO axios (data: URLs, proxy/hostnames, form-data options, HTTP/2, redirect chains) — unreachable: the SDK calls fixed CDP endpoints. Forcing override risks breaking wallet signing flows unverifiable without E2E; reassess on SDK upgrade.",
+      "addedIn": "audit-2026-10",
+      "expires": "2026-12-31"
+    },
+    {
+      "id": "GHSA-r4gj-5m52-g5wh",
+      "package": "axios",
+      "severity": "high",
+      "reason": "maxRedirects not enforced (fetch adapter SSRF). Transitive via @coinbase/cdp-sdk inside the Privy/wagmi wallet bundle (axios@1.19.0 nested). Zero imports of axios/coinbase/x402 in app|lib|components (verified grep); all server HTTP uses fetch/viem/supabase-js, never axios. Each advisory requires attacker-controlled input INTO axios (data: URLs, proxy/hostnames, form-data options, HTTP/2, redirect chains) — unreachable: the SDK calls fixed CDP endpoints. Forcing override risks breaking wallet signing flows unverifiable without E2E; reassess on SDK upgrade.",
+      "addedIn": "audit-2026-10",
+      "expires": "2026-12-31"
     }
   ]
 }

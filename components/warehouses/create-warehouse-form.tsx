@@ -235,6 +235,15 @@ export function CreateWarehouseForm() {
   const meta: CreateWarehouseMeta = { name, companyName, warehouseType };
   const busy = phase !== "form" && phase !== "error" && phase !== "success";
 
+  // BE-002: cegah refresh/back tak sengaja saat deploy on-chain berjalan
+  // (signature sudah dibayar tapi record DB belum finalize = warehouse yatim).
+  React.useEffect(() => {
+    if (!busy) return;
+    const guard = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", guard);
+    return () => window.removeEventListener("beforeunload", guard);
+  }, [busy]);
+
   function validate(): boolean {
     const errors: Record<string, string> = {};
     if (!name.trim()) errors.name = t("warehouses.create_err_name_required");
@@ -748,7 +757,7 @@ export function CreateWarehouseForm() {
                 !sessionReady
                   ? t("warehouses.signin_retry_title")
                   : !walletReady
-                    ? "Preparing your wallet"
+                    ? t("auth.wallet_preparing")
                     : undefined
               }
             >

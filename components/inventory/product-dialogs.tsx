@@ -88,6 +88,15 @@ export function CreateProductDialog({
   const [error, setError] = React.useState<string | null>(null);
   const [errorCode, setErrorCode] = React.useState<string | null>(null);
   const idempotencyKey = React.useRef<string | null>(null);
+  // BE-002: create produk + initial stock itu atomik satu RPC — refresh di
+  // tengah jalan aman di server (idempotency), tapi tahan dulu agar user
+  // tidak menekan submit ganda.
+  React.useEffect(() => {
+    if (!busy) return;
+    const guard = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", guard);
+    return () => window.removeEventListener("beforeunload", guard);
+  }, [busy]);
 
   const handleSubmit = async (values: ProductFormValues) => {
     if (!idempotencyKey.current) {

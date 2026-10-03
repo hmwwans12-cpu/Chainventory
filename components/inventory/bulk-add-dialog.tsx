@@ -181,6 +181,18 @@ export function BulkAddDialog({
   };
 
   const importRows = async () => {
+    // BE-001: fail cepat di client sebelum server menolak — tanpa ini user
+    // menunggu upload penuh hanya untuk dapat 400.
+    if (rows.length > 100) {
+      toast.add({
+        type: "error",
+        title: t("dialogs.bulk.toast_import_failed_title"),
+        description: t("dialogs.bulk.error_too_many", {
+          count: String(rows.length),
+        }),
+      });
+      return;
+    }
     if (!idempotencyKey.current) {
       idempotencyKey.current = newIdempotencyKey();
     }
@@ -326,7 +338,7 @@ export function BulkAddDialog({
             {/* Rel tengah lingkaran (kolom w-16, lingkaran size-8) */}
             <div className="bg-border/70 absolute top-4 right-8 left-8 h-[2px]">
               <div
-                className="bg-primary h-full transition-all duration-300"
+                className="bg-primary h-full transition-[width] duration-300"
                 style={{ width: `${(stepIndex / 2) * 100}%` }}
               />
             </div>
@@ -340,7 +352,7 @@ export function BulkAddDialog({
                 >
                   <span
                     className={cn(
-                      "flex size-8 items-center justify-center rounded-full text-xs font-bold transition-all",
+                      "flex size-8 items-center justify-center rounded-full text-xs font-bold transition-colors",
                       done || active
                         ? "bg-primary text-primary-foreground"
                         : "bg-card text-muted-foreground border-border border-2",
@@ -421,7 +433,7 @@ export function BulkAddDialog({
                       aria-pressed={active}
                       onClick={() => setMode(m.id)}
                       className={cn(
-                        "focus-visible:ring-ring relative flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium whitespace-nowrap transition-all before:absolute before:-inset-y-1 before:content-[''] focus-visible:ring-3 focus-visible:outline-none sm:px-3",
+                        "focus-visible:ring-ring relative flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium whitespace-nowrap transition-colors before:absolute before:-inset-y-1 before:content-[''] focus-visible:ring-3 focus-visible:outline-none sm:px-3",
                         active
                           ? "bg-card text-primary font-semibold shadow-(--shadow-card)"
                           : "text-muted-foreground hover:text-foreground"

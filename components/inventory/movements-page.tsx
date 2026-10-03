@@ -290,6 +290,9 @@ export function MovementsPage({
 
   const [movementDialog, setMovementDialog] = React.useState<{
     type: MovementType;
+    /** Prefill "ulangi movement": cocokkan produk via SKU + isi qty. */
+    presetSku?: string;
+    presetQty?: string;
   } | null>(null);
   const [detailTarget, setDetailTarget] =
     React.useState<MovementListItem | null>(null);
@@ -977,9 +980,15 @@ export function MovementsPage({
 
       {movementDialog ? (
         <StockMovementDialog
-          key={movementDialog.type}
+          key={`${movementDialog.type}:${movementDialog.presetSku ?? ""}:${movementDialog.presetQty ?? ""}`}
           warehouseId={warehouseId}
           products={products}
+          product={
+            movementDialog.presetSku
+              ? products.find((p) => p.sku === movementDialog.presetSku)
+              : undefined
+          }
+          initialQuantity={movementDialog.presetQty}
           movementType={movementDialog.type}
           open
           onOpenChange={(open) => {
@@ -998,10 +1007,28 @@ export function MovementsPage({
           onOpenChange={(open) => {
             if (!open) setDetailTarget(null);
           }}
-          isDeveloper={isDeveloper}
+          retryEndpoint={
+            detailTarget.proofId
+              ? isDeveloper
+                ? `/api/console/proofs/${encodeURIComponent(detailTarget.proofId)}/retry`
+                : role === "OWNER" || role === "MANAGER"
+                  ? `/api/warehouses/proofs/${encodeURIComponent(detailTarget.proofId)}/retry`
+                  : null
+              : null
+          }
           onRetrySuccess={() => {
             router.refresh();
             void refreshMovements();
+          }}
+          onRepeat={(m) => {
+            if (m.movementType !== "stock_in" && m.movementType !== "stock_out")
+              return;
+            setDetailTarget(null);
+            setMovementDialog({
+              type: m.movementType,
+              presetSku: m.productSku || undefined,
+              presetQty: m.quantity,
+            });
           }}
         />
       ) : null}

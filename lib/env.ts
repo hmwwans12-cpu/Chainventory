@@ -83,6 +83,14 @@ export const env = createEnv({
     // the internal keep-alive endpoint verifies it. Server-only.
     CRON_SECRET: optionalMin16,
 
+    // Dev-only outbox worker (`pnpm worker:dev`): izinkan route
+    // process-local saat NODE_ENV=production non-Vercel (mis. preview
+    // tunnel). TIDAK PERNAH set di Vercel Production.
+    LOCAL_WORKER_ENABLED: z.preprocess(
+      emptyToUndefined,
+      z.enum(["0", "1"]).optional()
+    ),
+
     // Base URL untuk delivery job QStash (proof process/confirm) saat RUNTIME.
     // Prioritas (lihat lib/proof/qstash.ts): QSTASH_APP_BASE_URL (override
     // server-only, dipakai serve.mjs E2E/tunnel) → NEXT_PUBLIC_APP_URL (URL
@@ -140,6 +148,7 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     CRON_SECRET: process.env.CRON_SECRET,
+    LOCAL_WORKER_ENABLED: process.env.LOCAL_WORKER_ENABLED,
     QSTASH_APP_BASE_URL: process.env.QSTASH_APP_BASE_URL,
     VERCEL_URL: process.env.VERCEL_URL,
     VERCEL_ENV: process.env.VERCEL_ENV,

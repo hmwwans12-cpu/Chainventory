@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/logger", () => ({ logger: { warn: vi.fn() } }));
+vi.mock("@/lib/logger", () => ({
+  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+}));
 vi.mock("@/lib/proof/verify-request", () => ({
   verifyCronSecret: vi.fn(),
   verifyQStashSignature: vi.fn(),
@@ -8,6 +10,8 @@ vi.mock("@/lib/proof/verify-request", () => ({
 vi.mock("@/lib/proof/reconcile", () => ({ reconcileProofs: vi.fn() }));
 vi.mock("@/lib/warehouses/lifecycle", () => ({
   runWarehouseLifecycle: vi.fn(),
+  digestLowStock: vi.fn(),
+  archiveOldLogs: vi.fn(),
 }));
 
 import {
@@ -23,7 +27,11 @@ import {
   verifyCronSecret,
   verifyQStashSignature,
 } from "@/lib/proof/verify-request";
-import { runWarehouseLifecycle } from "@/lib/warehouses/lifecycle";
+import {
+  archiveOldLogs,
+  digestLowStock,
+  runWarehouseLifecycle,
+} from "@/lib/warehouses/lifecycle";
 
 const mockCron = vi.mocked(verifyCronSecret);
 const mockQstash = vi.mocked(verifyQStashSignature);
@@ -48,6 +56,8 @@ beforeEach(() => {
     scheduledConfirms: [],
   });
   mockLifecycle.mockResolvedValue({ ok: true, processed: 0, stages: [] });
+  vi.mocked(digestLowStock).mockResolvedValue({ ok: true, notified: 2 });
+  vi.mocked(archiveOldLogs).mockResolvedValue({ ok: true, moved: 5 });
 });
 
 describe("internal cron routes", () => {
@@ -104,8 +114,13 @@ describe("internal cron routes", () => {
       const response = await handler(request(method));
 
       expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toMatchObject({ ok: true });
+      await expect(response.json()).resolves.toMatchObject({
+        ok: true,
+        lowStockNotified: 2,
+        archivedLogs: 5,
+      });
       expect(mockLifecycle).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(digestLowStock)).toHaveBeenCalledTimes(1);
     }
   );
 

@@ -69,6 +69,7 @@ export function ForgotPasswordForm() {
           name="email"
           type="email"
           autoComplete="email"
+          spellCheck={false}
           placeholder="you@company.com"
           required
           aria-invalid={error ? true : undefined}

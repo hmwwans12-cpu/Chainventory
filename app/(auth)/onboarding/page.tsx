@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { requireOnboardingUser } from "@/lib/onboarding/guard";
+import { APP_NAME } from "@/lib/constants";
 import { getLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/translations";
 
@@ -33,15 +34,20 @@ export default async function OnboardingPage() {
   const locale = await getLocale();
   const t = (key: string, params?: Record<string, string>) =>
     translate(locale, key, params);
+  const shellLabels = {
+    homeLabel: t("brand.home_aria", { app: APP_NAME }),
+    skipLabel: t("auth.skip_auth_form"),
+    backLabel: t("auth.back_home"),
+  };
   if (auth.authUnavailable) {
     return (
-      <AuthShell wide>
+      <AuthShell wide {...shellLabels}>
         <AuthUnavailableState />
       </AuthShell>
     );
   }
   return (
-    <AuthShell wide>
+    <AuthShell wide {...shellLabels}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-foreground text-2xl font-semibold text-balance">

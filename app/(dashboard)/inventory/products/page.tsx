@@ -125,7 +125,10 @@ export default async function ProductsPageRoute({
       <div className="flex flex-col gap-6">
         <PageHeader
           title={t("sub.products")}
-          description={`${active.name} · inventory.`}
+          description={t("products.header_desc", {
+            name: active.name,
+            code: active.code,
+          })}
         />
         <RetryErrorState
           icon="package"
@@ -234,40 +237,46 @@ export default async function ProductsPageRoute({
               aria-hidden="true"
               className="size-1.5 animate-pulse rounded-full bg-current"
             />
-            Live Synced
+            {t("products.kpi_live")}
           </Badge>
         }
         actions={
           <>
             <Badge variant="neutral" className="gap-1.5 px-3 py-1.5">
               <Package aria-hidden="true" className="size-3.5" />
-              {(safeTotal ?? 0).toLocaleString()} SKUs Total
+              {t("products.kpi_skus", {
+                n: (safeTotal ?? 0).toLocaleString(),
+              })}
             </Badge>
             <Badge
               variant={lowStockCount > 0 ? "warning" : "neutral"}
               className="gap-1.5 px-3 py-2"
               title={
                 lowStockTruncated
-                  ? `Dihitung dari ${KPI_ROW_CAP.toLocaleString()} produk pertama — persempit filter untuk angka pasti`
+                  ? t("products.kpi_truncated_skus", {
+                      n: KPI_ROW_CAP.toLocaleString(),
+                    })
                   : undefined
               }
             >
               <TriangleAlert aria-hidden="true" className="size-3.5" />
               {lowStockCount}
-              {lowStockTruncated ? "+" : ""} Low Stock Alerts
+              {lowStockTruncated ? "+" : ""} {t("products.kpi_low_stock")}
             </Badge>
             <Badge
               variant="neutral"
               className="gap-1.5 px-3 py-1.5"
               title={
                 categoriesTruncated
-                  ? `Daftar kategori dari ${KPI_ROW_CAP.toLocaleString()} produk pertama — kategori lain mungkin tersembunyi`
+                  ? t("products.kpi_truncated_categories", {
+                      n: KPI_ROW_CAP.toLocaleString(),
+                    })
                   : undefined
               }
             >
               <LayoutGrid aria-hidden="true" className="size-3.5" />
               {categories.length}
-              {categoriesTruncated ? "+" : ""} Categories
+              {categoriesTruncated ? "+" : ""} {t("products.kpi_categories")}
             </Badge>
           </>
         }

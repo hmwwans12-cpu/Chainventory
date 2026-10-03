@@ -437,6 +437,7 @@ export function MembersPage({
                         type="email"
                         inputMode="email"
                         autoComplete="email"
+                        spellCheck={false}
                         placeholder="teammate@company.com"
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}

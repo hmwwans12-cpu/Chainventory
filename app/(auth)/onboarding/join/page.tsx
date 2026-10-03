@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { AuthUnavailableState } from "@/components/auth/auth-unavailable-state";
+import { APP_NAME } from "@/lib/constants";
+import { getLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/translations";
 import { JoinWarehouseForm } from "@/components/warehouses/join-warehouse-form";
 import { requireOnboardingUser } from "@/lib/onboarding/guard";
 
@@ -22,15 +25,23 @@ export default async function JoinWarehousePage() {
   // FE-02: belum login → /login?next=.... Sengaja TANPA redirect dashboard
   // bila sudah punya warehouse — user boleh join warehouse lain.
   const auth = await requireOnboardingUser("/onboarding/join");
+  const locale = await getLocale();
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
+  const shellLabels = {
+    homeLabel: t("brand.home_aria", { app: APP_NAME }),
+    skipLabel: t("auth.skip_auth_form"),
+    backLabel: t("auth.back_home"),
+  };
   if (auth.authUnavailable) {
     return (
-      <AuthShell wide>
+      <AuthShell wide {...shellLabels}>
         <AuthUnavailableState />
       </AuthShell>
     );
   }
   return (
-    <AuthShell wide>
+    <AuthShell wide {...shellLabels}>
       <JoinWarehouseForm />
     </AuthShell>
   );

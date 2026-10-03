@@ -176,16 +176,10 @@ export async function syncWallet(
   privyAccessToken: string | null,
   verify: PrivyVerifier = verifyPrivyAccessToken,
   bindPrivyUser: PrivyBindingWriter = persistPrivyBinding,
-  registerWallet: WalletRegistrationWriter = async (
-    userId,
-    address,
-    walletType
-  ) =>
-    supabase.rpc("register_wallet_for_user", {
-      p_user_id: userId,
-      p_address: address,
-      p_wallet_type: walletType,
-    })
+  // Default = jalur PROD (service_role via persistWalletRegistration).
+  // Default lama (supabase.rpc langsung) SELALU gagal karena 0070 me-revoke
+  // RPC ini dari authenticated — jangan kembalikan pola itu.
+  registerWallet: WalletRegistrationWriter = persistWalletRegistration
 ): Promise<WalletSyncResult> {
   const parsed = syncWalletSchema.safeParse(input);
   if (!parsed.success) {

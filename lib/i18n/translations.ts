@@ -83,8 +83,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.split_login_sub":
       "Log in to see live stock, pending approvals, and proofs confirmed while you were away.",
     "auth.split_login_skip": "Skip to log-in form",
+    "auth.skip_signup_form": "Skip to sign-up form",
+    "auth.skip_login_form": "Skip to log-in form",
+    "auth.skip_auth_form": "Skip to form",
+    "auth.back_home": "Back to home",
     // Auth forms (labels, buttons, validation + server messages)
     "auth.email_label": "Email",
+    "auth.email_placeholder": "you@company.com",
     "auth.password_label": "Password",
     "auth.name_label": "Full Name",
     "auth.name_placeholder": "e.g. Sam Carter",
@@ -187,6 +192,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "products.load_failed_title": "Unable to load inventory.",
     "products.load_failed_desc":
       "Something went wrong while retrieving your inventory. Please try again.",
+    "products.header_desc": "{name} · {code} · inventory catalog.",
     "console.title": "Developer Console",
     "console.page_desc":
       "Platform-wide operations, on-chain health, and manual proof recovery.",
@@ -556,6 +562,26 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.action_needed": "Action needed",
     "dashboard.manage_invites": "Manage Invites",
     "dashboard.health_realtime": "Realtime Sync",
+    // Realtime indicator (site header)
+    "realtime.live": "Live",
+    "realtime.reconnecting": "Reconnecting…",
+    "realtime.outdated": "Data may be outdated",
+    "realtime.offline": "Offline",
+    "realtime.detail_offline":
+      "Offline. Last data 2m ago, changes paused. Will sync on reconnect.",
+    "realtime.detail_reconnecting": "Reconnecting. Live updates paused.",
+    "realtime.detail_outdated": "Data may be outdated. Retrying connection.",
+    "realtime.detail_live": "Live. Updates sync instantly.",
+    "realtime.sr_status": "Realtime: {label}. {detail}",
+    // Products KPI badges
+    "products.kpi_live": "Live Synced",
+    "products.kpi_skus": "{n} SKUs Total",
+    "products.kpi_low_stock": "Low Stock Alerts",
+    "products.kpi_categories": "Categories",
+    "products.kpi_truncated_skus":
+      "Counted from the first {n} products — narrow filters for exact numbers",
+    "products.kpi_truncated_categories":
+      "Category list from the first {n} products — others may be hidden",
     "dashboard.node_code": "Node Code",
     "activity.tab_all": "All",
     "activity.tab_inventory": "Inventory",
@@ -758,12 +784,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     "movements.proof_status": "Proof status",
     "movements.view_proof": "View blockchain proof",
     "movements.proof_failed_notice":
-      "Blockchain confirmation failed. Your inventory data was not lost. This proof will be retried automatically.",
+      "Blockchain confirmation failed. Your inventory data was not lost. Automatic retries run on a schedule — developers can also retry manually from here.",
     "movements.proof_retry": "Retry proof",
     "movements.proof_retry_queued_title": "Proof requeued",
     "movements.proof_retry_queued_desc":
       "The proof was sent back to the queue. Watch its status here.",
     "movements.proof_retry_failed": "Could not requeue the proof.",
+    "movements.repeat": "Repeat movement",
+    "movements.gas_estimate": "Est. network fee ~{value} ETH (you pay gas).",
     "movements.product_search_placeholder": "Search product…",
     "movements.select_product_aria": "Select product",
     "movements.no_products_found": "No products found.",
@@ -950,7 +978,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Bulk add dialog
     "dialogs.bulk.error_csv_empty": "CSV is empty.",
     "dialogs.bulk.error_missing_name": "Missing product name.",
-    "dialogs.bulk.error_missing_sku": "Missing SKU.",
+
     "dialogs.bulk.error_missing_unit": "Missing unit.",
     "dialogs.bulk.error_sku_too_long": "SKU is too long.",
     "dialogs.bulk.error_name_too_long": "Product name is too long.",
@@ -995,6 +1023,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dialogs.bulk.field_name": "Product name",
     "dialogs.bulk.field_sku": "SKU",
     "dialogs.bulk.sku_auto": "Auto",
+    "dialogs.bulk.error_too_many":
+      "Split imports above 100 rows (this file has {count}).",
     "dialogs.bulk.placeholder_unit": "e.g. pcs",
     "dialogs.bulk.placeholder_category": "Optional",
     "dialogs.bulk.remove_row": "Remove row",
@@ -1832,8 +1862,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.split_login_sub":
       "Masuk untuk melihat stok live, persetujuan tertunda, dan bukti yang terkonfirmasi selama kamu pergi.",
     "auth.split_login_skip": "Lewati ke formulir masuk",
+    "auth.skip_signup_form": "Lewati ke formulir pendaftaran",
+    "auth.skip_login_form": "Lewati ke formulir masuk",
+    "auth.skip_auth_form": "Lewati ke formulir",
+    "auth.back_home": "Kembali ke beranda",
     // Form auth (label, tombol, validasi + pesan server)
     "auth.email_label": "Email",
+    "auth.email_placeholder": "you@company.com",
     "auth.password_label": "Kata sandi",
     "auth.name_label": "Nama Lengkap",
     "auth.name_placeholder": "cth. Sam Carter",
@@ -1936,6 +1971,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "products.load_failed_title": "Gagal memuat inventaris.",
     "products.load_failed_desc":
       "Terjadi kesalahan saat mengambil inventaris. Silakan coba lagi.",
+    "products.header_desc": "{name} · {code} · katalog inventaris.",
     "console.title": "Konsol Developer",
     "console.page_desc":
       "Operasi platform, kesehatan on-chain, dan pemulihan bukti manual.",
@@ -2306,6 +2342,26 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dashboard.action_needed": "Perlu Tindakan",
     "dashboard.manage_invites": "Kelola Undangan",
     "dashboard.health_realtime": "Sinkron Realtime",
+    // Indikator realtime (header situs)
+    "realtime.live": "Live",
+    "realtime.reconnecting": "Menghubungkan ulang…",
+    "realtime.outdated": "Data mungkin basi",
+    "realtime.offline": "Luring",
+    "realtime.detail_offline":
+      "Luring. Data terakhir 2 mnt lalu, perubahan dijeda. Sinkron saat tersambung.",
+    "realtime.detail_reconnecting": "Menghubungkan ulang. Update live dijeda.",
+    "realtime.detail_outdated": "Data mungkin basi. Mencoba koneksi ulang.",
+    "realtime.detail_live": "Live. Update tersinkron seketika.",
+    "realtime.sr_status": "Realtime: {label}. {detail}",
+    // Badge KPI produk
+    "products.kpi_live": "Tersinkron Live",
+    "products.kpi_skus": "{n} SKU Total",
+    "products.kpi_low_stock": "Peringatan Stok Rendah",
+    "products.kpi_categories": "Kategori",
+    "products.kpi_truncated_skus":
+      "Dihitung dari {n} produk pertama — persempit filter untuk angka pasti",
+    "products.kpi_truncated_categories":
+      "Daftar kategori dari {n} produk pertama — kategori lain mungkin tersembunyi",
     "dashboard.node_code": "Kode Node",
     "activity.tab_all": "Semua",
     "activity.tab_inventory": "Inventaris",
@@ -2509,12 +2565,15 @@ export const translations: Record<Locale, Record<string, string>> = {
     "movements.proof_status": "Status bukti",
     "movements.view_proof": "Lihat bukti blockchain",
     "movements.proof_failed_notice":
-      "Konfirmasi blockchain gagal. Data inventaris Anda tidak hilang. Bukti ini akan dicoba ulang secara otomatis.",
+      "Konfirmasi blockchain gagal. Data inventaris Anda tidak hilang. Percobaan ulang otomatis berjalan terjadwal — developer juga bisa mencoba ulang manual dari sini.",
     "movements.proof_retry": "Coba ulang bukti",
     "movements.proof_retry_queued_title": "Bukti masuk antrean",
     "movements.proof_retry_queued_desc":
       "Bukti dikirim kembali ke antrean. Pantau statusnya di sini.",
     "movements.proof_retry_failed": "Gagal memasukkan bukti ke antrean.",
+    "movements.repeat": "Ulangi pergerakan",
+    "movements.gas_estimate":
+      "Estimasi fee jaringan ~{value} ETH (kamu yang bayar gas).",
     "movements.product_search_placeholder": "Cari produk…",
     "movements.select_product_aria": "Pilih produk",
     "movements.no_products_found": "Tidak ada produk ditemukan.",
@@ -2704,7 +2763,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Dialog tambah massal
     "dialogs.bulk.error_csv_empty": "CSV kosong.",
     "dialogs.bulk.error_missing_name": "Nama produk hilang.",
-    "dialogs.bulk.error_missing_sku": "SKU hilang.",
+
     "dialogs.bulk.error_missing_unit": "Satuan hilang.",
     "dialogs.bulk.error_sku_too_long": "SKU terlalu panjang.",
     "dialogs.bulk.error_name_too_long": "Nama produk terlalu panjang.",
@@ -2748,6 +2807,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dialogs.bulk.field_name": "Nama produk",
     "dialogs.bulk.field_sku": "SKU",
     "dialogs.bulk.sku_auto": "Otomatis",
+    "dialogs.bulk.error_too_many":
+      "Bagi impor di atas 100 baris (berkas ini {count} baris).",
     "dialogs.bulk.placeholder_unit": "cth. pcs",
     "dialogs.bulk.placeholder_category": "Opsional",
     "dialogs.bulk.remove_row": "Hapus baris",

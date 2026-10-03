@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireReadRateLimit } from "@/lib/api-handler";
+import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { driveLocalProofs } from "@/lib/proof/local-worker";
 import { verifyCronSecret } from "@/lib/proof/verify-request";
@@ -22,8 +23,7 @@ import { verifyCronSecret } from "@/lib/proof/verify-request";
 function productionBlocked(): boolean {
   if (process.env.VERCEL_ENV === "production") return true;
   return (
-    process.env.NODE_ENV === "production" &&
-    process.env.LOCAL_WORKER_ENABLED !== "1"
+    process.env.NODE_ENV === "production" && env.LOCAL_WORKER_ENABLED !== "1"
   );
 }
 

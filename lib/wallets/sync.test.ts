@@ -1,7 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
-import { syncWallet, type PrivyVerifier } from "@/lib/wallets/sync";
+import {
+  syncWallet,
+  type PrivyVerifier,
+  type WalletRegistrationWriter,
+} from "@/lib/wallets/sync";
+
+// Writer eksplisit ke mock supabase (default syncWallet = service-role,
+// tidak bisa dipakai di test tanpa kredensial).
 
 function mockSupabase(
   rpcImpl: (args: unknown) => unknown,
@@ -57,6 +64,26 @@ const VALID_CLAIMS = {
 
 const okVerifier: PrivyVerifier = async () => VALID_CLAIMS;
 
+/** Writer yang meniru default LAMA (user-client) untuk keperluan test. */
+function directWriter(
+  supabase: Parameters<typeof syncWallet>[0]
+): WalletRegistrationWriter {
+  const rpc = (
+    supabase as unknown as {
+      rpc: (
+        fn: string,
+        args: Record<string, unknown>
+      ) => Promise<{ data: unknown; error: { message: string } | null }>;
+    }
+  ).rpc;
+  return (userId, address, walletType) =>
+    rpc("register_wallet_for_user", {
+      p_user_id: userId,
+      p_address: address,
+      p_wallet_type: walletType,
+    });
+}
+
 describe("syncWallet", () => {
   const VALID_ADDR = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
   const UPS_CAPS = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
@@ -67,7 +94,9 @@ describe("syncWallet", () => {
       supabase,
       { address: "0x1234", walletType: "embedded", chainId: 84532 },
       "token",
-      okVerifier
+      okVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("INVALID_INPUT");
@@ -80,7 +109,9 @@ describe("syncWallet", () => {
       supabase,
       { address: VALID_ADDR, walletType: "embedded", chainId: 1 },
       "token",
-      okVerifier
+      okVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("UNSUPPORTED_NETWORK");
@@ -93,7 +124,9 @@ describe("syncWallet", () => {
       supabase,
       { address: VALID_ADDR, walletType: "embedded", chainId: 84532 },
       null,
-      okVerifier
+      okVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("PRIVY_VERIFICATION_FAILED");
@@ -106,7 +139,9 @@ describe("syncWallet", () => {
       supabase,
       { address: VALID_ADDR, walletType: "embedded", chainId: 84532 },
       "definitely-invalid-token",
-      async () => null
+      async () => null,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("PRIVY_VERIFICATION_FAILED");
@@ -123,7 +158,9 @@ describe("syncWallet", () => {
       supabase,
       { address: VALID_ADDR, walletType: "embedded", chainId: 84532 },
       "valid-token",
-      expiredVerifier
+      expiredVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("PRIVY_VERIFICATION_FAILED");
@@ -140,7 +177,9 @@ describe("syncWallet", () => {
         chainId: 84532,
       },
       "valid-token",
-      okVerifier
+      okVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("PRIVY_VERIFICATION_FAILED");
@@ -180,7 +219,9 @@ describe("syncWallet", () => {
         verificationSignature: signature,
       },
       "valid-token",
-      okVerifier
+      okVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(true);
   });
@@ -195,7 +236,9 @@ describe("syncWallet", () => {
       supabase,
       { address: VALID_ADDR, walletType: "embedded", chainId: 84532 },
       "valid-token",
-      noWalletDataVerifier
+      noWalletDataVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("PRIVY_VERIFICATION_FAILED");
@@ -237,7 +280,9 @@ describe("syncWallet", () => {
         verificationSignature: signature,
       },
       "valid-token",
-      noWalletDataVerifier
+      noWalletDataVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(true);
     expect(supabase.rpc).toHaveBeenCalledWith("register_wallet_for_user", {
@@ -260,7 +305,8 @@ describe("syncWallet", () => {
       { address: VALID_ADDR, walletType: "embedded", chainId: 84532 },
       "valid-token",
       okVerifier,
-      bindPrivyUser
+      bindPrivyUser,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(true);
     expect(bindPrivyUser).toHaveBeenCalledWith("u-1", "u-1");
@@ -283,7 +329,9 @@ describe("syncWallet", () => {
       supabase,
       { address: UPS_CAPS, walletType: "embedded", chainId: 84532 },
       "valid-token",
-      okVerifier
+      okVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(true);
     expect(result.wallet).toEqual(wallet);
@@ -303,7 +351,9 @@ describe("syncWallet", () => {
       supabase,
       { address: VALID_ADDR, walletType: "external", chainId: 84532 },
       "valid-token",
-      okVerifier
+      okVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("RPC_FAILED");
@@ -317,7 +367,9 @@ describe("syncWallet", () => {
       supabase,
       { address: VALID_ADDR, walletType: "embedded", chainId: 84532 },
       "valid-token",
-      okVerifier
+      okVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("PRIVY_VERIFICATION_FAILED");
@@ -336,7 +388,9 @@ describe("syncWallet", () => {
       supabase,
       { address: VALID_ADDR, walletType: "embedded", chainId: 84532 },
       "valid-token",
-      okVerifier
+      okVerifier,
+      undefined,
+      directWriter(supabase)
     );
     expect(result.ok).toBe(false);
     expect(result.errorCode).toBe("UNAUTHENTICATED");

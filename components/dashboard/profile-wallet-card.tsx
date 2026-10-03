@@ -45,7 +45,7 @@ export async function ProfileWalletCard({
       // FE-19: label gabungan agar SR tidak mendengar "ETH + saldo" terpotong
       // tanpa konteks (nilai saldo async tetap diumumkan terpisah).
       aria-label={translate(locale, "settings.open_profile_aria", { name })}
-      className="focus-visible:ring-ring group hover:border-primary block rounded-xl transition-all hover:shadow-(--shadow-elevated) focus-visible:ring-3 focus-visible:outline-none"
+      className="focus-visible:ring-ring group hover:border-primary block rounded-xl transition-[box-shadow,border-color] hover:shadow-(--shadow-elevated) focus-visible:ring-3 focus-visible:outline-none"
     >
       <Card className="p-4">
         <CardContent className="flex flex-col justify-between gap-4 p-0 md:flex-row md:items-center">
@@ -103,7 +103,7 @@ export async function ProfileWalletCard({
             <div className="bg-border h-8 w-px shrink-0" aria-hidden="true" />
             <ChevronRight
               aria-hidden="true"
-              className="text-muted-foreground group-hover:text-primary size-5 shrink-0 transition-all group-hover:translate-x-0.5"
+              className="text-muted-foreground group-hover:text-primary size-5 shrink-0 transition-[transform,color] group-hover:translate-x-0.5"
             />
           </div>
         </CardContent>

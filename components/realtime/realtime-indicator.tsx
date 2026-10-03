@@ -6,13 +6,7 @@ import { useOnline } from "@/hooks/use-online";
 import { cn } from "@/lib/utils";
 import { type RealtimeStatus } from "@/lib/realtime/status";
 import { useWarehouseRealtime } from "@/components/realtime/use-warehouse-realtime";
-
-const LABELS: Record<RealtimeStatus | "offline", string> = {
-  live: "Live",
-  reconnecting: "Reconnecting…",
-  outdated: "Data may be outdated",
-  offline: "Offline",
-};
+import { useLocale } from "@/components/providers/locale-provider";
 
 /**
  * Indikator status koneksi realtime (DESIGN §63) di SiteHeader.
@@ -27,17 +21,25 @@ export function RealtimeIndicator({
 }) {
   const online = useOnline();
   const status = useWarehouseRealtime(warehouseId);
+  const { t } = useLocale();
   const effective: RealtimeStatus | "offline" = online ? status : "offline";
+
+  const labels: Record<RealtimeStatus | "offline", string> = {
+    live: t("realtime.live"),
+    reconnecting: t("realtime.reconnecting"),
+    outdated: t("realtime.outdated"),
+    offline: t("realtime.offline"),
+  };
 
   // F22 offline/recovery: jangan pakai modal blocking — banner ringan + tooltip jam
   const detail =
     effective === "offline"
-      ? "Offline. Last data 2m ago, changes paused. Will sync on reconnect."
+      ? t("realtime.detail_offline")
       : effective === "reconnecting"
-        ? "Reconnecting. Live updates paused."
+        ? t("realtime.detail_reconnecting")
         : effective === "outdated"
-          ? "Data may be outdated. Retrying connection."
-          : "Live. Updates sync instantly.";
+          ? t("realtime.detail_outdated")
+          : t("realtime.detail_live");
   return (
     // FE-19: tanpa aria-label (aria-label menimpa descendants sehingga
     // sr-only detail mati + label terumumkan ganda). Nama aksesibel = satu
@@ -67,10 +69,10 @@ export function RealtimeIndicator({
         aria-hidden="true"
       />
       <span className="hidden sm:inline" aria-hidden="true">
-        {LABELS[effective]}
+        {labels[effective]}
       </span>
       <span className="sr-only">
-        Realtime: {LABELS[effective]}. {detail}
+        {t("realtime.sr_status", { label: labels[effective], detail })}
       </span>
     </span>
   );

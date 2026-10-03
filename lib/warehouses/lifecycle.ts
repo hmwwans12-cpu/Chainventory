@@ -23,6 +23,47 @@ export type LifecycleResult =
   | { ok: true; processed: number; stages: LifecycleRow[] }
   | { ok: false; processed: number; error: string };
 
+export type LowStockDigestResult =
+  | { ok: true; notified: number }
+  | { ok: false; notified: number; error: string };
+
+/**
+ * Digest low-stock harian (0076): produk aktif di bawah ambang →
+ * notifikasi OWNER+MANAGER (dedup per produk). Dipanggil cron lifecycle
+ * yang sama — tanpa cron baru. Gagal digest TIDAK menggagalkan lifecycle.
+ */
+export async function digestLowStock(): Promise<LowStockDigestResult> {
+  const supabase = createProofServiceClient();
+  const { data, error } = await supabase.rpc("digest_low_stock");
+  if (error) {
+    logger.error({ err: error.message }, "low-stock digest failed");
+    return { ok: false, notified: 0, error: error.message };
+  }
+  const notified = typeof data === "number" ? data : Number(data ?? 0) || 0;
+  logger.info({ notified }, "low-stock digest complete");
+  return { ok: true, notified };
+}
+
+export type ArchiveOldLogsResult =
+  { ok: true; moved: number } | { ok: false; moved: number; error: string };
+
+/**
+ * Arsip audit_logs + notifications >180 hari (0077, maks 1000/panggil —
+ * backlog terkuras progresif tiap cron). Gagal arsip TIDAK menggagalkan
+ * lifecycle.
+ */
+export async function archiveOldLogs(): Promise<ArchiveOldLogsResult> {
+  const supabase = createProofServiceClient();
+  const { data, error } = await supabase.rpc("archive_old_logs");
+  if (error) {
+    logger.error({ err: error.message }, "archive old logs failed");
+    return { ok: false, moved: 0, error: error.message };
+  }
+  const moved = typeof data === "number" ? data : Number(data ?? 0) || 0;
+  if (moved > 0) logger.info({ moved }, "archive old logs moved rows");
+  return { ok: true, moved };
+}
+
 export async function runWarehouseLifecycle(): Promise<LifecycleResult> {
   const supabase = createProofServiceClient();
 

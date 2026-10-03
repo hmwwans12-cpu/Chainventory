@@ -88,7 +88,7 @@ export function WarehouseLifecycleButton({
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
-        className="h-8 px-3 text-xs font-semibold"
+        className="relative h-8 px-3 text-xs font-semibold before:absolute before:-inset-2 before:content-['']"
       >
         {suspending ? (
           <PauseCircle aria-hidden="true" />

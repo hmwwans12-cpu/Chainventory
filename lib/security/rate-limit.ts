@@ -47,6 +47,11 @@ export const MUTATION_RATE_LIMITS = {
   "warehouse-lifecycle": { user: 10, ip: 30 },
   /** klaim faucet testnet (biaya treasury nyata walau testnet). */
   "faucet-claim": { user: 5, ip: 20 },
+  /**
+   * Retry proof manual oleh OWNER/MANAGER. Setiap retry = 1x percobaan
+   * submit treasury (gas) — bucket ketat + attempt_count DB dipertahankan.
+   */
+  "proof-retry": { user: 3, ip: 10 },
   /** join/approve/reject/remove/change_role. Looser than ownership transfer. */
   membership: { user: 20, ip: 60 },
   /**

@@ -151,6 +151,19 @@ export async function POST(request: Request) {
     parsed.data.idempotencyKey?.trim() ||
     deriveLegacyBulkProductIdempotencyKey(bulkRequestFingerprint);
 
+  // BE-001: bulk sinkron dibatasi 100 baris agar selalu selesai jauh di
+  // bawah maxDuration 60 dtk (per baris ~4-6 roundtrip DB/RPC + publish).
+  // Import lebih besar = 400 eksplisit, bukan timeout di tengah batch
+  // (parsial + ambigu). Per-baris tetap atomik via RPC; rollback
+  // lintas-baris SENGAJA tidak dilakukan — baris sukses adalah data valid
+  // dan idempotency per baris membuat retry aman.
+  if (parsed.data.products.length > 100) {
+    return invalid(
+      "Split imports above 100 rows (this file has " +
+        `${parsed.data.products.length}).`
+    );
+  }
+
   const results: RowResult[] = [];
   let created = 0;
   let failed = 0;

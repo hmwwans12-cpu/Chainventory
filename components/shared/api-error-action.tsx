@@ -23,7 +23,7 @@ export function ApiErrorActionButton({
     <Button
       variant="outline"
       size="sm"
-      className="mt-2 h-8 px-3 text-xs font-semibold"
+      className="relative mt-2 h-8 px-3 text-xs font-semibold before:absolute before:-inset-2 before:content-['']"
       render={<a href={action.href} />}
     >
       {t(action.labelKey)}

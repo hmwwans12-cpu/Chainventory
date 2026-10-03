@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
+import { APP_NAME } from "@/lib/constants";
 import { getLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/translations";
 
@@ -14,9 +15,14 @@ export const metadata: Metadata = {
 
 export default async function ResetPasswordPage() {
   const locale = await getLocale();
-  const t = (key: string) => translate(locale, key);
+  const t = (key: string, params?: Record<string, string>) =>
+    translate(locale, key, params);
   return (
-    <AuthShell>
+    <AuthShell
+      homeLabel={t("brand.home_aria", { app: APP_NAME })}
+      skipLabel={t("auth.skip_auth_form")}
+      backLabel={t("auth.back_home")}
+    >
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-foreground text-2xl font-semibold text-balance">

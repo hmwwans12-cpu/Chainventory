@@ -66,6 +66,7 @@ export function LoginForm({
             id="email"
             type="email"
             autoComplete="email"
+            spellCheck={false}
             {...register("email")}
           />
         </FormField>
