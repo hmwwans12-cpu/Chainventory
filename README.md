@@ -1,33 +1,93 @@
-# 📦 ⛓️ Chainventory
+<div align="center">
 
-[![Release](https://img.shields.io/github/v/release/hmwwans12-cpu/Chainventory?sort=semver)](https://github.com/hmwwans12-cpu/Chainventory/releases)
-[![CI](https://github.com/hmwwans12-cpu/Chainventory/actions/workflows/ci.yml/badge.svg)](https://github.com/hmwwans12-cpu/Chainventory/actions/workflows/ci.yml)
-[![Base Sepolia](https://img.shields.io/badge/chain-Base%20Sepolia-0052FF)](https://sepolia.basescan.org)
-[![Bilingual](https://img.shields.io/badge/i18n-EN%20%7C%20ID-green)](<>)
-[![License](https://img.shields.io/badge/license-proprietary-red)](<>)
+# 📦⛓️ Chainventory
 
-> **Sistem inventaris gudang untuk UMKM — dengan bukti blockchain untuk setiap pergerakan stok penting.**
-> _Warehouse inventory management with verifiable on-chain proof for every critical stock movement._
+### Sistem inventaris gudang dengan **bukti blockchain** untuk setiap pergerakan stok penting.
 
-```text
-Barang masuk/keluar → tercatat di ledger → proof di-anchor on-chain → bisa diverifikasi siapa pun di BaseScan
-```
+### _Warehouse inventory with verifiable on-chain proof for every critical stock movement._
+
+[![Release](https://img.shields.io/github/v/release/hmwwans12-cpu/Chainventory?sort=semver&style=for-the-badge)](https://github.com/hmwwans12-cpu/Chainventory/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/hmwwans12-cpu/Chainventory/ci.yml?style=for-the-badge&label=CI)](https://github.com/hmwwans12-cpu/Chainventory/actions/workflows/ci.yml)
+[![Base Sepolia](https://img.shields.io/badge/chain-Base%20Sepolia-0052FF?style=for-the-badge&logo=ethereum)](https://sepolia.basescan.org)
+[![Bilingual](https://img.shields.io/badge/i18n-EN_%7C_ID-22c55e?style=for-the-badge)](<>)
+[![License](https://img.shields.io/badge/license-proprietary-red?style=for-the-badge)](<>)
+
+[🚀 Quick Start](#-quick-start) · [✨ Fitur](#-kenapa-chainventory) · [🏗️ Arsitektur](#️-arsitektur) · [📚 Dokumentasi](#-dokumentasi) · [📦 Releases](https://github.com/hmwwans12-cpu/Chainventory/releases)
+
+</div>
 
 ---
 
 ## ✨ Kenapa Chainventory?
 
-| Untuk operasional harian                                        | Untuk kepercayaan & audit                       |
-| --------------------------------------------------------------- | ----------------------------------------------- |
-| 🏭 Multi-warehouse + multi-user (5 role: Owner → Viewer)        | 🔗 Setiap movement penting punya proof on-chain |
-| 📝 Stock in/out, adjustment (4 mata), reversal, bulk CSV import | 🔍 Audit explorer + BaseScan link per transaksi |
-| 🔢 SKU auto-generate + threshold stok rendah + notifikasi       | 🛡️ Tak ada yang bisa ubah history diam-diam     |
-| 🌏 Antarmuka bilingual penuh (Indonesia / English)              | 📜 Ledger append-only + audit log di database   |
+<table>
+<tr>
+<td width="50%" valign="top">
 
-**Dua mode proof** mengikuti umur kontrak gudangmu — otomatis dipilihkan aplikasi:
+### 🏭 Untuk operasional harian
 
-- 🏛️ **Treasury flow (kontrak v1)** — gas dibayar treasury, user tinggal klik.
-- 👛 **Wallet-paid flow (kontrak v2)** — wallet member menandatangani + membayar gas sendiri, dengan estimasi fee transparan sebelum sign.
+- 🏢 Multi-warehouse + multi-user
+- 👥 5 role: Owner → Manager → Staff → Auditor → Viewer
+- 📝 Stock in/out, adjustment 4-mata, reversal
+- 📥 Bulk import CSV (100 baris/batch, idempoten)
+- 🔢 SKU auto-generate + ambang stok rendah + notifikasi
+- 🔁 Tombol "ulangi movement" untuk kasir
+- 🌏 Bilingual penuh Indonesia / English
+
+</td>
+<td width="50%" valign="top">
+
+### 🛡️ Untuk kepercayaan & audit
+
+- 🔗 Proof on-chain tiap movement penting
+- 🔍 Audit explorer + link BaseScan per transaksi
+- 📊 Status proof live: pending → confirmed
+- 🔄 Retry proof + reconciler otomatis
+- 📜 Ledger append-only, tak bisa diubah diam-diam
+- 🔐 Treasury signer terisolasi, gas transparan
+
+</td>
+</tr>
+</table>
+
+### 💸 Dua mode proof — dipilihkan otomatis sesuai umur kontrak gudangmu
+
+|                  | 🏛️ Treasury (kontrak v1)             | 👛 Wallet-paid (kontrak v2)         |
+| ---------------- | ------------------------------------ | ----------------------------------- |
+| **Gas**          | Dibayar treasury — user tinggal klik | Wallet member bayar sendiri         |
+| **Cocok untuk**  | Gudang lama / tim non-kripto         | Tim yang mau self-custody penuh     |
+| **Estimasi fee** | —                                    | Ditampilkan transparan sebelum sign |
+
+---
+
+## 🔄 Alur Proof (disederhanakan)
+
+```mermaid
+flowchart LR
+    A[📥 Stock In/Out] --> B[🔒 RPC atomik<br/>lock + validasi + insert + audit]
+    B --> C[📦 Proof + outbox<br/>dalam 1 transaksi]
+    C --> D[⚡ QStash publish]
+    D --> E[🏦 Treasury signer<br/>tx Base Sepolia]
+    E --> F[✅ Konfirmasi 2 block]
+```
+
+<details>
+<summary><b>🏗️ Lihat arsitektur sistem lengkap</b></summary>
+
+```mermaid
+flowchart TD
+    Browser --> MW[Next.js Middleware<br/>auth guard]
+    MW --> BFF[Route Handler / BFF<br/>auth → rate limit → permission → validasi]
+    BFF --> RPC[SECURITY DEFINER RPC<br/>PostgreSQL]
+    RPC --> DB[(PostgreSQL<br/>RLS tenant boundary)]
+
+    style BFF fill:#22c55e,color:#fff
+    style RPC fill:#0052FF,color:#fff
+```
+
+> Mutation sensitif **tidak pernah** direct table access — selalu lewat RPC dengan otorisasi internal (role + warehouse active + product active). RLS hanya tenant boundary, bukan authorization boundary.
+
+</details>
 
 ---
 
@@ -42,40 +102,6 @@ Barang masuk/keluar → tercatat di ledger → proof di-anchor on-chain → bisa
 | Async jobs | Upstash QStash (proof pipeline) · Upstash Redis (rate limiting)                    |
 | Testing    | Vitest · Testing Library · Playwright · Forge test                                 |
 | CI/CD      | GitHub Actions · Vercel                                                            |
-
-## 🏗️ Arsitektur
-
-```text
-Browser
-  ↓
-Next.js Middleware (auth guard)
-  ↓
-Route Handler (BFF)
-  ↓ auth → rate limit → permission → validation
-SECURITY DEFINER RPC (PostgreSQL)
-  ↓
-PostgreSQL (RLS tenant boundary)
-```
-
-Mutation sensitif **tidak** melalui direct table access. Semua melalui
-SECURITY DEFINER RPC dengan otorisasi internal (role + warehouse active +
-product active). RLS menjadi tenant boundary, bukan authorization boundary.
-
-### Proof Pipeline
-
-```text
-Stock In/Out
-  ↓
-apply_stock_movement() RPC (atomic: lock + validate + insert + audit)
-  ↓
-proof + outbox (dalam transaction yang sama)
-  ↓
-QStash publish → processor endpoint
-  ↓
-treasury signer → Base Sepolia tx
-  ↓
-confirmation polling (2 blocks) → confirmed
-```
 
 ## 🚀 Quick Start
 
@@ -92,16 +118,18 @@ cp .env.example .env.local
 # 3. Database migrations (butuh SUPABASE_ACCESS_TOKEN)
 corepack pnpm db:push:verify
 
-# 4. Run (terminal 1: app, terminal 2: proof worker lokal)
+# 4. Run — terminal 1: app, terminal 2: proof worker lokal
 corepack pnpm dev
 corepack pnpm worker:dev
 ```
 
+> 💡 **Kenapa 2 terminal?** QStash tidak bisa callback ke `localhost`, jadi worker lokal mengerjakan antrian proof langsung in-process. Di production, QStash yang mengambil alih.
+
 ## 🔑 Environment Variables
 
-Lihat `.env.example` untuk daftar lengkap. Kategori:
+Lihat `.env.example` untuk daftar lengkap — intinya 6 grup:
 
-| Kategori      | Key                                                                                       | Sifat                   |
+| Kategori      | Key utama                                                                                 | Sifat                   |
 | ------------- | ----------------------------------------------------------------------------------------- | ----------------------- |
 | Supabase      | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` | Wajib                   |
 | Privy         | `NEXT_PUBLIC_PRIVY_APP_ID`, `PRIVY_APP_SECRET`                                            | Wajib                   |
@@ -114,27 +142,21 @@ Lihat `.env.example` untuk daftar lengkap. Kategori:
 
 ## 🛠️ Scripts
 
-```bash
-corepack pnpm dev          # Development server
-corepack pnpm worker:dev   # Proof outbox worker lokal (QStash tak bisa callback ke localhost)
-corepack pnpm build        # Production build
-corepack pnpm typecheck    # TypeScript strict check
-corepack pnpm lint         # ESLint
-corepack pnpm test         # Vitest
-corepack pnpm format:check # Prettier
-corepack pnpm check:contrast # WCAG contrast check
-corepack pnpm db:push:verify # Push migrasi + verifikasi RPC di schema cache
+| Perintah                                        | Fungsi                                        |
+| ----------------------------------------------- | --------------------------------------------- |
+| `corepack pnpm dev`                             | Development server                            |
+| `corepack pnpm worker:dev`                      | Proof outbox worker lokal                     |
+| `corepack pnpm build`                           | Production build                              |
+| `corepack pnpm typecheck` / `lint` / `test`     | TypeScript / ESLint / Vitest                  |
+| `corepack pnpm format:check` / `check:contrast` | Prettier / kontras WCAG                       |
+| `corepack pnpm db:push:verify`                  | Push migrasi + verifikasi RPC di schema cache |
+| `corepack pnpm e2e:verify` + `e2e:test`         | Playwright (butuh secrets `E2E_*`)            |
 
-# E2E (butuh secrets E2E_*)
-corepack pnpm e2e:verify
-corepack pnpm e2e:test
-```
-
-## ✅ Testing
+## ✅ Testing & Quality Gates
 
 | Layer              | Tool            | Status                                     |
 | ------------------ | --------------- | ------------------------------------------ |
-| Unit + Integration | Vitest          | 533 passed (live-gated skip terisolasi)    |
+| Unit + Integration | Vitest          | 533 passed (live-gated terisolasi)         |
 | Kontrak RPC↔DB     | Vitest (statis) | Paritas 44 RPC × migrasi (overload-aware)  |
 | Smart Contract     | Forge           | Factory, Warehouse, EIP-712 suites         |
 | E2E                | Playwright      | Main flow, console, smoke                  |
@@ -143,11 +165,19 @@ corepack pnpm e2e:test
 
 ## 🔒 Security Model
 
-1. **UI**: role-based button visibility (5 roles: OWNER > MANAGER > STAFF > AUDITOR > VIEWER)
+```mermaid
+flowchart LR
+    UI["1. UI<br/>role-based buttons"] --> BFF["2. BFF<br/>permission + rate limit"]
+    BFF --> RPC["3. RPC<br/>SECURITY DEFINER + auth internal"]
+    RPC --> RLS["4. RLS<br/>tenant boundary"]
+    RLS --> TRG["5. Trigger<br/>immutable guards"]
+```
+
+1. **UI**: visibilitas tombol per role (5 roles: OWNER > MANAGER > STAFF > AUDITOR > VIEWER)
 2. **BFF**: `requirePermission()` + `requireRateLimit()` + `requireActiveWarehouse()`
 3. **RPC**: SECURITY DEFINER dengan otorisasi internal (`auth.uid()` + role + warehouse active)
 4. **RLS**: tenant boundary (warehouse_id scoping) — read-only untuk authenticated
-5. **Trigger**: warehouse active · product status role · warehouse_id immutable · unit immutable
+5. **Trigger**: warehouse active · product status · warehouse_id immutable · unit immutable
 
 Direct table mutation dari authenticated **ditolak** (INSERT/UPDATE/DELETE revoked).
 
@@ -178,3 +208,13 @@ Deploy ke Vercel:
 4. Tambahkan domain ke Supabase Auth → URL Configuration
 
 Branch protection: `main` memerlukan check `quality` (strict).
+
+---
+
+<div align="center">
+
+**Dibuat untuk UMKM Indonesia 🇮🇩 — inventaris rapi, audit berani.**
+
+⭐ Star repo ini kalau membantu · 🐛 Lapor bug via Issues
+
+</div>
