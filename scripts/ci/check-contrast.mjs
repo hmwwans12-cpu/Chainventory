@@ -17,10 +17,8 @@
  *
  * M-6: (a) unresolved pairings are HARD failures (a missing/renamed token
  * must never silently `continue` green); (b) WCAG 1.4.11 non-text pairings
- * included where values comply (ring 3:1). --border/--input are DELIBERATELY
- * not gated here: measured 1.20–1.94:1 (< 3:1, see M-5) and CSS must not
- * change in this finding — values + gate update belong to M-5 (design
- * decision). No colors are changed by this script.
+ * included (ring 3:1; accent 4.5 + border/input 3:1 sejak M-4/M-5 dengan
+ * nilai yang diselaraskan). No colors are changed by this script.
  */
 
 import { readFileSync } from "node:fs";
@@ -133,6 +131,15 @@ const PAIRS = [
   // M-6: WCAG 1.4.11 non-text (focus indicator 3:1; measured 4.82–7.48:1).
   ["--ring", "--background", 3, "ring (focus) on background"],
   ["--ring", "--card", 3, "ring (focus) on card"],
+  // M-4: accent dipakai sebagai latar focus + teks accent-foreground
+  // (dropdown/select). Butuh 4.5:1 untuk text-sm.
+  ["--accent-foreground", "--accent", 4.5, "accent-foreground on accent"],
+  // M-5: border/input sebagai batas komponen (WCAG 1.4.11, 3:1).
+  // Nilai border/input diselaraskan ke angka lolos (lihat DESIGN.md).
+  ["--border", "--background", 3, "border on background"],
+  ["--border", "--card", 3, "border on card"],
+  ["--input", "--background", 3, "input on background"],
+  ["--input", "--card", 3, "input on card"],
 ];
 
 let failures = 0;

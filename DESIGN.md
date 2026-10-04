@@ -88,7 +88,7 @@ Hindari:
 | Muted           | `#247158`                                                      |
 | Primary         | `#186049`                                                      |
 | Secondary       | `#6AB29B`                                                      |
-| Border          | `#D4C2B2`                                                      |
+| Border          | `#7D6A5C` (M-5: 3.58:1 di bg, 5.14:1 di card)                       |
 
 ---
 
@@ -105,7 +105,7 @@ Dark mode tidak menjadi prioritas MVP awal. Namun design system harus disiapkan 
 | Muted      | `#6AB29B` |
 | Primary    | `#6AB29B` |
 | Secondary  | `#247158` |
-| Border     | `#23493C` |
+| Border     | `#5D8A76` (M-5: 4.21:1 di bg, 3.06:1 di card) |
 
 ---
 

@@ -43,8 +43,10 @@
      untuk teks di atas permukaan tinted (8.5:1+ di tint). */
   --warning: #7f530a;
   --warning-foreground: #4a2f04;
-  --border: #d4c2b2;
-  --input: #d4c2b2;
+  /* M-5: #D4C2B2 hanya 1.20:1 di --background / 1.73:1 di --card (gagal
+     WCAG 1.4.11 3:1). #7D6A5C = 3.58:1 di --background, 5.14:1 di --card. */
+  --border: #7d6a5c;
+  --input: #7d6a5c;
   --ring: #186049;
   --placeholder: color-mix(in oklab, var(--foreground) 50%, transparent);
   /* Unified overlay + hover tokens (UI overhaul): single source for
@@ -148,7 +150,9 @@
   /* Muted dipisah dari card agar `bg-muted/30` overlay tidak menyatu dengan card */
   --muted: #122b23;
   --muted-foreground: #6ab29b;
-  --accent: #247158;
+  /* M-4: #247158 hanya 4.09:1 dengan --accent-foreground (gagal WCAG AA
+     4.5:1 untuk teks focus dropdown/select). #1A5340 = 6.22:1. */
+  --accent: #1a5340;
   --accent-foreground: #e4d5c7;
   /* Final pass: #EFA39C 5.93:1 di --card, 4.55:1+ di atas tint
      bg-destructive/15 — teks error terbaca di dark tanpa jadi pink neon. */
@@ -158,9 +162,10 @@
   /* Final pass: #F5E6C8 7.25:1 di atas tint bg-warning/15 — warning-fg
      lama (#3A2404) hanya 1.64:1 di dark tint (tidak terbaca). */
   --warning-foreground: #f5e6c8;
-  /* Border dinaikkan saturasi agar tidak redup di monitor low-contrast */
-  --border: #2d5447;
-  --input: #2d5447;
+  /* M-5: #2D5447 hanya 1.94:1 di --background / 1.41:1 di --card (gagal
+     WCAG 1.4.11 3:1). #5D8A76 = 4.21:1 di --background, 3.06:1 di --card. */
+  --border: #5d8a76;
+  --input: #5d8a76;
   --ring: #6ab29b;
   --mint-soft: #a4dcc7;
 
