@@ -11,6 +11,8 @@
  * Env untuk --push:
  *   SUPABASE_PROJECT_REF, SUPABASE_ACCESS_TOKEN (link),
  *   SUPABASE_DB_PASSWORD (push),
+ *   DB_PUSH_ALLOWED_REFS (wajib: daftar ref proyek staging yang boleh
+ *     di-push, koma-dipisah — lihat WORKFLOW.md),
  *   NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
  *   (atau ..._ANON_KEY) untuk verifikasi OpenAPI.
  *
@@ -64,12 +66,29 @@ if (!PUSH_MODE) {
 }
 
 // 2. Push.
+// R-7 (PERUBAHAN PERILAKU): allowlist ref proyek — tolak bila kosong atau
+// ref tak cocok, SEBELUM supabase link. Tanpa ini kredensial prod yang
+// keliru (atau ref salah ketik) langsung push ke DB yang salah.
+const allowedRefs = (process.env.DB_PUSH_ALLOWED_REFS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+if (allowedRefs.length === 0) {
+  fail(
+    "DB_PUSH_ALLOWED_REFS kosong — set daftar ref proyek staging yang boleh di-push (koma-dipisah). Lihat WORKFLOW.md."
+  );
+}
 const ref = process.env.SUPABASE_PROJECT_REF;
 const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
 const dbPassword = process.env.SUPABASE_DB_PASSWORD;
 if (!ref || !accessToken || !dbPassword) {
   skip(
     "SUPABASE_PROJECT_REF / SUPABASE_ACCESS_TOKEN / SUPABASE_DB_PASSWORD belum lengkap"
+  );
+}
+if (!allowedRefs.includes(ref)) {
+  fail(
+    `SUPABASE_PROJECT_REF "${ref}" tidak ada di DB_PUSH_ALLOWED_REFS — push dibatalkan.`
   );
 }
 

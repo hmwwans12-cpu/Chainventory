@@ -124,6 +124,18 @@ peran server, tidak bisa DDL).
    revoke token lama di dashboard → verifikasi dengan satu query
    read-only (`select 1`).
 
+### 4.3 Runbook `db:push:verify` + `DB_PUSH_ALLOWED_REFS` (temuan audit R-7)
+
+`pnpm db:push:verify` (mode statik, tanpa DB) selalu aman. Mode `--push`
+menulis ke Supabase — dijaga allowlist ref proyek:
+
+1. **Set Allowlist**: `DB_PUSH_ALLOWED_REFS=<ref-staging-1>,<ref-staging-2>`
+   di `.env.local` (gitignored). Jangan pernah isi dengan ref production.
+2. **Tanpa allowlist / ref tak cocok**: skrip exit 1 SEBELUM `supabase link`
+   — tidak ada yang ter-push.
+3. **Urutan verifikasi**: paritas statik RPC↔migrasi → cek allowlist →
+   link → push → verifikasi PostgREST schema cache.
+
 ## 5. Workflow Smart Contract
 
 1. Buat change request yang menjelaskan invariant yang terdampak.
