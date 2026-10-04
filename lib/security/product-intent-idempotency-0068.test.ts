@@ -77,7 +77,9 @@ describe("Priority 1 idempotency regressions (0068, static)", () => {
     expect(productDialog).toContain("isRetryableApiFailure");
     expect(productDialog).toContain("idempotencyKey: idempotencyKey.current");
     expect(bulkDialog).toContain("isRetryableApiFailure");
-    expect(bulkDialog).toContain("{ idempotencyKey: idempotencyKey.current }");
+    // #15: kunci ref tetap diteruskan (kini di opsi chunked + onProgress) —
+    // logika retensi tak berubah: null hanya saat sukses/non-retryable/tutup.
+    expect(bulkDialog).toContain("idempotencyKey: idempotencyKey.current");
     expect(movementDialog).toContain("isPendingIntentConfirmation");
   });
 });

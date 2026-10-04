@@ -33,7 +33,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  bulkCreateProducts,
+  BULK_CHUNK_SIZE,
+  bulkCreateProductsChunked,
   type BulkCreateResult,
   type BulkProductRow,
 } from "@/lib/inventory/products-client";
@@ -92,6 +93,11 @@ export function BulkAddDialog({
   const { t } = useLocale();
   const [results, setResults] = React.useState<BulkCreateResult | null>(null);
   const [busy, setBusy] = React.useState(false);
+  // #15: progres antrean chunk (null bila 1 chunk — tak perlu ditampilkan).
+  const [progress, setProgress] = React.useState<{
+    done: number;
+    total: number;
+  } | null>(null);
   const idempotencyKey = React.useRef<string | null>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const closeDialog = () => {
@@ -181,23 +187,16 @@ export function BulkAddDialog({
   };
 
   const importRows = async () => {
-    // BE-001: fail cepat di client sebelum server menolak — tanpa ini user
-    // menunggu upload penuh hanya untuk dapat 400.
-    if (rows.length > 100) {
-      toast.add({
-        type: "error",
-        title: t("dialogs.bulk.toast_import_failed_title"),
-        description: t("dialogs.bulk.error_too_many", {
-          count: String(rows.length),
-        }),
-      });
-      return;
-    }
+    // #15: file ≤1000 baris (batas parse CSV) dikirim sebagai antrean chunk
+    // sequential ≤100 baris (BE-001: server menolak sinkron >100). Tiap chunk
+    // kunci idempotency sendiri; retry memakai base key sama = idempoten.
     if (!idempotencyKey.current) {
       idempotencyKey.current = newIdempotencyKey();
     }
     setBusy(true);
-    const result = await bulkCreateProducts(
+    setProgress(null);
+    const totalChunks = Math.max(1, Math.ceil(rows.length / BULK_CHUNK_SIZE));
+    const result = await bulkCreateProductsChunked(
       warehouseId,
       rows.map((r) => ({
         sku: r.sku,
@@ -208,8 +207,14 @@ export function BulkAddDialog({
         lowStockThreshold: r.lowStockThreshold,
         initialQuantity: r.initialQty ?? undefined,
       })),
-      { idempotencyKey: idempotencyKey.current }
+      {
+        idempotencyKey: idempotencyKey.current,
+        onProgress: (p) => {
+          if (totalChunks > 1) setProgress(p);
+        },
+      }
     );
+    setProgress(null);
     if (!result.ok) {
       setBusy(false);
       if (!isRetryableApiFailure(result)) {
@@ -896,6 +901,17 @@ export function BulkAddDialog({
                 >
                   {t("dialogs.bulk.back_to_edit")}
                 </Button>
+                {busy && progress && progress.total > 1 ? (
+                  <span
+                    aria-live="polite"
+                    className="text-muted-foreground self-center text-xs font-medium tabular-nums"
+                  >
+                    {t("dialogs.bulk.progress_chunk", {
+                      done: String(progress.done),
+                      total: String(progress.total),
+                    })}
+                  </span>
+                ) : null}
                 <Button
                   onClick={importRows}
                   disabled={busy || rows.length === 0}

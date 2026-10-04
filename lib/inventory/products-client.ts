@@ -65,6 +65,65 @@ export type BulkCreateOptions = {
   fetcher?: Fetcher;
 };
 
+/**
+ * #15: antrean chunk bulk import.
+ *
+ * Server menolak sinkron >100 baris (BE-001, jauh di bawah maxDuration
+ * 60 dtk) — file 1000 baris (batas parse CSV) dipecah menjadi chunk ≤100
+ * yang dikirim SEQUENTIAL. Tiap chunk memakai kunci operasi BERBEDA
+ * (`<base>:chunk-<i>`) karena server menurunkan kunci per-baris dari
+ * kunci operasi + indeks DALAM request (`deriveProductRowIdempotencyKey`);
+ * kunci sama lintas chunk akan tabrakan dan gagal fingerprint.
+ * Retry aman: pakai base key yang sama → chunk yang sudah sukses replay
+ * sebagai no-op (jalur existingIntent server).
+ */
+export const BULK_CHUNK_SIZE = 100;
+
+export function splitBulkRows<T>(rows: T[], size = BULK_CHUNK_SIZE): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size));
+  return out;
+}
+
+export type BulkChunkProgress = { done: number; total: number };
+
+export type BulkChunkedOptions = BulkCreateOptions & {
+  chunkSize?: number;
+  onProgress?: (p: BulkChunkProgress) => void;
+};
+
+export async function bulkCreateProductsChunked(
+  warehouseId: string,
+  products: BulkProductRow[],
+  options: BulkChunkedOptions = {}
+): Promise<ApiResult<BulkCreateResult>> {
+  const { chunkSize = BULK_CHUNK_SIZE, onProgress, ...rest } = options;
+  const chunks = splitBulkRows(products, chunkSize);
+  const merged: BulkCreateResult = { created: 0, failed: 0, results: [] };
+  let status = 200;
+  for (let c = 0; c < chunks.length; c++) {
+    const chunk = chunks[c]!;
+    const key = rest.idempotencyKey
+      ? `${rest.idempotencyKey}:chunk-${c}`
+      : undefined;
+    const res = await bulkCreateProducts(warehouseId, chunk, {
+      ...rest,
+      idempotencyKey: key,
+    });
+    // Gagal transport/validasi chunk → abort sisa (chunk selesai tetap
+    // tersimpan; retry dengan base key sama = idempoten).
+    if (!res.ok) return res;
+    status = res.status;
+    merged.created += res.data.created;
+    merged.failed += res.data.failed;
+    const offset = c * chunkSize;
+    for (const r of res.data.results)
+      merged.results.push({ ...r, index: r.index + offset });
+    onProgress?.({ done: c + 1, total: chunks.length });
+  }
+  return { ok: true, status, data: merged };
+}
+
 export type CreateProductWithInitialStockInput = CreateProductInput & {
   initialQuantity?: string;
 };

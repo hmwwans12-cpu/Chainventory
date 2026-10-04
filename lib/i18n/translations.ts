@@ -1031,6 +1031,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dialogs.bulk.sku_auto": "Auto",
     "dialogs.bulk.error_too_many":
       "Split imports above 100 rows (this file has {count}).",
+    "dialogs.bulk.progress_chunk": "Importing part {done} of {total}…",
     "dialogs.bulk.placeholder_unit": "e.g. pcs",
     "dialogs.bulk.placeholder_category": "Optional",
     "dialogs.bulk.remove_row": "Remove row",
@@ -2821,6 +2822,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dialogs.bulk.sku_auto": "Otomatis",
     "dialogs.bulk.error_too_many":
       "Bagi impor di atas 100 baris (berkas ini {count} baris).",
+    "dialogs.bulk.progress_chunk": "Mengimpor bagian {done} dari {total}…",
     "dialogs.bulk.placeholder_unit": "cth. pcs",
     "dialogs.bulk.placeholder_category": "Opsional",
     "dialogs.bulk.remove_row": "Hapus baris",
