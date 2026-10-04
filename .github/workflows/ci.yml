@@ -1,5 +1,9 @@
 name: CI
 
+# R-4: least privilege — GITHUB_TOKEN hanya butuh baca repo di semua job.
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -14,13 +18,13 @@ jobs:
     env:
       SKIP_ENV_VALIDATION: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4 (v4.3.0)
         with:
           version: 11.21.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           cache: pnpm
@@ -55,6 +59,11 @@ jobs:
       # di-wire: ia menjalankan next build sehingga menggandakan CI.)
       - name: Contrast check
         run: pnpm check:contrast
+        shell: bash
+
+      # R-8: gate encoding UTF-8 (mencegah mojibake ter-commit).
+      - name: Encoding check
+        run: pnpm encoding:check
         shell: bash
 
   # E2E penuh (P3 item 1+2): build production lokal + tunnel cloudflared +
@@ -112,13 +121,13 @@ jobs:
       # serve.mjs hanya membaca ini dari .env.e2e.local yang tak ada di CI.
       DEVELOPER_ALLOWLIST: dev-verify@chainventory.test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4 (v4.3.0)
         with:
           version: 11.21.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           cache: pnpm
@@ -127,8 +136,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install cloudflared (tunnel QStash â†’ runner localhost)
+        # T-3: versi di-pin + checksum diverifikasi SEBELUM dieksekusi.
+        # (checksum dihitung dari rilis resmi 2026.9.3, 2026-10-04; tidak ada
+        # file checksum resmi dari Cloudflare — naikkan CLOUDFLARED_VERSION +
+        # hash bersamaan saat update.)
+        env:
+          CLOUDFLARED_VERSION: "2026.9.3"
+          CLOUDFLARED_SHA256: "77e26d8d900e0b8469f416239d14b5f296525fdf79fee6f511ef55609e3fbac2"
         run: |
-          curl -L -o /tmp/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          curl -L -o /tmp/cloudflared "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-amd64"
+          echo "${CLOUDFLARED_SHA256}  /tmp/cloudflared" | sha256sum -c -
           chmod +x /tmp/cloudflared
           mkdir -p "$RUNNER_TEMP/opencode"
           cp /tmp/cloudflared "$RUNNER_TEMP/opencode/cloudflared"
@@ -160,15 +177,36 @@ jobs:
     # NON-BLOCKING dihapus (temuan audit #12): gate kini blocking via
     # scripts/ci/deps-audit.mjs + .github/security-allowlist.json.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4 (v4.3.0)
         with:
           version: 11.21.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       - name: Audit production dependencies
         run: pnpm deps:audit
+
+  # R-6: kontrak Foundry di-compile + di-test di CI. Checkout butuh
+  # submodule recursive (contracts/lib/forge-std + openzeppelin-contracts).
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          submodules: recursive
+
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1
+
+      - name: Build contracts
+        working-directory: contracts
+        run: forge build
+        shell: bash
+
+      - name: Test contracts
+        working-directory: contracts
+        run: forge test
+        shell: bash
 
   # Temuan audit #30: alert bila run TERJADWAL (cron Senin) gagal — tanpa
   # ini kegagalan job scheduled (runner error/outage) tidak terdeteksi.
