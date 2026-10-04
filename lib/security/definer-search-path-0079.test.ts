@@ -9,7 +9,8 @@ import { describe, expect, it } from "vitest";
  * Serangan search_path: DEFINER dengan `search_path = public` (atau tanpa
  * SET) mengeksekusi referensi tak-terkualifikasi memakai path penelepon —
  * penyerang dengan CREATE di skema awal path bisa membajak tabel/fungsi.
- * Migrasi 0079 mengunci 54 fungsi live yang terverifikasi aman (semua
+ * Migrasi 0079 mengunci fungsi live yang terverifikasi aman (semua
+ * referensi terkualifikasi skema / builtin pg_catalog / CTE) via
  * referensi terkualifikasi skema / builtin pg_catalog / CTE) via
  * `ALTER FUNCTION ... SET search_path = ''`.
  *
@@ -21,8 +22,16 @@ import { describe, expect, it } from "vitest";
  */
 const DIR = join(process.cwd(), "supabase", "migrations");
 
-/** Fungsi yang SADAR dikecualikan (dengan alasan). Kosong saat ini. */
-const DEFERRED: { sig: string; reason: string }[] = [];
+/** Fungsi yang SADAR dikecualikan (dengan alasan). */
+const DEFERRED: { sig: string; reason: string }[] = [
+  {
+    sig: "public.purge_expired_idempotency_keys(interval,integer)",
+    reason:
+      "TIDAK ADA di staging sebagai DEFINER (atau sama sekali) — ALTER akan gagal. " +
+      "Bila muncul kembali, hapus entri ini agar test menuntut kunci. " +
+      "Drift 0053 diselidiki terpisah.",
+  },
+];
 
 function normTypes(argstr: string): string {
   const parts: string[] = [];
@@ -72,11 +81,11 @@ function events(): Ev[] {
   for (const f of files) {
     const sql = readFileSync(join(DIR, f), "utf8");
     const re =
-      /(create\s+(or\s+replace\s+)?function|drop\s+function\s+(if\s+exists\s+)?)\s+([a-zA-Z0-9_."]+)\s*\(/gi;
+      /(create\s+(or\s+replace\s+)?function\s+|drop\s+function\s+(?:if\s+exists\s+)?)([a-zA-Z0-9_."]+)\s*\(/gi;
     let m: RegExpExecArray | null;
     while ((m = re.exec(sql)) !== null) {
       const isDrop = /^drop/i.test(m[1]!);
-      const fname = m[4]!.replace(/"/g, "").toLowerCase();
+      const fname = m[3]!.replace(/"/g, "").toLowerCase();
       let depth = 0;
       let args = "";
       const k = m.index + m[0].length - 1;
