@@ -14,12 +14,20 @@
  *      below WCAG AA (4.5:1 for body text, 3:1 for large/badge text).
  *
  * Extend `PAIRS` when new tokens/surfaces are introduced.
+ *
+ * M-6: (a) unresolved pairings are HARD failures (a missing/renamed token
+ * must never silently `continue` green); (b) WCAG 1.4.11 non-text pairings
+ * included where values comply (ring 3:1). --border/--input are DELIBERATELY
+ * not gated here: measured 1.20–1.94:1 (< 3:1, see M-5) and CSS must not
+ * change in this finding — values + gate update belong to M-5 (design
+ * decision). No colors are changed by this script.
  */
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const GLOBALS = join(process.cwd(), "app", "globals.css");
+// Optional CSS path (tests pass a tampered copy); default = app globals.
+const GLOBALS = process.argv[2] ?? join(process.cwd(), "app", "globals.css");
 
 function hexToRgb(hex) {
   let h = hex.trim().replace(/^#/, "");
@@ -122,6 +130,9 @@ const PAIRS = [
     4.5,
     "secondary-foreground on secondary",
   ],
+  // M-6: WCAG 1.4.11 non-text (focus indicator 3:1; measured 4.82–7.48:1).
+  ["--ring", "--background", 3, "ring (focus) on background"],
+  ["--ring", "--card", 3, "ring (focus) on card"],
 ];
 
 let failures = 0;
@@ -134,7 +145,15 @@ for (const [themeName, vars] of [
     // parseVars stores keys WITHOUT the `--` prefix — strip it here.
     const fgHex = resolve(vars[fg.replace(/^--/, "")] ?? "", vars);
     const bgResolved = resolveBg(bg, vars);
-    if (!fgHex || !bgResolved) continue;
+    // M-6 fail-closed: token tak ter-resolve = gate MERAH (dulu `continue`
+    // membuat token hilang/rename lolos diam-diam).
+    if (!fgHex || !bgResolved) {
+      failures += 1;
+      console.error(
+        `❌ [${themeName}] ${label}: UNRESOLVED ${!fgHex ? fg : bg} — token hilang/rename?`
+      );
+      continue;
+    }
     const r = ratio(hexToRgb(fgHex), hexToRgb(bgResolved.hex));
     if (r < min) {
       failures += 1;
