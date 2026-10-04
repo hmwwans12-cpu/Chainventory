@@ -72,8 +72,12 @@ jobs:
         # NCF-01: tanpa backtick — "`$GITHUB_OUTPUT" mengeksekusi path
         # sebagai perintah (command substitution) dan selalu gagal,
         # sehingga job e2e tak pernah jalan walau secret ada.
+        # R-5: secret via env (bukan interpolasi langsung di run:) agar
+        # tidak terekspos ke shell / rentan script-injection.
+        env:
+          E2E_SUPABASE_URL_AVAILABLE: ${{ secrets.E2E_SUPABASE_URL }}
         run: |
-          if [ -z "${{ secrets.E2E_SUPABASE_URL }}" ]; then
+          if [ -z "$E2E_SUPABASE_URL_AVAILABLE" ]; then
             echo "::notice::E2E secrets not configured - e2e job will be skipped."
             echo "enabled=false" >> "$GITHUB_OUTPUT"
           else
