@@ -101,7 +101,7 @@ export function StockMovementDialog({
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [selectedId, setSelectedId] = React.useState(product?.id ?? "");
   const [quantity, setQuantity] = React.useState(initialQuantity ?? "");
   const [reason, setReason] = React.useState("");
@@ -924,7 +924,7 @@ export function StockMovementDialog({
                                   item.movementType as keyof typeof MOVEMENT_TYPE_META
                                 ]?.label ?? item.movementType}{" "}
                                 · {item.quantity} ·{" "}
-                                {formatDate(item.created_at)}
+                                {formatDate(item.created_at, locale)}
                               </SelectItem>
                             ))}
                           </SelectContent>

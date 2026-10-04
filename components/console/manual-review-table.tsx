@@ -52,7 +52,7 @@ export function ManualReviewTable({
   busyId: string | null;
   onRequestRetry: (proof: ManualReviewProof) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   return (
     <Card className="border-warning/30 bg-warning/5">
       <CardHeader>
@@ -142,7 +142,7 @@ export function ManualReviewTable({
                     </TableCell>
                     <TableCell className="text-right">
                       <span className="text-muted-foreground text-sm tabular-nums">
-                        {formatDateTime(proof.updatedAt)}
+                        {formatDateTime(proof.updatedAt, locale)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">

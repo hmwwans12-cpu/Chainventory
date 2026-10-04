@@ -31,7 +31,7 @@ function shortId(value: string | null): string {
 
 /** Trail audit (append-only) — termasuk log setiap manual retry proof. */
 export function AuditTrail({ entries }: { entries: AuditEntry[] }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   return (
     <Card>
       <CardHeader>
@@ -85,7 +85,7 @@ export function AuditTrail({ entries }: { entries: AuditEntry[] }) {
                     </TableCell>
                     <TableCell className="text-right">
                       <span className="text-muted-foreground text-sm">
-                        {formatDateTime(entry.createdAt)}
+                        {formatDateTime(entry.createdAt, locale)}
                       </span>
                     </TableCell>
                   </TableRow>
