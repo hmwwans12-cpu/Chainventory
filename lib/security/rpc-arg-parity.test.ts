@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -203,6 +203,41 @@ const CONTRACTS: RpcContract[] = [
     name: "archive_old_logs",
     callers: ["lib/warehouses/lifecycle.ts"],
   },
+  // M-7: dispatch dinamis app/api/warehouses/membership/route.ts
+  // (`supabase.rpc(fn[action], rpcArgs[action])`) tak terlihat pemindai
+  // literal — 8 RPC hidup ini tidak tercakup sebelum fix.
+  {
+    name: "request_join",
+    callers: ["app/api/warehouses/membership/route.ts"],
+  },
+  {
+    name: "approve_join",
+    callers: ["app/api/warehouses/membership/route.ts"],
+  },
+  {
+    name: "reject_join",
+    callers: ["app/api/warehouses/membership/route.ts"],
+  },
+  {
+    name: "cancel_join",
+    callers: ["app/api/warehouses/membership/route.ts"],
+  },
+  {
+    name: "leave_warehouse",
+    callers: ["app/api/warehouses/membership/route.ts"],
+  },
+  {
+    name: "remove_member",
+    callers: ["app/api/warehouses/membership/route.ts"],
+  },
+  {
+    name: "update_member_role",
+    callers: ["app/api/warehouses/membership/route.ts"],
+  },
+  {
+    name: "transfer_ownership",
+    callers: ["app/api/warehouses/membership/route.ts"],
+  },
 ];
 
 function readRepo(relativePath: string): string {
@@ -251,7 +286,11 @@ function balancedBlock(source: string, openIndex: number): string | null {
 }
 
 /** Semua kemunculan `.rpc("name", { ... })` → daftar himpunan kunci argumen. */
-function extractCallerArgSets(source: string, rpcName: string): string[][] {
+function extractCallerArgSets(
+  source: string,
+  rpcName: string,
+  callerPath?: string
+): string[][] {
   // Posisi dicari di source ASLI (nama utuh); parsing kurung di versi
   // tersamar yang indeksnya identik (maskEqual sama panjang).
   const masked = maskSources(source);
@@ -276,10 +315,85 @@ function extractCallerArgSets(source: string, rpcName: string): string[][] {
     );
     sets.push([...new Set(keys)]);
   }
+  // M-7: dispatch dinamis `supabase.rpc(fn[action], rpcArgs[action])` di
+  // membership route — nama RPC hidup di peta `fn`, kunci argumen di peta
+  // `rpcArgs` (file yang sama). Tanpa ini 8 RPC tak tercakup diam-diam.
+  if (
+    callerPath?.endsWith("membership/route.ts") &&
+    source.includes("fn[action]")
+  ) {
+    const byAction = dispatchArgSets(source);
+    const fnMap = dispatchFnMap(source);
+    for (const [action, target] of fnMap) {
+      if (target === rpcName && byAction.has(action)) {
+        sets.push(byAction.get(action)!);
+      }
+    }
+  }
   return sets;
 }
 
-type SqlParam = { name: string; hasDefault: boolean };
+/** Peta aksi → nama RPC dari `const fn: Record<...> = { aksi: "rpc", ... }`. */
+function dispatchFnMap(source: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const anchor = source.indexOf("const fn: Record");
+  if (anchor < 0) return out;
+  const open = source.indexOf("{", anchor);
+  if (open < 0) return out;
+  const block = balancedBlock(source, open);
+  if (block === null) return out;
+  for (const m of block.matchAll(/(\w+)\s*:\s*"([a-z_]+)"/g)) {
+    out.set(m[1]!, m[2]!);
+  }
+  return out;
+}
+
+/** Peta aksi → kunci argumen dari `const rpcArgs ... = { aksi: { p_x, ... } }`. */
+function dispatchArgSets(source: string): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  const anchor = source.indexOf("const rpcArgs");
+  if (anchor < 0) return out;
+  const open = source.indexOf("{", anchor);
+  if (open < 0) return out;
+  const block = balancedBlock(source, open);
+  if (block === null) return out;
+  // Setiap aksi: `aksi: { ... }` — objek ber-nest, pakai balancedBlock lagi.
+  const keyRe = /(\w+)\s*:\s*\{/g;
+  let m: RegExpExecArray | null;
+  while ((m = keyRe.exec(block)) !== null) {
+    // Pastikan ini level-aksi (depth 0 relatif terhadap block).
+    const depth =
+      (block.slice(0, m.index).match(/\{/g) ?? []).length -
+      (block.slice(0, m.index).match(/\}/g) ?? []).length;
+    if (depth !== 0) continue;
+    const inner = balancedBlock(block, m.index + m[0].length - 1);
+    if (inner === null) continue;
+    out.set(m[1]!, [
+      ...new Set(
+        [...inner.matchAll(/\b(p_[a-z][a-z0-9_]*)\b/g)].map((k) => k[1]!)
+      ),
+    ]);
+  }
+  return out;
+}
+
+type SqlParam = { name: string; type: string; hasDefault: boolean };
+
+/**
+ * M-7: kanonik tipe argumen untuk key per-signature (bukan aritas saja).
+ * Dua overload ber-aritas sama (mis. apply_stock_movement 13-arg bigint vs
+ * integer) tidak boleh saling menimpa diam-diam. Hanya alias ejaan yang
+ * dinormalisasi (int→integer, timestamptz→timestamp with time zone) —
+ * tipe berbeda tetap kunci berbeda.
+ */
+function normSigType(raw: string): string {
+  return raw
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\btimestamptz\b/g, "timestamp with time zone")
+    .replace(/\bint\b/g, "integer");
+}
 
 function splitTopLevel(body: string): string[] {
   const parts: string[] = [];
@@ -334,8 +448,14 @@ function liveOverloads(rpcName: string): Overload[] {
     const params: SqlParam[] = [];
     for (const part of splitTopLevel(paramBody)) {
       const m = part.match(/^\s*(p_\w+)\s+(.+?)\s*$/s);
-      if (m)
-        params.push({ name: m[1]!, hasDefault: /\bdefault\b/i.test(m[2]!) });
+      if (m) {
+        const typeRaw = m[2]!.replace(/\bdefault\b.*/is, "");
+        params.push({
+          name: m[1]!,
+          type: normSigType(typeRaw),
+          hasDefault: /\bdefault\b/i.test(m[2]!),
+        });
+      }
     }
     return params;
   };
@@ -360,9 +480,17 @@ function liveOverloads(rpcName: string): Overload[] {
       if (body === null) continue;
       if (event.kind === "create") {
         const params = parseParams(masked, event.index);
-        if (params) overloads.set(params.length.toString(), { file, params });
+        if (params)
+          overloads.set(params.map((p) => p.type).join(","), {
+            file,
+            params,
+          });
       } else {
-        overloads.delete(splitTopLevel(body).length.toString());
+        overloads.delete(
+          splitTopLevel(body)
+            .map((t) => normSigType(t))
+            .join(",")
+        );
       }
     }
   }
@@ -370,6 +498,45 @@ function liveOverloads(rpcName: string): Overload[] {
 }
 
 describe("paritas argumen RPC ↔ migrasi (static)", () => {
+  it("setiap RPC yang dipanggil kode punya entri CONTRACTS (guard RPC baru)", () => {
+    // M-7: RPC baru tanpa entri = test gagal. Cakupan = literal
+    // `.rpc("nama")` di kode non-test + nilai peta dispatch dinamis
+    // (membership route). Helper trigger/fungsi mati yang tak pernah
+    // dipanggil TIDAK memicu (anti false-alarm).
+    const names = new Set(CONTRACTS.map((c) => c.name));
+    const called = new Map<string, string>();
+    const roots = ["lib", "app", "components", "hooks"].map((d) =>
+      join(process.cwd(), d)
+    );
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full);
+          continue;
+        }
+        if (!/\.(ts|tsx)$/.test(entry.name) || /\.test\./.test(entry.name))
+          continue;
+        const rel = relative(process.cwd(), full).replace(/\\/g, "/");
+        const src = readRepo(rel);
+        for (const m of src.matchAll(/\.rpc\(\s*"([a-z_]+)"/g)) {
+          called.set(m[1]!, rel);
+        }
+        if (full.endsWith("membership/route.ts")) {
+          for (const [, rpc] of dispatchFnMap(src)) {
+            called.set(rpc, rel);
+          }
+        }
+      }
+    };
+    roots.forEach(walk);
+    const missing = [...called.entries()].filter(([n]) => !names.has(n));
+    expect(
+      missing.map(([n, f]) => `${n} <- ${f}`),
+      "RPC dipanggil tapi tanpa entri CONTRACTS"
+    ).toEqual([]);
+  });
+
   for (const contract of CONTRACTS) {
     it(`${contract.name}: terdefinisi di migrasi dan argumen cocok`, () => {
       const overloads = liveOverloads(contract.name);
@@ -379,7 +546,11 @@ describe("paritas argumen RPC ↔ migrasi (static)", () => {
       ).toBeGreaterThan(0);
 
       for (const caller of contract.callers) {
-        const sets = extractCallerArgSets(readRepo(caller), contract.name);
+        const sets = extractCallerArgSets(
+          readRepo(caller),
+          contract.name,
+          caller
+        );
         expect(
           sets.length,
           `${caller} tidak memanggil .rpc("${contract.name}")`

@@ -157,7 +157,7 @@ Lihat `.env.example` untuk daftar lengkap + komentar per key:
 | Layer              | Tool              | Status                                     |
 | ------------------ | ----------------- | ------------------------------------------ |
 | Unit + Integration | Vitest            | 533 passed (live-gated terisolasi)         |
-| Kontrak RPC↔DB     | Vitest (statis)   | Paritas 44 RPC × migrasi (overload-aware)  |
+| Kontrak RPC↔DB     | Vitest (statis)   | Paritas 54 RPC × migrasi (overload-aware)  |
 | Smart Contract     | Forge             | Factory, Warehouse, EIP-712 suites         |
 | E2E                | Playwright        | Main flow, console, smoke                  |
 | A11y               | check-contrast    | Otomatis (WCAG AA) + preflight 7/7         |
