@@ -33,6 +33,28 @@ const optionalMin16 = z.preprocess(
   z.string().min(16).optional()
 );
 
+/**
+ * T-1: SKIP_ENV_VALIDATION dilarang di Vercel Production.
+ *
+ * Sebelumnya `skipValidation: !!process.env.SKIP_ENV_VALIDATION` dan gate
+ * fail-fast `&& !process.env.SKIP_ENV_VALIDATION` memakai variabel yang
+ * sama — `SKIP_ENV_VALIDATION=1` di Production mematikan SEMUA validasi
+ * diam-diam (README "jangan set di production" tidak ditegakkan).
+ * Preview (`VERCEL_ENV=preview`) dan CI/lokal (tanpa VERCEL_ENV=production)
+ * tetap boleh memakai SKIP seperti sebelumnya.
+ */
+const isVercelProductionBuild = process.env.VERCEL_ENV === "production";
+if (isVercelProductionBuild && process.env.SKIP_ENV_VALIDATION) {
+  throw new Error(
+    "[env] SKIP_ENV_VALIDATION must not be set in production (VERCEL_ENV=production). " +
+      "Remove it from Vercel Production env so fail-fast secret validation runs."
+  );
+}
+// Di production variabel diabaikan (defense-in-depth bila throw di atas
+// tertangkap); di tempat lain perilaku lama dipertahankan.
+const skipEnvValidation =
+  !!process.env.SKIP_ENV_VALIDATION && !isVercelProductionBuild;
+
 export const env = createEnv({
   server: {
     NODE_ENV: z
@@ -166,7 +188,8 @@ export const env = createEnv({
   // CI/preview builds without live secrets should set SKIP_ENV_VALIDATION=1
   // to avoid fail-fast. Production deploys (Vercel) run without it and will
   // fail-fast if secrets are missing (TECHSTACK §4, fix A7 below).
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  // T-1: di Vercel Production SKIP diabaikan (lihat throw di atas).
+  skipValidation: skipEnvValidation,
 });
 
 // Fix A7: klaim TECHSTACK §4 "gagal cepat bila secret wajib hilang" sebelumnya
@@ -181,7 +204,8 @@ export const env = createEnv({
 // (VERCEL=1; Vercel me-set-nya otomatis) — platform deploy resmi (ARSITEKTUR
 // §7.4). Build lokal/CI memakai SKIP_ENV_VALIDATION=1 seperti sebelumnya.
 const isVercelBuild = process.env.VERCEL === "1";
-if (isVercelBuild && !process.env.SKIP_ENV_VALIDATION) {
+// T-1: pakai skip efektif (SKIP diabaikan di production — sudah throw di atas).
+if (isVercelBuild && !skipEnvValidation) {
   const missing: string[] = [];
   const need = (name: string, ok: boolean) => {
     if (!ok) missing.push(name);
