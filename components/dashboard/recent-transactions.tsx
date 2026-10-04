@@ -87,10 +87,13 @@ export function RecentTransactions({
   items,
   warehouseId,
   copy,
+  locale = "en-US",
 }: {
   items: RecentTransactionItem[];
   warehouseId?: string;
   copy: RecentTransactionsCopy;
+  /** Locale BCP-47 untuk waktu relatif (default = perilaku lama). */
+  locale?: string;
 }) {
   const proofLabel: Record<
     NonNullable<RecentTransactionItem["proofStatus"]>,
@@ -190,10 +193,10 @@ export function RecentTransactions({
                             />
                           }
                         >
-                          {formatTimeAgo(item.createdAt)}
+                          {formatTimeAgo(item.createdAt, locale)}
                         </TooltipTrigger>
                         <TooltipContent>
-                          {formatDateTime(item.createdAt)}
+                          {formatDateTime(item.createdAt, locale)}
                         </TooltipContent>
                       </Tooltip>
                     </span>

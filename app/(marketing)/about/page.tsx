@@ -20,22 +20,9 @@ export default async function AboutPage() {
         description={translate(locale, "about.page_desc")}
       />
       <div className="text-muted-foreground flex flex-col gap-4 text-base leading-relaxed">
-        <p>
-          Chainventory helps warehouse teams manage inventory in real time.
-          Multiple users can operate on one warehouse at the same time, with
-          stock updates that stay consistent and synchronized.
-        </p>
-        <p>
-          The product is built on a simple principle: keep everyday inventory
-          work easy, and use blockchain as an additional verification layer for
-          important records. Every stock movement gets a verifiable proof, so
-          history is transparent and tamper-evident.
-        </p>
-        <p>
-          You don&apos;t need to understand crypto to use Chainventory. Records
-          are verified quietly in the background, and you see a simple, readable
-          status whenever it matters.
-        </p>
+        <p>{translate(locale, "about.body_1")}</p>
+        <p>{translate(locale, "about.body_2")}</p>
+        <p>{translate(locale, "about.body_3")}</p>
       </div>
     </div>
   );

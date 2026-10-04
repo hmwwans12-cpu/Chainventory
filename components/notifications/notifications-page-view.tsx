@@ -14,10 +14,10 @@ import {
 } from "@/lib/notifications/notifications-client";
 import {
   NOTIFICATION_TYPE_META,
-  formatTimeAgo,
   notificationHref,
   type NotificationRow,
 } from "@/lib/notifications/types";
+import { formatTimeAgo } from "@/lib/utils";
 import { debounce } from "@/lib/realtime/debounce";
 import { openChannel } from "@/lib/realtime/channel";
 import { FLASH_MESSAGE_MS, REALTIME_DEBOUNCE_MS } from "@/lib/constants";
@@ -46,7 +46,7 @@ export function NotificationsPageView({
   pageSize: number;
 }) {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [notifications, setNotifications] = useState(initialNotifications);
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const [warehouseNames, setWarehouseNames] = useState(initialWarehouseNames);
@@ -318,7 +318,7 @@ export function NotificationsPageView({
                           className="tabular-nums"
                           suppressHydrationWarning
                         >
-                          {formatTimeAgo(n.last_event_at)}
+                          {formatTimeAgo(n.last_event_at, locale)}
                         </time>
                         {manyWarehouses &&
                         n.warehouse_id &&

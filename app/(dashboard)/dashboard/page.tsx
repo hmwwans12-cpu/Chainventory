@@ -722,6 +722,7 @@ export default async function DashboardPage({
       <RecentMovements
         items={recentMovements}
         warehouseId={active.id}
+        locale={locale}
         copy={{
           title: t("dashboard.recent_movements_title"),
           description: t("dashboard.recent_movements_desc"),
@@ -746,6 +747,7 @@ export default async function DashboardPage({
         <RecentTransactions
           items={recentTransactions}
           warehouseId={active.id}
+          locale={locale}
           copy={{
             title: t("dashboard.recent_tx_title"),
             description: t("dashboard.recent_tx_desc"),

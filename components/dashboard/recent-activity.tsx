@@ -78,7 +78,7 @@ function matchesTab(item: RecentActivityItem, tab: ActivityTab): boolean {
 }
 
 export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [tab, setTab] = React.useState<ActivityTab>("all");
   const filtered = React.useMemo(
     () => items.filter((i) => matchesTab(i, tab)),
@@ -193,11 +193,11 @@ export function RecentActivity({ items }: { items: RecentActivityItem[] }) {
                       />
                     }
                   >
-                    {formatTimeAgo(item.lastEventAt)}
+                    {formatTimeAgo(item.lastEventAt, locale)}
                     {item.times > 1 ? ` · ${item.times}×` : ""}
                   </TooltipTrigger>
                   <TooltipContent>
-                    {formatDateTime(item.lastEventAt)}
+                    {formatDateTime(item.lastEventAt, locale)}
                   </TooltipContent>
                 </Tooltip>
               </li>

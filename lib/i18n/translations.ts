@@ -205,6 +205,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     "about.page_title": "About Chainventory",
     "about.page_desc":
       "Inventory management that feels like a normal SaaS, with verification built underneath.",
+    "about.body_1":
+      "Chainventory helps warehouse teams manage inventory in real time. Multiple users can operate on one warehouse at the same time, with stock updates that stay consistent and synchronized.",
+    "about.body_2":
+      "The product is built on a simple principle: keep everyday inventory work easy, and use blockchain as an additional verification layer for important records. Every stock movement gets a verifiable proof, so history is transparent and tamper-evident.",
+    "about.body_3":
+      "You don't need to understand crypto to use Chainventory. Records are verified quietly in the background, and you see a simple, readable status whenever it matters.",
     // Error follow-up actions (F4: errorCode → aksi)
     "errors.action_sign_in": "Sign in again",
     "errors.action_open_settings": "Open Settings",
@@ -1984,6 +1990,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     "about.page_title": "Tentang Chainventory",
     "about.page_desc":
       "Manajemen inventaris yang terasa seperti SaaS biasa, dengan verifikasi di bawahnya.",
+    "about.body_1":
+      "Chainventory membantu tim gudang mengelola inventaris secara real-time. Banyak pengguna bisa mengoperasikan satu gudang bersamaan, dengan update stok yang tetap konsisten dan tersinkron.",
+    "about.body_2":
+      "Produk ini dibangun di atas prinsip sederhana: buat pekerjaan inventaris harian tetap mudah, dan gunakan blockchain sebagai lapisan verifikasi tambahan untuk catatan penting. Setiap pergerakan stok mendapat bukti terverifikasi, sehingga riwayat transparan dan anti-rusak.",
+    "about.body_3":
+      "Kamu tidak perlu paham crypto untuk memakai Chainventory. Catatan diverifikasi diam-diam di latar, dan kamu melihat status sederhana yang mudah dibaca kapan pun dibutuhkan.",
     // Aksi lanjutan error (F4: errorCode → aksi)
     "errors.action_sign_in": "Masuk lagi",
     "errors.action_open_settings": "Buka Pengaturan",

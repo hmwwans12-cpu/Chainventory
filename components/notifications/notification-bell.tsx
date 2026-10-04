@@ -22,10 +22,10 @@ import {
 } from "@/lib/notifications/notifications-client";
 import {
   NOTIFICATION_TYPE_META,
-  formatTimeAgo,
   notificationHref,
   type NotificationRow,
 } from "@/lib/notifications/types";
+import { formatTimeAgo } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,7 +50,7 @@ const PANEL_LIMIT = NOTIFICATION_PANEL_LIMIT;
  */
 export function NotificationBell() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [open, setOpen] = useState(false);
   // P2-06: unread count dibagi via store — badge sidebar ikut segar instan.
   const unreadCount = useSyncExternalStore(
@@ -394,7 +394,7 @@ export function NotificationBell() {
                                   dateTime={n.last_event_at}
                                   suppressHydrationWarning
                                 >
-                                  {formatTimeAgo(n.last_event_at)}
+                                  {formatTimeAgo(n.last_event_at, locale)}
                                 </time>
                                 {manyWarehouses &&
                                 n.warehouse_id &&

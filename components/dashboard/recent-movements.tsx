@@ -101,10 +101,13 @@ export function RecentMovements({
   items,
   warehouseId,
   copy,
+  locale = "en-US",
 }: {
   items: RecentMovementItem[];
   warehouseId?: string;
   copy: RecentMovementsCopy;
+  /** Locale BCP-47 untuk waktu relatif (default = perilaku lama). */
+  locale?: string;
 }) {
   const viewAllHref = warehouseId
     ? `/inventory/movements?warehouse=${warehouseId}`
@@ -243,10 +246,10 @@ export function RecentMovements({
                               />
                             }
                           >
-                            {formatTimeAgo(item.createdAt)}
+                            {formatTimeAgo(item.createdAt, locale)}
                           </TooltipTrigger>
                           <TooltipContent>
-                            {formatDateTime(item.createdAt)}
+                            {formatDateTime(item.createdAt, locale)}
                           </TooltipContent>
                         </Tooltip>
                       </TableCell>
