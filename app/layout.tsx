@@ -7,6 +7,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PrivyProviderLazy } from "@/components/providers/privy-provider-lazy";
+import { getLocale } from "@/lib/i18n/server";
 
 // Self-hosted via next/font/local for offline build robustness (audit §3).
 // Stitch type system: Manrope (headings/data summaries), Hanken Grotesk
@@ -89,13 +90,17 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // M-8: lang mengikuti cookie locale (en/id) — sebelumnya hardcode "en".
+  // RootLayout boleh async (Server Component); AuthShell tetap sinkron
+  // agar error boundary client tidak rusak.
+  const locale = await getLocale();
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html lang={locale} className="h-full" suppressHydrationWarning>
       <body
         className={`${hankenGrotesk.variable} ${manrope.variable} ${jetbrainsMono.variable} flex min-h-full flex-col antialiased`}
       >
