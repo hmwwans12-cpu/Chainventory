@@ -13,3 +13,7 @@ coverage/
 test-results/
 playwright-report/
 *.tsbuildinfo
+
+# Laporan audit generatif (ribuan baris tabel) — bukan source; diformat
+# manual oleh penulisnya. Mencegah format:check merah di CI (insiden v0.5.8).
+AUDIT_*.md
