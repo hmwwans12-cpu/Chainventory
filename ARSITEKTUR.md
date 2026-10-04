@@ -378,5 +378,5 @@ reversal original FOR UPDATE (bila reversal)
 1. **UI**: role-based button visibility + suspended banner
 2. **BFF**: requirePermission + requireRateLimit + requireActiveWarehouse
 3. **RPC**: SECURITY DEFINER dengan otorisasi internal
-4. **Trigger**: warehouse active � product status role � warehouse_id immutable � unit immutable
-5. **RLS**: tenant boundary (warehouse_id scoping) � SELECT only untuk authenticated
+4. **Trigger**: warehouse active + product status role + warehouse_id immutable + unit immutable
+5. **RLS**: tenant boundary (warehouse_id scoping) + SELECT only untuk authenticated
