@@ -88,7 +88,7 @@ Hindari:
 | Muted           | `#247158`                                                      |
 | Primary         | `#186049`                                                      |
 | Secondary       | `#6AB29B`                                                      |
-| Border          | `#7D6A5C` (M-5: 3.58:1 di bg, 5.14:1 di card)                       |
+| Border          | `#7D6A5C` (M-5: 3.58:1 di bg, 5.14:1 di card)                  |
 
 ---
 
@@ -96,15 +96,15 @@ Hindari:
 
 Dark mode tidak menjadi prioritas MVP awal. Namun design system harus disiapkan agar mudah ditambahkan.
 
-| Token      | Value     |
-| ---------- | --------- |
-| Background | `#0E231B` |
-| Card       | `#153227` |
-| Heading    | `#E4D5C7` |
-| Body       | `#E8F2EE` |
-| Muted      | `#6AB29B` |
-| Primary    | `#6AB29B` |
-| Secondary  | `#247158` |
+| Token      | Value                                         |
+| ---------- | --------------------------------------------- |
+| Background | `#0E231B`                                     |
+| Card       | `#153227`                                     |
+| Heading    | `#E4D5C7`                                     |
+| Body       | `#E8F2EE`                                     |
+| Muted      | `#6AB29B`                                     |
+| Primary    | `#6AB29B`                                     |
+| Secondary  | `#247158`                                     |
 | Border     | `#5D8A76` (M-5: 4.21:1 di bg, 3.06:1 di card) |
 
 ---
