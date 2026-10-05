@@ -84,32 +84,58 @@ async function deleteUser(id: string): Promise<void> {
 
 describe.skipIf(!available)("RLS bypass via anon client", () => {
   it("anon TIDAK bisa insert products dan TIDAK bisa membaca lintas tenant", async () => {
-    const whId = randomUUID();
+    let whId = "";
     const owner = await createTestUser();
 
     try {
-      // Setup: warehouse + satu produk (service role).
-      const setup = await send(
-        "/rest/v1/warehouses",
+      // Setup: warehouse + produk (service role). 0071: warehouse + OWNER
+      // membership harus lahir atomik → via RPC (anon tetap bukan member).
+      const ownerWallet = `0x${"11".repeat(20)}`;
+      await send(
+        "/rest/v1/wallets",
         {
           method: "POST",
           prefer: "return=minimal",
           body: [
             {
-              id: whId,
-              name: `RLS-BYPASS-${Date.now()}`,
-              warehouse_code: `RLS${randomUUID().slice(0, 8).toUpperCase()}`,
-              owner_user_id: owner.id,
-              on_chain_owner_wallet:
-                "0x0000000000000000000000000000000000000000",
-              status: "active",
+              user_id: owner.id,
+              address: ownerWallet,
+              is_primary: true,
+              verification_state: "verified",
             },
           ],
         },
         SECRET!
       );
-      if (setup.status >= 400)
-        throw new Error(`setup warehouse: ${setup.text.slice(0, 200)}`);
+      const code = `RLS${randomUUID().slice(0, 8).toUpperCase()}`;
+      const created = await send(
+        "/rest/v1/rpc/create_warehouse_and_deployment",
+        {
+          method: "POST",
+          body: {
+            p_warehouse_code: code,
+            p_name: `RLS-BYPASS-${Date.now()}`,
+            p_company_name: "Contract",
+            p_warehouse_type: "physical",
+            p_on_chain_owner_wallet: ownerWallet,
+            p_factory_address: "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+            p_chain_id: 84532,
+            p_warehouse_code_hash: `0x${"22".repeat(32)}`,
+            p_deployment_nonce: 0,
+            p_expiry: Math.floor(Date.now() / 1000) + 3600,
+            p_signature: `0x${"ab".repeat(65)}`,
+            p_idempotency_key: randomUUID(),
+            p_actor_user_id: owner.id,
+          },
+        },
+        SECRET!
+      );
+      if (created.status >= 400)
+        throw new Error(`setup warehouse: ${created.text.slice(0, 200)}`);
+      whId = String(
+        (JSON.parse(created.text)[0] as { created_warehouse_id: string })
+          .created_warehouse_id
+      );
 
       const product = await send(
         "/rest/v1/products",
@@ -152,14 +178,19 @@ describe.skipIf(!available)("RLS bypass via anon client", () => {
       expect(select.status).toBeLessThan(300);
       expect(JSON.parse(select.text || "[]")).toEqual([]);
     } finally {
-      // Cleanup terurut (anak dulu).
+      // Cleanup terurut (anak dulu; deployment SET NULL bukan cascade).
       await send(
         `/rest/v1/products?warehouse_id=eq.${whId}`,
         { method: "DELETE" },
         SECRET!
       );
       await send(
-        "/rest/v1/memberships?warehouse_id=eq." + whId,
+        `/rest/v1/memberships?warehouse_id=eq.${whId}`,
+        { method: "DELETE" },
+        SECRET!
+      ).catch(() => undefined);
+      await send(
+        `/rest/v1/warehouse_deployments?warehouse_id=eq.${whId}`,
         { method: "DELETE" },
         SECRET!
       ).catch(() => undefined);
@@ -179,7 +210,10 @@ describe.skipIf(!available)(
     it.each(["STAFF", "MANAGER"] as const)(
       "%s direct mutation products harus ditolak database (BFF-only)",
       async (role) => {
-        const whId = randomUUID();
+        // 0071 melarang owner tanpa membership OWNER: attacker BUKAN owner
+        // di sini (owner user terpisah + RPC), attacker member biasa.
+        const owner = await createTestUser();
+        let whId = "";
 
         // 1. Buat user attacker via Admin API (service role).
         const attacker = await createTestUser();
@@ -200,31 +234,60 @@ describe.skipIf(!available)(
           const token = (JSON.parse(signin.text) as { access_token: string })
             .access_token;
 
-          // 3. Setup warehouse + membership attacker + satu produk (service role).
-          const setup = await send(
-            "/rest/v1/warehouses",
+          // 3. Setup warehouse via RPC (atomik 0071) + membership attacker
+          // dengan role yang diuji (service role).
+          const ownerWallet = `0x${"33".repeat(20)}`;
+          await send(
+            "/rest/v1/wallets",
             {
               method: "POST",
               prefer: "return=minimal",
               body: [
                 {
-                  id: whId,
-                  name: `RLS-AUTH-${Date.now()}`,
-                  warehouse_code: `RLA${randomUUID().slice(0, 8).toUpperCase()}`,
-                  owner_user_id: attackerId,
-                  on_chain_owner_wallet:
-                    "0x0000000000000000000000000000000000000000",
-                  status: "active",
+                  user_id: owner.id,
+                  address: ownerWallet,
+                  is_primary: true,
+                  verification_state: "verified",
                 },
               ],
             },
             SECRET!
           );
-          if (setup.status >= 400)
-            throw new Error(`setup warehouse: ${setup.text.slice(0, 200)}`);
+          const code = `RLA${randomUUID().slice(0, 8).toUpperCase()}`;
+          const createdWh = await send(
+            "/rest/v1/rpc/create_warehouse_and_deployment",
+            {
+              method: "POST",
+              body: {
+                p_warehouse_code: code,
+                p_name: `RLS-AUTH-${Date.now()}`,
+                p_company_name: "Contract",
+                p_warehouse_type: "physical",
+                p_on_chain_owner_wallet: ownerWallet,
+                p_factory_address: "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+                p_chain_id: 84532,
+                p_warehouse_code_hash: `0x${"44".repeat(32)}`,
+                p_deployment_nonce: 0,
+                p_expiry: Math.floor(Date.now() / 1000) + 3600,
+                p_signature: `0x${"ab".repeat(65)}`,
+                p_idempotency_key: randomUUID(),
+                p_actor_user_id: owner.id,
+              },
+            },
+            SECRET!
+          );
+          if (createdWh.status >= 400)
+            throw new Error(`setup warehouse: ${createdWh.text.slice(0, 200)}`);
+          whId = String(
+            (
+              JSON.parse(createdWh.text)[0] as {
+                created_warehouse_id: string;
+              }
+            ).created_warehouse_id
+          );
 
-          // Membership role eksplisit; bila trigger sudah membuat OWNER row,
-          // gagal insert tidak fatal — yang diuji adalah privilege global.
+          // Membership role eksplisit untuk attacker (owner user sudah punya
+          // OWNER via RPC; insert ini tidak konflik karena user berbeda).
           await send(
             "/rest/v1/memberships",
             {
@@ -355,12 +418,22 @@ describe.skipIf(!available)(
             SECRET!
           ).catch(() => undefined);
           await send(
+            `/rest/v1/warehouse_deployments?warehouse_id=eq.${whId}`,
+            { method: "DELETE" },
+            SECRET!
+          ).catch(() => undefined);
+          await send(
             `/rest/v1/warehouses?id=eq.${whId}`,
             { method: "DELETE" },
             SECRET!
           ).catch(() => undefined);
           await send(
             `/auth/v1/admin/users/${attackerId}`,
+            { method: "DELETE" },
+            SECRET!
+          ).catch(() => undefined);
+          await send(
+            `/auth/v1/admin/users/${owner.id}`,
             { method: "DELETE" },
             SECRET!
           ).catch(() => undefined);

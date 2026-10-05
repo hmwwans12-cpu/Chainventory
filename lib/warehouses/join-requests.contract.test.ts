@@ -215,20 +215,50 @@ async function fetchPendingRequests(bearer: string, warehouseId: string) {
       const requesterBToken = tokens.get(emails.requesterB)!;
       const outsiderToken = tokens.get(emails.outsider)!;
 
-      const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
-        warehouse_code: warehouseCode,
-        name: `JoinReq ${suffix.slice(0, 8)}`,
-        company_name: "Contract",
-        warehouse_type: "physical",
-        owner_user_id: ownerId,
-        on_chain_owner_wallet: "0x0000000000000000000000000000000000000002",
+      // 0071: warehouse + OWNER membership harus lahir atomik → via RPC
+      // (deployment bawaan RPC langsung dihapus agar state = setup lama).
+      const ownerWallet = `0x${(suffix.replace(/-/g, "") + suffix.replace(/-/g, "")).slice(0, 40)}`;
+      await insertRow(SECRET!, SECRET!, "wallets", {
+        user_id: ownerId,
+        address: ownerWallet,
+        is_primary: true,
+        verification_state: "verified",
       });
-      warehouseId = String(warehouse.id);
+      const createdWh = await json<{ created_warehouse_id: string }[]>(
+        await send(
+          `/rest/v1/rpc/create_warehouse_and_deployment`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              p_warehouse_code: warehouseCode,
+              p_name: `JoinReq ${suffix.slice(0, 8)}`,
+              p_company_name: "Contract",
+              p_warehouse_type: "physical",
+              p_on_chain_owner_wallet: ownerWallet,
+              p_factory_address: "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+              p_chain_id: 84532,
+              p_warehouse_code_hash: `0x${suffix.replace(/-/g, "")}${suffix.replace(/-/g, "").slice(0, 32)}`,
+              p_deployment_nonce: 0,
+              p_expiry: Math.floor(Date.now() / 1000) + 3600,
+              p_signature: `0x${"ab".repeat(65)}`,
+              p_idempotency_key: randomUUID(),
+              p_actor_user_id: ownerId,
+            }),
+          },
+          SECRET!,
+          SECRET!
+        )
+      );
+      warehouseId = String(createdWh[0].created_warehouse_id);
+      await send(
+        `/rest/v1/warehouse_deployments?warehouse_id=eq.${warehouseId}`,
+        { method: "DELETE" },
+        SECRET!,
+        SECRET!
+      );
 
-      for (const [userId, role] of [
-        [ownerId, "OWNER"],
-        [managerId, "MANAGER"],
-      ] as const) {
+      // OWNER membership sudah dibuat RPC; MANAGER manual seperti dulu.
+      for (const [userId, role] of [[managerId, "MANAGER"]] as const) {
         await insertRow(SECRET!, SECRET!, "memberships", {
           warehouse_id: warehouseId,
           user_id: userId,
@@ -358,6 +388,12 @@ async function fetchPendingRequests(bearer: string, warehouseId: string) {
     } finally {
       if (warehouseId) {
         try {
+          await deleteRow(
+            SECRET!,
+            SECRET!,
+            "warehouse_deployments",
+            `warehouse_id=eq.${warehouseId}`
+          );
           await deleteRow(
             SECRET!,
             SECRET!,

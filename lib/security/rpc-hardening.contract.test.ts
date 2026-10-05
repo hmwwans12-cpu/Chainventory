@@ -177,25 +177,67 @@ const DEPLOYED_ADDR = "0x3811b69b5ebc07dda11db72412ccd8ec68a8bf48";
         // 0062: w1 dibuat SUDAH deployed via service insert (jalur sah
         // finalizeIfMined tidak lagi via RPC authenticated, jadi setup
         // tidak boleh bergantung pada RPC langsung).
+        // 0071: warehouse + OWNER membership harus lahir atomik → via RPC
+        // (deployment bawaan RPC langsung dihapus; contract w1 di-PATCH).
         for (const [tag, code, ownerId] of [
           ["w1", `RH1-${suffix.slice(0, 8)}`, owner1.id],
           ["w2", `RH2-${suffix.slice(0, 8)}`, owner2.id],
         ] as const) {
-          const wh = await insertRow("warehouses", {
-            warehouse_code: code,
-            name: `Hardening ${tag} ${suffix.slice(0, 8)}`,
-            owner_user_id: ownerId,
-            on_chain_owner_wallet: "0x0000000000000000000000000000000000000002",
-            ...(tag === "w1" ? { contract_address: DEPLOYED_ADDR } : {}),
+          const ownerWallet = `0x${(suffix.replace(/-/g, "") + tag + suffix.replace(/-/g, "")).replace(/[^0-9a-f]/gi, "0").slice(0, 40)}`;
+          await insertRow("wallets", {
+            user_id: ownerId,
+            address: ownerWallet,
+            is_primary: true,
+            verification_state: "verified",
           });
-          if (tag === "w1") w1 = String(wh.id);
-          else w2 = String(wh.id);
-          for (const [userId, role] of [
-            [ownerId, "OWNER"],
-            [member.id, "STAFF"],
-          ] as const) {
+          const created = await json<{ created_warehouse_id: string }[]>(
+            await send(
+              `/rest/v1/rpc/create_warehouse_and_deployment`,
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  p_warehouse_code: code,
+                  p_name: `Hardening ${tag} ${suffix.slice(0, 8)}`,
+                  p_company_name: "Contract",
+                  p_warehouse_type: "physical",
+                  p_on_chain_owner_wallet: ownerWallet,
+                  p_factory_address:
+                    "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+                  p_chain_id: 84532,
+                  p_warehouse_code_hash: `0x${suffix.replace(/-/g, "")}${suffix.replace(/-/g, "").slice(0, 32)}`,
+                  p_deployment_nonce: 0,
+                  p_expiry: Math.floor(Date.now() / 1000) + 3600,
+                  p_signature: `0x${"ab".repeat(65)}`,
+                  p_idempotency_key: randomUUID(),
+                  p_actor_user_id: ownerId,
+                }),
+              },
+              SECRET!,
+              SECRET!
+            )
+          );
+          const whId = String(created[0].created_warehouse_id);
+          await send(
+            `/rest/v1/warehouse_deployments?warehouse_id=eq.${whId}`,
+            { method: "DELETE" },
+            SECRET!,
+            SECRET!
+          );
+          if (tag === "w1") {
+            w1 = whId;
+            await send(
+              `/rest/v1/warehouses?id=eq.${whId}`,
+              {
+                method: "PATCH",
+                body: JSON.stringify({ contract_address: DEPLOYED_ADDR }),
+              },
+              SECRET!,
+              SECRET!
+            );
+          } else w2 = whId;
+          for (const [userId, role] of [[member.id, "STAFF"]] as const) {
             await insertRow("memberships", {
-              warehouse_id: String(wh.id),
+              warehouse_id: whId,
               user_id: userId,
               role,
               status: "ACTIVE",
@@ -421,6 +463,7 @@ const DEPLOYED_ADDR = "0x3811b69b5ebc07dda11db72412ccd8ec68a8bf48";
         for (const id of [w1, w2]) {
           if (id) {
             try {
+              await deleteRow("warehouse_deployments", `warehouse_id=eq.${id}`);
               await deleteRow("warehouses", `id=eq.${id}`);
             } catch {
               /* ignore */

@@ -207,25 +207,51 @@ async function sleep(ms: number): Promise<void> {
         userId = created.id;
 
         // Setup: warehouse TER-DEPLOY (contract_address on-chain nyata), produk.
-        const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
-          warehouse_code: `PRF-${suffix.slice(0, 8)}`,
-          name: `Proof E2E WH ${suffix.slice(0, 8)}`,
-          company_name: "Proof E2E",
-          warehouse_type: "physical",
-          owner_user_id: userId,
-          contract_address: DEPLOYED_WAREHOUSE,
-          on_chain_owner_wallet: DEPLOYED_OWNER,
-        });
-        warehouseId = String(warehouse.id);
-
-        await insertRow(SECRET!, SECRET!, "memberships", {
-          warehouse_id: warehouseId,
-          user_id: userId,
-          role: "OWNER",
-          status: "ACTIVE",
-          joined_at: new Date().toISOString(),
-        });
+        // 0071: warehouse + OWNER membership harus lahir atomik → via RPC
+        // (deployment bawaan RPC langsung dihapus; contract di-PATCH karena
+        // service-role latch 0062 hanya lewat finalize resmi).
         await insertVerifiedWallet(userId, DEPLOYED_OWNER);
+        const createdWh = await json<{ created_warehouse_id: string }[]>(
+          await send(
+            `/rest/v1/rpc/create_warehouse_and_deployment`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                p_warehouse_code: `PRF-${suffix.slice(0, 8)}`,
+                p_name: `Proof E2E WH ${suffix.slice(0, 8)}`,
+                p_company_name: "Proof E2E",
+                p_warehouse_type: "physical",
+                p_on_chain_owner_wallet: DEPLOYED_OWNER,
+                p_factory_address: "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+                p_chain_id: 84532,
+                p_warehouse_code_hash: `0x${suffix.replace(/-/g, "")}${suffix.replace(/-/g, "").slice(0, 32)}`,
+                p_deployment_nonce: 0,
+                p_expiry: Math.floor(Date.now() / 1000) + 3600,
+                p_signature: `0x${"ab".repeat(65)}`,
+                p_idempotency_key: randomUUID(),
+                p_actor_user_id: userId,
+              }),
+            },
+            SECRET!,
+            SECRET!
+          )
+        );
+        warehouseId = String(createdWh[0].created_warehouse_id);
+        await send(
+          `/rest/v1/warehouse_deployments?warehouse_id=eq.${warehouseId}`,
+          { method: "DELETE" },
+          SECRET!,
+          SECRET!
+        );
+        await send(
+          `/rest/v1/warehouses?id=eq.${warehouseId}`,
+          {
+            method: "PATCH",
+            body: JSON.stringify({ contract_address: DEPLOYED_WAREHOUSE }),
+          },
+          SECRET!,
+          SECRET!
+        );
 
         const product = await insertRow(SECRET!, SECRET!, "products", {
           warehouse_id: warehouseId,
@@ -404,6 +430,12 @@ async function sleep(ms: number): Promise<void> {
         // Cleanup DB + user auth (proof on-chain immutable — tetap).
         if (warehouseId) {
           try {
+            await deleteRow(
+              SECRET!,
+              SECRET!,
+              "warehouse_deployments",
+              `warehouse_id=eq.${warehouseId}`
+            );
             await deleteRow(
               SECRET!,
               SECRET!,

@@ -165,23 +165,35 @@ type Ledger = {
       const staffToken = tokens.get(emails.staff)!;
       const outsiderToken = tokens.get(emails.outsider)!;
 
-      const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
-        warehouse_code: `TX-${suffix.slice(0, 8)}`,
-        name: `Transactions ${suffix.slice(0, 8)}`,
-        company_name: "Contract",
-        warehouse_type: "physical",
-        owner_user_id: staffId,
-        on_chain_owner_wallet: "0x0000000000000000000000000000000000000002",
-      });
-      warehouseId = String(warehouse.id);
-
-      await insertRow(SECRET!, SECRET!, "memberships", {
-        warehouse_id: warehouseId,
+      // 0071: warehouse + OWNER membership harus lahir dalam SATU transaksi
+      // (constraint trigger deferred menolak insert warehouse yang commit
+      // sendirian). Provisioning via RPC create_warehouse_and_deployment
+      // (butuh primary wallet terverifikasi + param deployment dummy).
+      const ownerWallet = `0x${(suffix.replace(/-/g, "") + suffix.replace(/-/g, "")).slice(0, 40)}`;
+      await insertRow(SECRET!, SECRET!, "wallets", {
         user_id: staffId,
-        role: "OWNER",
-        status: "ACTIVE",
-        joined_at: new Date().toISOString(),
+        address: ownerWallet,
+        is_primary: true,
+        verification_state: "verified",
       });
+      const created = await json<{ created_warehouse_id: string }[]>(
+        await callRpc(SECRET!, SECRET!, "create_warehouse_and_deployment", {
+          p_warehouse_code: `TX-${suffix.slice(0, 8)}`,
+          p_name: `Transactions ${suffix.slice(0, 8)}`,
+          p_company_name: "Contract",
+          p_warehouse_type: "physical",
+          p_on_chain_owner_wallet: ownerWallet,
+          p_factory_address: "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+          p_chain_id: 84532,
+          p_warehouse_code_hash: `0x${suffix.replace(/-/g, "")}${suffix.replace(/-/g, "").slice(0, 32)}`,
+          p_deployment_nonce: 0,
+          p_expiry: Math.floor(Date.now() / 1000) + 3600,
+          p_signature: `0x${"ab".repeat(65)}`,
+          p_idempotency_key: randomUUID(),
+          p_actor_user_id: staffId,
+        })
+      );
+      warehouseId = String(created[0].created_warehouse_id);
 
       const product = await insertRow(SECRET!, SECRET!, "products", {
         warehouse_id: warehouseId,
@@ -358,6 +370,14 @@ type Ledger = {
     } finally {
       if (warehouseId) {
         try {
+          // Deployment RPC ikut membuat baris deployment (SET NULL, bukan
+          // cascade) — bersihkan dulu agar tidak jadi orphan.
+          await send(
+            `/rest/v1/warehouse_deployments?warehouse_id=eq.${warehouseId}`,
+            { method: "DELETE" },
+            SECRET!,
+            SECRET!
+          );
           const res = await send(
             `/rest/v1/warehouses?id=eq.${warehouseId}`,
             { method: "DELETE" },

@@ -247,9 +247,9 @@ const daysAgo = (days: number): string =>
         outsider: testWalletAddress(suffix, 6),
       };
 
-      const wh1 = "00000000-0000-0000-0000-0000000000d1";
-      const wh2 = "00000000-0000-0000-0000-0000000000d2";
-      const wh3 = "00000000-0000-0000-0000-0000000000d3";
+      let wh1 = "";
+      let wh2 = "";
+      let wh3 = "";
 
       try {
         const tokens = new Map<string, string>();
@@ -262,16 +262,49 @@ const daysAgo = (days: number): string =>
 
         // --- Fixture: 3 warehouse (masing-masing owner unik karena
         // warehouses_one_active_per_owner_idx) + keanggotaan.
-        const makeWarehouse = (id: string, owner: string, code: string) =>
-          insertRow(SECRET!, SECRET!, "warehouses", {
-            id,
-            warehouse_code: code,
-            name: `Lifecycle ${code}`,
-            company_name: "Contract",
-            warehouse_type: "physical",
-            owner_user_id: owner,
-            on_chain_owner_wallet: "0x0000000000000000000000000000000000000002",
-          });
+        // 0071: warehouse + OWNER membership harus lahir atomik → via RPC
+        // (deployment bawaan RPC langsung dihapus).
+        const makeWarehouse = async (
+          owner: string,
+          walletAddress: string,
+          code: string
+        ): Promise<string> => {
+          await insertVerifiedWallet(owner, walletAddress);
+          const created = await json<{ created_warehouse_id: string }[]>(
+            await send(
+              `/rest/v1/rpc/create_warehouse_and_deployment`,
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  p_warehouse_code: code,
+                  p_name: `Lifecycle ${code}`,
+                  p_company_name: "Contract",
+                  p_warehouse_type: "physical",
+                  p_on_chain_owner_wallet: walletAddress,
+                  p_factory_address:
+                    "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+                  p_chain_id: 84532,
+                  p_warehouse_code_hash: `0x${randomUUID().replace(/-/g, "")}${randomUUID().replace(/-/g, "").slice(0, 32)}`,
+                  p_deployment_nonce: 0,
+                  p_expiry: Math.floor(Date.now() / 1000) + 3600,
+                  p_signature: `0x${"ab".repeat(65)}`,
+                  p_idempotency_key: randomUUID(),
+                  p_actor_user_id: owner,
+                }),
+              },
+              SECRET!,
+              SECRET!
+            )
+          );
+          const id = String(created[0].created_warehouse_id);
+          await send(
+            `/rest/v1/warehouse_deployments?warehouse_id=eq.${id}`,
+            { method: "DELETE" },
+            SECRET!,
+            SECRET!
+          );
+          return id;
+        };
         const makeMembership = (wh: string, user: string, role: string) =>
           insertRow(SECRET!, SECRET!, "memberships", {
             warehouse_id: wh,
@@ -281,24 +314,29 @@ const daysAgo = (days: number): string =>
             joined_at: new Date().toISOString(),
           });
 
+        wh1 = await makeWarehouse(
+          owner1,
+          wallets.owner1,
+          `LC1-${suffix.slice(0, 4)}`
+        );
+        wh2 = await makeWarehouse(
+          owner2,
+          wallets.owner2,
+          `LC2-${suffix.slice(0, 4)}`
+        );
+        wh3 = await makeWarehouse(
+          owner3,
+          wallets.owner3,
+          `LC3-${suffix.slice(0, 4)}`
+        );
+        // OWNER membership sudah dibuat RPC; sisanya manual.
         await Promise.all([
-          makeWarehouse(wh1, owner1, `LC1-${suffix.slice(0, 4)}`),
-          makeWarehouse(wh2, owner2, `LC2-${suffix.slice(0, 4)}`),
-          makeWarehouse(wh3, owner3, `LC3-${suffix.slice(0, 4)}`),
-        ]);
-        await Promise.all([
-          makeMembership(wh1, owner1, "OWNER"),
           makeMembership(wh1, manager1, "MANAGER"),
           makeMembership(wh1, staff1, "STAFF"),
-          makeMembership(wh2, owner2, "OWNER"),
-          makeMembership(wh3, owner3, "OWNER"),
         ]);
         for (const [userId, address] of [
-          [owner1, wallets.owner1],
           [manager1, wallets.manager1],
           [staff1, wallets.staff1],
-          [owner2, wallets.owner2],
-          [owner3, wallets.owner3],
           [outsiderId, wallets.outsider],
         ] as const) {
           await insertVerifiedWallet(userId, address);
@@ -592,6 +630,7 @@ const daysAgo = (days: number): string =>
         expect(wh3WarnAfter).toHaveLength(1);
       } finally {
         for (const wh of [wh1, wh2, wh3]) {
+          if (!wh) continue;
           try {
             await deleteRow(
               SECRET!,
@@ -607,6 +646,16 @@ const daysAgo = (days: number): string =>
               SECRET!,
               SECRET!,
               "join_requests",
+              `warehouse_id=eq.${wh}`
+            );
+          } catch {
+            /* ignore */
+          }
+          try {
+            await deleteRow(
+              SECRET!,
+              SECRET!,
+              "warehouse_deployments",
               `warehouse_id=eq.${wh}`
             );
           } catch {

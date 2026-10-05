@@ -151,24 +151,58 @@ async function callRpc(
       }
       const staffToken = tokens.get(emails.staff)!;
 
-      const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
-        warehouse_code: `BC-${suffix.slice(0, 8)}`,
-        name: `Blockchain ${suffix.slice(0, 8)}`,
-        company_name: "Contract",
-        warehouse_type: "physical",
-        owner_user_id: staffId,
-        on_chain_owner_wallet: "0x0000000000000000000000000000000000000002",
-        contract_address: `0x${"c".repeat(40)}`,
-      });
-      warehouseId = String(warehouse.id);
-
-      await insertRow(SECRET!, SECRET!, "memberships", {
-        warehouse_id: warehouseId,
+      // 0071: warehouse + OWNER membership harus lahir atomik → via RPC
+      // (deployment bawaan RPC langsung dihapus; contract di-PATCH).
+      const ownerWallet = `0x${(suffix.replace(/-/g, "") + suffix.replace(/-/g, "")).slice(0, 40)}`;
+      await insertRow(SECRET!, SECRET!, "wallets", {
         user_id: staffId,
-        role: "OWNER",
-        status: "ACTIVE",
-        joined_at: new Date().toISOString(),
+        address: ownerWallet,
+        is_primary: true,
+        verification_state: "verified",
       });
+      const created = await json<{ created_warehouse_id: string }[]>(
+        await send(
+          `/rest/v1/rpc/create_warehouse_and_deployment`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              p_warehouse_code: `BC-${suffix.slice(0, 8)}`,
+              p_name: `Blockchain ${suffix.slice(0, 8)}`,
+              p_company_name: "Contract",
+              p_warehouse_type: "physical",
+              p_on_chain_owner_wallet: ownerWallet,
+              p_factory_address: "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+              p_chain_id: 84532,
+              p_warehouse_code_hash: `0x${suffix.replace(/-/g, "")}${suffix.replace(/-/g, "").slice(0, 32)}`,
+              p_deployment_nonce: 0,
+              p_expiry: Math.floor(Date.now() / 1000) + 3600,
+              p_signature: `0x${"ab".repeat(65)}`,
+              p_idempotency_key: randomUUID(),
+              p_actor_user_id: staffId,
+            }),
+          },
+          SECRET!,
+          SECRET!
+        )
+      );
+      warehouseId = String(created[0].created_warehouse_id);
+      await send(
+        `/rest/v1/warehouse_deployments?warehouse_id=eq.${warehouseId}`,
+        { method: "DELETE" },
+        SECRET!,
+        SECRET!
+      );
+      await send(
+        `/rest/v1/warehouses?id=eq.${warehouseId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ contract_address: `0x${"c".repeat(40)}` }),
+        },
+        SECRET!,
+        SECRET!
+      );
+
+      // OWNER membership sudah dibuat RPC.
 
       const product = await insertRow(SECRET!, SECRET!, "products", {
         warehouse_id: warehouseId,
@@ -342,6 +376,12 @@ async function callRpc(
     } finally {
       if (warehouseId) {
         try {
+          await send(
+            `/rest/v1/warehouse_deployments?warehouse_id=eq.${warehouseId}`,
+            { method: "DELETE" },
+            SECRET!,
+            SECRET!
+          );
           const res = await send(
             `/rest/v1/warehouses?id=eq.${warehouseId}`,
             { method: "DELETE" },

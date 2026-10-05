@@ -240,19 +240,43 @@ type NotificationRow = {
         const outsiderToken = tokens.get(emails.outsider)!;
 
         // Setup: warehouse + OWNER + MANAGER. staff/r2/outsider bukan member.
-        const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
-          warehouse_code: whCode,
-          name: `Notif ${suffix.slice(0, 8)}`,
-          company_name: "Contract",
-          warehouse_type: "physical",
-          owner_user_id: ownerId,
-          on_chain_owner_wallet: "0x0000000000000000000000000000000000000003",
-        });
-        warehouseId = String(warehouse.id);
-        for (const [userId, role] of [
-          [ownerId, "OWNER"],
-          [managerId, "MANAGER"],
-        ] as const) {
+        // 0071: warehouse + OWNER membership harus lahir atomik → via RPC
+        // (wallet owner dulu; deployment bawaan RPC langsung dihapus).
+        await insertVerifiedWallet(ownerId, wallets.owner);
+        const createdWh = await json<{ created_warehouse_id: string }[]>(
+          await send(
+            `/rest/v1/rpc/create_warehouse_and_deployment`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                p_warehouse_code: whCode,
+                p_name: `Notif ${suffix.slice(0, 8)}`,
+                p_company_name: "Contract",
+                p_warehouse_type: "physical",
+                p_on_chain_owner_wallet: wallets.owner,
+                p_factory_address: "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+                p_chain_id: 84532,
+                p_warehouse_code_hash: `0x${suffix.replace(/-/g, "")}${suffix.replace(/-/g, "").slice(0, 32)}`,
+                p_deployment_nonce: 0,
+                p_expiry: Math.floor(Date.now() / 1000) + 3600,
+                p_signature: `0x${"ab".repeat(65)}`,
+                p_idempotency_key: randomUUID(),
+                p_actor_user_id: ownerId,
+              }),
+            },
+            SECRET!,
+            SECRET!
+          )
+        );
+        warehouseId = String(createdWh[0].created_warehouse_id);
+        await send(
+          `/rest/v1/warehouse_deployments?warehouse_id=eq.${warehouseId}`,
+          { method: "DELETE" },
+          SECRET!,
+          SECRET!
+        );
+        // OWNER (+wallet) sudah ada; MANAGER manual, wallet sisanya manual.
+        for (const [userId, role] of [[managerId, "MANAGER"]] as const) {
           await insertRow(SECRET!, SECRET!, "memberships", {
             warehouse_id: warehouseId,
             user_id: userId,
@@ -262,7 +286,6 @@ type NotificationRow = {
           });
         }
         for (const [userId, address] of [
-          [ownerId, wallets.owner],
           [managerId, wallets.manager],
           [staffId, wallets.staff],
           [r2Id, wallets.r2],
@@ -695,6 +718,12 @@ type NotificationRow = {
       } finally {
         if (warehouseId) {
           try {
+            await deleteRow(
+              SECRET!,
+              SECRET!,
+              "warehouse_deployments",
+              `warehouse_id=eq.${warehouseId}`
+            );
             await deleteRow(
               SECRET!,
               SECRET!,

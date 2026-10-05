@@ -188,18 +188,60 @@ async function deleteRow(
         const managerTok = tokens.get(emails.manager)!;
         const outsiderTok = tokens.get(emails.outsider)!;
 
-        // Setup (service role, bypass RLS).
-        const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
-          warehouse_code: CODE,
-          name: `Scope WH ${suffix.slice(0, 8)}`,
-          company_name: "Scope",
-          warehouse_type: "physical",
-          owner_user_id: ownerId,
-          on_chain_owner_wallet: OWNER_WALLET,
-          contract_address: CONTRACT,
-          status: "active",
+        // Setup (service role, bypass RLS). 0071: warehouse + OWNER
+        // membership harus lahir atomik → via RPC (butuh primary wallet
+        // terverifikasi). Deployment bawaan RPC dihapus agar assertions
+        // deployment milik test tetap tepat-1.
+        await insertRow(SECRET!, SECRET!, "wallets", {
+          user_id: ownerId,
+          address: OWNER_WALLET,
+          is_primary: true,
+          verification_state: "verified",
         });
-        warehouseId = String(warehouse.id);
+        const created = await json<{ created_warehouse_id: string }[]>(
+          await send(
+            `/rest/v1/rpc/create_warehouse_and_deployment`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                p_warehouse_code: CODE,
+                p_name: `Scope WH ${suffix.slice(0, 8)}`,
+                p_company_name: "Scope",
+                p_warehouse_type: "physical",
+                p_on_chain_owner_wallet: OWNER_WALLET,
+                p_factory_address: "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+                p_chain_id: 84532,
+                p_warehouse_code_hash: `0x${suffix.replace(/-/g, "")}${suffix.replace(/-/g, "").slice(0, 32)}`,
+                p_deployment_nonce: 1,
+                p_expiry: Math.floor(Date.now() / 1000) + 3600,
+                p_signature: `0x${"bb".repeat(65)}`,
+                p_idempotency_key: `SC-KEY-${suffix}`,
+                p_actor_user_id: ownerId,
+              }),
+            },
+            SECRET!,
+            SECRET!
+          )
+        );
+        warehouseId = String(created[0].created_warehouse_id);
+        await send(
+          `/rest/v1/warehouse_deployments?warehouse_id=eq.${warehouseId}`,
+          { method: "DELETE" },
+          SECRET!,
+          SECRET!
+        );
+        await send(
+          `/rest/v1/warehouses?id=eq.${warehouseId}`,
+          {
+            method: "PATCH",
+            body: JSON.stringify({
+              contract_address: CONTRACT,
+              status: "active",
+            }),
+          },
+          SECRET!,
+          SECRET!
+        );
 
         const deployment = await insertRow(
           SECRET!,
@@ -221,10 +263,8 @@ async function deleteRow(
         );
         deploymentId = String(deployment.id);
 
-        for (const [userId, role] of [
-          [ownerId, "OWNER"],
-          [managerId, "MANAGER"],
-        ] as const) {
+        // OWNER membership sudah dibuat atomik oleh RPC provisioning.
+        for (const [userId, role] of [[managerId, "MANAGER"]] as const) {
           await insertRow(SECRET!, SECRET!, "memberships", {
             warehouse_id: warehouseId,
             user_id: userId,
@@ -359,10 +399,16 @@ async function deleteRow(
           )
         ).toHaveLength(1);
       } finally {
-        // Cleanup: hapus warehouse (cascade deployments/memberships), lalu
-        // hapus user auth (cascade public.users).
+        // Cleanup: hapus deployments (SET NULL, bukan cascade) + warehouse
+        // (cascade memberships/produk), lalu hapus user auth.
         if (warehouseId) {
           try {
+            await deleteRow(
+              SECRET!,
+              SECRET!,
+              "warehouse_deployments",
+              `warehouse_id=eq.${warehouseId}`
+            );
             await deleteRow(
               SECRET!,
               SECRET!,

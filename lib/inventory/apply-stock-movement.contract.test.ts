@@ -195,6 +195,12 @@ async function applyMovement(
       ? params.p_request_fingerprint
       : `CT-FP-${randomUUID()}`,
     p_actor_user_id: actor.userId,
+    // 0065: satu-satunya overload live berarity 15 tanpa DEFAULT — tanpa
+    // ketiganya PostgREST 404 (PGRST202). Null = tanpa proof (warehouse
+    // test tanpa contract_address tidak mewajibkan proof).
+    p_movement_id: params.p_movement_id ?? null,
+    p_proof_payload: params.p_proof_payload ?? null,
+    p_proof_payload_hash: params.p_proof_payload_hash ?? null,
   };
   const res = await send(
     "/rest/v1/rpc/apply_stock_movement",
@@ -249,15 +255,41 @@ async function applyMovement(
         const ownerTok = await login(emails.owner);
 
         // Setup: warehouse + product + memberships (service role, bypass RLS).
-        const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
-          warehouse_code: `CT-${suffix.slice(0, 8)}`,
-          name: `Contract WH ${suffix.slice(0, 8)}`,
-          company_name: "Contract",
-          warehouse_type: "physical",
-          owner_user_id: ownerId,
-          on_chain_owner_wallet: "0x0000000000000000000000000000000000000001",
-        });
-        warehouseId = String(warehouse.id);
+        // 0071: warehouse + OWNER membership harus lahir atomik → via RPC
+        // (deployment bawaan RPC langsung dihapus).
+        await insertVerifiedWallet(actors.owner.userId, actors.owner.wallet);
+        const createdWh = await json<{ created_warehouse_id: string }[]>(
+          await send(
+            `/rest/v1/rpc/create_warehouse_and_deployment`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                p_warehouse_code: `CT-${suffix.slice(0, 8)}`,
+                p_name: `Contract WH ${suffix.slice(0, 8)}`,
+                p_company_name: "Contract",
+                p_warehouse_type: "physical",
+                p_on_chain_owner_wallet: actors.owner.wallet,
+                p_factory_address: "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+                p_chain_id: 84532,
+                p_warehouse_code_hash: `0x${suffix.replace(/-/g, "")}${suffix.replace(/-/g, "").slice(0, 32)}`,
+                p_deployment_nonce: 0,
+                p_expiry: Math.floor(Date.now() / 1000) + 3600,
+                p_signature: `0x${"ab".repeat(65)}`,
+                p_idempotency_key: randomUUID(),
+                p_actor_user_id: ownerId,
+              }),
+            },
+            SECRET!,
+            SECRET!
+          )
+        );
+        warehouseId = String(createdWh[0].created_warehouse_id);
+        await send(
+          `/rest/v1/warehouse_deployments?warehouse_id=eq.${warehouseId}`,
+          { method: "DELETE" },
+          SECRET!,
+          SECRET!
+        );
 
         const product = await insertRow(SECRET!, SECRET!, "products", {
           warehouse_id: warehouseId,
@@ -267,8 +299,8 @@ async function applyMovement(
         });
         productId = String(product.id);
 
+        // OWNER membership sudah dibuat RPC; sisanya manual seperti dulu.
         for (const [userId, role] of [
-          [ownerId, "OWNER"],
           [staffId, "STAFF"],
           [viewerId, "VIEWER"],
         ] as const) {
@@ -281,7 +313,7 @@ async function applyMovement(
           });
         }
 
-        for (const actor of Object.values(actors)) {
+        for (const actor of [actors.staff, actors.viewer, actors.outsider]) {
           await insertVerifiedWallet(actor.userId, actor.wallet);
         }
 
@@ -522,9 +554,16 @@ async function applyMovement(
         expect(Number(restoredBalance[0]?.quantity)).toBe(97);
       } finally {
         // Cleanup: hapus warehouse (cascade products/balances/movements/
-        // memberships), lalu hapus user auth (cascade public.users).
+        // memberships) + deployments (SET NULL), lalu hapus user auth
+        // (cascade public.users).
         if (warehouseId) {
           try {
+            await deleteRow(
+              SECRET!,
+              SECRET!,
+              "warehouse_deployments",
+              `warehouse_id=eq.${warehouseId}`
+            );
             await deleteRow(
               SECRET!,
               SECRET!,
@@ -561,15 +600,40 @@ async function applyMovement(
 
       try {
         const token = await login(email);
-        const warehouse = await insertRow(SECRET!, SECRET!, "warehouses", {
-          warehouse_code: `CC-${suffix.slice(0, 8)}`,
-          name: `Conc WH ${suffix.slice(0, 8)}`,
-          company_name: "Conc",
-          warehouse_type: "physical",
-          owner_user_id: createdUser.id,
-          on_chain_owner_wallet: "0x0000000000000000000000000000000000000001",
-        });
-        warehouseId = String(warehouse.id);
+        // 0071: atomik via RPC (owner wallet dulu).
+        await insertVerifiedWallet(actor.userId, actor.wallet);
+        const createdWh2 = await json<{ created_warehouse_id: string }[]>(
+          await send(
+            `/rest/v1/rpc/create_warehouse_and_deployment`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                p_warehouse_code: `CC-${suffix.slice(0, 8)}`,
+                p_name: `Conc WH ${suffix.slice(0, 8)}`,
+                p_company_name: "Conc",
+                p_warehouse_type: "physical",
+                p_on_chain_owner_wallet: actor.wallet,
+                p_factory_address: "0x769347c3ae208ff34996d991a0A44a5F02d15301",
+                p_chain_id: 84532,
+                p_warehouse_code_hash: `0x${suffix.replace(/-/g, "")}${suffix.replace(/-/g, "").slice(0, 32)}`,
+                p_deployment_nonce: 0,
+                p_expiry: Math.floor(Date.now() / 1000) + 3600,
+                p_signature: `0x${"ab".repeat(65)}`,
+                p_idempotency_key: randomUUID(),
+                p_actor_user_id: createdUser.id,
+              }),
+            },
+            SECRET!,
+            SECRET!
+          )
+        );
+        warehouseId = String(createdWh2[0].created_warehouse_id);
+        await send(
+          `/rest/v1/warehouse_deployments?warehouse_id=eq.${warehouseId}`,
+          { method: "DELETE" },
+          SECRET!,
+          SECRET!
+        );
 
         const product = await insertRow(SECRET!, SECRET!, "products", {
           warehouse_id: warehouseId,
@@ -579,14 +643,7 @@ async function applyMovement(
         });
         const productId = String(product.id);
 
-        await insertRow(SECRET!, SECRET!, "memberships", {
-          warehouse_id: warehouseId,
-          user_id: createdUser.id,
-          role: "OWNER",
-          status: "ACTIVE",
-          joined_at: new Date().toISOString(),
-        });
-        await insertVerifiedWallet(actor.userId, actor.wallet);
+        // OWNER membership + wallet sudah dibuat saat provisioning RPC.
 
         const base = {
           p_warehouse_id: warehouseId,
@@ -644,6 +701,12 @@ async function applyMovement(
       } finally {
         if (warehouseId) {
           try {
+            await deleteRow(
+              SECRET!,
+              SECRET!,
+              "warehouse_deployments",
+              `warehouse_id=eq.${warehouseId}`
+            );
             await deleteRow(
               SECRET!,
               SECRET!,
